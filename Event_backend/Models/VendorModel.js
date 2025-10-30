@@ -21,14 +21,7 @@ class VendorModel {
         ];
 
         // ✅ Execute the query
-        db.query(sql, values, (err, result) => {
-            if (err) {
-                console.error('❌ Insert Vendor Error:', err);
-                return callback(err);
-            }
-            console.log('✅ Vendor inserted:', result.insertId);
-            callback(null, result);
-        });
+        db.query(sql, values, callback);
     }
 
     static insertVendorSubcription(vendorSubscriptionData, callback) {
@@ -43,15 +36,15 @@ class VendorModel {
         ];
 
         // ✅ Execute the query
-        db.query(sql, values, (err, result) => {
-            if (err) {
-                console.error('❌ Insert Subscription Error:', err);
-                return callback(err);
-            }
-            console.log('✅ Subscription inserted:', result.insertId);
-            callback(null, result);
-        });
+        db.query(sql, values, callback);
     }
+
+    static getallVendors(callback){ 
+        const sql = "select * from vendor_profiles ";
+          db.query (sql , callback)
+
+    }
+    
 }
 
 export default VendorModel;

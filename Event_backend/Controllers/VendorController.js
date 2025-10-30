@@ -20,8 +20,8 @@ export const insertVendor = (req, res) => {
         return res.status(401).json({ message: 'Unauthorized: Invalid token' });
     }
 
-   
-   
+
+
 
     const userId = decoded.userId;
     // vendorData.user_id = userId;
@@ -31,33 +31,33 @@ export const insertVendor = (req, res) => {
     // vendorData.is_verified = 0;
     // vendorData.is_active = 1;
 
-    const vendorData = { 
-        user_id : userId,
+    const vendorData = {
+        user_id: userId,
         business_name: data.business_name,
         service_category_id: data.service_category_id,
         description: data.description,
         years_experience: data.years_experience,
         contact: data.contact,
-        address:data.address,
-        city:data.city,
-        state:data.state,
-        is_verified:0,
-        is_active:1,
+        address: data.address,
+        city: data.city,
+        state: data.state,
+        is_verified: 0,
+        is_active: 1,
         profile_url: profile_url,
-        event_profiles_url:data.event_profiles_url
+        event_profiles_url: data.event_profiles_url
     }
 
 
-  
-     console.log(vendorData);
+
+    console.log(vendorData);
 
     VendorModel.insertVendor(vendorData, (err, result) => {
         if (err) {
             return res.status(500).json({ message: 'Error inserting vendor', error: err });
         }
-       const  vendor_id = result.insertId;
+        const vendor_id = result.insertId;
         const vendorSubscriptionData = {
-            vendor_id:vendor_id,
+            vendor_id: vendor_id,
             start_date: new Date(),
             end_date: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
             billing_cycle: 'annual',
@@ -77,3 +77,23 @@ export const insertVendor = (req, res) => {
         });
     });
 };
+
+export const getAllVendor = (req, res) => {
+    //check if the user is login or not 
+   const  token = req.cookies.auth_token;
+    if (!token) {
+        return res.status(401).json({ Messege: "Unauthorized" })
+    }
+
+    VendorModel.getallVendors((err, results) => {
+        if (err) {
+            return res.status(500).json({
+                messege:
+                    'Error geting vendors', error: err
+            });
+        }
+        res.status(200).json(results)
+    })
+
+
+}
