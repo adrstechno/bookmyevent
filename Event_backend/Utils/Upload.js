@@ -17,8 +17,11 @@ const fieldtodir = {
 
 // Configure Cloudinary Storage
 const storage = new CloudinaryStorage({
+   
+    
     cloudinary: cloudinary.v2,
     params: async (req, file) => {
+       
         const folderName = fieldtodir[file.fieldname] || 'General_Uploads';
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         const publicId = `${folderName}/${file.fieldname}-${uniqueSuffix}`;

@@ -1,7 +1,6 @@
 import ServiceModel from '../Models/ServiceModel.js';
 
 export const insertService = (req, res) => {
-          console.log(req.body);
           
     const {category_name, description, is_active } = req.body;
     
