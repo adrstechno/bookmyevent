@@ -4,6 +4,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Auth/Login";
 import Register from "./pages/Auth/Register";
 import VendorProfileSetup from "./pages/Dashboards/Vendor/VendorProfileSetup";
+import AddService from "./pages/Dashboards/Admin/AddServices";
 // import AboutPage from "./pages/Home/AboutPage";
 // import ContactPage from "./pages/Home/ContactPage";
 
@@ -13,10 +14,12 @@ const App = () => {
       {/* Auth */}
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-
+       
+       <Route path="/admin/addservice" element={<AddService />} />
       {/* Home */}
       {/* <Route path="/about" element={<AboutPage />} />
       <Route path="/contact" element={<ContactPage />} /> */}
+       
        <Route path="vendor/profile-setup" element={<VendorProfileSetup />}/> 
 
       {/* Default route */}
