@@ -24,7 +24,7 @@ const Login = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log("Login Submitted:", formData);
-    navigate("/dashboard");
+    navigate("/vendor/profile-setup");
   };
 
   return (
