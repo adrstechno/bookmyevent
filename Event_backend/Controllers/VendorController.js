@@ -2,6 +2,8 @@ import { resolve } from 'url';
 import VendorModel from '../Models/VendorModel.js';
 import { verifyToken } from '../Utils/Verification.js';
 import { rejects } from 'assert';
+import { promises } from 'dns';
+
 
 
 export const insertVendor = (req, res) => {
@@ -104,7 +106,7 @@ export const getAllVendor = (req, res) => {
 
 export const AddEventImages = async (req, res) => {
     try {
-        // 1️⃣ Verify token
+        //  Verify token
         const token = req.cookies.auth_token;
         if (!token) {
             return res.status(401).json({ message: 'Unauthorized: No token provided' });
@@ -208,3 +210,174 @@ export const getvendorById = async (req, res) => {
         return res.status(500).json({ error: 'Server error', details: err.message });
     }
 };
+
+export const updateVendorProfile = async (req, res) => {
+    try {
+        const data = req.body;
+        const profile_url = req.file?.path;
+
+        // Validate token
+        const token = req.cookies.auth_token;
+        if (!token) {
+            return res.status(401).json({ message: 'Unauthorized: User not logged in' });
+        }
+
+        const decoded = verifyToken(token);
+        if (!decoded) {
+            return res.status(401).json({ message: 'Unauthorized: Invalid token' });
+        }
+
+        // Find vendor ID
+        const vendor_id = await new Promise((resolve, reject) => {
+            VendorModel.findVendorID(decoded.userId, (err, result) => {
+                if (err) {
+                    reject(err);
+                } else if (!result || result.length === 0) {
+                    resolve(null);
+                } else {
+                    resolve(result[0].vendor_id);
+                }
+            });
+        });
+
+        if (!vendor_id) {
+            return res.status(404).json({ message: 'Vendor not found' });
+        }
+
+        // Prepare update data
+        const updateData = {
+            ...data,
+            ...(profile_url && { profile_url })
+        };
+
+        // Update vendor profile
+        await new Promise((resolve, reject) => {
+            VendorModel.updateVendor(vendor_id, updateData, (err, result) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(result);
+                }
+            });
+        });
+
+        return res.status(200).json({
+            message: 'Vendor profile updated successfully',
+            vendor_id
+        });
+    } catch (err) {
+        console.error('Error updating vendor profile:', err);
+        return res.status(500).json({
+            message: 'Server error',
+            error: err.message
+        });
+    }
+};
+
+export const VendorShift = async (req, res) => {
+    try {
+        const token = req.cookies.auth_token;
+
+        if (!token) {
+            return res.status(401).json({ message: 'Unauthorized: User not logged in' });
+        }
+
+        const decoded = verifyToken(token);
+        if (!decoded) {
+            return res.status(401).json({ message: 'Unauthorized: Invalid token' });
+        }
+
+        const { shift_name, start_time, end_time, days_of_week } = req.body;
+
+        // Validate input
+        if (!shift_name || !start_time || !end_time || !days_of_week ) {
+            return res.status(400).json({ message: 'All fields required. days_of_week must be an array' });
+        }
+
+        const vendor_id = await new Promise((resolve, reject) => {
+            VendorModel.findVendorID(decoded.userId, (err, result) => {
+                if (err) reject(err);
+                else resolve(result?.[0]?.vendor_id || null);
+            });
+        });
+
+        if (!vendor_id) {
+            return res.status(404).json({ message: 'Vendor not found' });
+        }
+
+        await new Promise((resolve, reject) => {
+            VendorModel.insertVendorShift({
+                vendor_id,
+                shift_name,
+                start_time,
+                end_time,
+                days_of_week,
+                is_active: true
+            }, (err, result) => {
+                if (err) reject(err);
+                else resolve(result);
+            });
+        });
+
+        return res.status(201).json({ message: 'Shift added successfully' });
+    } catch (err) {
+        console.error('Error adding shift:', err);
+        return res.status(500).json({ error: 'Server error', details: err.message });
+    }
+};
+
+export const getVendorShiftforVendor = async (req, res) => {
+    try {
+        const token = req.cookies.auth_token;
+        if (!token) {
+            return res.status(401).json({ message: 'Unauthorized: User not logged in' });
+        }
+
+        const decoded = verifyToken(token);
+        if (!decoded) {
+            return res.status(401).json({ message: 'Unauthorized: Invalid token' });
+        }
+
+        const vendor_id = await new Promise((resolve, reject) => {
+            VendorModel.findVendorID(decoded.userId, (err, result) => {
+                if (err) reject(err);
+                else resolve(result?.[0]?.vendor_id || null);
+            });
+        });
+
+        if (!vendor_id) {
+            return res.status(404).json({ message: 'Vendor not found' });
+        }
+
+        const shifts = await new Promise((resolve, reject) => {
+            VendorModel.getVendorShifts(vendor_id, (err, result) => {
+                if (err) reject(err);
+                else resolve(result);
+            });
+        });
+
+        if (!shifts || shifts.length === 0) {
+            return res.status(200).json({ message: 'No shifts found', shifts: [] });
+        }
+
+        return res.status(200).json({
+            message: 'Shifts retrieved successfully',
+            count: shifts.length,
+            shifts
+        });
+    } catch (err) {
+        console.error('Error fetching shifts:', err);
+        return res.status(500).json({ error: 'Server error', details: err.message });
+    }
+};
+
+
+
+ 
+
+
+
+   
+    
+
+    

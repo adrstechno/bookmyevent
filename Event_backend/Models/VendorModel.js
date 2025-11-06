@@ -52,13 +52,91 @@ class VendorModel {
 
     static findVendorID(decodedUserID, callback) {
         const sql = `select vendor_id from vendor_profiles where user_id = '${decodedUserID}'`;
-        db.query(sql, callback)  }
+        db.query(sql, callback)
+    }
 
-      static findVendor(decodedUserID, callback) {
+    static findVendor(decodedUserID, callback) {
         const sql = `select * from vendor_profiles where user_id = '${decodedUserID}'`;
-        db.query(sql, callback)  }
+        db.query(sql, callback)
+    }
+
+    static updateVendor(vendor_id, data, callback) {
+        let sql = 'update vendor_profiles set ';
+        const values = [];
+        const allowedFields = ['business_name', 'service_category_id', 'description', 'years_experience', 'contact', 'address', 'city', 'state', 'profile_url', 'event_profiles_url'];
+
+        const fieldsToUpdate = [];
+
+        for (const field of allowedFields) {
+            if (data[field] !== undefined) {
+                fieldsToUpdate.push(`${field}  = ?`);
+                values.push(data[field]);
+            }
+        }
+        if (fieldsToUpdate.length === 0) {
+            return callback(new Error("no vaild fields update."));
+        }
+
+        sql += fieldsToUpdate.join(',') + 'where vendor_id = ?';
+        values.push(vendor_id);
+        db.query(sql, values, callback);
+
+    }
+
+ static insertVendorShift(shiftData, callback) {
+    const sql = 'INSERT INTO vendor_shifts (vendor_id, shift_name, start_time, end_time, days_of_week, is_active) VALUES (?,?,?,?,?,?)';
+
+    const values = [
+        shiftData.vendor_id,
+        shiftData.shift_name,
+        shiftData.start_time,
+        shiftData.end_time,
+        JSON.stringify(shiftData.days_of_week),  // Convert array to JSON string
+        shiftData.is_active || true
+    ];
+
+    db.query(sql, values, callback);
+}
+
+    static getVendorShifts(vendor_id, callback) {
+        const sql = 'SELECT * FROM vendor_shifts WHERE vendor_id = ? ORDER BY FIELD(days_of_week, "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"), start_time';
+        db.query(sql, [vendor_id], callback);
+    }
 
 
+    static getShiftById(shift_id, callback) {
+        const sql = 'SELECT * FROM vendor_shifts WHERE shift_id = ?';
+
+        db.query(sql, [shift_id], callback);
+    }
+
+    static updateVendorShift(shift_id, shiftData, callback) {
+        const sql = 'UPDATE vendor_shifts SET shift_name = ?, start_time = ?, end_time = ?, day_of_week = ?, is_active = ? WHERE shift_id = ?';
+
+        const values = [
+            shiftData.shift_name,
+            shiftData.start_time,
+            shiftData.end_time,
+            shiftData.day_of_week,
+            shiftData.is_active,
+            shift_id
+        ];
+
+        db.query(sql, values, callback);
+    }
+
+
+    static deleteVendorShift(shift_id, callback) {
+        const sql = 'DELETE FROM vendor_shifts WHERE shift_id = ?';
+
+        db.query(sql, [shift_id], callback);
+    }
+
+    static getShiftsByDay(vendor_id, day_of_week, callback) {
+        const sql = 'SELECT * FROM vendor_shifts WHERE vendor_id = ? AND day_of_week = ? ORDER BY start_time';
+
+        db.query(sql, [vendor_id, day_of_week], callback);
+    }
 
 }
 
