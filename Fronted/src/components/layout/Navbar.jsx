@@ -37,7 +37,7 @@ const Navbar = () => {
       </div>
 
       <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-        <div style={{ color: "#333" }}>{user?.name || "Guest"}</div>
+        <div style={{ color: "#333" }}>{user?.name }</div>
         {user ? (
           <button
             onClick={handleLogout}
@@ -63,7 +63,7 @@ const Navbar = () => {
               cursor: "pointer",
             }}
           >
-            Login
+            Logout
           </button>
         )}
       </div>

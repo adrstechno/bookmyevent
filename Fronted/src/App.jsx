@@ -17,7 +17,10 @@ import VendorProfileSetup from "./pages/Dashboards/Vendor/VendorProfileSetup";
 
 // Test Page
 import TestPage from "./pages/TestPage"; // optional
-import Users from "./pages/Dashboards/Admin/Users";
+import AdminUsers from "./pages/Dashboards/Admin/AdminUsers";
+import ChangePassword from "./components/ChangePassword";
+import VendorDashboard from "./pages/Dashboards/Vendor/VendorDashboard";
+import VendorSettings from "./pages/Dashboards/Vendor/VendorSettings";
 
 // import { AuthContext } from "./context/AuthContext"; // not needed now
 // import ProtectedRoute from "./components/ProtectedRoute"; // comment out for dev
@@ -29,6 +32,7 @@ export default function App() {
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path ="/changepassword" element={<ChangePassword />} />
         <Route path="/" element={<Home />} />
 
         {/* Routes that use MainLayout (dashboard panels) */}
@@ -36,19 +40,22 @@ export default function App() {
           {/* Admin */}
           <Route path="admin">
             <Route path="dashboard" element={<Admindashboard />} />
-            <Route path = "users" element = {<Users />}/>
+            <Route path = "users" element = {<AdminUsers/>}/>
             <Route path="addservices" element={<AddService />} />
           </Route>
 
           {/* Vendor */}
           <Route path="vendor">
             <Route path="profile-setup" element={<VendorProfileSetup />} />
+            <Route path= "dashboard" element = {<VendorDashboard />} />
+            <Route path ="setting" element= {<VendorSettings />}/>
             <Route path="test" element={<TestPage />} />
           </Route>
 
           {/* User */}
           <Route path="user">
             <Route path="test" element={<TestPage />} />
+            
           </Route>
         </Route>
       </Routes>
