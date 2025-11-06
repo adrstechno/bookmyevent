@@ -9,9 +9,14 @@ class UserModel {
         db.query(sql, [data.uuid, data.email, data.phone, data.password_hash, data.first_name, data.last_name, data.user_type, data.is_verified, data.is_active], callback);
     }
 
-    static async findonebyemail(email , password , callback) {
-        const sql = 'SELECT * FROM users WHERE email = ?';
-        db.query(sql, [email], callback);
+    static async findonebyemail(email  , callback) {
+        const sql = `SELECT * FROM users WHERE email = '${email}' `;
+        db.query(sql, callback);
+    }
+
+    static async updatepassword(email , hashedPassword , callback){
+        const sql = 'UPDATE users SET password_hash = ? WHERE email = ?';
+        db.query(sql, [hashedPassword, email], callback);
     }
 
 

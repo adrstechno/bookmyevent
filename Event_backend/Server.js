@@ -35,3 +35,9 @@ app.get('/', (req, res) => {
 app.listen(process.env.PORT, () => {
   console.log(`Server is running on port ${process.env.PORT}`);
 });
+
+// Custom error-handling middleware
+app.use((err, req, res, next) => {
+  console.log(err);
+  res.status(500).json({ message: "Oops! Something went wrong." });
+});

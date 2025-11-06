@@ -12,7 +12,8 @@ cloudinary.v2.config({
 
 const fieldtodir = { 
     serviceIcon: 'Service_Icons',
-    profilePicture: 'Vendor_Profiles'  
+    profilePicture: 'Vendor_Profiles' ,
+    eventImages: 'eventImages' 
 }
 
 // Configure Cloudinary Storage
