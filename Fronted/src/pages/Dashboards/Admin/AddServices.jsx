@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 import { AddCircleOutline, CloudUpload } from "@mui/icons-material";
 import axios from "axios";
+import { VITE_API_BASE_URL } from "../../../utils/api";
 
 const AddService = () => {
   const [formData, setFormData] = useState({
@@ -65,7 +66,7 @@ const AddService = () => {
       formDataToSend.append("is_active", formData.is_active ? 1 : 0); // ✅ match backend (1 or 0)
 
       const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/Service/InsertService`,
+        `${VITE_API_BASE_URL}/Service/InsertService`,
         formDataToSend,
         {
           headers: {

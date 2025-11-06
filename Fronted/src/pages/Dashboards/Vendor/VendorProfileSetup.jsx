@@ -1,22 +1,359 @@
+// import React, { useState, useEffect } from "react";
+// import {
+//   Box,
+//   Card,
+//   CardContent,
+//   Typography,
+//   TextField,
+//   Button,
+//   Stack,
+//   Avatar,
+//   CircularProgress,
+//   MenuItem,
+//   Divider,
+// } from "@mui/material";
+// import { PhotoCamera, Save, Business } from "@mui/icons-material";
+// import axios from "axios";
+// import { useNavigate } from "react-router-dom";
+// import { VITE_API_BASE_URL } from "../../../utils/api";
+// import toast from "react-hot-toast";
+
+// const VendorProfileSetup = () => {
+//   const navigate = useNavigate();
+
+//   const [formData, setFormData] = useState({
+//     business_name: "",
+//     service_category_id: "",
+//     description: "",
+//     years_experience: "",
+//     contact: "",
+//     address: "",
+//     city: "",
+//     state: "",
+//     event_profiles_url: "",
+//     profilePicture: null,
+//   });
+
+//   const [preview, setPreview] = useState(null);
+//   const [loading, setLoading] = useState(false);
+//   const [services, setServices] = useState([]);
+
+//   const token = localStorage.getItem("token");
+
+//   // ✅ Fetch all service categories
+//   useEffect(() => {
+//     const fetchServices = async () => {
+//       try {
+//         // If there's no token, redirect to login — backend requires auth for this endpoint
+//         if (!token) {
+//           toast.error("Please log in to continue.");
+//           navigate("/login");
+//           return;
+//         }
+
+//         const response = await axios.get(`${VITE_API_BASE_URL}/Service/GetAllServices`, {
+//           headers: token ? { Authorization: `Bearer ${token}` } : {},
+//         });
+
+//         const data = response.data?.data || response.data;
+
+//         if (Array.isArray(data)) {
+//           const formatted = data.map((item) => ({
+//             id: item.category_id,
+//             name: item.category_name,
+//           }));
+//           setServices(formatted);
+//         } else {
+//           console.error("Unexpected data format:", data);
+//         }
+//       } catch (error) {
+//         // Log details for debugging
+//         console.error("Error fetching services:", error?.response || error);
+
+//         if (error.response?.status === 401) {
+//           // token invalid/expired — clear and redirect
+//           localStorage.removeItem("token");
+//           localStorage.removeItem("user");
+//           toast.error("Session expired or unauthorized. Please log in again.");
+//           navigate("/login");
+//         } else {
+//           toast.error("Failed to load services. Please try again later.");
+//         }
+//       }
+//     };
+//     fetchServices();
+//   }, [token, navigate]);
+
+//   // ✅ Handle input field change
+//   const handleChange = (e) => {
+//     const { name, value } = e.target;
+//     setFormData((prev) => ({ ...prev, [name]: value }));
+//   };
+
+//   // ✅ Handle profile image upload
+//   const handleFileChange = (e) => {
+//     const file = e.target.files[0];
+//     if (file) {
+//       setFormData((prev) => ({ ...prev, profilePicture: file }));
+//       setPreview(URL.createObjectURL(file));
+//     }
+//   };
+
+//   // ✅ Handle form submission
+//   const handleSubmit = async (e) => {
+//     e.preventDefault();
+
+//     if (
+//       !formData.business_name ||
+//       !formData.service_category_id ||
+//       !formData.description ||
+//       !formData.contact ||
+//       !formData.profilePicture
+//     ) {
+//       alert("Please fill all required fields!");
+//       return;
+//     }
+
+//     try {
+//       setLoading(true);
+//       const formDataToSend = new FormData();
+//       Object.keys(formData).forEach((key) => {
+//         formDataToSend.append(key, formData[key]);
+//       });
+
+//       const response = await axios.post(
+//         `${VITE_API_BASE_URL}/Vendor/InsertVendor`,
+//         formDataToSend,
+//         {
+//           headers: {
+//             Authorization: `Bearer ${token}`,
+//             "Content-Type": "multipart/form-data",
+//           },
+//         }
+//       );
+
+//       toast.success(response.data.message || "Vendor profile created successfully!");
+//       navigate("/vendor/dashboard");
+//     } catch (error) {
+//       if (error.response?.status === 401) {
+//         toast.error("Unauthorized! Please log in again.");
+//         // navigate("/login");
+//       } else {
+//         console.error("Error creating vendor:", error);
+//         toast.error("Something went wrong. Please try again.");
+//       }
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   return (
+//     <Box
+//       sx={{
+//         bgcolor: "#f8f9fa",
+//         minHeight: "100vh",
+//         display: "flex",
+//         justifyContent: "center",
+//         alignItems: "center",
+//         p: 2,
+//       }}
+//     >
+//       <Card
+//         sx={{
+//           width: "100%",
+//           maxWidth: 500,
+//           borderRadius: 4,
+//           boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
+//           bgcolor: "#fff",
+//           p: { xs: 3, md: 4 },
+//         }}
+//       >
+//         <CardContent>
+//           <Stack spacing={3} component="form" onSubmit={handleSubmit}>
+//             <Box textAlign="center">
+//               <Business sx={{ fontSize: 50, color: "#3c6e71" }} />
+//               <Typography variant="h5" fontWeight={600}>
+//                 Vendor Profile Setup
+//               </Typography>
+//               <Typography variant="body2" color="text.secondary">
+//                 Fill your business details to get started.
+//               </Typography>
+//             </Box>
+
+//             <Divider />
+
+//             {/* Profile Picture */}
+//             <Stack
+//               direction="row"
+//               spacing={2}
+//               alignItems="center"
+//               justifyContent="center"
+//             >
+//               <Avatar
+//                 src={preview}
+//                 sx={{
+//                   width: 90,
+//                   height: 90,
+//                   border: "2px solid #d9d9d9",
+//                   bgcolor: "#fafafa",
+//                 }}
+//               />
+//               <Button
+//                 variant="outlined"
+//                 component="label"
+//                 startIcon={<PhotoCamera />}
+//                 sx={{
+//                   textTransform: "none",
+//                   borderRadius: 2,
+//                   borderColor: "#284b63",
+//                   color: "#284b63",
+//                 }}
+//               >
+//                 Upload
+//                 <input hidden accept="image/*" type="file" onChange={handleFileChange} />
+//               </Button>
+//             </Stack>
+
+//             {/* Form Fields */}
+//             <TextField
+//               label="Business Name"
+//               name="business_name"
+//               fullWidth
+//               value={formData.business_name}
+//               onChange={handleChange}
+//               required
+//             />
+
+//             <TextField
+//               select
+//               label="Service Category"
+//               name="service_category_id"
+//               fullWidth
+//               value={formData.service_category_id || ""}
+//               onChange={handleChange}
+//               required
+//             >
+//               {services.map((service) => (
+//                 <MenuItem key={service.id} value={service.id}>
+//                   {service.name}
+//                 </MenuItem>
+//               ))}
+//             </TextField>
+
+//             <TextField
+//               label="Description"
+//               name="description"
+//               fullWidth
+//               multiline
+//               rows={3}
+//               value={formData.description}
+//               onChange={handleChange}
+//               required
+//             />
+
+//             <TextField
+//               label="Years of Experience"
+//               name="years_experience"
+//               type="number"
+//               fullWidth
+//               value={formData.years_experience}
+//               onChange={handleChange}
+//             />
+
+//             <TextField
+//               label="Contact Number"
+//               name="contact"
+//               fullWidth
+//               value={formData.contact}
+//               onChange={handleChange}
+//               required
+//             />
+
+//             <TextField
+//               label="Address"
+//               name="address"
+//               fullWidth
+//               value={formData.address}
+//               onChange={handleChange}
+//             />
+
+//             <TextField
+//               label="City"
+//               name="city"
+//               fullWidth
+//               value={formData.city}
+//               onChange={handleChange}
+//             />
+
+//             <TextField
+//               label="State"
+//               name="state"
+//               fullWidth
+//               value={formData.state}
+//               onChange={handleChange}
+//             />
+
+//             <TextField
+//               label="Event Profile / Social URL"
+//               name="event_profiles_url"
+//               fullWidth
+//               value={formData.event_profiles_url}
+//               onChange={handleChange}
+//             />
+
+//             {/* Submit */}
+//             <Button
+//               variant="contained"
+//               fullWidth
+//               type="submit"
+//               sx={{
+//                 py: 1.3,
+//                 fontWeight: 600,
+//                 borderRadius: 2,
+//                 textTransform: "none",
+//                 bgcolor: "#3c6e71",
+//                 boxShadow: "0 4px 15px rgba(40,75,99,0.3)",
+//                 "&:hover": {
+//                   bgcolor: "#284b63",
+//                   boxShadow: "0 6px 25px rgba(40,75,99,0.4)",
+//                 },
+//               }}
+//               startIcon={<Save />}
+//               disabled={loading}
+//             >
+//               {loading ? <CircularProgress size={24} color="inherit" /> : "Save Vendor Profile"}
+//             </Button>
+//           </Stack>
+//         </CardContent>
+//       </Card>
+//     </Box>
+//   );
+// };
+
+// export default VendorProfileSetup;
+
 import React, { useState, useEffect } from "react";
 import {
   Box,
-  Grid,
   Card,
   CardContent,
   Typography,
   TextField,
   Button,
   Stack,
-  Divider,
   Avatar,
   CircularProgress,
   MenuItem,
+  Divider,
 } from "@mui/material";
 import { PhotoCamera, Save, Business } from "@mui/icons-material";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { VITE_API_BASE_URL } from "../../../utils/api"; // ✅ use same import style
+import { VITE_API_BASE_URL } from "../../../utils/api";
+import toast from "react-hot-toast";
+
+// ✅ Enable cookies globally
+axios.defaults.withCredentials = true;
 
 const VendorProfileSetup = () => {
   const navigate = useNavigate();
@@ -38,35 +375,44 @@ const VendorProfileSetup = () => {
   const [loading, setLoading] = useState(false);
   const [services, setServices] = useState([]);
 
-  // ✅ Fetch All Services for dropdown
+  // ✅ Fetch service categories (using cookie auth)
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const response = await axios.get(`${VITE_API_BASE_URL}/Service/GetAllServices`);
-        console.log("✅ Services Response:", response.data);
+        const res = await axios.get(`${VITE_API_BASE_URL}/Service/GetAllServices`, {
+          withCredentials: true, // send cookie
+        });
 
-        if (response.data && Array.isArray(response.data.data)) {
-          setServices(response.data.data);
-        } else if (Array.isArray(response.data)) {
-          setServices(response.data);
+        const data = res.data?.data || res.data;
+        if (Array.isArray(data)) {
+          const formatted = data.map((item) => ({
+            id: item.category_id,
+            name: item.category_name,
+          }));
+          setServices(formatted);
         } else {
-          console.warn("⚠️ Unexpected format for services API:", response.data);
+          console.error("Unexpected data format:", data);
         }
       } catch (error) {
-        console.error("❌ Error fetching services:", error);
-        alert("Failed to load services. Please try again.");
+        console.error("Error fetching services:", error);
+        if (error.response?.status === 401) {
+          toast.error("Session expired. Please log in again.");
+          navigate("/login");
+        } else {
+          toast.error("Failed to load services.");
+        }
       }
     };
     fetchServices();
-  }, []);
+  }, [navigate]);
 
-  // ✅ Handle input change
+  // ✅ Handle input field change
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // ✅ Handle file upload
+  // ✅ Handle profile image upload
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -75,7 +421,7 @@ const VendorProfileSetup = () => {
     }
   };
 
-  // ✅ Handle submit
+  // ✅ Submit vendor form
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -86,7 +432,7 @@ const VendorProfileSetup = () => {
       !formData.contact ||
       !formData.profilePicture
     ) {
-      alert("Please fill all required fields!");
+      toast.error("Please fill all required fields!");
       return;
     }
 
@@ -94,224 +440,209 @@ const VendorProfileSetup = () => {
       setLoading(true);
 
       const formDataToSend = new FormData();
-      for (const key in formData) {
+      Object.keys(formData).forEach((key) => {
         formDataToSend.append(key, formData[key]);
-      }
+      });
 
+      // ✅ No Authorization header — backend reads cookie
       const response = await axios.post(
         `${VITE_API_BASE_URL}/Vendor/InsertVendor`,
         formDataToSend,
         {
+          withCredentials: true, // 🔑 crucial for cookies
           headers: {
             "Content-Type": "multipart/form-data",
           },
         }
       );
 
-      console.log("✅ Vendor Created:", response.data);
-
-      alert(response.data.message || "Vendor profile created successfully!");
+      toast.success(response.data.message || "Vendor profile created successfully!");
       navigate("/vendor/dashboard");
     } catch (error) {
-      console.error("❌ Error creating vendor:", error);
-      alert("Something went wrong. Please try again.");
+      console.error("Error creating vendor:", error);
+
+      if (error.response?.status === 401) {
+        toast.error("Unauthorized: Please log in again.");
+        navigate("/login");
+      } else {
+        toast.error("Something went wrong. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Box sx={{ p: { xs: 2, md: 5 }, bgcolor: "#f9f9fb", minHeight: "100vh" }}>
+    <Box
+      sx={{
+        bgcolor: "#f8f9fa",
+        minHeight: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        p: 2,
+      }}
+    >
       <Card
         sx={{
-          maxWidth: 900,
-          mx: "auto",
+          width: "100%",
+          maxWidth: 500,
           borderRadius: 4,
-          boxShadow: 6,
-          p: { xs: 2, md: 4 },
-          bgcolor: "background.paper",
+          boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
+          bgcolor: "#fff",
+          p: { xs: 3, md: 4 },
         }}
       >
         <CardContent>
-          <Stack spacing={2}>
-            {/* Header */}
-            <Box textAlign="center" mb={1}>
-              <Business sx={{ fontSize: 50, color: "primary.main" }} />
-              <Typography variant="h4" fontWeight={600}>
+          <Stack spacing={3} component="form" onSubmit={handleSubmit}>
+            <Box textAlign="center">
+              <Business sx={{ fontSize: 50, color: "#3c6e71" }} />
+              <Typography variant="h5" fontWeight={600}>
                 Vendor Profile Setup
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Add your business details to start accepting event bookings 🎉
+                Fill your business details to get started.
               </Typography>
             </Box>
 
-            <Divider sx={{ my: 2 }} />
+            <Divider />
 
-            {/* Form */}
-            <form onSubmit={handleSubmit} encType="multipart/form-data">
-              <Grid container spacing={3}>
-                {/* Business Name */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Business Name"
-                    name="business_name"
-                    fullWidth
-                    value={formData.business_name}
-                    onChange={handleChange}
-                    required
-                  />
-                </Grid>
+            {/* Profile Picture */}
+            <Stack direction="row" spacing={2} alignItems="center" justifyContent="center">
+              <Avatar
+                src={preview}
+                sx={{
+                  width: 90,
+                  height: 90,
+                  border: "2px solid #d9d9d9",
+                  bgcolor: "#fafafa",
+                }}
+              />
+              <Button
+                variant="outlined"
+                component="label"
+                startIcon={<PhotoCamera />}
+                sx={{
+                  textTransform: "none",
+                  borderRadius: 2,
+                  borderColor: "#284b63",
+                  color: "#284b63",
+                }}
+              >
+                Upload
+                <input hidden accept="image/*" type="file" onChange={handleFileChange} />
+              </Button>
+            </Stack>
 
-                {/* Service Category Dropdown */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    select
-                    label="Service Category"
-                    name="service_category_id"
-                    fullWidth
-                    value={formData.service_category_id}
-                    onChange={handleChange}
-                    required
-                  >
-                    {services.map((service) => (
-                      <MenuItem key={service.service_id} value={service.service_id}>
-                        {service.category_name}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </Grid>
+            {/* Form Fields */}
+            <TextField
+              label="Business Name"
+              name="business_name"
+              fullWidth
+              value={formData.business_name}
+              onChange={handleChange}
+              required
+            />
 
-                {/* Description */}
-                <Grid item xs={12}>
-                  <TextField
-                    label="Description"
-                    name="description"
-                    fullWidth
-                    multiline
-                    rows={3}
-                    value={formData.description}
-                    onChange={handleChange}
-                    placeholder="Describe your business services, specialties..."
-                    required
-                  />
-                </Grid>
+            <TextField
+              select
+              label="Service Category"
+              name="service_category_id"
+              fullWidth
+              value={formData.service_category_id || ""}
+              onChange={handleChange}
+              required
+            >
+              {services.map((service) => (
+                <MenuItem key={service.id} value={service.id}>
+                  {service.name}
+                </MenuItem>
+              ))}
+            </TextField>
 
-                {/* Years of Experience */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Years of Experience"
-                    name="years_experience"
-                    fullWidth
-                    type="number"
-                    value={formData.years_experience}
-                    onChange={handleChange}
-                  />
-                </Grid>
+            <TextField
+              label="Description"
+              name="description"
+              fullWidth
+              multiline
+              rows={3}
+              value={formData.description}
+              onChange={handleChange}
+              required
+            />
 
-                {/* Contact */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Contact Number"
-                    name="contact"
-                    fullWidth
-                    type="tel"
-                    value={formData.contact}
-                    onChange={handleChange}
-                    required
-                  />
-                </Grid>
+            <TextField
+              label="Years of Experience"
+              name="years_experience"
+              type="number"
+              fullWidth
+              value={formData.years_experience}
+              onChange={handleChange}
+            />
 
-                {/* Address */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Address"
-                    name="address"
-                    fullWidth
-                    value={formData.address}
-                    onChange={handleChange}
-                  />
-                </Grid>
+            <TextField
+              label="Contact Number"
+              name="contact"
+              fullWidth
+              value={formData.contact}
+              onChange={handleChange}
+              required
+            />
 
-                {/* City */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="City"
-                    name="city"
-                    fullWidth
-                    value={formData.city}
-                    onChange={handleChange}
-                  />
-                </Grid>
+            <TextField
+              label="Address"
+              name="address"
+              fullWidth
+              value={formData.address}
+              onChange={handleChange}
+            />
 
-                {/* State */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="State"
-                    name="state"
-                    fullWidth
-                    value={formData.state}
-                    onChange={handleChange}
-                  />
-                </Grid>
+            <TextField
+              label="City"
+              name="city"
+              fullWidth
+              value={formData.city}
+              onChange={handleChange}
+            />
 
-                {/* Event Profile URL */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Event Profile URL"
-                    name="event_profiles_url"
-                    fullWidth
-                    value={formData.event_profiles_url}
-                    onChange={handleChange}
-                    placeholder="https://instagram.com/yourprofile"
-                  />
-                </Grid>
+            <TextField
+              label="State"
+              name="state"
+              fullWidth
+              value={formData.state}
+              onChange={handleChange}
+            />
 
-                {/* Profile Picture Upload */}
-                <Grid item xs={12}>
-                  <Typography variant="subtitle1" fontWeight={500}>
-                    Upload Profile Picture
-                  </Typography>
-                  <Stack direction="row" alignItems="center" spacing={2} mt={1}>
-                    <Avatar
-                      src={preview}
-                      sx={{ width: 90, height: 90, border: "2px solid #ccc" }}
-                    />
-                    <Button
-                      variant="outlined"
-                      component="label"
-                      startIcon={<PhotoCamera />}
-                    >
-                      Upload Image
-                      <input
-                        hidden
-                        accept="image/*"
-                        type="file"
-                        onChange={handleFileChange}
-                      />
-                    </Button>
-                  </Stack>
-                </Grid>
+            <TextField
+              label="Event Profile / Social URL"
+              name="event_profiles_url"
+              fullWidth
+              value={formData.event_profiles_url}
+              onChange={handleChange}
+            />
 
-                {/* Submit */}
-                <Grid item xs={12}>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    fullWidth
-                    type="submit"
-                    sx={{ py: 1.4, fontWeight: 600 }}
-                    startIcon={<Save />}
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <CircularProgress size={26} color="inherit" />
-                    ) : (
-                      "Save Vendor Profile"
-                    )}
-                  </Button>
-                </Grid>
-              </Grid>
-            </form>
+            {/* Submit */}
+            <Button
+              variant="contained"
+              fullWidth
+              type="submit"
+              sx={{
+                py: 1.3,
+                fontWeight: 600,
+                borderRadius: 2,
+                textTransform: "none",
+                bgcolor: "#3c6e71",
+                boxShadow: "0 4px 15px rgba(40,75,99,0.3)",
+                "&:hover": {
+                  bgcolor: "#284b63",
+                  boxShadow: "0 6px 25px rgba(40,75,99,0.4)",
+                },
+              }}
+              startIcon={<Save />}
+              disabled={loading}
+            >
+              {loading ? <CircularProgress size={24} color="inherit" /> : "Save Vendor Profile"}
+            </Button>
           </Stack>
         </CardContent>
       </Card>
