@@ -21,6 +21,7 @@ import AdminUsers from "./pages/Dashboards/Admin/AdminUsers";
 import ChangePassword from "./components/ChangePassword";
 import VendorDashboard from "./pages/Dashboards/Vendor/VendorDashboard";
 import VendorSettings from "./pages/Dashboards/Vendor/VendorSettings";
+import MyEvents from "./pages/Dashboards/Vendor/MyEvents";
 
 // import { AuthContext } from "./context/AuthContext"; // not needed now
 // import ProtectedRoute from "./components/ProtectedRoute"; // comment out for dev
@@ -48,6 +49,7 @@ export default function App() {
           <Route path="vendor">
             <Route path="profile-setup" element={<VendorProfileSetup />} />
             <Route path= "dashboard" element = {<VendorDashboard />} />
+            <Route path = "myevents" element={<MyEvents />} />
             <Route path ="setting" element= {<VendorSettings />}/>
             <Route path="test" element={<TestPage />} />
           </Route>
