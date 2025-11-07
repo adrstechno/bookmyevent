@@ -61,7 +61,7 @@ const Navbar = () => {
               background: "#1976d2",
               color: "#fff",
               cursor: "pointer",
-            }}
+            }} 
           >
             Logout
           </button>
@@ -73,16 +73,17 @@ const Navbar = () => {
 
 export default Navbar;
 
+
 // import React, { useContext } from "react";
-// import { AppBar, Toolbar, Typography, Button, Box } from "@mui/material";
 // import { useNavigate } from "react-router-dom";
 // import { AuthContext } from "../../context/AuthContext";
-// import { motion } from "framer-motion";
+// import { UserCircleIcon } from "@heroicons/react/24/outline";
 
 // const navHeight = 64;
 
 // const Navbar = () => {
-//   const { logout } = useContext(AuthContext);
+//   const auth = useContext(AuthContext) || {};
+//   const { user, logout } = auth;
 //   const navigate = useNavigate();
 
 //   const handleLogout = () => {
@@ -91,86 +92,50 @@ export default Navbar;
 //   };
 
 //   return (
-//     <motion.div
-//       initial={{ y: -70, opacity: 0 }}
-//       animate={{ y: 0, opacity: 1 }}
-//       transition={{ duration: 0.6, ease: "easeOut" }}
+//     <header
+//       style={{
+//         position: "fixed",
+//         top: 0,
+//         left: 0,
+//         right: 0,
+//         height: navHeight,
+//         display: "flex",
+//         alignItems: "center",
+//         justifyContent: "space-between",
+//         padding: "0 24px",
+//         backgroundColor: "#3c6e71",
+//         color: "#ffffff",
+//         boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+//         zIndex: 1000,
+//       }}
 //     >
-//       <AppBar
-//         position="fixed"
-//         elevation={0}
-//         sx={{
-//           height: navHeight,
-//           backdropFilter: "blur(10px)",
-//           background:
-//             "linear-gradient(135deg, rgba(33,33,33,0.9), rgba(66,66,66,0.85))",
-//           borderBottom: "1px solid rgba(255,255,255,0.1)",
-//           color: "#f5f5f5",
-//           display: "flex",
-//           justifyContent: "center",
-//           zIndex: 1300,
-//           boxShadow: "0 2px 15px rgba(0,0,0,0.3)",
-//         }}
-//       >
-//         <Toolbar
-//           sx={{
-//             display: "flex",
-//             justifyContent: "space-between",
-//             alignItems: "center",
-//             px: { xs: 2, sm: 4 },
-//           }}
-//         >
-//           {/* Brand Name */}
-//           <Typography
-//             variant="h6"
-//             sx={{
-//               fontWeight: 700,
-//               letterSpacing: 0.8,
-//               cursor: "pointer",
-//               color: "#e0e0e0",
-//               fontFamily: "'Poppins', sans-serif",
-//               "&:hover": {
-//                 color: "#c0c0c0",
-//                 transition: "color 0.3s ease",
-//               },
-//             }}
-//             onClick={() => navigate("/")}
-//           >
-//             BookMyEvent
-//           </Typography>
+//       <h1 style={{ fontSize: 20, fontWeight: 600 }}>Vendor Dashboard</h1>
 
-//           {/* Logout Button */}
-//           <Box>
-//             <Button
-//               variant="contained"
-//               onClick={handleLogout}
-//               sx={{
-//                 textTransform: "none",
-//                 fontWeight: 600,
-//                 borderRadius: "25px",
-//                 px: 3,
-//                 py: 1,
-//                 fontFamily: "'Poppins', sans-serif",
-//                 background: "linear-gradient(135deg, #1e1e1e, #3a3a3a)",
-//                 color: "#f5f5f5",
-//                 boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
-//                 border: "1px solid rgba(255,255,255,0.1)",
-//                 transition: "all 0.3s ease",
-//                 "&:hover": {
-//                   background: "linear-gradient(135deg, #2a2a2a, #555)",
-//                   boxShadow: "0 6px 14px rgba(0,0,0,0.5)",
-//                 },
-//                 "&:active": {
-//                   transform: "scale(0.98)",
-//                 },
-//               }}
-//             >
-//               Logout
-//             </Button>
-//           </Box>
-//         </Toolbar>
-//       </AppBar>
-//     </motion.div>
+//       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+//         <UserCircleIcon style={{ height: 28, width: 28, color: "white" }} />
+//         <span style={{ fontWeight: 500 }}>
+//           Welcome, {user?.name || "Vendor"}
+//         </span>
+
+//         <button
+//           onClick={handleLogout}
+//           style={{
+//             backgroundColor: "white",
+//             color: "#3c6e71",
+//             padding: "6px 14px",
+//             borderRadius: 6,
+//             fontWeight: 500,
+//             border: "none",
+//             cursor: "pointer",
+//             transition: "all 0.3s ease",
+//           }}
+//           onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#e8f0f0")}
+//           onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "white")}
+//         >
+//           Logout
+//         </button>
+//       </div>
+//     </header>
 //   );
 // };
 

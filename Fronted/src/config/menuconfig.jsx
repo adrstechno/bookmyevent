@@ -20,7 +20,7 @@ export const menuConfig = {
   vendor: [
     { label: "Create Profile", path: "/vendor/profile-setup", icon: <PersonIcon /> },   
     { label: "Dashboard", path: "/vendor/dashboard", icon: <PersonIcon /> },   
-    { label: "My Events", path: "/vendor/events", icon: <ListAltIcon /> },
+    { label: "My Events", path: "/vendor/myevents", icon: <ListAltIcon /> },
     { label: "Orders", path: "/vendor/orders", icon: <ShoppingCartIcon /> },
     { label: "Setting", path: "/vendor/setting", icon: <ShoppingCartIcon /> },
     
