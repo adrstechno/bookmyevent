@@ -1,64 +1,117 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
+import toast from "react-hot-toast";
+import { VITE_API_BASE_URL } from "../utils/api"; // adjust import if needed
 
 const ChangePassword = ({ visible, onClose }) => {
   const [form, setForm] = useState({
-    currentPassword: "",
+    email: "",
+    oldPassword: "",
     newPassword: "",
-    confirmPassword: "",
   });
+
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    document.body.style.overflow = visible ? "hidden" : "auto";
+  }, [visible]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (form.newPassword !== form.confirmPassword) {
-      alert("New passwords do not match!");
+    if (!form.email || !form.oldPassword || !form.newPassword) {
+      toast.error("Please fill in all fields");
       return;
     }
 
-    console.log("Password updated:", form);
-    alert("Password updated successfully!");
-    onClose();
-  };
+    try {
+      setLoading(true);
 
-  useEffect(() => {
-    document.body.style.overflow = visible ? "hidden" : "auto";
-  }, [visible]);
+      // Create form data for x-www-form-urlencoded
+      const params = new URLSearchParams();
+      params.append("email", form.email);
+      params.append("oldPassword", form.oldPassword);
+      params.append("newPassword", form.newPassword);
+
+      const response = await axios.post(
+        `${VITE_API_BASE_URL}/User/changePassword`,
+        params,
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          withCredentials: true, // allows cookies to be sent if needed
+        }
+      );
+
+      toast.success(response.data.message || "Password changed successfully");
+      setForm({ email: "", oldPassword: "", newPassword: "" });
+      onClose();
+    } catch (error) {
+      console.error("Change Password Error:", error);
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Something went wrong. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!visible) return null;
 
   return (
     <>
-      {/* Soft blur background (no black overlay) */}
+      {/* Soft blurred background */}
       <div className="fixed inset-0 z-[998] bg-white/50 backdrop-blur-sm transition" />
 
-      {/* Modal Box */}
+      {/* Modal */}
       <div className="fixed z-[999] inset-0 flex items-center justify-center">
-        <div className="bg-white/90 backdrop-blur-lg shadow-2xl rounded-2xl p-8 w-full max-w-md border-t-4 border-[#3c6e71] animate-fadeIn">
+        <div className="bg-white/95 backdrop-blur-md shadow-2xl rounded-2xl p-8 w-full max-w-md border-t-4 border-[#3c6e71] animate-fadeIn">
           <h2 className="text-xl font-semibold text-gray-800 mb-6 text-center">
             Change Password
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Email */}
             <div>
               <label className="block text-gray-700 font-medium mb-1">
-                Current Password
+                Email
               </label>
               <input
-                type="password"
-                name="currentPassword"
-                value={form.currentPassword}
+                type="email"
+                name="email"
+                value={form.email}
                 onChange={handleChange}
+                placeholder="Enter your email"
                 required
-                placeholder="Enter current password"
                 className="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-[#3c6e71]"
               />
             </div>
 
+            {/* Old Password */}
+            <div>
+              <label className="block text-gray-700 font-medium mb-1">
+                Old Password
+              </label>
+              <input
+                type="password"
+                name="oldPassword"
+                value={form.oldPassword}
+                onChange={handleChange}
+                placeholder="Enter old password"
+                required
+                className="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-[#3c6e71]"
+              />
+            </div>
+
+            {/* New Password */}
             <div>
               <label className="block text-gray-700 font-medium mb-1">
                 New Password
@@ -68,23 +121,8 @@ const ChangePassword = ({ visible, onClose }) => {
                 name="newPassword"
                 value={form.newPassword}
                 onChange={handleChange}
-                required
                 placeholder="Enter new password"
-                className="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-[#3c6e71]"
-              />
-            </div>
-
-            <div>
-              <label className="block text-gray-700 font-medium mb-1">
-                Confirm Password
-              </label>
-              <input
-                type="password"
-                name="confirmPassword"
-                value={form.confirmPassword}
-                onChange={handleChange}
                 required
-                placeholder="Confirm new password"
                 className="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-[#3c6e71]"
               />
             </div>
@@ -94,16 +132,18 @@ const ChangePassword = ({ visible, onClose }) => {
               <button
                 type="button"
                 onClick={onClose}
-                className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-5 rounded-lg transition"
+                disabled={loading}
+                className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-5 rounded-lg transition disabled:opacity-50"
               >
                 Cancel
               </button>
 
               <button
                 type="submit"
-                className="bg-[#3c6e71] hover:bg-[#284b63] text-white font-semibold py-2 px-6 rounded-lg shadow-md transition"
+                disabled={loading}
+                className="bg-[#3c6e71] hover:bg-[#284b63] text-white font-semibold py-2 px-6 rounded-lg shadow-md transition disabled:opacity-50"
               >
-                Update
+                {loading ? "Updating..." : "Update"}
               </button>
             </div>
           </form>
