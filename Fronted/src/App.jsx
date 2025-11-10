@@ -22,6 +22,8 @@ import ChangePassword from "./components/ChangePassword";
 import VendorDashboard from "./pages/Dashboards/Vendor/VendorDashboard";
 import VendorSettings from "./pages/Dashboards/Vendor/VendorSettings";
 import MyEvents from "./pages/Dashboards/Vendor/MyEvents";
+import VendorGallery from "./pages/Dashboards/Vendor/VendorGallery";
+import UserDashboard from "./pages/Dashboards/User/Userdashboard";
 
 // import { AuthContext } from "./context/AuthContext"; // not needed now
 // import ProtectedRoute from "./components/ProtectedRoute"; // comment out for dev
@@ -50,12 +52,14 @@ export default function App() {
             <Route path="profile-setup" element={<VendorProfileSetup />} />
             <Route path= "dashboard" element = {<VendorDashboard />} />
             <Route path = "myevents" element={<MyEvents />} />
+            <Route path ="gallery" element={<VendorGallery />} />
             <Route path ="setting" element= {<VendorSettings />}/>
             <Route path="test" element={<TestPage />} />
           </Route>
 
           {/* User */}
           <Route path="user">
+            <Route path="dashboard" element={<UserDashboard />} />
             <Route path="test" element={<TestPage />} />
             
           </Route>
