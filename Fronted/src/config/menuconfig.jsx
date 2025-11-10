@@ -21,7 +21,7 @@ export const menuConfig = {
     { label: "Create Profile", path: "/vendor/profile-setup", icon: <PersonIcon /> },   
     { label: "Dashboard", path: "/vendor/dashboard", icon: <PersonIcon /> },   
     { label: "My Events", path: "/vendor/myevents", icon: <ListAltIcon /> },
-    { label: "Orders", path: "/vendor/orders", icon: <ShoppingCartIcon /> },
+    { label: "Gallery", path: "/vendor/gallery", icon: <ShoppingCartIcon /> },
     { label: "Setting", path: "/vendor/setting", icon: <ShoppingCartIcon /> },
     
 
@@ -33,7 +33,7 @@ export const menuConfig = {
   ],
 
   user: [
-    { label: "Home", path: "/", icon: <HomeIcon /> },
+    { label: "Dashboard", path: "/user/dashboard", icon: <HomeIcon /> },
     { label: "My Bookings", path: "/bookings", icon: <ConfirmationNumberIcon /> },
     { label: "Profile", path: "/profile", icon: <PersonIcon /> },
   ],
