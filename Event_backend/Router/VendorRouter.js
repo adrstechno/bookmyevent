@@ -11,7 +11,7 @@ router.post('/AddEventImages' , upload.array('eventImages', 5), AddEventImages)
 router.get('/getvendorById' , getvendorById);
 router.post('/updateVendorProfile' ,upload.single('profilePicture') , updateVendorProfile);
 router.post('/AddvendorShifts', VendorShift);
-router.get('/ ', getVendorShiftforVendor);
+router.get('/getVendorShiftforVendor', getVendorShiftforVendor);
 
 
 

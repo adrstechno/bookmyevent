@@ -81,7 +81,7 @@ const Login = () => {
               navigate("/marketer/dashboard");
               break;
             case "user":
-              navigate("/user/home");
+              navigate("/user/dashboard");
               break;
             default:
               navigate("/");
@@ -221,3 +221,4 @@ const Login = () => {
 };
 
 export default Login;
+  
