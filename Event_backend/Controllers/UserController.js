@@ -34,7 +34,7 @@ export const login = (req, res) => {
 
     // Validate inputs
     if (!email || !password) {
-        return res.status(400).json({ error: 'Email and password are required' });
+        return res.status(400).json({ error: 'Email and password are required ' });
     }
 
     UserModel.findonebyemail(email, (err, results) => {
