@@ -1,5 +1,5 @@
 import express from 'express';
-import {insertVendor , getAllVendor , AddEventImages , getvendorById , updateVendorProfile  , VendorShift , getVendorShiftforVendor  , GetvendorEventImages} from '../Controllers/VendorController.js';
+import {insertVendor , getAllVendor , AddEventImages , getvendorById , updateVendorProfile  , VendorShift , getVendorShiftforVendor  , GetvendorEventImages  , updateVendorShiftbyId  , deleteVendorShiftbyId} from '../Controllers/VendorController.js';
 import { upload } from '../Utils/Upload.js';
 
 const router = express.Router();
@@ -13,9 +13,8 @@ router.post('/updateVendorProfile' ,upload.single('profilePicture') , updateVend
 router.post('/AddvendorShifts', VendorShift);
 router.get('/getVendorShiftforVendor', getVendorShiftforVendor);
 router.get('/GetvendorEventImages', GetvendorEventImages);
-
-
-
+router.post('/updateVendorShiftbyId', updateVendorShiftbyId);
+router.get('/deleteVendorShiftbyId', deleteVendorShiftbyId);
 
 
 

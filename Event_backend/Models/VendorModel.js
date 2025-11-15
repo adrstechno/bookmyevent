@@ -111,13 +111,13 @@ class VendorModel {
     }
 
     static updateVendorShift(shift_id, shiftData, callback) {
-        const sql = 'UPDATE vendor_shifts SET shift_name = ?, start_time = ?, end_time = ?, day_of_week = ?, is_active = ? WHERE shift_id = ?';
+        const sql = 'UPDATE vendor_shifts SET shift_name = ?, start_time = ?, end_time = ?, days_of_week = ?, is_active = ? WHERE shift_id = ?';
 
         const values = [
             shiftData.shift_name,
             shiftData.start_time,
             shiftData.end_time,
-            shiftData.day_of_week,
+            shiftData.days_of_week,
             shiftData.is_active,
             shift_id
         ];

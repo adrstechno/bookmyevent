@@ -2,7 +2,6 @@ import { resolve } from "url";
 import VendorModel from "../Models/VendorModel.js";
 import { verifyToken } from "../Utils/Verification.js";
 
-
 export const insertVendor = (req, res) => {
   // ✅ Check if file exists
   if (!req.file) {
@@ -68,12 +67,10 @@ export const insertVendor = (req, res) => {
       vendorSubscriptionData,
       (err, subResult) => {
         if (err) {
-          return res
-            .status(500)
-            .json({
-              message: "Error inserting vendor subscription",
-              error: err,
-            });
+          return res.status(500).json({
+            message: "Error inserting vendor subscription",
+            error: err,
+          });
         }
         return res.status(200).json({
           message: "Vendor inserted successfully",
@@ -300,11 +297,9 @@ export const VendorShift = async (req, res) => {
 
     // Validate input
     if (!shift_name || !start_time || !end_time || !days_of_week) {
-      return res
-        .status(400)
-        .json({
-          message: "All fields required. days_of_week must be an array",
-        });
+      return res.status(400).json({
+        message: "All fields required. days_of_week must be an array",
+      });
     }
 
     const vendor_id = await new Promise((resolve, reject) => {
@@ -446,11 +441,89 @@ export const GetvendorEventImages = async (req, res) => {
 };
 
 export const updateVendorShiftbyId = async (req, res) => {
-  
+  try {
+    const token = req.cookies.auth_token;
+    if (!token) {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: User not logged in" });
+    }
 
-}
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return res.status(401).json({ message: "Unauthorized: Invalid token" });
+    }
 
+    const { shift_id, shift_name, start_time, end_time, days_of_week } =
+      req.body;
 
+    if (!shift_id || !shift_name || !start_time || !end_time || !days_of_week) {
+      return res.status(400).json({
+        message: "All fields required. days_of_week must be an array",
+      });
+    }
 
+    const ShiftData = {
+      shift_name,
+      start_time,
+      end_time,
+      days_of_week,
+      is_active: true,
+    };
 
+    const updateVendorShift = await new Promise((resolve, reject) => {
+      VendorModel.updateVendorShift(shift_id, ShiftData, (err, result) => {
+        if (err) reject(err);
+        else resolve(result);
+      });
+    });
+
+    if (updateVendorShift.affectedRows === 0) {
+      return res.status(404).json({ message: "Shift not found" });
+    } else {
+      return res.status(200).json({ message: "Shift updated successfully" });
+    }
+  } catch (err) {
+    console.error("Error updating shift:", err);
+    return res.status(500).json({ error: "Server error", details: err.message });
+  }
+};
+
+export const deleteVendorShiftbyId = async (req, res) => {
+  try {
+    const token = req.cookies.auth_token;
+    if (!token) {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: User not logged in" });
+    }
+    
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return res.status(401).json({ message: "Unauthorized: Invalid token" });
+    }
+    
+    const {shift_id} = req.query;
+    if (!shift_id) {
+      return res.status(400).json({ message: "shift_id is required" });
+    }
+    const deleteShift = await new Promise((resolve, reject) => {
+      VendorModel.deleteVendorShift(shift_id, (err, result) => {
+        if (err) reject(err);
+        else resolve(result);
+      });
+    }
+    );
+    
+    if (deleteShift.affectedRows === 0) {
+      return res.status(404).json({ message: "Shift not found" });
+    } else {
+      return res.status(200).json({ message: "Shift deleted successfully" });
+    }
+  }
+  catch (err) {
+    console.error("Error deleting shift:", err);
+    return res.status(500).json({ error: "Server error", details: err.message });
+  }
+};
 
