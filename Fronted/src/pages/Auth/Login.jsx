@@ -1,98 +1,72 @@
+
 import React, { useState } from "react";
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  TextField,
-  Typography,
-  Stack,
-  Link,
-  Divider,
-  CircularProgress,
-  IconButton,
-  InputAdornment,
-} from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { Login as LoginIcon, Event, Visibility, VisibilityOff } from "@mui/icons-material";
+import toast from "react-hot-toast";
 import axios from "axios";
 import { VITE_API_BASE_URL } from "../../utils/api";
-import toast, { Toaster } from "react-hot-toast";
+
+import { FaRegEnvelope, FaLock, FaRegEye, FaRegEyeSlash } from "react-icons/fa";
+import { RiSparklingFill } from "react-icons/ri";
 
 const Login = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({ email: "", password: "" });
-  const [loading, setLoading] = useState(false);
+
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+
   const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
-  // Handle input change
-  const handleChange = (e) => {
+  const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
+
+  // VALIDATION
+  const validate = () => {
+    let err = {};
+
+    if (!formData.email.trim()) {
+      err.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      err.email = "Enter a valid email";
+    }
+
+    if (!formData.password.trim()) {
+      err.password = "Password is required";
+    } else if (formData.password.length < 6) {
+      err.password = "Password must be at least 6 characters";
+    }
+
+    return err;
   };
 
-  // Validation
-  const validateForm = () => {
-    const { email, password } = formData;
-
-    if (!email.trim() || !password.trim()) {
-      toast.error("Please fill in all fields!");
-      return false;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      toast.error("Enter a valid email address!");
-      return false;
-    }
-
-    if (password.length < 6) {
-      toast.error("Password must be at least 6 characters long!");
-      return false;
-    }
-
-    return true;
-  };
-
-  // Submit handler
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
+
+    const validationErrors = validate();
+    setErrors(validationErrors);
+
+    if (Object.keys(validationErrors).length > 0) return;
 
     setLoading(true);
 
     try {
       const res = await axios.post(`${VITE_API_BASE_URL}/User/Login`, formData);
 
-      if (res.data.token) {
+      if (res.data?.token) {
+        toast.success("Login Successful");
+
         localStorage.setItem("token", res.data.token);
         localStorage.setItem("role", res.data.role);
 
-        toast.success("Login successful!");
-
-        setTimeout(() => {
-          switch (res.data.role) {
-            case "admin":
-              navigate("/admin/dashboard");
-              break;
-            case "vendor":
-              navigate("/vendor/profile-setup");
-              break;
-            case "marketer":
-              navigate("/marketer/dashboard");
-              break;
-            case "user":
-              navigate("/user/dashboard");
-              break;
-            default:
-              navigate("/");
-          }
-        }, 800);
+        setTimeout(() => navigate("/vendor/dashboard"), 700);
       } else {
-        toast.error("Login failed. Please try again.");
+        toast.error("Invalid credentials");
       }
     } catch (error) {
-      console.error(error);
-      toast.error(error.response?.data?.message || "Something went wrong!");
+      toast.error("Something went wrong", error.message);
     } finally {
       setLoading(false);
     }
@@ -100,125 +74,102 @@ const Login = () => {
 
   return (
     <>
-      <Toaster position="top-center" reverseOrder={false} />
+    
 
-      <Box
-        sx={{
-          display: "flex",
-          height: "100vh",
-          bgcolor: "#f9f9fb",
-        }}
-      >
-        {/* Left Section - Image or Branding */}
-        <Box
-          sx={{
-            flex: 1,
-            backgroundImage: "url('/login.jpg')",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            display: { xs: "none", md: "block" },
-          }}
-        />
+      <div className="flex min-h-screen bg-gray-100">
+        {/* Left Banner */}
+        <div
+          className="hidden md:block w-1/2 bg-cover bg-center"
+          style={{ backgroundImage: "url('/login.jpg')" }}
+        ></div>
 
-        {/* Right Section - Form */}
-        <Box
-          flex={1}
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-          p={3}
-        >
-          <Card
-            sx={{
-              width: "100%",
-              maxWidth: 420,
-              borderRadius: 4,
-              boxShadow: 5,
-              p: 3,
-              backdropFilter: "blur(10px)",
-            }}
-          >
-            <CardContent>
-              <Stack spacing={2}>
-                <Box textAlign="center">
-                  <Event sx={{ fontSize: 50, color: "primary.main" }} />
-                  <Typography variant="h4" fontWeight={600}>
-                    Welcome Back
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Login to continue planning your perfect event ✨
-                  </Typography>
-                </Box>
+        {/* Right Section */}
+        <div className="flex flex-1 justify-center items-center p-6">
+          <div className="w-full max-w-md bg-white rounded-xl shadow-xl p-8 border-t-4 border-[#3c6e71]">
+            {/* Header */}
+            <div className="flex flex-col items-center mb-6">
+              <div className="w-14 h-14 bg-[#3c6e71] text-white rounded-full flex items-center justify-center shadow-md">
+                <RiSparklingFill size={28} />
+              </div>
 
-                <Divider />
+              <h2 className="text-3xl font-bold mt-4 text-gray-800">
+                Welcome Back
+              </h2>
+              <p className="text-gray-500 text-sm">
+                Login to continue your journey
+              </p>
+            </div>
 
-                <form onSubmit={handleSubmit}>
-                  <Stack spacing={2}>
-                    <TextField
-                      label="Email Address"
-                      name="email"
-                      type="email"
-                      fullWidth
-                      variant="outlined"
-                      value={formData.email}
-                      onChange={handleChange}
-                    />
-                    <TextField
-                      label="Password"
-                      name="password"
-                      type={showPassword ? "text" : "password"}
-                      fullWidth
-                      variant="outlined"
-                      value={formData.password}
-                      onChange={handleChange}
-                      InputProps={{
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <IconButton
-                              onClick={() => setShowPassword(!showPassword)}
-                              edge="end"
-                            >
-                              {showPassword ? <VisibilityOff /> : <Visibility />}
-                            </IconButton>
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      startIcon={<LoginIcon />}
-                      type="submit"
-                      sx={{ py: 1.3, fontWeight: 600 }}
-                      disabled={loading}
-                    >
-                      {loading ? <CircularProgress size={24} color="inherit" /> : "Login"}
-                    </Button>
-                  </Stack>
-                </form>
+            {/* FORM */}
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Email */}
+              <div className="relative">
+                <FaRegEnvelope className="absolute left-3 top-3 text-gray-500" />
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="Email Address"
+                  className={`w-full pl-10 pr-3 py-2.5 rounded-lg border outline-none bg-gray-50 ${
+                    errors.email ? "border-red-500" : "border-gray-300"
+                  } focus:ring-2 focus:ring-[#3c6e71]`}
+                />
+                {errors.email && (
+                  <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                )}
+              </div>
 
-                <Typography
-                  variant="body2"
-                  textAlign="center"
-                  color="text.secondary"
+              {/* Password */}
+              <div className="relative">
+                <FaLock className="absolute left-3 top-3 text-gray-500" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="Password"
+                  className={`w-full pl-10 pr-10 py-2.5 rounded-lg border outline-none bg-gray-50 ${
+                    errors.password ? "border-red-500" : "border-gray-300"
+                  } focus:ring-2 focus:ring-[#3c6e71]`}
+                />
+
+                {/* Toggle Password */}
+                <div
+                  className="absolute right-3 top-3 text-gray-600 cursor-pointer"
+                  onClick={() => setShowPassword(!showPassword)}
                 >
-                  Don’t have an account?{" "}
-                  <Link
-                    component="button"
-                    underline="hover"
-                    onClick={() => navigate("/register")}
-                  >
-                    Register here
-                  </Link>
-                </Typography>
-              </Stack>
-            </CardContent>
-          </Card>
-        </Box>
-      </Box>
+                  {showPassword ? <FaRegEyeSlash size={20} /> : <FaRegEye size={20} />}
+                </div>
+                {errors.password && (
+                  <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+                )}
+              </div>
+
+              {/* Submit */}
+              <button
+                type="submit"
+                className="w-full py-3 bg-[#3c6e71] text-white rounded-lg font-semibold hover:bg-[#284b63] transition"
+              >
+                {loading ? "Processing..." : "Login"}
+              </button>
+
+              {/* Register Link */}
+              <p className="text-center text-sm text-gray-600">
+                Don’t have an account?{" "}
+                <span
+                  className="text-[#3c6e71] cursor-pointer font-semibold hover:underline"
+                  onClick={() => navigate("/register")}
+                >
+                  Register
+                </span>
+              </p>
+            </form>
+          </div>
+        </div>
+      </div>
     </>
   );
 };
 
 export default Login;
-  

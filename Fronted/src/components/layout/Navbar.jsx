@@ -144,11 +144,11 @@
 import React, { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
-import { UserCircleIcon } from "@heroicons/react/24/outline";
+import { UserCircleIcon, Bars3Icon } from "@heroicons/react/24/outline";
 
 const navHeight = 64;
 
-const Navbar = () => {
+const Navbar = ({ onMenuClick, isMobile }) => {
   const auth = useContext(AuthContext) || {};
   const { user, logout } = auth;
   const navigate = useNavigate();
@@ -176,26 +176,38 @@ const Navbar = () => {
         boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
       }}
     >
-      {/* Logo / Brand */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          cursor: "pointer",
-        }}
-        onClick={() => navigate("/vendor/dashboard")}
-      >
-        <span
-          style={{
-            fontSize: 22,
-            fontWeight: 700,
-            color: "#3c6e71", // vendor primary color
-            letterSpacing: 0.5,
+      {/* Logo / Brand + hamburger on mobile */}
+      <div className="flex items-center gap-3">
+        {isMobile && (
+          <button
+            className="p-2 rounded-md hover:bg-gray-100"
+            onClick={onMenuClick}
+            aria-label="open menu"
+          >
+            <Bars3Icon className="w-6 h-6 text-gray-700" />
+          </button>
+        )}
+        {/* Logo image: desktop vs mobile */}
+        <div
+          className="flex items-center gap-3 cursor-pointer"
+          onClick={() => {
+            // role-based redirect when clicking the logo
+            const role = user?.role;
+            let dest = "/";
+            if (role === "admin") dest = "/admin/dashboard";
+            else if (role === "vendor") dest = "/vendor/dashboard";
+            else if (role === "user") dest = "/user/dashboard";
+            else if (role === "marketer") dest = "/marketer/dashboard";
+            else dest = "/"; // fallback to home
+            navigate(dest);
           }}
         >
-          BookMyEvent
-        </span>
+          <img
+            src={isMobile ? "/mobilelogo.png" : "/logo.png"}
+            alt="Celebria"
+            className={isMobile ? "h-12 w-auto" : "h-12 w-auto"}
+          />
+        </div>
       </div>
 
       {/* Right Section */}

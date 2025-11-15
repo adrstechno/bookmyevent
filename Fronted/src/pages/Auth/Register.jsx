@@ -1,23 +1,12 @@
-// 
 import React, { useState } from "react";
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  TextField,
-  Typography,
-  Stack,
-  Link,
-  Divider,
-  MenuItem,
-  InputAdornment,
-  CircularProgress,
-} from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { PersonAdd, Phone, Email } from "@mui/icons-material";
 import axios from "axios";
+import toast from "react-hot-toast";
 import { VITE_API_BASE_URL } from "../../utils/api";
+
+// React Icons
+import { FaUser, FaPhoneAlt, FaRegEnvelope, FaLock } from "react-icons/fa";
+import { RiUserAddFill } from "react-icons/ri";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -25,290 +14,249 @@ const Register = () => {
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
-    user_type: "user", // default mode user
+    user_type: "user",
     email: "",
     phone: "",
     password: "",
   });
 
+  const [isVendorSignup, setIsVendorSignup] = useState(false);
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const [isVendorSignup, setIsVendorSignup] = useState(false); // toggle between User/Vendor signup
 
-  // const userTypes = [
-  //   { label: "Vendor", value: "vendor" },
-  //   { label: "User", value: "user" },
-  //   { label: "Marketer", value: "marketer" },
-  // ];
-
-  const handleChange = (e) => {
+  const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
 
-  const validateForm = () => {
-    const { first_name, email, password, phone } = formData;
+  // VALIDATION
+  const validate = () => {
+    let err = {};
 
-    if (!first_name.trim()) {
-      alert("First name is required");
-      return false;
-    }
-    if (!email.trim()) {
-      alert("Email is required");
-      return false;
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      alert("Please enter a valid email");
-      return false;
-    }
-    if (!password.trim() || password.length < 6) {
-      alert("Password must be at least 6 characters");
-      return false;
-    }
-    if (phone && !/^\d{10}$/.test(phone)) {
-      alert("Please enter a valid 10-digit phone number");
-      return false;
+    if (!formData.first_name.trim()) {
+      err.first_name = "First name is required";
     }
 
-    return true;
+    if (!formData.email.trim()) {
+      err.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      err.email = "Enter a valid email";
+    }
+
+    if (formData.phone && !/^\d{10}$/.test(formData.phone)) {
+      err.phone = "Phone must be a valid 10-digit number";
+    }
+
+    if (!formData.password.trim()) {
+      err.password = "Password is required";
+    } else if (formData.password.length < 6) {
+      err.password = "Password must be at least 6 characters";
+    }
+
+    return err;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!validateForm()) return;
+    const validationErrors = validate();
+    setErrors(validationErrors);
+    if (Object.keys(validationErrors).length > 0) return;
+
+    setLoading(true);
 
     try {
-      setLoading(true);
       const payload = {
         ...formData,
         user_type: isVendorSignup ? "vendor" : "user",
       };
 
-      const response = await axios.post(
-        `${VITE_API_BASE_URL}/User/InsertUser`,
-        payload
-      );
-      console.log("✅ Register Success:", response.data);
+      await axios.post(`${VITE_API_BASE_URL}/User/InsertUser`, payload);
 
-      alert("Registration successful!");
-      navigate("/login");
+      toast.success("Registration Successful");
+      setTimeout(() => navigate("/login"), 800);
     } catch (error) {
-      console.error("❌ Register Error:", error);
-      alert("Something went wrong! Please try again.");
+      toast.error("Something went wrong" ,error.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        height: "100vh",
-        bgcolor: "#f9f9fb",
-      }}
-    >
-      {/* Left Image Section */}
-      <Box
-        sx={{
-          flex: 1,
-          backgroundImage:
-            "url('https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          display: { xs: "none", md: "block" },
-        }}
-      />
-
-      {/* Right Form Section */}
-      <Box
-        flex={1}
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
-        p={3}
-      >
-        <Card
-          sx={{
-            width: "100%",
-            maxWidth: 440,
-            borderRadius: 4,
-            boxShadow: 5,
-            p: 3,
+    <>
+          <div className="flex min-h-screen bg-gray-100">
+        
+        {/* Left Banner */}
+        <div
+          className="hidden md:block w-1/2 bg-cover bg-center"
+          style={{
+            backgroundImage:
+              "url('https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80')",
           }}
-        >
-          <CardContent>
-            <Stack spacing={2}>
-              <Box textAlign="center">
-                <PersonAdd sx={{ fontSize: 50, color: "primary.main" }} />
-                <Typography variant="h4" fontWeight={600}>
-                  {isVendorSignup ? "Vendor Sign Up" : "Create Your Account"}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {isVendorSignup
-                    ? "Join us as a vendor and offer your services 🎉"
-                    : "Join us and start planning your perfect event 🎉"}
-                </Typography>
-              </Box>
+        ></div>
 
-              <Divider />
+        {/* Right Form */}
+        <div className="flex flex-1 justify-center items-center p-6">
+          <div className="w-full max-w-md bg-white rounded-xl shadow-xl p-8 border-t-4 border-[#3c6e71]">
+            
+            {/* Header */}
+            <div className="flex flex-col items-center mb-6">
+              <div className="w-14 h-14 bg-[#3c6e71] text-white rounded-full flex items-center justify-center shadow-md">
+                <RiUserAddFill size={28} />
+              </div>
 
-              <form onSubmit={handleSubmit}>
-                <Stack spacing={2}>
-                  {/* Name Fields */}
-                  <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-                    <TextField
-                      label="First Name"
-                      name="first_name"
-                      fullWidth
-                      value={formData.first_name}
-                      onChange={handleChange}
-                      required
-                    />
-                    <TextField
-                      label="Last Name"
-                      name="last_name"
-                      fullWidth
-                      value={formData.last_name}
-                      onChange={handleChange}
-                    />
-                  </Stack>
+              <h2 className="text-3xl font-bold mt-4 text-gray-800">
+                {isVendorSignup ? "Vendor Sign Up" : "Create Your Account"}
+              </h2>
 
-                  {/* Show user_type when vendor mode is active */}
-                  {isVendorSignup && (
-                    <TextField
-                      select
-                      label="User Type"
-                      name="user_type"
-                      fullWidth
-                      value={formData.user_type}
-                      onChange={handleChange}
-                      InputProps={{ readOnly: true }}
-                    >
-                      <MenuItem value="vendor">Vendor</MenuItem>
-                    </TextField>
+              <p className="text-gray-500 text-sm">
+                {isVendorSignup
+                  ? "Join as a vendor and grow your business"
+                  : "Let's get you started"}
+              </p>
+            </div>
+
+            {/* FORM */}
+            <form onSubmit={handleSubmit} className="space-y-5">
+              
+              {/* First + Last Name */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="relative">
+                  <FaUser className="absolute left-3 top-3 text-gray-500" />
+                  <input
+                    name="first_name"
+                    placeholder="First Name"
+                    value={formData.first_name}
+                    onChange={handleChange}
+                    className={`w-full pl-10 pr-3 py-2.5 rounded-lg border bg-gray-50 outline-none ${
+                      errors.first_name ? "border-red-500" : "border-gray-300"
+                    } focus:ring-2 focus:ring-[#3c6e71]`}
+                  />
+                  {errors.first_name && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.first_name}
+                    </p>
                   )}
+                </div>
 
-                  <TextField
-                    label="Email Address"
-                    name="email"
-                    type="email"
-                    fullWidth
-                    value={formData.email}
+                <div className="relative">
+                  <FaUser className="absolute left-3 top-3 text-gray-500" />
+                  <input
+                    name="last_name"
+                    placeholder="Last Name"
+                    value={formData.last_name}
                     onChange={handleChange}
-                    required
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <Email />
-                        </InputAdornment>
-                      ),
-                    }}
+                    className="w-full pl-10 pr-3 py-2.5 rounded-lg border bg-gray-50 border-gray-300 outline-none focus:ring-2 focus:ring-[#3c6e71]"
                   />
+                </div>
+              </div>
 
-                  <TextField
-                    label="Phone Number"
-                    name="phone"
-                    type="tel"
-                    fullWidth
-                    value={formData.phone}
-                    onChange={handleChange}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <Phone />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
+              {/* Email */}
+              <div className="relative">
+                <FaRegEnvelope className="absolute left-3 top-3 text-gray-500" />
+                <input
+                  name="email"
+                  placeholder="Email Address"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className={`w-full pl-10 pr-3 py-2.5 rounded-lg border outline-none bg-gray-50 ${
+                    errors.email ? "border-red-500" : "border-gray-300"
+                  } focus:ring-2 focus:ring-[#3c6e71]`}
+                />
+                {errors.email && (
+                  <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                )}
+              </div>
 
-                  <TextField
-                    label="Password"
-                    name="password"
-                    type="password"
-                    fullWidth
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                  />
+              {/* Phone */}
+              <div className="relative">
+                <FaPhoneAlt className="absolute left-3 top-3 text-gray-500" />
+                <input
+                  name="phone"
+                  placeholder="Phone Number"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className={`w-full pl-10 pr-3 py-2.5 rounded-lg border outline-none bg-gray-50 ${
+                    errors.phone ? "border-red-500" : "border-gray-300"
+                  } focus:ring-2 focus:ring-[#3c6e71]`}
+                />
+                {errors.phone && (
+                  <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
+                )}
+              </div>
 
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    type="submit"
-                    disabled={loading}
-                    sx={{ py: 1.3, fontWeight: 600 }}
-                  >
-                    {loading ? (
-                      <CircularProgress size={24} color="inherit" />
-                    ) : isVendorSignup ? (
-                      "Register as Vendor"
-                    ) : (
-                      "Register"
-                    )}
-                  </Button>
-                </Stack>
-              </form>
+              {/* Password */}
+              <div className="relative">
+                <FaLock className="absolute left-3 top-3 text-gray-500" />
+                <input
+                  name="password"
+                  type="password"
+                  placeholder="Password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className={`w-full pl-10 pr-3 py-2.5 rounded-lg border outline-none bg-gray-50 ${
+                    errors.password ? "border-red-500" : "border-gray-300"
+                  } focus:ring-2 focus:ring-[#3c6e71]`}
+                />
+                {errors.password && (
+                  <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+                )}
+              </div>
 
-              {/* Mode Switch */}
-              <Typography
-                variant="body2"
-                textAlign="center"
-                color="text.secondary"
-                mt={1}
+              {/* Submit */}
+              <button
+                type="submit"
+                className="w-full py-3 bg-[#3c6e71] text-white rounded-lg font-semibold hover:bg-[#284b63] transition"
               >
+                {loading ? "Registering..." : isVendorSignup ? "Register as Vendor" : "Register"}
+              </button>
+
+              {/* Vendor Switch */}
+              <p className="text-center text-sm text-gray-600">
                 {isVendorSignup ? (
                   <>
                     Want to register as a normal user?{" "}
-                    <Link
-                      component="button"
-                      underline="hover"
-                      onClick={() =>
-                        setIsVendorSignup(false) ||
-                        setFormData({ ...formData, user_type: "user" })
-                      }
+                    <span
+                      className="text-[#3c6e71] cursor-pointer font-semibold hover:underline"
+                      onClick={() => {
+                        setIsVendorSignup(false);
+                        setFormData({ ...formData, user_type: "user" });
+                      }}
                     >
-                      Sign up as User
-                    </Link>
+                      Sign Up as User
+                    </span>
                   </>
                 ) : (
                   <>
                     Want to offer services?{" "}
-                    <Link
-                      component="button"
-                      underline="hover"
-                      onClick={() =>
-                        setIsVendorSignup(true) ||
-                        setFormData({ ...formData, user_type: "vendor" })
-                      }
+                    <span
+                      className="text-[#3c6e71] cursor-pointer font-semibold hover:underline"
+                      onClick={() => {
+                        setIsVendorSignup(true);
+                        setFormData({ ...formData, user_type: "vendor" });
+                      }}
                     >
-                      Sign up as Vendor
-                    </Link>
+                      Sign Up as Vendor
+                    </span>
                   </>
                 )}
-              </Typography>
+              </p>
 
-              <Typography
-                variant="body2"
-                textAlign="center"
-                color="text.secondary"
-              >
+              {/* Login Link */}
+              <p className="text-center text-sm text-gray-600">
                 Already have an account?{" "}
-                <Link
-                  component="button"
-                  underline="hover"
+                <span
+                  className="text-[#3c6e71] cursor-pointer font-semibold hover:underline"
                   onClick={() => navigate("/login")}
                 >
                   Login
-                </Link>
-              </Typography>
-            </Stack>
-          </CardContent>
-        </Card>
-      </Box>
-    </Box>
+                </span>
+              </p>
+
+            </form>
+          </div>
+        </div>
+      </div>
+    </>
   );
 };
 
 export default Register;
-
