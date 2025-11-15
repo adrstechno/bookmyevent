@@ -1,26 +1,35 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
 
-const drawerWidth = 240;
-const navHeight = 64;
-
 const MainLayout = () => {
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" ? window.innerWidth < 768 : false
+  );
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  const handleDrawerToggle = () => setMobileOpen((s) => !s);
+
   return (
-    <div>
-      <Navbar />
-      <Sidebar />
+    <div className="min-h-screen bg-gray-100">
+      <Navbar onMenuClick={handleDrawerToggle} isMobile={isMobile} />
+
+      <Sidebar
+        mobileOpen={mobileOpen}
+        handleDrawerToggle={handleDrawerToggle}
+        isMobile={isMobile}
+      />
 
       <main
-        style={{
-          marginTop: navHeight,
-          marginLeft: drawerWidth,
-          padding: 20,
-          minHeight: `calc(100vh - ${navHeight}px)`,
-          background: "#f7f7f8",
-          boxSizing: "border-box",
-        }}
+        className={`pt-16 ${isMobile ? "" : "md:ml-64"} p-5 min-h-[calc(100vh-4rem)]`}
+        style={{ boxSizing: "border-box" }}
       >
         <Outlet />
       </main>
