@@ -138,6 +138,13 @@ class VendorModel {
         db.query(sql, [vendor_id, day_of_week], callback);
     }
 
+    static getEventImages(vendor_id, callback) {
+        const sql = "select * from Event_images where vendor_id = ?";
+        db.query(sql, [vendor_id], callback)
+    }   
+
+    
+
 }
 
 export default VendorModel;
