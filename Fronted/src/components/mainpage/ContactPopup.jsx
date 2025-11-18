@@ -1,125 +1,23 @@
-// import React, { useEffect, useState } from "react";
-// import { motion, AnimatePresence } from "framer-motion";
-
-// const ContactPopup = () => {
-//   const [showPopup, setShowPopup] = useState(false);
-
-//   // Auto-show after 4 seconds
-//   useEffect(() => {
-//     const timer = setTimeout(() => {
-//       setShowPopup(true);
-//     }, 4000);
-
-//     return () => clearTimeout(timer);
-//   }, []);
-
-//   return (
-//     <AnimatePresence>
-//       {showPopup && (
-//         <>
-//           {/* Overlay */}
-//           <motion.div
-//             className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
-//             initial={{ opacity: 0 }}
-//             animate={{ opacity: 1 }}
-//             exit={{ opacity: 0 }}
-//             onClick={() => setShowPopup(false)}
-//           />
-
-//           {/* Popup */}
-//           <motion.div
-//             className="fixed inset-0 flex items-center justify-center z-50"
-//             initial={{ opacity: 0, scale: 0.8, y: 50 }}
-//             animate={{ opacity: 1, scale: 1, y: 0 }}
-//             exit={{ opacity: 0, scale: 0.8, y: 50 }}
-//             transition={{ duration: 0.4, ease: "easeOut" }}
-//           >
-//             <div className="relative bg-white/90 backdrop-blur-xl shadow-2xl rounded-2xl p-6 w-[90%] max-w-md">
-
-//               {/* Decorative background image */}
-//               <div  
-//                 className="absolute inset-0 bg-cover bg-center opacity-[0.5]"
-//                 style={{ backgroundImage: "url('/images/ContectFormbg.jpg')" }}
-//               />
-
-//               {/* Close Button */}
-//               <button
-//                 onClick={() => setShowPopup(false)}
-//                 className="absolute top-4 right-4 z-20 text-gray-700 text-xl hover:text-[#284b63]"
-//               >
-//                 ✕
-//               </button>
-
-//               <h2 className="text-2xl font-bold text-[#284b63] text-center mb-5 relative z-20">
-//                 Get in Touch
-//               </h2>
-
-//               <form className="space-y-4 relative z-20">
-//                 <div>
-//                   <label className="text-sm font-medium">Name</label>
-//                   <input
-//                     type="text"
-//                     className="w-full mt-1 px-3 py-2 rounded-lg bg-white/60 border border-gray-300 focus:border-[#284b63] focus:ring-2 focus:ring-[#284b63]/40 outline-none"
-//                     placeholder="Enter your name"
-//                   />
-//                 </div>
-
-//                 <div>
-//                   <label className="text-sm font-medium">Email</label>
-//                   <input
-//                     type="email"
-//                     className="w-full mt-1 px-3 py-2 rounded-lg bg-white/60 border border-gray-300 focus:border-[#284b63] focus:ring-2 focus:ring-[#284b63]/40 outline-none"
-//                     placeholder="Enter your email"
-//                   />
-//                 </div>
-
-//                 <div>
-//                   <label className="text-sm font-medium">Phone</label>
-//                   <input
-//                     type="tel"
-//                     className="w-full mt-1 px-3 py-2 rounded-lg bg-white/60 border border-gray-300 focus:border-[#284b63] focus:ring-2 focus:ring-[#284b63]/40 outline-none"
-//                     placeholder="Enter phone number"
-//                   />
-//                 </div>
-
-//                 <div>
-//                   <label className="text-sm font-medium">Message</label>
-//                   <textarea
-//                     rows="3"
-//                     className="w-full mt-1 px-3 py-2 rounded-lg bg-white/60 border border-gray-300 focus:border-[#284b63] focus:ring-2 focus:ring-[#284b63]/40 outline-none resize-none"
-//                     placeholder="Write your message..."
-//                   ></textarea>
-//                 </div>
-
-//                 <motion.button
-//                   type="submit"
-//                   whileHover={{ scale: 1.03 }}
-//                   whileTap={{ scale: 0.97 }}
-//                   className="w-full py-3 bg-[#284b63] text-white rounded-lg font-semibold hover:bg-[#3c6e71] transition-all"
-//                 >
-//                   Send Message
-//                 </motion.button>
-//               </form>
-//             </div>
-//           </motion.div>
-//         </>
-//       )}
-//     </AnimatePresence>
-//   );
-// };
-
-// export default ContactPopup;
-
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const ContactPopup = () => {
   const [showPopup, setShowPopup] = useState(false);
 
-  // Auto popup in 4 seconds
+  // Auto popup in 4 seconds - only once per session
   useEffect(() => {
-    const timer = setTimeout(() => setShowPopup(true), 4000);
-    return () => clearTimeout(timer);
+    // Check if popup has already been shown
+    const hasShownPopup = sessionStorage.getItem('contactPopupShown');
+    
+    if (!hasShownPopup) {
+      const timer = setTimeout(() => {
+        setShowPopup(true);
+        // Mark popup as shown in session storage
+        sessionStorage.setItem('contactPopupShown', 'true');
+      }, 4000);
+      
+      return () => clearTimeout(timer);
+    }
   }, []);
 
   return (
