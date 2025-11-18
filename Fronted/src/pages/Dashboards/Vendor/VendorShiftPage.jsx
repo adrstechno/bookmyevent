@@ -26,7 +26,9 @@ import {
   Paper,
   InputAdornment,
 } from "@mui/material";
-import { Add, Edit, Delete, Search, ArrowUpward, ArrowDownward } from "@mui/icons-material";
+import { Add, Search, ArrowUpward, ArrowDownward } from "@mui/icons-material";
+import { FiEdit3 } from "react-icons/fi";
+import { RiDeleteBin6Line } from "react-icons/ri";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { VITE_API_BASE_URL } from "../../../utils/api";
@@ -288,8 +290,34 @@ const VendorShiftPage = () => {
                     <TableCell>{parseDays(s.days_of_week).join(", ")}</TableCell>
                     <TableCell align="right">
                       <Stack direction="row" spacing={1} justifyContent="flex-end">
-                        <IconButton color="primary" onClick={() => handleOpenEdit(s)}><Edit /></IconButton>
-                        <IconButton color="error" onClick={() => handleDelete(s.shift_id ?? s.id)}><Delete /></IconButton>
+                        <IconButton 
+                          color="primary" 
+                          onClick={() => handleOpenEdit(s)}
+                          sx={{ 
+                            '&:hover': { 
+                              bgcolor: '#3c6e71', 
+                              color: 'white',
+                              transform: 'scale(1.1)',
+                              transition: 'all 0.2s'
+                            } 
+                          }}
+                        >
+                          <FiEdit3 size={20} />
+                        </IconButton>
+                        <IconButton 
+                          color="error" 
+                          onClick={() => handleDelete(s.shift_id ?? s.id)}
+                          sx={{ 
+                            '&:hover': { 
+                              bgcolor: '#d32f2f', 
+                              color: 'white',
+                              transform: 'scale(1.1)',
+                              transition: 'all 0.2s'
+                            } 
+                          }}
+                        >
+                          <RiDeleteBin6Line size={20} />
+                        </IconButton>
                       </Stack>
                     </TableCell>
                   </TableRow>
