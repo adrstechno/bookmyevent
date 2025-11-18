@@ -24,10 +24,11 @@ import VendorDashboard from "./pages/Dashboards/Vendor/VendorDashboard";
 import VendorSettings from "./pages/Dashboards/Vendor/VendorSettings";
 import MyEvents from "./pages/Dashboards/Vendor/MyEvents";
 import VendorGallery from "./pages/Dashboards/Vendor/VendorGallery";
-import UserDashboard from "./pages/Dashboards/User/Userdashboard";
+import UserDashboard from "./pages/Dashboards/User/UserDashboard";
 import CategoryPage from "./pages/CategoryPage";
 import WhyUsPage from "./pages/WhyUsPage";
-
+import ShiftList from "./pages/Dashboards/Vendor/VendorShiftPage";
+import VendorShiftPage from "./pages/Dashboards/Vendor/VendorShiftPage";
 // import { AuthContext } from "./context/AuthContext"; // not needed now
 // import ProtectedRoute from "./components/ProtectedRoute"; // comment out for dev
 
@@ -57,6 +58,7 @@ export default function App() {
           {/* Vendor */}
           <Route path="vendor">
             <Route path="profile-setup" element={<VendorProfileSetup />} />
+            <Route path="shifts" element={<VendorShiftPage />} />
             <Route path= "dashboard" element = {<VendorDashboard />} />
             <Route path = "myevents" element={<MyEvents />} />
             <Route path ="gallery" element={<VendorGallery />} />

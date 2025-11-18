@@ -64,6 +64,7 @@ export const menuConfig = {
 
   vendor: [
     { label: "Create Profile", path: "/vendor/profile-setup", icon: <FaUser /> },
+    { label: "Shifts", path: "/vendor/shifts", icon: <FaListAlt /> },
     { label: "Dashboard", path: "/vendor/dashboard", icon: <FaTachometerAlt /> },
     { label: "My Events", path: "/vendor/myevents", icon: <FaListAlt /> },
     { label: "Gallery", path: "/vendor/gallery", icon: <FaShoppingCart /> },
