@@ -7,6 +7,8 @@ import db from './Config/DatabaseCon.js';
 import UserRouter from './Router/UserRouter.js';
 import ServiceRouter from './Router/ServiceROuter.js';
 import VendorRouter from './Router/VendorRouter.js';
+import BookingRouter from './Router/BookingRouter.js';
+
 
 dotenv.config();
 
@@ -27,6 +29,7 @@ app.use(cors({
 app.use('/User', UserRouter);
 app.use('/Service', ServiceRouter);
 app.use('/Vendor', VendorRouter);
+app.use('/Booking', BookingRouter);
 
 app.get('/', (req, res) => {
   res.send('Welcome to the Event Management API');
