@@ -9,18 +9,19 @@ const MyEvents = () => {
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState("all");
 
-  // ✅ Fetch vendor events
+  // Fetch vendor events from NEW API
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         setLoading(true);
+
         const response = await axios.get(
-          `${VITE_API_BASE_URL}/Vendor/GetMyEvents`,
+          `${VITE_API_BASE_URL}/Vendor/GetvendorEventImages`,
           { withCredentials: true }
         );
 
-        if (Array.isArray(response.data?.data)) {
-          setEvents(response.data.data);
+        if (Array.isArray(response.data?.eventImages)) {
+          setEvents(response.data.eventImages);
         } else {
           toast.error("No events found!");
         }
@@ -35,11 +36,10 @@ const MyEvents = () => {
     fetchEvents();
   }, []);
 
-  // ✅ Filter Events
   const filteredEvents =
     filter === "all"
       ? events
-      : events.filter((e) => e.status?.toLowerCase() === filter);
+      : events.filter((e) => (e.status || "Active").toLowerCase() === filter.toLowerCase());
 
   return (
     <div className="min-h-screen bg-[#f7f7f8] p-6">
@@ -77,9 +77,7 @@ const MyEvents = () => {
       </div>
 
       {/* Loading */}
-      {loading && (
-        <div className="text-center text-gray-500 py-10">Loading events...</div>
-      )}
+      {loading && <div className="text-center text-gray-500 py-10">Loading events...</div>}
 
       {/* No Events */}
       {!loading && filteredEvents.length === 0 && (
@@ -93,33 +91,28 @@ const MyEvents = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredEvents.map((event) => (
           <div
-            key={event.event_id}
-            className="bg-white rounded-2xl shadow-md hover:shadow-lg transition p-5 border-t-4 border-[#3c6e71]"
+            key={event.imageID}
+            className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-all duration-200 p-5 border-t-4 border-[#3c6e71]"
           >
-            <div className="flex justify-between items-start mb-3">
-              <h3 className="text-lg font-semibold text-[#284b63]">
-                {event.event_name || "Untitled Event"}
-              </h3>
-              <span
-                className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                  event.status === "Completed"
-                    ? "bg-green-100 text-green-700"
-                    : event.status === "Active"
-                    ? "bg-blue-100 text-blue-700"
-                    : event.status === "Cancelled"
-                    ? "bg-red-100 text-red-700"
-                    : "bg-gray-100 text-gray-600"
-                }`}
-              >
-                {event.status || "Pending"}
-              </span>
-            </div>
+            {/* Event Image */}
+            {event.imageUrl && (
+              <img
+                src={event.imageUrl}
+                alt="Event"
+                className="w-full h-40 object-cover rounded-lg mb-4"
+              />
+            )}
+
+            {/* Event Name */}
+            <h3 className="text-lg font-semibold text-[#284b63]">
+              Event #{event.imageID}
+            </h3>
 
             {/* Date */}
-            <div className="flex items-center text-gray-600 text-sm mb-2">
+            <div className="flex items-center text-gray-600 text-sm my-2">
               <CalendarDaysIcon className="h-4 w-4 mr-1 text-[#3c6e71]" />
               <span>
-                {new Date(event.date).toLocaleDateString("en-IN", {
+                {new Date(event.created_at).toLocaleDateString("en-IN", {
                   year: "numeric",
                   month: "short",
                   day: "numeric",
@@ -127,19 +120,16 @@ const MyEvents = () => {
               </span>
             </div>
 
-            <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-              {event.description || "No description available."}
-            </p>
+            {/* Status */}
+            <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-700">
+              Active
+            </span>
 
             {/* Footer */}
-            <div className="flex justify-between items-center">
-              <span className="text-[#284b63] font-semibold text-sm">
-                ₹ {event.budget || "0"}
-              </span>
-
+            <div className="flex justify-end mt-4">
               <button
-                onClick={() => toast(`View event ${event.event_name}`)}
-                className="text-[#3c6e71] hover:text-[#284b63] text-sm font-medium"
+                onClick={() => toast(`Viewing event: ${event.imageID}`)}
+                className="text-[#3c6e71] hover:text-[#284b63] text-sm font-medium transition"
               >
                 View Details →
               </button>

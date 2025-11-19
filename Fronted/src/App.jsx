@@ -7,6 +7,8 @@ import MainLayout from "./components/layout/MainLayout";
 import Login from "./pages/Auth/Login";
 import Register from "./pages/Auth/Register";
 import Home from "./pages/HomePage";
+import VendorDetail from "./pages/VendorDetail";
+import CartPage from "./pages/CartPage";
 
 // Admin Pages
 import AddService from "./pages/Dashboards/Admin/AddServices";
@@ -15,16 +17,18 @@ import Admindashboard from "./pages/Dashboards/Admin/Admindashboard";
 // Vendor Pages
 import VendorProfileSetup from "./pages/Dashboards/Vendor/VendorProfileSetup";
 
-// Test Page
-import TestPage from "./pages/TestPage"; // optional
+
 import AdminUsers from "./pages/Dashboards/Admin/AdminUsers";
 import ChangePassword from "./components/ChangePassword";
 import VendorDashboard from "./pages/Dashboards/Vendor/VendorDashboard";
 import VendorSettings from "./pages/Dashboards/Vendor/VendorSettings";
 import MyEvents from "./pages/Dashboards/Vendor/MyEvents";
 import VendorGallery from "./pages/Dashboards/Vendor/VendorGallery";
-import UserDashboard from "./pages/Dashboards/User/Userdashboard";
-
+import UserDashboard from "./pages/Dashboards/User/UserDashboard";
+import CategoryPage from "./pages/CategoryPage";
+import WhyUsPage from "./pages/WhyUsPage";
+import ShiftList from "./pages/Dashboards/Vendor/VendorShiftPage";
+import VendorShiftPage from "./pages/Dashboards/Vendor/VendorShiftPage";
 // import { AuthContext } from "./context/AuthContext"; // not needed now
 // import ProtectedRoute from "./components/ProtectedRoute"; // comment out for dev
 
@@ -36,6 +40,10 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path ="/changepassword" element={<ChangePassword />} />
+  <Route path ="/category/:slug" element={<CategoryPage />} />
+  <Route path="/vendor/view/:id" element={<VendorDetail />} />
+  <Route path="/cart" element={<CartPage />} />
+  <Route path="/why-us" element={<WhyUsPage />} />
         <Route path="/" element={<Home />} />
 
         {/* Routes that use MainLayout (dashboard panels) */}
@@ -50,19 +58,22 @@ export default function App() {
           {/* Vendor */}
           <Route path="vendor">
             <Route path="profile-setup" element={<VendorProfileSetup />} />
+            <Route path="shifts" element={<VendorShiftPage />} />
             <Route path= "dashboard" element = {<VendorDashboard />} />
             <Route path = "myevents" element={<MyEvents />} />
             <Route path ="gallery" element={<VendorGallery />} />
             <Route path ="setting" element= {<VendorSettings />}/>
-            <Route path="test" element={<TestPage />} />
+           
           </Route>
 
           {/* User */}
           <Route path="user">
             <Route path="dashboard" element={<UserDashboard />} />
-            <Route path="test" element={<TestPage />} />
+            
             
           </Route>
+
+                  
         </Route>
       </Routes>
     </AuthProvider>

@@ -11,37 +11,17 @@ import {
   Avatar,
   CircularProgress,
   MenuItem,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  OutlinedInput,
-  Checkbox,
-  ListItemText,
 } from "@mui/material";
-import { PhotoCamera, Save, Business, AccessTime } from "@mui/icons-material";
+import { PhotoCamera, Save } from "@mui/icons-material";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+// navigation not required in this form
 import { VITE_API_BASE_URL } from "../../../utils/api";
 import toast from "react-hot-toast";
 
 axios.defaults.withCredentials = true;
 
-const weekdays = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday",
-];
-
 const VendorProfileSetup = () => {
-  const navigate = useNavigate();
+  // navigation not required in this form
 
   const [formData, setFormData] = useState({
     business_name: "",
@@ -59,16 +39,6 @@ const VendorProfileSetup = () => {
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [services, setServices] = useState([]);
-  const [hasShift, setHasShift] = useState(false);
-
-  const [shiftOpen, setShiftOpen] = useState(false);
-  const [shiftValues, setShiftValues] = useState({
-    shift_name: "",
-    start_time: "09:00",
-    end_time: "12:00",
-    days_of_week: [],
-  });
-  const [shiftLoading, setShiftLoading] = useState(false);
 
   // ✅ Fetch all service categories
   useEffect(() => {
@@ -147,73 +117,7 @@ const VendorProfileSetup = () => {
     }
   };
 
-  // ✅ Shift Handlers
-  const openShiftModal = () => setShiftOpen(true);
-  const closeShiftModal = () => setShiftOpen(false);
-
-  const handleShiftChange = (e) => {
-    const { name, value } = e.target;
-    setShiftValues((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleDaysChange = (event) => {
-    const { value } = event.target;
-    setShiftValues((prev) => ({
-      ...prev,
-      days_of_week: typeof value === "string" ? value.split(",") : value,
-    }));
-  };
-
-  const validateShift = () => {
-    const { shift_name, start_time, end_time, days_of_week } = shiftValues;
-    if (!shift_name.trim()) return toast.error("Shift name required.");
-    if (!start_time || !end_time)
-      return toast.error("Start and end time are required.");
-    if (start_time >= end_time)
-      return toast.error("End time must be after start time.");
-    if (!days_of_week.length) return toast.error("Select at least one day.");
-    return true;
-  };
-
-  // ✅ ADD SHIFT API integration (exactly like Postman)
-  const saveShift = async () => {
-  if (!validateShift()) return;
-  setShiftLoading(true);
-
-  try {
-    // Prepare the body as JSON
-    const payload = {
-      shift_name: shiftValues.shift_name,
-      start_time: shiftValues.start_time + ":00",
-      end_time: shiftValues.end_time + ":00",
-      days_of_week: shiftValues.days_of_week, // array
-    };
-
-    const res = await axios.post(
-      `${VITE_API_BASE_URL}/Vendor/AddvendorShifts`,
-      payload,
-      {
-        withCredentials: true, // 🔑 send cookies for auth_token
-        headers: { "Content-Type": "application/json" },
-      }
-    );
-
-    if (res.status === 201 || res.status === 200) {
-      toast.success(res.data.message || "Shift added successfully!");
-      setHasShift(true);
-      closeShiftModal();
-    } else {
-      toast.error("Failed to add shift.");
-    }
-  } catch (err) {
-    console.error("Error adding shift:", err);
-    const errorMsg =
-      err.response?.data?.message || "Something went wrong while adding shift.";
-    toast.error(errorMsg);
-  } finally {
-    setShiftLoading(false);
-  }
-};
+  // shift management moved to VendorShiftPage
 
 
   return (
@@ -246,28 +150,6 @@ const VendorProfileSetup = () => {
         >
           Vendor Profile Setup
         </Typography>
-
-        {/* Shift Button */}
-        <Button
-          variant={hasShift ? "outlined" : "contained"}
-          onClick={openShiftModal}
-          startIcon={<AccessTime />}
-          sx={{
-            textTransform: "none",
-            fontWeight: 600,
-            px: 3,
-            py: 1,
-            borderRadius: 2,
-            color: hasShift ? "#3c6e71" : "#fff",
-            borderColor: "#3c6e71",
-            bgcolor: hasShift ? "#fff" : "#3c6e71",
-            "&:hover": {
-              bgcolor: hasShift ? "rgba(60,110,113,0.08)" : "#284b63",
-            },
-          }}
-        >
-          {hasShift ? "Edit Shift" : "Add Shift"}
-        </Button>
       </Box>
 
       {/* --- Vendor Form --- */}
@@ -417,77 +299,7 @@ const VendorProfileSetup = () => {
         </CardContent>
       </Card>
 
-      {/* --- Shift Modal --- */}
-      <Dialog open={shiftOpen} onClose={closeShiftModal} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ bgcolor: "#f7fafb", color: "#284b63", fontWeight: 700 }}>
-          Add Working Shift
-        </DialogTitle>
-        <DialogContent dividers>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <TextField
-              label="Shift Name"
-              name="shift_name"
-              value={shiftValues.shift_name}
-              onChange={handleShiftChange}
-              fullWidth
-              required
-            />
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-              <TextField
-                label="Start Time"
-                name="start_time"
-                type="time"
-                value={shiftValues.start_time}
-                onChange={handleShiftChange}
-                fullWidth
-              />
-              <TextField
-                label="End Time"
-                name="end_time"
-                type="time"
-                value={shiftValues.end_time}
-                onChange={handleShiftChange}
-                fullWidth
-              />
-            </Stack>
-            <FormControl fullWidth>
-              <InputLabel id="days-label">Days of Week</InputLabel>
-              <Select
-                labelId="days-label"
-                multiple
-                value={shiftValues.days_of_week}
-                onChange={handleDaysChange}
-                input={<OutlinedInput label="Days of Week" />}
-                renderValue={(selected) => selected.join(", ")}
-              >
-                {weekdays.map((day) => (
-                  <MenuItem key={day} value={day}>
-                    <Checkbox checked={shiftValues.days_of_week.indexOf(day) > -1} />
-                    <ListItemText primary={day} />
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={closeShiftModal} sx={{ color: "#777" }}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            onClick={saveShift}
-            disabled={shiftLoading}
-            sx={{
-              bgcolor: "#3c6e71",
-              "&:hover": { bgcolor: "#284b63" },
-              color: "#fff",
-            }}
-          >
-            {shiftLoading ? <CircularProgress color="inherit" size={20} /> : "Save Shift"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* Shift management moved to VendorShiftPage */}
     </Box>
   );
 };
