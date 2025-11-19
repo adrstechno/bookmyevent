@@ -1,6 +1,7 @@
 import { resolve } from "url";
 import VendorModel from "../Models/VendorModel.js";
 import { verifyToken } from "../Utils/Verification.js";
+import { v4 as uuidv4 } from "uuid";
 
 export const insertVendor = (req, res) => {
   // ✅ Check if file exists
@@ -526,4 +527,148 @@ export const deleteVendorShiftbyId = async (req, res) => {
     return res.status(500).json({ error: "Server error", details: err.message });
   }
 };
+
+export const insertVendorPackage = (req, res) => {
+  try {
+    const data = req.body;
+    const token = req.cookies.auth_token;
+
+    if (!token) {
+      return res.status(401).json({ message: "Unauthorized: No token provided" });
+    }
+
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return res.status(401).json({ message: "Unauthorized: Invalid token" });
+    }
+
+    const userId = decoded.userId;
+
+    // Find vendor ID and handle insertion in callback
+    VendorModel.findVendorID(userId, (err, result) => {
+      if (err) {
+        return res.status(500).json({ message: "Error finding vendor", error: err });
+      }
+
+      if (!result || result.length === 0) {
+        return res.status(404).json({ message: "Vendor not found" });
+      }
+
+      const vendor_id = result[0].vendor_id;
+      const package_uuid = uuidv4();
+
+      const packageData = {
+        package_uuid: package_uuid,
+        vendor_id: vendor_id,
+        package_name: data.package_name,
+        package_desc: data.package_desc,
+        amount: data.amount,
+      };
+
+      VendorModel.insertVendorPackage(packageData, (err, result) => {
+        if (err) {
+          return res.status(500).json({ message: "Error inserting vendor package", error: err });
+        }
+
+        return res.status(200).json({
+          message: "Vendor package inserted successfully",
+          packageId: result.insertId
+        });
+      });
+    });
+  } catch (err) {
+    console.error("Error inserting vendor package:", err);
+    return res.status(500).json({ error: "Server error", details: err.message });
+  }
+};
+
+export const updateVendorPackage = (req, res) => {
+  try {
+    const data = req.body;
+   const {package_id} = req.body;
+    
+    const token = req.cookies.auth_token;
+    if (!token) {
+      return res.status(401).json({ message: "Unauthorized: No token provided" });
+    }
+    
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return res.status(401).json({ message: "Unauthorized: Invalid token" });
+    }
+    
+    VendorModel.updateVendorPackage(package_id, data, (err, result) => {
+      if (err) {
+        return res.status(500).json({ message: "Error updating vendor package", error: err });
+      }
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ message: "Vendor package not found" });
+      }
+      return res.status(200).json({ message: "Vendor package updated successfully" });
+    });
+  }
+  catch (err) {
+    console.error("Error updating vendor package:", err);
+    return res.status(500).json({ error: "Server error", details: err.message });
+  }
+};
+ 
+export const deleteVendorPackage = (req, res) => {
+  try{ 
+    const {package_id} = req.query;
+    
+    const token = req.cookies.auth_token;
+    if (!token) {
+      return res.status(401).json({ message: "Unauthorized: No token provided" });
+    }
+    
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return res.status(401).json({ message: "Unauthorized: Invalid token" });
+    }
+    
+    VendorModel.deleteVendorPackage(package_id, (err, result) => {
+      if (err) {
+        return res.status(500).json({ message: "Error deleting vendor package", error: err });
+      }
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ message: "Vendor package not found" });
+      }
+      return res.status(200).json({ message: "Vendor package deleted successfully" });
+    });
+  }
+  catch (err) {
+    console.error("Error deleting vendor package:", err);
+    return res.status(500).json({ error: "Server error", details: err.message });
+  }
+}
+
+export const getAllVendorPackages = (req, res) => {
+  try{ 
+    const vendor_id = req.query.vendor_id;
+    
+    const token = req.cookies.auth_token;
+    if (!token) {
+      return res.status(401).json({ message: "Unauthorized: No token provided" });
+    }
+    
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return res.status(401).json({ message: "Unauthorized: Invalid token" });
+    }
+    
+    VendorModel.getAllVendorPackages(vendor_id, (err, results) => {
+      if (err) {
+        return res.status(500).json({ message: "Error fetching vendor packages", error: err });
+      }
+      return  res.status(200).json({ message: "Vendor packages retrieved successfully", count: results.length, packages: results });
+    });
+
+
+  }catch (err) {
+    console.error("Error fetching vendor packages:", err);
+    return res.status(500).json({ error: "Server error", details: err.message });
+  }
+}
+
 
