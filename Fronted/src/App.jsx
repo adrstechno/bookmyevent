@@ -29,6 +29,7 @@ import CategoryPage from "./pages/CategoryPage";
 import WhyUsPage from "./pages/WhyUsPage";
 import ShiftList from "./pages/Dashboards/Vendor/VendorShiftPage";
 import VendorShiftPage from "./pages/Dashboards/Vendor/VendorShiftPage";
+import MyPackege from "./pages/Dashboards/Vendor/MyPackege";
 // import { AuthContext } from "./context/AuthContext"; // not needed now
 // import ProtectedRoute from "./components/ProtectedRoute"; // comment out for dev
 
@@ -62,6 +63,7 @@ export default function App() {
             <Route path= "dashboard" element = {<VendorDashboard />} />
             <Route path = "myevents" element={<MyEvents />} />
             <Route path ="gallery" element={<VendorGallery />} />
+            <Route path ="mypackege" element={<MyPackege />} />
             <Route path ="setting" element= {<VendorSettings />}/>
            
           </Route>
