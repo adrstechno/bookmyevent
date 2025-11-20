@@ -68,6 +68,7 @@ export const menuConfig = {
     { label: "Dashboard", path: "/vendor/dashboard", icon: <FaTachometerAlt /> },
     { label: "My Events", path: "/vendor/myevents", icon: <FaListAlt /> },
     { label: "Gallery", path: "/vendor/gallery", icon: <FaShoppingCart /> },
+    { label: "My Packege", path: "/vendor/mypackege", icon: <FaShoppingCart /> },
     { label: "Setting", path: "/vendor/setting", icon: <FaCog /> },
   ],
 
