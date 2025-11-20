@@ -79,7 +79,7 @@ export const menuConfig = {
 
   user: [
     { label: "Dashboard", path: "/user/dashboard", icon: <FaHome /> },
-    { label: "My Bookings", path: "/bookings", icon: <FaTicketAlt /> },
+    { label: "My Bookings", path: "/user/bookings", icon: <FaTicketAlt /> },
     { label: "Profile", path: "/profile", icon: <FaUser /> },
   ],
 };

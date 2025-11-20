@@ -30,6 +30,7 @@ import WhyUsPage from "./pages/WhyUsPage";
 import ShiftList from "./pages/Dashboards/Vendor/VendorShiftPage";
 import VendorShiftPage from "./pages/Dashboards/Vendor/VendorShiftPage";
 import MyPackege from "./pages/Dashboards/Vendor/MyPackege";
+import MyBookings from "./pages/Dashboards/User/MyBookings";
 // import { AuthContext } from "./context/AuthContext"; // not needed now
 // import ProtectedRoute from "./components/ProtectedRoute"; // comment out for dev
 
@@ -71,8 +72,7 @@ export default function App() {
           {/* User */}
           <Route path="user">
             <Route path="dashboard" element={<UserDashboard />} />
-            
-            
+            <Route path="bookings" element={<MyBookings />} />
           </Route>
 
                   
