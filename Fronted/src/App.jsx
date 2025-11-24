@@ -1,52 +1,66 @@
-// src/App.jsx
-import React from "react";
 import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import MainLayout from "./components/layout/MainLayout";
+import ScrollToTop from "./components/ScrollToTop";
 
+// Auth Pages
 import Login from "./pages/Auth/Login";
 import Register from "./pages/Auth/Register";
+import ChangePassword from "./components/ChangePassword";
+
+// Public Pages
 import Home from "./pages/HomePage";
-import VendorDetail from "./pages/VendorDetail";
-import CartPage from "./pages/CartPage";
+import WhyUsPage from "./pages/WhyUsPage";
+import AboutPage from "./pages/AboutPage";
+import ContactPage from "./pages/ContactPage";
 
 // Admin Pages
-import AddService from "./pages/Dashboards/Admin/AddServices";
 import Admindashboard from "./pages/Dashboards/Admin/Admindashboard";
+import AdminUsers from "./pages/Dashboards/Admin/AdminUsers";
+import AddService from "./pages/Dashboards/Admin/AddServices";
 
 // Vendor Pages
-import VendorProfileSetup from "./pages/Dashboards/Vendor/VendorProfileSetup";
-
-
-import AdminUsers from "./pages/Dashboards/Admin/AdminUsers";
-import ChangePassword from "./components/ChangePassword";
 import VendorDashboard from "./pages/Dashboards/Vendor/VendorDashboard";
-import VendorSettings from "./pages/Dashboards/Vendor/VendorSettings";
+import VendorProfileSetup from "./pages/Dashboards/Vendor/VendorProfileSetup";
+import VendorShiftPage from "./pages/Dashboards/Vendor/VendorShiftPage";
 import MyEvents from "./pages/Dashboards/Vendor/MyEvents";
 import VendorGallery from "./pages/Dashboards/Vendor/VendorGallery";
-import UserDashboard from "./pages/Dashboards/User/UserDashboard";
-import CategoryPage from "./pages/CategoryPage";
-import WhyUsPage from "./pages/WhyUsPage";
-import ShiftList from "./pages/Dashboards/Vendor/VendorShiftPage";
-import VendorShiftPage from "./pages/Dashboards/Vendor/VendorShiftPage";
 import MyPackege from "./pages/Dashboards/Vendor/MyPackege";
+import VendorSettings from "./pages/Dashboards/Vendor/VendorSettings";
+
+// User Pages
+import UserDashboard from "./pages/Dashboards/User/UserDashboard";
 import MyBookings from "./pages/Dashboards/User/MyBookings";
-// import { AuthContext } from "./context/AuthContext"; // not needed now
-// import ProtectedRoute from "./components/ProtectedRoute"; // comment out for dev
+
+// Category Pages
+import Weddings from "./pages/Category/Weddings";
+import CorporateEvents from "./pages/Category/CorporateEvents";
+import ConcertsFestivals from "./pages/Category/ConcertsFestivals";
+import BirthdayParties from "./pages/Category/BirthdayParties";
+import FashionShows from "./pages/Category/FashionShows";
+import Exhibitions from "./pages/Category/Exhibitions";
 
 export default function App() {
   return (
     <AuthProvider>
+      <ScrollToTop />
       <Routes>
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path ="/changepassword" element={<ChangePassword />} />
-  <Route path ="/category/:slug" element={<CategoryPage />} />
-  <Route path="/vendor/view/:id" element={<VendorDetail />} />
-  <Route path="/cart" element={<CartPage />} />
-  <Route path="/why-us" element={<WhyUsPage />} />
+        <Route path="/changepassword" element={<ChangePassword />} />
+        <Route path="/why-us" element={<WhyUsPage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/contact" element={<ContactPage />} />
         <Route path="/" element={<Home />} />
+
+         {/* Category Pages */}
+        <Route path="/category/weddings" element={<Weddings />} />
+        <Route path="/category/corporate-events" element={<CorporateEvents />} />
+        <Route path="/category/concerts-festivals" element={<ConcertsFestivals />} />
+        <Route path="/category/birthday-parties" element={<BirthdayParties />} />
+        <Route path="/category/fashion-shows" element={<FashionShows />} />
+        <Route path="/category/exhibitions" element={<Exhibitions />} />
 
         {/* Routes that use MainLayout (dashboard panels) */}
         <Route element={<MainLayout />}>
