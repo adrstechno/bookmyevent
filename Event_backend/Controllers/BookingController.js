@@ -120,7 +120,7 @@ export const getBookingsByUserId = (req, res) => {
 
 export const getBookingsByVendorId = (req, res) => {
   try {
-    const vendor_id = req.params.vendorId;
+    const vendor_id = req.query.vendorId;
 
     const token = req.cookies.auth_token;
     if (!token) return res.status(401).json({ error: "Unauthorized" });
@@ -147,7 +147,7 @@ export const getBookingsByVendorId = (req, res) => {
 
 export const getBookingById = (req, res) => {
   try {
-    const booking_id = req.params.id;
+    const booking_id = req.query.bookingId;
 
     const token = req.cookies.auth_token;
     if (!token) {
@@ -181,3 +181,6 @@ export const getBookingById = (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+
+

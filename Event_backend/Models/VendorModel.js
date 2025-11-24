@@ -46,6 +46,11 @@ class VendorModel {
     db.query(sql, callback);
   }
 
+  static getVendorByServiceId(service_category_id, callback) { 
+    const sql = "select * from vendor_profiles where service_category_id = ?";
+    db.query(sql, [service_category_id], callback);
+  }
+  
   static addEventImages(data, callback) {
     const sql = "insert into Event_images (vendor_id , imageUrl) values(?,?)";
     db.query(sql, [data.vendor_id, data.event_profiles_url], callback);
