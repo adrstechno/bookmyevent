@@ -44,7 +44,8 @@ import CTASection from "../components/mainpage/CTASection";
 import Footer from "../components/mainpage/Footer";
 import ShowcaseSection from "../components/mainpage/ShowcaseSection";
 import SocialSidebar from "../components/mainpage/SocialSidebar";
-import ContactPopup from "../components/mainpage/ContactPopup"; // ✅ import popup
+import ContactPopup from "../components/mainpage/ContactPopup";
+
 
 const HomePage = () => {
   return (
@@ -54,18 +55,16 @@ const HomePage = () => {
       <ServicesSection />
       <VendorsSection />
       <ShowcaseSection />
-      <CTASection />
       <Testimonials />
       <WhyChooseUs />
-      
+      <CTASection />
       <Footer />
 
-      {/* ✅ Floating Sidebar + WhatsApp */}
+      {/* Floating Sidebar + WhatsApp */}
       <SocialSidebar />
 
-      {/* ✅ Contact Popup */}
+      {/* Contact Popup */}
       <ContactPopup />
-     
     </div>
   );
 };

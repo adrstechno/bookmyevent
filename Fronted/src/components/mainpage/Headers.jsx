@@ -1,19 +1,3 @@
-// import React from "react";
-// import Head from "./Head";
-// import HomeNavbar from "./HomeNavbar";
-
-// const Headers = () => {
-//   return (
-//     <header className="w-full">
-//       <Head />
-//       <HomeNavbar />
-//     </header>
-//   );
-// };
-
-// export default Headers;
-
-
 import React from "react";
 import Head from "./Head";
 import HomeNavbar from "./HomeNavbar";
