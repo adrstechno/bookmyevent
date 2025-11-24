@@ -164,7 +164,7 @@ const AboutPage = () => {
               className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 bg-white px-6 py-3 rounded-full shadow-lg border border-gray-100"
             >
               <p className="text-sm text-gray-600 font-medium">
-                👆 Drag or click to explore our events
+              click to explore our events
               </p>
             </motion.div>
           </motion.div>
@@ -348,7 +348,7 @@ const AboutPage = () => {
       </div>
 
       {/* Our Team */}
-      <div className="bg-white py-20">
+      {/* <div className="bg-white py-20">
         <div className="max-w-7xl mx-auto px-6">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -393,7 +393,7 @@ const AboutPage = () => {
             ))}
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* CTA Section */}
       <div className="relative py-20 overflow-hidden">
