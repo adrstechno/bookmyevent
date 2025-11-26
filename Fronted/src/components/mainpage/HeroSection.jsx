@@ -59,12 +59,38 @@ const HeroSection = () => {
           </p>
 
           <div className="flex gap-4 pt-2">
-            <button className="px-6 py-3 bg-[#f9a826] text-black rounded-full font-semibold hover:bg-[#f7b733] transition">
-              Explore Vendors
-            </button>
-            <button className="px-6 py-3 border border-white rounded-full hover:bg-white hover:text-[#3c6e71] transition">
-              Become a Vendor
-            </button>
+            <motion.button 
+              whileHover={{ 
+                scale: 1.05,
+                boxShadow: "0 10px 30px rgba(249, 168, 38, 0.4)"
+              }}
+              whileTap={{ scale: 0.95 }}
+              className="px-8 py-3 bg-[#f9a826] text-black rounded-full font-semibold hover:bg-[#f7b733] transition-all duration-300 shadow-lg relative overflow-hidden group"
+            >
+              <span className="relative z-10">Explore Vendors</span>
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-[#f7b733] to-[#f9a826]"
+                initial={{ x: "-100%" }}
+                whileHover={{ x: "0%" }}
+                transition={{ duration: 0.3 }}
+              />
+            </motion.button>
+            <motion.button 
+              whileHover={{ 
+                scale: 1.05,
+                backgroundColor: "rgba(255, 255, 255, 1)",
+                color: "#3c6e71",
+                boxShadow: "0 10px 30px rgba(255, 255, 255, 0.3)"
+              }}
+              whileTap={{ scale: 0.95 }}
+              className="px-8 py-3 border-2 border-white rounded-full font-semibold transition-all duration-300 relative overflow-hidden group"
+            >
+              <span className="relative z-10">Become a Vendor</span>
+              <motion.div
+                className="absolute inset-0 bg-white opacity-0 group-hover:opacity-100"
+                transition={{ duration: 0.3 }}
+              />
+            </motion.button>
           </div>
         </motion.div>
 

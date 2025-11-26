@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
@@ -8,109 +8,300 @@ import {
   CakeIcon,
   CameraIcon,
   GlobeAltIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
 } from "@heroicons/react/24/outline";
+import { VITE_API_BASE_URL } from "../../utils/api";
+import TiltedCard from "./TiltedCard";
 
-const services = [
-  {
-    title: "Weddings",
-    slug: "weddings",
-    description: "Plan your dream wedding with top venues, decor & catering.",
-    icon: SparklesIcon,
-    color: "from-pink-500 to-rose-500",
-    image: "/images/Wedding.jpg",
-  },
-  {
-    title: "Corporate Events",
-    slug: "corporate-events",
-    description: "Professional event setups, conferences & brand launches.",
-    icon: BuildingOfficeIcon,
-    color: "from-blue-500 to-cyan-500",
-    image: "/images/Corporate-event.jpg",
-  },
-  {
-    title: "Concerts & Festivals",
-    slug: "concerts-festivals",
-    description: "Lights, sound, and vibes — manage large-scale live events.",
-    icon: MusicalNoteIcon,
-    color: "from-purple-500 to-indigo-500",
-    image: "/images/Concert.jpg",
-  },
-  {
-    title: "Birthday Parties",
-    slug: "birthday-parties",
-    description: "Make every birthday special with themed decor & catering.",
-    icon: CakeIcon,
-    color: "from-yellow-500 to-orange-500",
-    image: "/images/Birthday.jpg",
-  },
-  {
-    title: "Fashion & Shows",
-    slug: "fashion-shows",
-    description: "Glamorous runway and stage event management.",
-    icon: CameraIcon,
-    color: "from-fuchsia-500 to-pink-500",
-    image: "/images/FashionShow.jpg",
-  },
-  {
-    title: "Exhibitions",
-    slug: "exhibitions",
-    description: "Plan & execute perfect exhibitions and trade fairs.",
-    icon: GlobeAltIcon,
-    color: "from-green-500 to-emerald-500",
-    image: "/images/Exivision.jpg",
-  },
+const defaultIcons = [
+  SparklesIcon,
+  BuildingOfficeIcon,
+  MusicalNoteIcon,
+  CakeIcon,
+  CameraIcon,
+  GlobeAltIcon,
 ];
 
 const ServicesSection = () => {
   const navigate = useNavigate();
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const servicesPerPage = 6;
+
+  useEffect(() => {
+    fetchServices();
+  }, []);
+
+  const fetchServices = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${VITE_API_BASE_URL}/service/GetAllServices`, {
+        method: "GET",
+        credentials: "include", // This sends cookies with the request
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch services");
+      }
+
+      const data = await response.json();
+      
+      // Transform API data to match component structure
+      const transformedServices = data.map((service, index) => ({
+        category_id: service.category_id,
+        title: service.category_name,
+        slug: service.category_name.toLowerCase().replace(/\s+/g, "-"),
+        description: service.description,
+        icon: defaultIcons[index % defaultIcons.length],
+        color: getColorGradient(index),
+        image: service.icon_url,
+        is_active: service.is_active,
+      }));
+
+      setServices(transformedServices.filter(s => s.is_active === 1));
+      setError(null);
+    } catch (err) {
+      console.error("Error fetching services:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getColorGradient = (index) => {
+    const gradients = [
+      "from-pink-500 to-rose-500",
+      "from-blue-500 to-cyan-500",
+      "from-purple-500 to-indigo-500",
+      "from-yellow-500 to-orange-500",
+      "from-fuchsia-500 to-pink-500",
+      "from-green-500 to-emerald-500",
+    ];
+    return gradients[index % gradients.length];
+  };
+
+  const handleServiceClick = (service) => {
+    // Navigate to vendors page with service ID
+    navigate(`/vendors/${service.category_id}`, {
+      state: { 
+        serviceName: service.title,
+        serviceDescription: service.description 
+      }
+    });
+  };
+
+  // Pagination logic
+  const indexOfLastService = currentPage * servicesPerPage;
+  const indexOfFirstService = indexOfLastService - servicesPerPage;
+  const currentServices = services.slice(indexOfFirstService, indexOfLastService);
+  const totalPages = Math.ceil(services.length / servicesPerPage);
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  if (loading) {
+    return (
+      <section className="py-20 bg-gray-50 relative">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#284b63]"></div>
+          <p className="mt-4 text-gray-600">Loading services...</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="py-20 bg-gray-50 relative">
+        <div className="text-center">
+          <p className="text-red-600">Error loading services: {error}</p>
+          <button 
+            onClick={fetchServices}
+            className="mt-4 px-6 py-2 bg-[#284b63] text-white rounded-lg hover:bg-[#3c6e71] transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </section>
+    );
+  }
 
   return (
-    <section className="py-20 bg-gray-50 relative">
-      <div className="text-center mb-12">
-        <h2 className="text-4xl font-bold text-[#284b63] mb-4">
-          Explore Event Categories
-        </h2>
-        <p className="text-gray-600 text-lg">
-          Choose your event type and find the best vendors to make it happen.
-        </p>
+    <section className="py-20 bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
+      {/* Animated Background Pattern */}
+      <div className="absolute inset-0 opacity-5 pointer-events-none">
+        <motion.div
+          animate={{
+            backgroundPosition: ["0% 0%", "100% 100%"],
+          }}
+          transition={{
+            duration: 20,
+            repeat: Infinity,
+            repeatType: "reverse",
+          }}
+          className="absolute inset-0"
+          style={{
+            backgroundImage: 'radial-gradient(circle, #284b63 1px, transparent 1px)',
+            backgroundSize: '50px 50px'
+          }}
+        />
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-        {services.map((service, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: index * 0.1 }}
-            whileHover={{ scale: 1.05 }}
-            onClick={() => navigate(`/category/${service.slug}`)}
-            className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer group"
+      <div className="text-center mb-16 relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: -30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+        >
+          <motion.h2 
+            className="text-5xl font-bold text-[#284b63] mb-4"
+            initial={{ scale: 0.9 }}
+            whileInView={{ scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
           >
-            <div className="relative h-48 overflow-hidden">
-              <img
-                src={service.image}
-                alt={service.title}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+            Explore Event Categories
+          </motion.h2>
+          <motion.div
+            initial={{ width: 0 }}
+            whileInView={{ width: "100px" }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.3, duration: 0.8 }}
+            className="h-1 bg-[#f9a826] mx-auto mb-4 rounded-full"
+          />
+          <motion.p 
+            className="text-gray-600 text-lg max-w-2xl mx-auto"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.4 }}
+          >
+            Choose your event type and find the best vendors to make it happen.
+          </motion.p>
+        </motion.div>
+      </div>
 
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
-                <motion.div
-                  whileHover={{ rotate: 360 }}
-                  transition={{ duration: 1 }}
-                >
-                  <service.icon className="w-12 h-12 mb-3 text-[#f9a826]" />
-                </motion.div>
-                <h3 className="text-2xl font-semibold">{service.title}</h3>
-              </div>
-            </div>
-
-            <div className="p-6 text-center">
-              <p className="text-gray-700">{service.description}</p>
-            </div>
+      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10">
+        {currentServices.map((service, index) => (
+          <motion.div
+            key={service.category_id}
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ 
+              duration: 0.5, 
+              delay: index * 0.1
+            }}
+            onClick={() => handleServiceClick(service)}
+            className="cursor-pointer"
+          >
+            <TiltedCard
+              imageSrc={service.image}
+              altText={service.title}
+              captionText={service.title}
+              containerHeight="420px"
+              containerWidth="100%"
+              imageHeight="420px"
+              imageWidth="100%"
+              scaleOnHover={1.05}
+              rotateAmplitude={8}
+              showMobileWarning={false}
+              showTooltip={true}
+              displayOverlayContent={true}
+              overlayContent={
+                <div className="w-full h-[420px] flex flex-col justify-between p-4">
+                  <div className="flex flex-col items-center justify-center flex-1 min-h-0">
+                    <div className="bg-black/50 backdrop-blur-md rounded-xl p-4 shadow-2xl border border-white/20 max-w-full">
+                      <service.icon className="w-12 h-12 text-[#f9a826] drop-shadow-2xl mb-2 mx-auto" />
+                      <h3 className="text-xl font-bold text-white drop-shadow-2xl text-center line-clamp-2" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8)' }}>
+                        {service.title}
+                      </h3>
+                    </div>
+                  </div>
+                  <div className="bg-white/95 backdrop-blur-md rounded-xl p-3 shadow-2xl border border-gray-200 flex-shrink-0">
+                    <p className="text-gray-800 text-xs leading-relaxed mb-2 text-center font-medium line-clamp-3">
+                      {service.description}
+                    </p>
+                    <div className="text-center">
+                      <span className="inline-block text-[#284b63] text-sm font-bold hover:text-[#f9a826] transition-colors">
+                        Explore Vendors →
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              }
+            />
           </motion.div>
         ))}
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="max-w-7xl mx-auto px-6 mt-12 flex items-center justify-center gap-4">
+          <button
+            onClick={handlePrevPage}
+            disabled={currentPage === 1}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${
+              currentPage === 1
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-[#284b63] text-white hover:bg-[#3c6e71]"
+            }`}
+          >
+            <ChevronLeftIcon className="w-5 h-5" />
+            Previous
+          </button>
+
+          <div className="flex items-center gap-2">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => {
+                  setCurrentPage(page);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                className={`w-10 h-10 rounded-lg font-semibold transition-all ${
+                  currentPage === page
+                    ? "bg-[#284b63] text-white"
+                    : "bg-white text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${
+              currentPage === totalPages
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-[#284b63] text-white hover:bg-[#3c6e71]"
+            }`}
+          >
+            Next
+            <ChevronRightIcon className="w-5 h-5" />
+          </button>
+        </div>
+      )}
     </section>
   );
 };

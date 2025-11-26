@@ -39,6 +39,8 @@ import ConcertsFestivals from "./pages/Category/ConcertsFestivals";
 import BirthdayParties from "./pages/Category/BirthdayParties";
 import FashionShows from "./pages/Category/FashionShows";
 import Exhibitions from "./pages/Category/Exhibitions";
+import VendorsByService from "./pages/VendorsByService";
+import VendorDetail from "./pages/VendorDetail";
 
 export default function App() {
   return (
@@ -61,6 +63,12 @@ export default function App() {
         <Route path="/category/birthday-parties" element={<BirthdayParties />} />
         <Route path="/category/fashion-shows" element={<FashionShows />} />
         <Route path="/category/exhibitions" element={<Exhibitions />} />
+        
+        {/* Vendors by Service */}
+        <Route path="/vendors/:serviceId" element={<VendorsByService />} />
+        
+        {/* Vendor Detail */}
+        <Route path="/vendor/:vendorId" element={<VendorDetail />} />
 
         {/* Routes that use MainLayout (dashboard panels) */}
         <Route element={<MainLayout />}>

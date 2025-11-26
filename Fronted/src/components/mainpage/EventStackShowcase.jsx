@@ -10,23 +10,33 @@ const EventStackShowcase = ({
   const defaultImages = [
     { 
       id: 1, 
-      img: "https://images.unsplash.com/photo-1519167758481-83f29da8c2b6?q=80&w=500&auto=format",
+      img: "/images/Wedding.jpg",
       title: "Elegant Wedding"
     },
     { 
       id: 2, 
-      img: "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=500&auto=format",
+      img: "/images/Corporate-event.jpg",
       title: "Corporate Gala"
     },
     { 
       id: 3, 
-      img: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?q=80&w=500&auto=format",
+      img: "/images/Birthday.jpg",
       title: "Birthday Celebration"
     },
     { 
       id: 4, 
-      img: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=500&auto=format",
+      img: "/images/Concert.jpg",
       title: "Music Festival"
+    },
+    { 
+      id: 5, 
+      img: "/images/FashionShow.jpg",
+      title: "Fashion Show"
+    },
+    { 
+      id: 6, 
+      img: "/images/Exivision.jpg",
+      title: "Exhibition"
     }
   ];
 
