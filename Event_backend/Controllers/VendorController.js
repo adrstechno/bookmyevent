@@ -85,16 +85,11 @@ export const insertVendor = (req, res) => {
 };
 
 export const getAllVendor = (req, res) => {
-  //check if the user is login or not
-  const token = req.cookies.auth_token;
-  if (!token) {
-    return res.status(401).json({ Messege: "Unauthorized" });
-  }
-
+  // Allow public access - no authentication required for viewing vendors
   VendorModel.getallVendors((err, results) => {
     if (err) {
       return res.status(500).json({
-        messege: "Error geting vendors",
+        messege: "Error getting vendors",
         error: err,
       });
     }
@@ -637,23 +632,13 @@ export const getAllVendorPackages = (req, res) => {
   try{ 
     const vendor_id = req.query.vendor_id;
     
-    const token = req.cookies.auth_token;
-    if (!token) {
-      return res.status(401).json({ message: "Unauthorized: No token provided" });
-    }
-    
-    const decoded = verifyToken(token);
-    if (!decoded) {
-      return res.status(401).json({ message: "Unauthorized: Invalid token" });
-    }
-    
+    // Allow public access - no authentication required for viewing packages
     VendorModel.getAllVendorPackages(vendor_id, (err, results) => {
       if (err) {
         return res.status(500).json({ message: "Error fetching vendor packages", error: err });
       }
       return  res.status(200).json({ message: "Vendor packages retrieved successfully", count: results.length, packages: results });
     });
-
 
   }catch (err) {
     console.error("Error fetching vendor packages:", err);
