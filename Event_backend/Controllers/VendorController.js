@@ -391,20 +391,10 @@ export const getVendorShiftforVendor = async (req, res) => {
 
 export const GetvendorEventImages = async (req, res) => {
   try {
-    const token = req.cookies.auth_token;
-
-    if (!token) {
-      return res
-        .status(401)
-        .json({ message: "Unauthorized: No token provided" });
-    }
-    const decoded = verifyToken(token);
-    if (!decoded) {
-      return res.status(401).json({ message: "Unauthorized: Invalid token" });
-    }
+    const vendorId = req.query.vendor_id;
 
     const vendor_id = await new Promise((resolve, reject) => {
-      VendorModel.findVendorID(decoded.userId, (err, result) => {
+      VendorModel.findVendorID(vendorId, (err, result) => {
         if (err) {
           reject(err);
         } else if (!result || result.length === 0) {
