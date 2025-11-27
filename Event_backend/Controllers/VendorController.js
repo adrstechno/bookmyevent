@@ -398,7 +398,7 @@ export const GetvendorEventImages = async (req, res) => {
         if (err) {
           reject(err);
         } else if (!result || result.length === 0) {
-          resolve(null);personalbar
+          resolve(null);
         } else {
           resolve(result[0].vendor_id);
         }
