@@ -665,15 +665,6 @@ export const getvendorsByServiceId = (req, res) => {
   try {
     const service_category_id = req.query.service_category_id;
 
-    const token = req.cookies.auth_token;
-    if (!token) {
-      return res.status(401).json({ message: "Unauthorized: No token provided" });
-    }
-
-    const decoded = verifyToken(token);
-    if (!decoded) {
-      return res.status(401).json({ message: "Unauthorized: Invalid token" });
-    }
 
     VendorModel.getVendorByServiceId(service_category_id, (err, results) => {
       if (err) {
