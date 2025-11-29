@@ -678,5 +678,47 @@ export const getvendorsByServiceId = (req, res) => {
   }
 };  
 
+export const getFreeVendorsByDay = async (req, res) => {
+try {
+  const {date} = req.query;
 
+  if(!date) 
+    return res.satus(400).json({message: "Date query param is required to fetch free vendors"});
 
+    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const day = dayNames[new Date(date).getDay()];
+
+    console.log("Fetching free vendors for day:", day);
+
+    const vendorIds = await new Promise((resolve, reject) => {
+      VendorModel.findVendorsByDay(day, (err, result) => {
+        if (err) return reject(err);
+        resolve(result.map((r) => r.vendor_id));
+      });
+    });
+
+    if(!vendorIds || vendorIds.length === 0) {
+      return res.status(200).json({
+        message: "No vendors available on the specified day",
+        vendors: []
+      });
+    }
+
+      const vendors = await new Promise((resolve, reject) => {
+        VendorModel.getVendorsByIds(vendorIds, (err, result) => {
+          if(err) return reject(err);
+          resolve(result);
+        });
+      });
+
+      return res.status(200).json({
+        message: "Vendors retrieved successfully",
+        count: vendors.length,
+        vendors,
+      });
+}
+catch (err) {
+  console.error("Error fetching free vendors by day:", err);
+  return res.status(500).json({error: "Server error", details: err.message});
+}
+};
