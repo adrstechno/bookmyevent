@@ -670,7 +670,15 @@ try {
   if(!date) 
     return res.satus(400).json({message: "Date query param is required to fetch free vendors"});
 
-    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const dayNames = [
+  "Sunday", 
+  "Monday", 
+  "Tuesday", 
+  "Wednesday", 
+  "Thursday", 
+  "Friday", 
+  "Saturday"
+];
     const day = dayNames[new Date(date).getDay()];
 
     console.log("Fetching free vendors for day:", day);
