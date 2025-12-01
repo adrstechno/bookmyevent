@@ -25,8 +25,10 @@ const AdminUsers = () => {
   const [allUsers, setAllUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [roleFilter, setRoleFilter] = useState("user");
+  const [openDropdown, setOpenDropdown] = useState(false);
+
   const [page, setPage] = useState(1);
-  const rowsPerPage = 10;
+  const rowsPerPage = 5;
 
   const PRIMARY = "#3C6E71";
 
@@ -63,51 +65,164 @@ const AdminUsers = () => {
     <Box sx={{ p: { xs: 2, md: 4 }, bgcolor: "#f8f9fa", minHeight: "100vh" }}>
       
       {/* HEADER */}
-      <Stack direction="row" justifyContent="space-between" alignItems="center">
-        <Box>
-          <Typography variant="h4" fontWeight={700} sx={{ color: "#212529" }}>
-            User Management
-          </Typography>
-          <Typography variant="body2" color="#6c757d" mb={4}>
-            Manage registered users and vendor accounts.
-          </Typography>
-        </Box>
+      {/* FILTER (Responsive) */}
+<Stack
+  direction={{ xs: "column", sm: "row" }}
+  spacing={2}
+  alignItems={{ xs: "stretch", sm: "center" }}
+  sx={{ width: { xs: "100%", sm: "auto" } }}
+>
 
-        {/* BUTTONS (simple, clean, original style) */}
-        <Stack direction="row" spacing={2}>
-          <Button
-            variant={roleFilter === "user" ? "contained" : "outlined"}
-            onClick={() => setRoleFilter("user")}
-            sx={{
-              backgroundColor: roleFilter === "user" ? PRIMARY : "transparent",
-              color: roleFilter === "user" ? "#fff" : PRIMARY,
-              borderColor: PRIMARY,
-              "&:hover": {
-                backgroundColor: roleFilter === "user" ? "#31575A" : "#e9ecef",
-                borderColor: PRIMARY,
-              },
-            }}
-          >
-            Users
-          </Button>
+  {/* BUTTONS FOR DESKTOP */}
+  <Stack
+    direction="row"
+    spacing={2}
+    sx={{ display: { xs: "none", sm: "flex" } }}
+  >
+    <Button
+      variant={roleFilter === "user" ? "contained" : "outlined"}
+      onClick={() => setRoleFilter("user")}
+      sx={{
+        backgroundColor: roleFilter === "user" ? PRIMARY : "transparent",
+        color: roleFilter === "user" ? "#fff" : PRIMARY,
+        borderColor: PRIMARY,
+        "&:hover": {
+          backgroundColor: roleFilter === "user" ? "#31575A" : "#e9ecef",
+        },
+      }}
+    >
+      Users
+    </Button>
 
-          <Button
-            variant={roleFilter === "vendor" ? "contained" : "outlined"}
-            onClick={() => setRoleFilter("vendor")}
-            sx={{
-              backgroundColor: roleFilter === "vendor" ? PRIMARY : "transparent",
-              color: roleFilter === "vendor" ? "#fff" : PRIMARY,
-              borderColor: PRIMARY,
-              "&:hover": {
-                backgroundColor: roleFilter === "vendor" ? "#31575A" : "#e9ecef",
-                borderColor: PRIMARY,
-              },
-            }}
-          >
-            Vendors
-          </Button>
-        </Stack>
-      </Stack>
+    <Button
+      variant={roleFilter === "vendor" ? "contained" : "outlined"}
+      onClick={() => setRoleFilter("vendor")}
+      sx={{
+        backgroundColor: roleFilter === "vendor" ? PRIMARY : "transparent",
+        color: roleFilter === "vendor" ? "#fff" : PRIMARY,
+        borderColor: PRIMARY,
+        "&:hover": {
+          backgroundColor: roleFilter === "vendor" ? "#31575A" : "#e9ecef",
+        },
+      }}
+    >
+      Vendors
+    </Button>
+  </Stack>
+
+  {/* DROPDOWN FOR MOBILE */}
+  {/* MOBILE FILTER DROPDOWN — TAILWIND CUSTOM ATTRACTIVE */}
+{/* MOBILE FILTER DROPDOWN — CUSTOM TAILWIND, NO SELECT TAG */}
+<Box
+  sx={{
+    display: { xs: "block", sm: "none" },
+    width: "100%",
+    marginTop: "10px",
+  }}
+>
+  <div className="relative w-full">
+
+    {/* Dropdown Button */}
+    <div
+      onClick={() => setOpenDropdown(!openDropdown)}
+      className="
+        w-full 
+        px-4 
+        py-3 
+        bg-white 
+        border 
+        rounded-xl 
+        cursor-pointer 
+        shadow-md
+        flex 
+        justify-between 
+        items-center
+      "
+      style={{
+        borderColor: "#3C6E71",
+        color: "#3C6E71",
+        fontWeight: 600,
+      }}
+    >
+      {roleFilter === "user" ? "Users" : "Vendors"}
+
+      {/* Arrow Icon */}
+      <svg
+        className={`transition-transform duration-200 ${
+          openDropdown ? "rotate-180" : ""
+        }`}
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="#3C6E71"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <polyline points="6 9 12 15 18 9" />
+      </svg>
+    </div>
+
+    {/* Dropdown Menu */}
+    {openDropdown && (
+      <div
+        className="
+          absolute 
+          left-0 
+          mt-2 
+          w-full 
+          bg-white 
+          rounded-xl 
+          shadow-xl 
+          z-50
+          border
+        "
+        style={{ borderColor: "#3C6E71" }}
+      >
+        {/* Users */}
+        <div
+          onClick={() => {
+            setRoleFilter("user");
+            setOpenDropdown(false);
+          }}
+          className="
+            px-4 
+            py-3 
+            cursor-pointer 
+            font-semibold 
+            hover:bg-gray-100
+          "
+          style={{ color: "#3C6E71" }}
+        >
+          Users
+        </div>
+
+        {/* Vendors */}
+        <div
+          onClick={() => {
+            setRoleFilter("vendor");
+            setOpenDropdown(false);
+          }}
+          className="
+            px-4 
+            py-3 
+            cursor-pointer 
+            font-semibold 
+            hover:bg-gray-100
+          "
+          style={{ color: "#3C6E71" }}
+        >
+          Vendors
+        </div>
+      </div>
+    )}
+  </div>
+</Box>
+
+
+</Stack>
+
 
       {/* TABLE */}
       <Card sx={{ borderRadius: 3, boxShadow: "0 4px 10px rgba(0,0,0,0.06)", mt: 3 }}>
