@@ -100,54 +100,6 @@ const VendorDetail = () => {
     }
   };
 
-  // const fetchEventImages = async (vId) => {
-  //   try {
-  //     // Since GetvendorEventImages requires authentication and only returns logged-in vendor's images,
-  //     // we need to fetch from the Event_images table directly
-  //     // For now, we'll try to get images from all vendors and filter by vendor_id
-      
-  //     // First, try the authenticated endpoint (in case user is logged in as this vendor)
-  //     try {
-  //       const response = await fetch(
-  //         `${VITE_API_BASE_URL}/Vendor/GetvendorEventImages`,
-  //         {
-  //           method: "GET",
-  //           credentials: "include",
-  //           headers: { "Content-Type": "application/json" },
-  //         }
-  //       );
-
-  //       if (response.ok) {
-  //         const data = await response.json();
-  //         console.log("Event images data:", data);
-          
-  //         // Check if these images belong to the current vendor
-  //         if (data.eventImages && data.eventImages.length > 0) {
-  //           // Filter images for this specific vendor
-  //           const vendorImages = data.eventImages.filter(
-  //             img => img.vendor_id === parseInt(vId)
-  //           );
-            
-  //           if (vendorImages.length > 0) {
-  //             setEventImages(vendorImages);
-  //             return;
-  //           }
-  //         }
-  //       }
-  //     } catch (authErr) {
-  //       console.log("Authenticated endpoint not accessible:", authErr);
-  //     }
-
-  //     // If authenticated endpoint doesn't work, images won't be available
-  //     // This is because the backend requires authentication
-  //     console.log("Event images require vendor authentication");
-  //     setEventImages([]);
-      
-  //   } catch (err) {
-  //     console.error("Error fetching event images:", err);
-  //     setEventImages([]);
-  //   }
-  // };
 
   const fetchEventImages = async (vId) => {
     try {
