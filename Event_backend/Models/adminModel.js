@@ -3,7 +3,7 @@ import db from "../Config/DatabaseCon.js";
 class AdminModel {
     static getAllUsers(callback) {
         const sql = `
-        SELECT id, uuid, email, phone, first_name, last_name, user_type, id_verified, is_active, created_at
+        SELECT user_id, uuid, email, phone, first_name, last_name, user_type, is_verified, is_active, created_at
         FROM users
         ORDER BY created_at DESC
         `;

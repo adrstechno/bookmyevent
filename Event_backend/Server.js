@@ -31,7 +31,7 @@ app.use('/User', UserRouter);
 app.use('/Service', ServiceRouter);
 app.use('/Vendor', VendorRouter);
 app.use('/Booking', BookingRouter);
-app.use('./admin', adminroutes);
+app.use('/admin', adminroutes);
 
 app.get('/', (req, res) => {
   res.send('Welcome to the Event Management API');
