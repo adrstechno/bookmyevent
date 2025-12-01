@@ -249,6 +249,18 @@ static getVendorsByIds(ids, callback) {
   db.query(sql, [ids], callback);
 }
 
+static findVendorsByDayAndService(day, service_category_id, callback) {
+  const sql = `
+    SELECT DISTINCT vs.vendor_id
+    FROM vendor_shifts vs
+    JOIN vendor_profiles vp ON vs.vendor_id = vp.vendor_id
+    WHERE JSON_CONTAINS(vs.days_of_week, ?, "$")
+      AND vp.service_category_id = ?
+  `;
+
+  db.query(sql, [`"${day}"`, service_category_id], callback);
+}
+
 }
 
 
