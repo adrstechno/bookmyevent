@@ -421,7 +421,8 @@ import {
   FiPhone,
   FiAward,
   FiCalendar,
-  FiUsers
+  FiUsers,
+  FiX
 } from "react-icons/fi";
 import HomeNavbar from "../components/mainpage/HomeNavbar";
 import Footer from "../components/mainpage/Footer";
@@ -437,12 +438,12 @@ const VendorsByService = () => {
   const { serviceName, serviceDescription } = location.state || {};
 
   const [vendors, setVendors] = useState([]);
-  const [freeVendors, setFreeVendors] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showCalendar, setShowCalendar] = useState(false);
 
-  // filterType = category | all | calendar
+  // filterType = category | all
   const [filterType, setFilterType] = useState("category");
 
   // Pagination
@@ -455,8 +456,11 @@ const VendorsByService = () => {
   const totalPages = Math.ceil(vendors.length / vendorsPerPage);
 
   useEffect(() => {
-    if (filterType === "category") fetchVendorsByCategory();
-    if (filterType === "all") fetchAllVendors();
+    if (filterType === "category" && !selectedDate) {
+      fetchVendorsByCategory();
+    } else if (filterType === "all" && !selectedDate) {
+      fetchAllVendors();
+    }
   }, [filterType, serviceId]);
 
   useEffect(() => {
@@ -488,10 +492,10 @@ const VendorsByService = () => {
   const fetchAllVendors = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${VITE_API_BASE_URL}/Vendor/getAllVendors`);
+      const response = await fetch(`${VITE_API_BASE_URL}/Vendor/Getallvendors`);
       const result = await response.json();
 
-      setVendors(result.vendors || []);
+      setVendors(result || []);
       setError(null);
     } catch (err) {
       setError("Failed to fetch all vendors");
@@ -507,16 +511,34 @@ const VendorsByService = () => {
       const formattedDate = dateObj.toISOString().split("T")[0];
 
       const response = await fetch(
-        `${VITE_API_BASE_URL}/Vendor/getFreeVendorsByDay?date=${formattedDate}`
+        `${VITE_API_BASE_URL}/Vendor/getFreeVendorsByDay?date=${formattedDate}&service_id=${serviceId}`
       );
       const result = await response.json();
 
-      setFreeVendors(result.vendors || []);
+      setVendors(result.vendors || []);
       setError(null);
+      setShowCalendar(false);
     } catch (err) {
       setError("Failed to load free vendors");
+      setVendors([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Handle date selection
+  const handleDateSelect = (date) => {
+    setSelectedDate(date);
+    fetchFreeVendorsByDate(date);
+  };
+
+  // Clear date filter
+  const clearDateFilter = () => {
+    setSelectedDate(null);
+    if (filterType === "category") {
+      fetchVendorsByCategory();
+    } else {
+      fetchAllVendors();
     }
   };
 
@@ -602,21 +624,27 @@ const VendorsByService = () => {
         <FiArrowLeft className="text-2xl" />
       </motion.button>
 
-      {/* CALENDAR VISIBLE ONLY IN FILTER */}
-      {filterType === "calendar" && (
-        <div className="fixed top-28 right-6 z-50">
+      {/* CALENDAR MODAL */}
+      {showCalendar && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center" onClick={() => setShowCalendar(false)}>
           <motion.div
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="rounded-2xl shadow-2xl backdrop-blur-xl bg-white/70 p-3"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl shadow-2xl p-6 relative"
+            onClick={(e) => e.stopPropagation()}
           >
+            <button
+              onClick={() => setShowCalendar(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+            >
+              <FiX className="text-2xl" />
+            </button>
+            <h3 className="text-xl font-bold text-[#284b63] mb-4">Select a Date</h3>
             <Calendar
-              onChange={(date) => {
-                setSelectedDate(date);
-                fetchFreeVendorsByDate(date);
-              }}
-              value={selectedDate}
-              className="event-calendar rounded-2xl"
+              onChange={handleDateSelect}
+              value={selectedDate || new Date()}
+              className="event-calendar rounded-xl"
+              minDate={new Date()}
             />
           </motion.div>
         </div>
@@ -636,60 +664,188 @@ const VendorsByService = () => {
       </div>
 
       {/* FILTER BUTTONS */}
-      <div className="flex justify-center gap-4 mt-10">
+      <div className="flex justify-center items-center gap-4 mt-10 flex-wrap px-4">
         <button
-          onClick={() => setFilterType("category")}
-          className={`px-6 py-3 rounded-xl font-semibold shadow-md ${
-            filterType === "category"
+          onClick={() => {
+            setFilterType("category");
+            clearDateFilter();
+          }}
+          className={`px-6 py-3 rounded-xl font-semibold shadow-md transition-all ${
+            filterType === "category" && !selectedDate
               ? "bg-[#284b63] text-white"
-              : "bg-white text-[#284b63]"
+              : "bg-white text-[#284b63] hover:bg-gray-100"
           }`}
         >
           By Category
         </button>
 
         <button
-          onClick={() => setFilterType("all")}
-          className={`px-6 py-3 rounded-xl font-semibold shadow-md ${
-            filterType === "all"
+          onClick={() => {
+            setFilterType("all");
+            clearDateFilter();
+          }}
+          className={`px-6 py-3 rounded-xl font-semibold shadow-md transition-all ${
+            filterType === "all" && !selectedDate
               ? "bg-[#284b63] text-white"
-              : "bg-white text-[#284b63]"
+              : "bg-white text-[#284b63] hover:bg-gray-100"
           }`}
         >
           Show All Vendors
         </button>
 
         <button
-          onClick={() => setFilterType("calendar")}
-          className={`px-6 py-3 rounded-xl font-semibold shadow-md ${
-            filterType === "calendar"
-              ? "bg-[#284b63] text-white"
-              : "bg-white text-[#284b63]"
-          }`}
+          onClick={() => setShowCalendar(true)}
+          className="px-6 py-3 rounded-xl font-semibold shadow-md bg-[#f9a826] text-white hover:bg-[#e09620] transition-all flex items-center gap-2"
         >
-          By Calendar
+          <FiCalendar className="text-lg" />
+          Choose Date
         </button>
+
+        {selectedDate && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex items-center gap-2 bg-green-100 text-green-800 px-4 py-2 rounded-xl font-semibold"
+          >
+            <FiCalendar />
+            <span>{selectedDate.toLocaleDateString()}</span>
+            <button
+              onClick={clearDateFilter}
+              className="ml-2 hover:bg-green-200 rounded-full p-1"
+            >
+              <FiX />
+            </button>
+          </motion.div>
+        )}
       </div>
 
       {/* CONTENT SECTION */}
       <div className="max-w-7xl mx-auto px-6 py-16 flex-grow">
-        {loading ? (
-          <div className="text-center py-20">Loading vendors...</div>
-        ) : filterType === "calendar" ? (
-          freeVendors.length === 0 ? (
-            <p className="text-center text-lg text-gray-600">
-              No free vendors on selected date.
-            </p>
+        <AnimatePresence mode="wait">
+          {loading ? (
+            <motion.div
+              key="loading"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="text-center py-20"
+            >
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                className="inline-block"
+              >
+                <div className="w-16 h-16 border-4 border-[#284b63] border-t-[#f9a826] rounded-full"></div>
+              </motion.div>
+              <p className="mt-6 text-gray-600 text-lg font-semibold">
+                Loading vendors...
+              </p>
+            </motion.div>
+          ) : vendors.length === 0 ? (
+            <motion.div
+              key="empty"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="text-center py-20"
+            >
+              <div className="text-6xl mb-4">🔍</div>
+              <p className="text-gray-600 text-xl mb-2">
+                {selectedDate 
+                  ? `No vendors available on ${selectedDate.toLocaleDateString()}`
+                  : "No vendors found for this service yet."}
+              </p>
+              <p className="text-gray-500 mb-6">
+                {selectedDate 
+                  ? "Try selecting a different date"
+                  : "Check back soon or explore other services!"}
+              </p>
+            </motion.div>
           ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {freeVendors.map((v, i) => renderVendorCard(v, i))}
-            </div>
-          )
-        ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {currentVendors.map((v, i) => renderVendorCard(v, i))}
-          </div>
-        )}
+            <motion.div
+              key="vendors"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              {/* Vendors Count */}
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-center mb-12"
+              >
+                <h2 className="text-3xl font-bold text-gray-800 mb-2">
+                  Found <span className="text-[#f9a826]">{vendors.length}</span> {selectedDate ? "Available" : "Amazing"} Vendors
+                </h2>
+                <p className="text-gray-600">
+                  {selectedDate 
+                    ? `Free on ${selectedDate.toLocaleDateString()}`
+                    : "Choose the perfect match for your event"}
+                </p>
+              </motion.div>
+
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {currentVendors.map((v, i) => renderVendorCard(v, i))}
+              </div>
+
+              {/* Pagination */}
+              {vendors.length > vendorsPerPage && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="flex justify-center items-center gap-2 mt-12"
+                >
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className={`px-4 py-2 rounded-lg font-semibold transition-all duration-300 ${
+                      currentPage === 1
+                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        : 'bg-white text-[#284b63] hover:bg-[#284b63] hover:text-white shadow-md'
+                    }`}
+                  >
+                    Previous
+                  </motion.button>
+
+                  <div className="flex gap-2">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <motion.button
+                        key={page}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setCurrentPage(page)}
+                        className={`w-10 h-10 rounded-lg font-semibold transition-all duration-300 ${
+                          currentPage === page
+                            ? 'bg-gradient-to-r from-[#284b63] to-[#3c6e71] text-white shadow-lg'
+                            : 'bg-white text-gray-700 hover:bg-gray-100 shadow-md'
+                        }`}
+                      >
+                        {page}
+                      </motion.button>
+                    ))}
+                  </div>
+
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className={`px-4 py-2 rounded-lg font-semibold transition-all duration-300 ${
+                      currentPage === totalPages
+                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        : 'bg-white text-[#284b63] hover:bg-[#284b63] hover:text-white shadow-md'
+                    }`}
+                  >
+                    Next
+                  </motion.button>
+                </motion.div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <Footer />

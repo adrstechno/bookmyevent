@@ -386,23 +386,13 @@ export const getVendorShiftforVendor = async (req, res) => {
 
 export const GetvendorEventImages = async (req, res) => {
   try {
-    const vendorId = req.query.vendor_id;
+    const vendor_id = req.query.vendor_id;
 
-    const vendor_id = await new Promise((resolve, reject) => {
-      VendorModel.findVendorID(vendorId, (err, result) => {
-        if (err) {
-          reject(err);
-        } else if (!result || result.length === 0) {
-          resolve(null);
-        } else {
-          resolve(result[0].vendor_id);
-        }
-      });
-    });
     if (!vendor_id) {
-      return res.status(404).json({ message: "Vendor not found" });
+      return res.status(400).json({ message: "vendor_id is required" });
     }
 
+    // Directly use vendor_id to get event images
     const eventImages = await new Promise((resolve, reject) => {
       VendorModel.getEventImages(vendor_id, (err, result) => {
         if (err) {
