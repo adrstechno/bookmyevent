@@ -1,4 +1,5 @@
 import BookingModel from "../Models/BookingModel.js";
+import NotificationModel from "../Models/NotificationModel.js";
 import { verifyToken } from "../Utils/Verification.js";
 import { v4 as uuidv4 } from "uuid";
 
@@ -204,10 +205,25 @@ export const approveBooking = (req, res) => {
     BookingModel.updateBooking(booking_id, data, (err, result) => {
       if(err) return res.status(500).json({error: "database error", details: err});
 
-    res.status(200).json({
-      message: "Booking Approved successfully"
+      BookingModel.getBookingById(booking_id, (err2, bookingData) => {
+        if(err2 || !bookingData.length){
+          return res.status(500).json({error: "Error fetching booking"});
+        }
+
+        const booking = bookingData[0];
+
+        NotificationModel.sendNotification(
+          booking.user_id,
+          "Booking approved 😃",
+          `Your booking (ID: ${booking.booking_uuid}) has been approved by admin.`,
+          () => {}
+        );
+
+        res.status(200).json({
+          message: "Booking Approved successfully"
+        });
+      });
     });
-  });
   }
   catch (err) {
     res.status(500).json({error: "Internal server error"});
