@@ -21,6 +21,9 @@ export const insertBooking = (req, res) => {
     data.booking_uuid = uuidv4();
     data.user_id = decoded.userId;
 
+    data.status = "pending";
+    data.admin_approval = "pending";
+
     // Now call model
     BookingModel.insertBooking(data, (err, result) => {
       if (err) {
@@ -28,7 +31,7 @@ export const insertBooking = (req, res) => {
       }
 
       res.status(201).json({
-        message: "Booking Created Successfully",
+        message: "Booking Created Successfully. Awaiting admin approval",
         bookingId: result.insertId,
       });
     });
@@ -182,5 +185,31 @@ export const getBookingById = (req, res) => {
   }
 };
 
+export const approveBooking = (req, res) => {
+  try {
+    const booking_id = req.body.booking_id;
 
+    const token = req.cookies.auth_token;
+    if(!token) return res.status(401).json({error: "UnAuthorized"});
 
+    const decoded = verifyToken(token);
+    if(!decoded || !decoded.isAdmin)
+      return res.status(403).json({error: "Admin access only"});
+
+    const data = {
+      admin_approval: "approved",
+      status: "confirmed"
+    };
+
+    BookingModel.updateBooking(booking_id, data, (err, result) => {
+      if(err) return res.status(500).json({error: "database error", details: err});
+
+    res.status(200).json({
+      message: "Booking Approved successfully"
+    });
+  });
+  }
+  catch (err) {
+    res.status(500).json({error: "Internal server error"});
+  }
+}
