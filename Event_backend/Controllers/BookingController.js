@@ -232,12 +232,19 @@ export const approveBooking = (req, res) => {
           (err3) => {
             if(err3) console.error("Error saving otp", err3);
           }
-        )
+        );
 
         NotificationModel.sendNotification(
           booking.user_id,
           "Booking approved 😃",
           `Your booking (ID: ${booking.booking_uuid}) has been approved by admin.`,
+          () => {}
+        );
+
+        NotificationModel.sendNotification(
+          vendor_id,
+          "New Booking Approved 📌",
+          `A new booking is allocated to you.\nCustomer OTP: ${otp}`,
           () => {}
         );
 
@@ -247,17 +254,9 @@ export const approveBooking = (req, res) => {
       });
     });
 
-            NotificationModel.sendNotification(
-          vendor_id,
-          "New Booking Approved 📌",
-          `A new booking is allocated to you.\nCustomer OTP: ${otp}`,
-          () => {}
-        );
-
   }
   catch (err) {
     res.status(500).json({error: "Internal server error"});
   }
 }
-
 
