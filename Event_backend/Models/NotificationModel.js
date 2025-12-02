@@ -17,4 +17,13 @@ class NotificationModel {
         `;
         db.query(sql, [user_id], callback);
     }
+
+    static markAsRead(notification_id, callback) {
+        const sql = `
+        UPDATE notifications SET is_read = TRUE WHERE id = ?
+        `;
+        db.query(sql, [notification_id], callback);
+    }
 }
+
+export default NotificationModel;
