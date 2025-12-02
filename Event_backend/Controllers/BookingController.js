@@ -1,7 +1,10 @@
 import BookingModel from "../Models/BookingModel.js";
 import NotificationModel from "../Models/NotificationModel.js";
+import BookingOtpModel from "../Models/BookingOtpModel.js";
 import { verifyToken } from "../Utils/Verification.js";
 import { v4 as uuidv4 } from "uuid";
+
+import crypto from "crypto";
 
 export const insertBooking = (req, res) => {
   try {
@@ -211,6 +214,25 @@ export const approveBooking = (req, res) => {
         }
 
         const booking = bookingData[0];
+        const user_id = booking.user_id;
+        const vendor_id = booking.vendor_id;
+
+        const otp = crypto.randomInt(100000, 999999).toString();
+        const expires_at = new Date(Date.now() + 48 * 60 * 60 * 1000);
+
+        BookingOtpModel.createOtp(
+          {
+            booking_id,
+            user_id,
+            vendor_id,
+            otp,
+            expires_at,
+            generated_by: decoded.admin_id
+          },
+          (err3) => {
+            if(err3) console.error("Error saving otp", err3);
+          }
+        )
 
         NotificationModel.sendNotification(
           booking.user_id,
@@ -224,8 +246,18 @@ export const approveBooking = (req, res) => {
         });
       });
     });
+
+            NotificationModel.sendNotification(
+          vendor_id,
+          "New Booking Approved 📌",
+          `A new booking is allocated to you.\nCustomer OTP: ${otp}`,
+          () => {}
+        );
+
   }
   catch (err) {
     res.status(500).json({error: "Internal server error"});
   }
 }
+
+
