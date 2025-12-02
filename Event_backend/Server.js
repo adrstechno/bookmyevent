@@ -9,6 +9,7 @@ import ServiceRouter from './Router/ServiceROuter.js';
 import VendorRouter from './Router/VendorRouter.js';
 import BookingRouter from './Router/BookingRouter.js';
 import adminroutes from './Router/adminRoute.js'
+import notificationroutes  from './Router/NotificationRoute.js'
 
 
 dotenv.config();
@@ -32,6 +33,7 @@ app.use('/Service', ServiceRouter);
 app.use('/Vendor', VendorRouter);
 app.use('/Booking', BookingRouter);
 app.use('/admin', adminroutes);
+app.use('/notifiction',  notificationroutes)
 
 app.get('/', (req, res) => {
   res.send('Welcome to the Event Management API');
