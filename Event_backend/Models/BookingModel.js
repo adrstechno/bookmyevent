@@ -24,16 +24,15 @@ class BookingModel {
   }
 
   static updateBooking(booking_id, data, callback) {
-    const sql = `
-        UPDATE event_booking SET
-            event_address = '${data.event_address}',
-            event_date = '${data.event_date}',
-            event_time = '${data.event_time}',
-            special_requirement = '${data.special_requirement}',
-            status = '${data.status}',
-            admin_approval = '${data.admin_approval}'
-        WHERE booking_id = ${booking_id}
-    `;
+    const fields = [];
+    if (data.event_address !== undefined) fields.push(`event_address = '${data.event_address}'`);
+    if (data.event_date !== undefined) fields.push(`event_date = '${data.event_date}'`);
+    if (data.event_time !== undefined) fields.push(`event_time = '${data.event_time}'`);
+    if (data.special_requirement !== undefined) fields.push(`special_requirement = '${data.special_requirement}'`);
+    if (data.status !== undefined) fields.push(`status = '${data.status}'`);
+    if (data.admin_approval !== undefined) fields.push(`admin_approval = '${data.admin_approval}'`);
+    
+    const sql = `UPDATE event_booking SET ${fields.join(', ')} WHERE booking_id = ${booking_id}`;
     db.query(sql, callback);
   }
 
