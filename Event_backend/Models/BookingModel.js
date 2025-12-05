@@ -101,5 +101,7 @@ ORDER BY eb.booking_id DESC;
 `;
     db.query(sql, callback);
   }
+
+  
 }
 export default BookingModel;

@@ -27,6 +27,12 @@ export const insertBooking = (req, res) => {
         return res.status(500).json({ error: "Database Error", details: err });
       }
 
+      // created a 6 digit otp for booking confirmation
+
+    //   const otp = Math.floor(100000 + Math.random() * 900000);
+    // save this otp into cookiesusko 
+
+
       res.status(201).json({
         message: "Booking Created Successfully",
         bookingId: result.insertId,
