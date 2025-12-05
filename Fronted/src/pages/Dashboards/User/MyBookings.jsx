@@ -98,12 +98,10 @@ const MyBookings = () => {
     if (!window.confirm("Are you sure you want to cancel this booking?")) return;
 
     try {
+      // Backend expects id as URL parameter: /DeleteBooking/:id
       await axios.get(
-        `${VITE_API_BASE_URL}/Booking/DeleteBooking`,
-        {
-          params: { id: bookingId },
-          withCredentials: true,
-        }
+        `${VITE_API_BASE_URL}/Booking/DeleteBooking/${bookingId}`,
+        { withCredentials: true }
       );
 
       toast.success("Booking cancelled successfully!");

@@ -1,0 +1,186 @@
+/* ============================================
+   ULTRA-WIDE LUXURY EVENT CALENDAR (FINAL)
+   ============================================ */
+
+.react-calendar {
+  width: 520px;               /* ⭐ BIG CALENDAR */
+  max-width: 100%;
+  padding: 28px;
+  border-radius: 28px;
+
+  /* ⭐ Cinematic Gradient + Background Image */
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.65) 0%,
+      rgba(255, 255, 255, 0.30) 40%,
+      rgba(255, 255, 255, 0.20) 100%
+    ),
+    url('https://png.pngtree.com/thumb_back/fw800/background/20240703/pngtree-event-management-outdoor-background-image_15934727.jpg');
+
+  background-size: cover;
+  background-position: center center;
+
+  /* ⭐ Premium Glass Look */
+  backdrop-filter: blur(26px);
+  -webkit-backdrop-filter: blur(26px);
+
+  border: 1px solid rgba(255, 255, 255, 0.55);
+
+  /* ⭐ Cinematic Shadow */
+  box-shadow:
+    0 20px 50px rgba(0,0,0,0.20),
+    0 0px 18px rgba(255,255,255,0.4) inset;
+
+  animation: calendarPop 0.4s ease-out;
+}
+
+@keyframes calendarPop {
+  from { opacity: 0; transform: scale(0.88); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* ON HOVER - Slight Lift Effect */
+.react-calendar:hover {
+  transform: scale(1.03);
+  transition: 0.35s ease;
+  box-shadow:
+    0 28px 70px rgba(0,0,0,0.25),
+    0 0px 25px rgba(255,255,255,0.45) inset;
+}
+
+/* ============================================
+   NAVIGATION HEADER
+   ============================================ */
+
+.react-calendar__navigation {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.react-calendar__navigation button {
+  background: rgba(255,255,255,0.85);
+  border: none;
+  padding: 14px 20px;
+
+  font-size: 20px;
+  font-weight: 800;
+  color: #1f2d3d;
+
+  border-radius: 18px;
+
+  box-shadow: 0 6px 18px rgba(60,60,60,0.15);
+  transition: all 0.25s ease;
+}
+
+.react-calendar__navigation button:hover {
+  background: #284b63;
+  color: white;
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(40,75,99,0.35);
+}
+
+.react-calendar__navigation__label {
+  background: rgba(255,255,255,0.92);
+  padding: 12px 20px;
+  border-radius: 18px;
+
+  font-size: 24px !important;
+  font-weight: 900 !important;
+  letter-spacing: 1px;
+  color: #1c2b36 !important;
+
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+/* ============================================
+   WEEKDAY LABELS (CLEAN & CENTERED)
+   ============================================ */
+
+.react-calendar__month-view__weekdays {
+  margin-bottom: 12px;
+}
+
+.react-calendar__month-view__weekdays__weekday {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f3a4a;
+  text-align: center;
+
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.react-calendar__month-view__weekdays__weekday abbr {
+  text-decoration: none !important;
+}
+
+/* ============================================
+   DATE TILES (Premium Cards)
+   ============================================ */
+
+.react-calendar__tile {
+  background: rgba(255,255,255,0.60);
+  border-radius: 20px;
+  margin: 6px;
+  padding: 20px !important;
+
+  font-size: 18px;
+  font-weight: 600;
+  color: #263238;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  box-shadow: 0 4px 14px rgba(40,75,99,0.20);
+  transition: all 0.25s ease;
+}
+
+/* Hover Effect */
+.react-calendar__tile:hover {
+  background: rgba(249,168,38,0.28) !important;
+  transform: scale(1.10);
+  box-shadow: 0 12px 26px rgba(249,168,38,0.45);
+}
+
+/* Active (Selected) */
+.react-calendar__tile--active {
+  background: #f9a826 !important;
+  color: #fff !important;
+  transform: scale(1.16);
+  font-weight: 800;
+
+  box-shadow: 0 14px 30px rgba(249,168,38,0.55);
+}
+
+/* TODAY badge */
+.react-calendar__tile--now {
+  background: rgba(40,75,99,0.28) !important;
+  color: #284b63 !important;
+  border: 2px solid #284b63;
+  font-weight: 800;
+}
+
+/* Disabled */
+.react-calendar__tile:disabled {
+  background: rgba(150,150,150,0.25);
+  color: #7f7f7f !important;
+  opacity: 0.5;
+  box-shadow: none;
+}
+
+/* ============================================
+   MONTH VIEW CONSISTENT GRID ALIGNMENT
+   ============================================ */
+
+.react-calendar__month-view__days {
+  gap: 4px !important;
+}
+
+.react-calendar__tile {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}

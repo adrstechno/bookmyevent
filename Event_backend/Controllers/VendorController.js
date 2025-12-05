@@ -85,16 +85,11 @@ export const insertVendor = (req, res) => {
 };
 
 export const getAllVendor = (req, res) => {
-  //check if the user is login or not
-  const token = req.cookies.auth_token;
-  if (!token) {
-    return res.status(401).json({ Messege: "Unauthorized" });
-  }
-
+  // Allow public access - no authentication required for viewing vendors
   VendorModel.getallVendors((err, results) => {
     if (err) {
       return res.status(500).json({
-        messege: "Error geting vendors",
+        messege: "Error getting vendors",
         error: err,
       });
     }
@@ -391,33 +386,13 @@ export const getVendorShiftforVendor = async (req, res) => {
 
 export const GetvendorEventImages = async (req, res) => {
   try {
-    const token = req.cookies.auth_token;
+    const vendor_id = req.query.vendor_id;
 
-    if (!token) {
-      return res
-        .status(401)
-        .json({ message: "Unauthorized: No token provided" });
-    }
-    const decoded = verifyToken(token);
-    if (!decoded) {
-      return res.status(401).json({ message: "Unauthorized: Invalid token" });
-    }
-
-    const vendor_id = await new Promise((resolve, reject) => {
-      VendorModel.findVendorID(decoded.userId, (err, result) => {
-        if (err) {
-          reject(err);
-        } else if (!result || result.length === 0) {
-          resolve(null);
-        } else {
-          resolve(result[0].vendor_id);
-        }
-      });
-    });
     if (!vendor_id) {
-      return res.status(404).json({ message: "Vendor not found" });
+      return res.status(400).json({ message: "vendor_id is required" });
     }
 
+    // Directly use vendor_id to get event images
     const eventImages = await new Promise((resolve, reject) => {
       VendorModel.getEventImages(vendor_id, (err, result) => {
         if (err) {
@@ -647,23 +622,13 @@ export const getAllVendorPackages = (req, res) => {
   try{ 
     const vendor_id = req.query.vendor_id;
     
-    const token = req.cookies.auth_token;
-    if (!token) {
-      return res.status(401).json({ message: "Unauthorized: No token provided" });
-    }
-    
-    const decoded = verifyToken(token);
-    if (!decoded) {
-      return res.status(401).json({ message: "Unauthorized: Invalid token" });
-    }
-    
+    // Allow public access - no authentication required for viewing packages
     VendorModel.getAllVendorPackages(vendor_id, (err, results) => {
       if (err) {
         return res.status(500).json({ message: "Error fetching vendor packages", error: err });
       }
       return  res.status(200).json({ message: "Vendor packages retrieved successfully", count: results.length, packages: results });
     });
-
 
   }catch (err) {
     console.error("Error fetching vendor packages:", err);
@@ -675,15 +640,6 @@ export const getvendorsByServiceId = (req, res) => {
   try {
     const service_category_id = req.query.service_category_id;
 
-    const token = req.cookies.auth_token;
-    if (!token) {
-      return res.status(401).json({ message: "Unauthorized: No token provided" });
-    }
-
-    const decoded = verifyToken(token);
-    if (!decoded) {
-      return res.status(401).json({ message: "Unauthorized: Invalid token" });
-    }
 
     VendorModel.getVendorByServiceId(service_category_id, (err, results) => {
       if (err) {
@@ -697,5 +653,66 @@ export const getvendorsByServiceId = (req, res) => {
   }
 };  
 
+export const getFreeVendorsByDay = async (req, res) => {
+  try {
+    const { date, service_id } = req.query;
 
+    if (!date) {
+      return res.status(400).json({ message: "Date query param is required" });
+    }
 
+    if (!service_id) {
+      return res.status(400).json({ message: "service_id query param is required" });
+    }
+
+    // Full day names
+    const dayNames = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday"
+    ];
+    const day = dayNames[new Date(date).getDay()];
+
+    console.log("Fetching free vendors for day:", day, "and service:", service_id);
+
+    // Step 1 — Get vendor IDs who match both
+    const vendorIds = await new Promise((resolve, reject) => {
+      VendorModel.findVendorsByDayAndService(day, service_id, (err, result) => {
+        if (err) return reject(err);
+        resolve(result.map(r => r.vendor_id));
+      });
+    });
+
+    if (!vendorIds || vendorIds.length === 0) {
+      return res.status(200).json({
+        message: "No vendors available for this day and service",
+        vendors: []
+      });
+    }
+
+    // Step 2 — Get vendor details
+    const vendors = await new Promise((resolve, reject) => {
+      VendorModel.getVendorsByIds(vendorIds, (err, result) => {
+        if (err) return reject(err);
+        resolve(result);
+      });
+    });
+
+    return res.status(200).json({
+      message: "Vendors retrieved successfully",
+      count: vendors.length,
+      vendors
+    });
+
+  } catch (err) {
+    console.error("Error fetching vendors:", err);
+    return res.status(500).json({
+      error: "Server error",
+      details: err.message
+    });
+  }
+};

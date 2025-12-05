@@ -4,7 +4,8 @@ import {
   deleteBooking,
   getBookingsByUserId,
   getBookingsByVendorId,
-  getBookingById
+  getBookingById,
+  approveBooking
 } from "../Controllers/BookingController.js";
 import express from "express";
 
@@ -15,6 +16,9 @@ router.post("/InsertBooking", insertBooking);
 
 // Route to update a booking
 router.post("/UpdateBooking", updateBooking);
+
+// Route to approve the booking
+router.post("/booking/approve", approveBooking);
 
 // Route to delete a booking
 router.get("/DeleteBooking", deleteBooking);

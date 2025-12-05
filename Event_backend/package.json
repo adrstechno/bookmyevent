@@ -5,6 +5,7 @@
   "main": "Server.js",
   "type": "module",
   "scripts": {
+    "start2": "nodemon Server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node Server.js"
   },
@@ -23,5 +24,8 @@
     "mysql2": "^3.15.3",
     "url": "^0.11.4",
     "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
   }
 }

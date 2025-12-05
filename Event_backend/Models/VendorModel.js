@@ -228,6 +228,41 @@ class VendorModel {
 
     db.query(sql, [package_id], callback);
   }
+
+static findVendorsByDay(day, callback) {
+  const sql = `
+    SELECT DISTINCT vendor_id
+    FROM vendor_shifts
+    WHERE JSON_CONTAINS(days_of_week, ?, "$")
+  `;
+  db.query(sql, [`"${day}"`], callback);
 }
+
+static getVendorsByIds(ids, callback) {
+  if (ids.length === 0) return callback(null, []);
+
+  const sql = `
+    SELECT vendor_id, business_name, city, state, profile_url, service_category_id
+    FROM vendor_profiles
+    WHERE vendor_id IN (?)
+  `;
+  db.query(sql, [ids], callback);
+}
+
+static findVendorsByDayAndService(day, service_category_id, callback) {
+  const sql = `
+    SELECT DISTINCT vs.vendor_id
+    FROM vendor_shifts vs
+    JOIN vendor_profiles vp ON vs.vendor_id = vp.vendor_id
+    WHERE JSON_CONTAINS(vs.days_of_week, ?, "$")
+      AND vp.service_category_id = ?
+  `;
+
+  db.query(sql, [`"${day}"`, service_category_id], callback);
+}
+
+}
+
+
 
 export default VendorModel;

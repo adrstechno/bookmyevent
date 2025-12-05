@@ -1,6 +1,10 @@
 import BookingModel from "../Models/BookingModel.js";
+import NotificationModel from "../Models/NotificationModel.js";
+import BookingOtpModel from "../Models/BookingOtpModel.js";
 import { verifyToken } from "../Utils/Verification.js";
 import { v4 as uuidv4 } from "uuid";
+
+import crypto from "crypto";
 
 export const insertBooking = (req, res) => {
   try {
@@ -21,6 +25,9 @@ export const insertBooking = (req, res) => {
     data.booking_uuid = uuidv4();
     data.user_id = decoded.userId;
 
+    data.status = "pending";
+    data.admin_approval = "pending";
+
     // Now call model
     BookingModel.insertBooking(data, (err, result) => {
       if (err) {
@@ -34,7 +41,7 @@ export const insertBooking = (req, res) => {
 
 
       res.status(201).json({
-        message: "Booking Created Successfully",
+        message: "Booking Created Successfully. Awaiting admin approval",
         bookingId: result.insertId,
       });
     });
@@ -188,5 +195,74 @@ export const getBookingById = (req, res) => {
   }
 };
 
+export const approveBooking = (req, res) => {
+  try {
+    const booking_id = req.body.booking_id;
 
+    const token = req.cookies.auth_token;
+    if(!token) return res.status(401).json({error: "UnAuthorized"});
+
+    const decoded = verifyToken(token);
+    if(!decoded || !decoded.isAdmin)
+      return res.status(403).json({error: "Admin access only"});
+
+    const data = {
+      admin_approval: "approved",
+      status: "confirmed"
+    };
+
+    BookingModel.updateBooking(booking_id, data, (err, result) => {
+      if(err) return res.status(500).json({error: "database error", details: err});
+
+      BookingModel.getBookingById(booking_id, (err2, bookingData) => {
+        if(err2 || !bookingData.length){
+          return res.status(500).json({error: "Error fetching booking"});
+        }
+
+        const booking = bookingData[0];
+        const user_id = booking.user_id;
+        const vendor_id = booking.vendor_id;
+
+        const otp = crypto.randomInt(100000, 999999).toString();
+        const expires_at = new Date(Date.now() + 48 * 60 * 60 * 1000);
+
+        BookingOtpModel.createOtp(
+          {
+            booking_id,
+            user_id,
+            vendor_id,
+            otp,
+            expires_at,
+            generated_by: decoded.admin_id
+          },
+          (err3) => {
+            if(err3) console.error("Error saving otp", err3);
+          }
+        );
+
+        NotificationModel.sendNotification(
+          booking.user_id,
+          "Booking approved 😃",
+          `Your booking (ID: ${booking.booking_uuid}) has been approved by admin.`,
+          () => {}
+        );
+
+        NotificationModel.sendNotification(
+          vendor_id,
+          "New Booking Approved 📌",
+          `A new booking is allocated to you.\nCustomer OTP: ${otp}`,
+          () => {}
+        );
+
+        res.status(200).json({
+          message: "Booking Approved successfully"
+        });
+      });
+    });
+
+  }
+  catch (err) {
+    res.status(500).json({error: "Internal server error"});
+  }
+}
 
