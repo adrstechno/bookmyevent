@@ -10,12 +10,14 @@ import Footer from "../components/mainpage/Footer";
 import ShowcaseSection from "../components/mainpage/ShowcaseSection";
 import SocialSidebar from "../components/mainpage/SocialSidebar";
 import ContactPopup from "../components/mainpage/ContactPopup";
+import HomeNavbar from "../components/mainpage/HomeNavbar";
 
 
 const HomePage = () => {
   return (
     <div className="bg-[#f8f9fa]">
-      <Headers />
+      {/* <Headers /> */}
+      <HomeNavbar />
       <HeroSection />
       <ServicesSection />
       <VendorsSection />
