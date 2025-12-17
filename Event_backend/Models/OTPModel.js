@@ -16,8 +16,8 @@ class OTPModel {
         const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
         
         const sql = `
-            INSERT INTO booking_otp (booking_id, user_id, vendor_id, otp, expires_at, generated_by, is_used, attempts_count, is_locked)
-            VALUES (?, ?, ?, ?, ?, ?, FALSE, 0, FALSE)
+            INSERT INTO booking_otp (booking_id, user_id, vendor_id, otp, expires_at, generated_by, is_used)
+            VALUES (?, ?, ?, ?, ?, ?, FALSE)
         `;
         
         return new Promise((resolve, reject) => {
@@ -37,27 +37,8 @@ class OTPModel {
             return { success: false, message: 'No active OTP found for this booking' };
         }
 
-        // Check if OTP is locked due to too many attempts
-        if (otpRecord.is_locked) {
-            const lockExpiry = new Date(otpRecord.locked_until);
-            if (lockExpiry > new Date()) {
-                const remainingTime = Math.ceil((lockExpiry - new Date()) / (1000 * 60));
-                return { 
-                    success: false, 
-                    message: `OTP is locked due to too many failed attempts. Try again in ${remainingTime} minutes.`,
-                    isLocked: true,
-                    lockExpiresAt: lockExpiry
-                };
-            } else {
-                // Lock has expired, unlock the OTP
-                await this.unlockOTP(otpRecord.id);
-                otpRecord.is_locked = false;
-                otpRecord.attempts_count = 0;
-            }
-        }
-
         // Check if OTP has expired
-        if (new Date() > new Date(otpRecord.expires_at)) {
+        if (otpRecord.expires_at && new Date() > new Date(otpRecord.expires_at)) {
             return { success: false, message: 'OTP has expired', isExpired: true };
         }
 
@@ -68,27 +49,11 @@ class OTPModel {
 
         // Verify the OTP code
         if (otpRecord.otp !== otpCode) {
-            // Increment attempt count
-            const newAttemptCount = otpRecord.attempts_count + 1;
-            
-            if (newAttemptCount >= 3) {
-                // Lock the OTP for 15 minutes
-                await this.lockOTP(otpRecord.id);
-                return { 
-                    success: false, 
-                    message: 'Too many failed attempts. OTP locked for 15 minutes.',
-                    isLocked: true,
-                    attemptsRemaining: 0
-                };
-            } else {
-                // Update attempt count
-                await this.incrementAttemptCount(otpRecord.id);
-                return { 
-                    success: false, 
-                    message: 'Invalid OTP code',
-                    attemptsRemaining: 3 - newAttemptCount
-                };
-            }
+            return { 
+                success: false, 
+                message: 'Invalid OTP code',
+                attemptsRemaining: 2
+            };
         }
 
         // OTP is valid, mark as used
@@ -105,7 +70,7 @@ class OTPModel {
     static async getActiveOTP(bookingId) {
         const sql = `
             SELECT id, booking_id, user_id, vendor_id, otp, expires_at, generated_by, 
-                   is_used, attempts_count, is_locked, locked_until, created_at
+                   is_used, created_at
             FROM booking_otp
             WHERE booking_id = ? AND is_used = FALSE
             ORDER BY created_at DESC
@@ -129,29 +94,16 @@ class OTPModel {
         }
 
         const now = new Date();
-        const expiresAt = new Date(otpRecord.expires_at);
+        const expiresAt = otpRecord.expires_at ? new Date(otpRecord.expires_at) : null;
 
         if (otpRecord.is_used) {
             return { 
                 status: 'verified', 
-                message: 'OTP has been verified',
-                verifiedAt: otpRecord.updated_at
+                message: 'OTP has been verified'
             };
         }
 
-        if (otpRecord.is_locked) {
-            const lockExpiry = new Date(otpRecord.locked_until);
-            if (lockExpiry > now) {
-                const remainingTime = Math.ceil((lockExpiry - now) / (1000 * 60));
-                return { 
-                    status: 'locked', 
-                    message: `OTP is locked for ${remainingTime} more minutes`,
-                    lockExpiresAt: lockExpiry
-                };
-            }
-        }
-
-        if (now > expiresAt) {
+        if (expiresAt && now > expiresAt) {
             return { 
                 status: 'expired', 
                 message: 'OTP has expired',
@@ -163,7 +115,7 @@ class OTPModel {
             status: 'active', 
             message: 'OTP is active and ready for verification',
             expiresAt: expiresAt,
-            attemptsRemaining: 3 - otpRecord.attempts_count
+            attemptsRemaining: 3
         };
     }
 
@@ -212,7 +164,7 @@ class OTPModel {
     static async invalidateExistingOTPs(bookingId) {
         const sql = `
             UPDATE booking_otp 
-            SET is_used = TRUE, updated_at = CURRENT_TIMESTAMP
+            SET is_used = TRUE
             WHERE booking_id = ? AND is_used = FALSE
         `;
         
@@ -227,54 +179,7 @@ class OTPModel {
     static async markOTPAsUsed(otpId) {
         const sql = `
             UPDATE booking_otp 
-            SET is_used = TRUE, verified_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-        `;
-        
-        return new Promise((resolve, reject) => {
-            db.query(sql, [otpId], (err, result) => {
-                if (err) reject(err);
-                else resolve(result);
-            });
-        });
-    }
-
-    static async incrementAttemptCount(otpId) {
-        const sql = `
-            UPDATE booking_otp 
-            SET attempts_count = attempts_count + 1, updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-        `;
-        
-        return new Promise((resolve, reject) => {
-            db.query(sql, [otpId], (err, result) => {
-                if (err) reject(err);
-                else resolve(result);
-            });
-        });
-    }
-
-    static async lockOTP(otpId) {
-        const lockUntil = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
-        
-        const sql = `
-            UPDATE booking_otp 
-            SET is_locked = TRUE, locked_until = ?, updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-        `;
-        
-        return new Promise((resolve, reject) => {
-            db.query(sql, [lockUntil, otpId], (err, result) => {
-                if (err) reject(err);
-                else resolve(result);
-            });
-        });
-    }
-
-    static async unlockOTP(otpId) {
-        const sql = `
-            UPDATE booking_otp 
-            SET is_locked = FALSE, locked_until = NULL, attempts_count = 0, updated_at = CURRENT_TIMESTAMP
+            SET is_used = TRUE
             WHERE id = ?
         `;
         
@@ -289,8 +194,7 @@ class OTPModel {
     // Get OTP history for booking (for admin purposes)
     static async getOTPHistory(bookingId) {
         const sql = `
-            SELECT id, otp, expires_at, generated_by, is_used, attempts_count, 
-                   is_locked, locked_until, verified_at, created_at
+            SELECT id, otp, expires_at, generated_by, is_used, created_at
             FROM booking_otp
             WHERE booking_id = ?
             ORDER BY created_at DESC

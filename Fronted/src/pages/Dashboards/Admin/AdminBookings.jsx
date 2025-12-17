@@ -75,8 +75,8 @@ const AdminBookings = () => {
   const filteredBookings = bookings
     .filter((booking) => {
       if (filter === "all") return true;
-      if (filter === "pending_approval") return booking.status === "accepted_by_vendor_pending_admin";
-      if (filter === "approved") return ["approved_by_admin_pending_otp", "otp_verification_in_progress", "booking_confirmed"].includes(booking.status);
+      if (filter === "pending_approval") return booking.status === "confirmed" && booking.admin_approval === "pending";
+      if (filter === "approved") return booking.status === "confirmed" && booking.admin_approval === "approved";
       if (filter === "completed") return ["completed", "awaiting_review"].includes(booking.status);
       if (filter === "cancelled") return booking.status?.includes("cancelled") || booking.status?.includes("rejected");
       return true;
@@ -93,8 +93,18 @@ const AdminBookings = () => {
       );
     });
 
-  const StatusBadge = ({ status }) => {
-    const config = BOOKING_STATUS[status] || BOOKING_STATUS.pending;
+  const StatusBadge = ({ status, adminApproval }) => {
+    let config = BOOKING_STATUS[status] || BOOKING_STATUS.pending;
+    
+    // Custom status based on both status and admin_approval
+    if (status === "pending") {
+      config = { label: "Pending Vendor Response", color: "yellow", icon: "clock" };
+    } else if (status === "confirmed" && adminApproval === "pending") {
+      config = { label: "Awaiting Admin Approval", color: "blue", icon: "clock" };
+    } else if (status === "confirmed" && adminApproval === "approved") {
+      config = { label: "Approved - OTP Sent", color: "green", icon: "check" };
+    }
+    
     const colorClasses = {
       yellow: "bg-yellow-100 text-yellow-800",
       blue: "bg-blue-100 text-blue-800",
@@ -112,12 +122,12 @@ const AdminBookings = () => {
     );
   };
 
-  const canApproveReject = (status) => status === "accepted_by_vendor_pending_admin";
+  const canApproveReject = (booking) => booking.status === "confirmed" && booking.admin_approval === "pending";
 
   const stats = {
     total: bookings.length,
-    pendingApproval: bookings.filter(b => b.status === "accepted_by_vendor_pending_admin").length,
-    approved: bookings.filter(b => ["approved_by_admin_pending_otp", "otp_verification_in_progress", "booking_confirmed"].includes(b.status)).length,
+    pendingApproval: bookings.filter(b => b.status === "confirmed" && b.admin_approval === "pending").length,
+    approved: bookings.filter(b => b.status === "confirmed" && b.admin_approval === "approved").length,
     completed: bookings.filter(b => ["completed", "awaiting_review"].includes(b.status)).length,
   };
 
@@ -217,7 +227,7 @@ const AdminBookings = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.03 }}
               className={`bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all overflow-hidden ${
-                canApproveReject(booking.status) ? "border-l-4 border-yellow-500" : "border-l-4 border-gray-200"
+                canApproveReject(booking) ? "border-l-4 border-yellow-500" : "border-l-4 border-gray-200"
               }`}
             >
               <div className="p-6">
@@ -226,7 +236,7 @@ const AdminBookings = () => {
                   <div>
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="text-xl font-bold text-gray-800">Booking #{booking.booking_id}</h3>
-                      <StatusBadge status={booking.status} />
+                      <StatusBadge status={booking.status} adminApproval={booking.admin_approval} />
                     </div>
                     <p className="text-sm text-gray-500">
                       Created: {new Date(booking.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
@@ -234,7 +244,7 @@ const AdminBookings = () => {
                   </div>
 
                   {/* Action Buttons */}
-                  {canApproveReject(booking.status) && (
+                  {canApproveReject(booking) && (
                     <div className="flex gap-2">
                       <motion.button
                         whileHover={{ scale: 1.05 }}
@@ -324,7 +334,7 @@ const AdminBookings = () => {
                 </div>
 
                 {/* Pending Approval Alert */}
-                {canApproveReject(booking.status) && (
+                {canApproveReject(booking) && (
                   <div className="mt-4 p-4 bg-yellow-50 rounded-xl border border-yellow-200 flex items-center gap-3">
                     <FiAlertCircle className="text-yellow-600 text-xl flex-shrink-0" />
                     <div>

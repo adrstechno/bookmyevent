@@ -81,182 +81,182 @@ const Register = () => {
   };
 
   return (
-    <>
-          <div className="flex min-h-screen bg-gray-100">
-        
-        {/* Left Banner */}
-        <div
-          className="hidden md:block w-1/2 bg-cover bg-center"
-          style={{
-            backgroundImage:
-              "url('https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80')",
-          }}
-        ></div>
+  <>
+    <div
+      className="min-h-screen w-full bg-cover bg-center flex items-center justify-center"
+      style={{
+        backgroundImage:
+          "url('https://cdn.pixabay.com/photo/2016/12/03/15/41/fireworks-1880042_1280.jpg')",
+      }}
+    >
+      {/* Dark overlay for contrast */}
+      <div className="absolute inset-0 bg-black/40"></div>
 
-        {/* Right Form */}
-        <div className="flex flex-1 justify-center items-center p-6">
-          <div className="w-full max-w-md bg-white rounded-xl shadow-xl p-8 border-t-4 border-[#3c6e71]">
-            
-            {/* Header */}
-            <div className="flex flex-col items-center mb-6">
-              <div className="w-14 h-14 bg-[#3c6e71] text-white rounded-full flex items-center justify-center shadow-md">
-                <RiUserAddFill size={28} />
-              </div>
+      {/* Register Card */}
+      <div className="relative w-full max-w-md mx-4 bg-white/20 backdrop-blur-md rounded-xl shadow-2xl p-8 ">
+        {/* Header */}
+        <div className="flex flex-col items-center mb-6">
+          <div className="w-14 h-14 bg-[#3c6e71] text-white rounded-full flex items-center justify-center shadow-md">
+            <RiUserAddFill size={28} />
+          </div>
 
-              <h2 className="text-3xl font-bold mt-4 text-gray-800">
-                {isVendorSignup ? "Vendor Sign Up" : "Create Your Account"}
-              </h2>
+          <h2 className="text-3xl font-bold mt-4 text-black-800">
+            {isVendorSignup ? "Vendor Sign Up" : "Create Your Account"}
+          </h2>
 
-              <p className="text-gray-500 text-sm">
-                {isVendorSignup
-                  ? "Join as a vendor and grow your business"
-                  : "Let's get you started"}
-              </p>
+          <p className="text-black-600 text-sm">
+            {isVendorSignup
+              ? "Join as a vendor and grow your business"
+              : "Let's get you started"}
+          </p>
+        </div>
+
+        {/* FORM */}
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* First + Last Name */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="relative">
+              <FaUser className="absolute left-3 top-3 text-gray-500" />
+              <input
+                name="first_name"
+                placeholder="First Name"
+                value={formData.first_name}
+                onChange={handleChange}
+                className={`w-full pl-10 pr-3 py-2.5 rounded-lg border bg-gray-50/80 outline-none ${
+                  errors.first_name ? "border-red-500" : "border-gray-300"
+                } focus:ring-2 focus:ring-[#3c6e71]`}
+              />
+              {errors.first_name && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.first_name}
+                </p>
+              )}
             </div>
 
-            {/* FORM */}
-            <form onSubmit={handleSubmit} className="space-y-5">
-              
-              {/* First + Last Name */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="relative">
-                  <FaUser className="absolute left-3 top-3 text-gray-500" />
-                  <input
-                    name="first_name"
-                    placeholder="First Name"
-                    value={formData.first_name}
-                    onChange={handleChange}
-                    className={`w-full pl-10 pr-3 py-2.5 rounded-lg border bg-gray-50 outline-none ${
-                      errors.first_name ? "border-red-500" : "border-gray-300"
-                    } focus:ring-2 focus:ring-[#3c6e71]`}
-                  />
-                  {errors.first_name && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.first_name}
-                    </p>
-                  )}
-                </div>
-
-                <div className="relative">
-                  <FaUser className="absolute left-3 top-3 text-gray-500" />
-                  <input
-                    name="last_name"
-                    placeholder="Last Name"
-                    value={formData.last_name}
-                    onChange={handleChange}
-                    className="w-full pl-10 pr-3 py-2.5 rounded-lg border bg-gray-50 border-gray-300 outline-none focus:ring-2 focus:ring-[#3c6e71]"
-                  />
-                </div>
-              </div>
-
-              {/* Email */}
-              <div className="relative">
-                <FaRegEnvelope className="absolute left-3 top-3 text-gray-500" />
-                <input
-                  name="email"
-                  placeholder="Email Address"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className={`w-full pl-10 pr-3 py-2.5 rounded-lg border outline-none bg-gray-50 ${
-                    errors.email ? "border-red-500" : "border-gray-300"
-                  } focus:ring-2 focus:ring-[#3c6e71]`}
-                />
-                {errors.email && (
-                  <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-                )}
-              </div>
-
-              {/* Phone */}
-              <div className="relative">
-                <FaPhoneAlt className="absolute left-3 top-3 text-gray-500" />
-                <input
-                  name="phone"
-                  placeholder="Phone Number"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  className={`w-full pl-10 pr-3 py-2.5 rounded-lg border outline-none bg-gray-50 ${
-                    errors.phone ? "border-red-500" : "border-gray-300"
-                  } focus:ring-2 focus:ring-[#3c6e71]`}
-                />
-                {errors.phone && (
-                  <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
-                )}
-              </div>
-
-              {/* Password */}
-              <div className="relative">
-                <FaLock className="absolute left-3 top-3 text-gray-500" />
-                <input
-                  name="password"
-                  type="password"
-                  placeholder="Password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className={`w-full pl-10 pr-3 py-2.5 rounded-lg border outline-none bg-gray-50 ${
-                    errors.password ? "border-red-500" : "border-gray-300"
-                  } focus:ring-2 focus:ring-[#3c6e71]`}
-                />
-                {errors.password && (
-                  <p className="text-red-500 text-sm mt-1">{errors.password}</p>
-                )}
-              </div>
-
-              {/* Submit */}
-              <button
-                type="submit"
-                className="w-full py-3 bg-[#3c6e71] text-white rounded-lg font-semibold hover:bg-[#284b63] transition"
-              >
-                {loading ? "Registering..." : isVendorSignup ? "Register as Vendor" : "Register"}
-              </button>
-
-              {/* Vendor Switch */}
-              <p className="text-center text-sm text-gray-600">
-                {isVendorSignup ? (
-                  <>
-                    Want to register as a normal user?{" "}
-                    <span
-                      className="text-[#3c6e71] cursor-pointer font-semibold hover:underline"
-                      onClick={() => {
-                        setIsVendorSignup(false);
-                        setFormData({ ...formData, user_type: "user" });
-                      }}
-                    >
-                      Sign Up as User
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    Want to offer services?{" "}
-                    <span
-                      className="text-[#3c6e71] cursor-pointer font-semibold hover:underline"
-                      onClick={() => {
-                        setIsVendorSignup(true);
-                        setFormData({ ...formData, user_type: "vendor" });
-                      }}
-                    >
-                      Sign Up as Vendor
-                    </span>
-                  </>
-                )}
-              </p>
-
-              {/* Login Link */}
-              <p className="text-center text-sm text-gray-600">
-                Already have an account?{" "}
-                <span
-                  className="text-[#3c6e71] cursor-pointer font-semibold hover:underline"
-                  onClick={() => navigate("/login")}
-                >
-                  Login
-                </span>
-              </p>
-
-            </form>
+            <div className="relative">
+              <FaUser className="absolute left-3 top-3 text-gray-500" />
+              <input
+                name="last_name"
+                placeholder="Last Name"
+                value={formData.last_name}
+                onChange={handleChange}
+                className="w-full pl-10 pr-3 py-2.5 rounded-lg border bg-gray-50/80 border-gray-300 outline-none focus:ring-2 focus:ring-[#3c6e71]"
+              />
+            </div>
           </div>
-        </div>
+
+          {/* Email */}
+          <div className="relative">
+            <FaRegEnvelope className="absolute left-3 top-3 text-gray-500" />
+            <input
+              name="email"
+              placeholder="Email Address"
+              value={formData.email}
+              onChange={handleChange}
+              className={`w-full pl-10 pr-3 py-2.5 rounded-lg border outline-none bg-gray-50/80 ${
+                errors.email ? "border-red-500" : "border-gray-300"
+              } focus:ring-2 focus:ring-[#3c6e71]`}
+            />
+            {errors.email && (
+              <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+            )}
+          </div>
+
+          {/* Phone */}
+          <div className="relative">
+            <FaPhoneAlt className="absolute left-3 top-3 text-gray-500" />
+            <input
+              name="phone"
+              placeholder="Phone Number"
+              value={formData.phone}
+              onChange={handleChange}
+              className={`w-full pl-10 pr-3 py-2.5 rounded-lg border outline-none bg-gray-50/80 ${
+                errors.phone ? "border-red-500" : "border-gray-300"
+              } focus:ring-2 focus:ring-[#3c6e71]`}
+            />
+            {errors.phone && (
+              <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
+            )}
+          </div>
+
+          {/* Password */}
+          <div className="relative">
+            <FaLock className="absolute left-3 top-3 text-gray-500" />
+            <input
+              name="password"
+              type="password"
+              placeholder="Password"
+              value={formData.password}
+              onChange={handleChange}
+              className={`w-full pl-10 pr-3 py-2.5 rounded-lg border outline-none bg-gray-50/80 ${
+                errors.password ? "border-red-500" : "border-gray-300"
+              } focus:ring-2 focus:ring-[#3c6e71]`}
+            />
+            {errors.password && (
+              <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+            )}
+          </div>
+
+          {/* Submit */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3 bg-[#3c6e71] text-white rounded-lg font-semibold hover:bg-[#284b63] transition"
+          >
+            {loading
+              ? "Registering..."
+              : isVendorSignup
+              ? "Register as Vendor"
+              : "Register"}
+          </button>
+
+          {/* Vendor Switch */}
+          <p className="text-center text-sm text-black-700">
+            {isVendorSignup ? (
+              <>
+                Want to register as a normal user?{" "}
+                <span
+                  className="text-black cursor-pointer font-semibold hover:underline"
+                  onClick={() => {
+                    setIsVendorSignup(false);
+                    setFormData({ ...formData, user_type: "user" });
+                  }}
+                >
+                  Sign Up as User
+                </span>
+              </>
+            ) : (
+              <>
+                Want to offer services?{" "}
+                <span
+                  className="text-black-800 cursor-pointer font-semibold hover:underline"
+                  onClick={() => {
+                    setIsVendorSignup(true);
+                    setFormData({ ...formData, user_type: "vendor" });
+                  }}
+                >
+                  Sign Up as Vendor
+                </span>
+              </>
+            )}
+          </p>
+
+          {/* Login Link */}
+          <p className="text-center text-sm text-black-700">
+            Already have an account?{" "}
+            <span
+              className="text-black cursor-pointer font-semibold hover:underline"
+              onClick={() => navigate("/login")}
+            >
+              Login
+            </span>
+          </p>
+        </form>
       </div>
-    </>
-  );
+    </div>
+  </>
+);
+
 };
 
 export default Register;
