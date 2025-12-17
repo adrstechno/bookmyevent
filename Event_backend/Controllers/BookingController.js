@@ -1,5 +1,4 @@
 import BookingModel from "../Models/BookingModel.js";
-import NotificationService from "../Services/NotificationService.js";
 import { v4 as uuidv4 } from 'uuid';
 
 class BookingController {
@@ -50,17 +49,7 @@ class BookingController {
 
             const result = await BookingModel.createBooking(bookingData);
 
-            // Get full booking details for notifications
-            const booking = await BookingModel.getBookingById(result.booking_id);
-
-            // Send notification to vendor
-            await NotificationService.notifyBookingCreated({
-                booking_id: result.booking_id,
-                user_name: `${booking.first_name} ${booking.last_name}`,
-                vendor_id,
-                event_date,
-                package_name: booking.package_name
-            });
+            // Notification will be handled separately if needed
 
             res.status(201).json({
                 success: true,
@@ -68,7 +57,7 @@ class BookingController {
                 data: {
                     booking_id: result.booking_id,
                     booking_uuid: result.booking_uuid,
-                    status: BookingModel.BOOKING_STATUS.PENDING_VENDOR_RESPONSE
+                    status: 'pending'
                 }
             });
 
@@ -113,22 +102,14 @@ class BookingController {
 
             await BookingModel.vendorAcceptBooking(id, vendor_id);
 
-            // Send notifications
-            await NotificationService.notifyBookingAccepted({
-                booking_id: id,
-                user_id: booking.user_id,
-                user_name: `${booking.first_name} ${booking.last_name}`,
-                vendor_name: booking.business_name,
-                event_date: booking.event_date,
-                package_name: booking.package_name
-            });
+            // Notification will be handled separately if needed
 
             res.status(200).json({
                 success: true,
                 message: 'Booking accepted successfully',
                 data: {
                     booking_id: id,
-                    status: BookingModel.BOOKING_STATUS.ACCEPTED_BY_VENDOR_PENDING_ADMIN
+                    status: 'confirmed'
                 }
             });
 
@@ -174,21 +155,14 @@ class BookingController {
 
             await BookingModel.vendorRejectBooking(id, vendor_id, reason);
 
-            // Send notification to user
-            await NotificationService.notifyBookingRejected({
-                booking_id: id,
-                user_id: booking.user_id,
-                vendor_name: booking.business_name,
-                event_date: booking.event_date,
-                reason
-            });
+            // Notification will be handled separately if needed
 
             res.status(200).json({
                 success: true,
                 message: 'Booking rejected successfully',
                 data: {
                     booking_id: id,
-                    status: BookingModel.BOOKING_STATUS.CANCELLED_BY_VENDOR
+                    status: 'cancelled'
                 }
             });
 
@@ -233,22 +207,14 @@ class BookingController {
 
             await BookingModel.adminApproveBooking(id, admin_id);
 
-            // Send notifications
-            await NotificationService.notifyBookingApproved({
-                booking_id: id,
-                user_id: booking.user_id,
-                vendor_id: booking.vendor_id,
-                vendor_name: booking.business_name,
-                event_date: booking.event_date,
-                package_name: booking.package_name
-            });
+            // Notification will be handled separately if needed
 
             res.status(200).json({
                 success: true,
                 message: 'Booking approved successfully',
                 data: {
                     booking_id: id,
-                    status: BookingModel.BOOKING_STATUS.APPROVED_BY_ADMIN_PENDING_OTP
+                    status: 'confirmed'
                 }
             });
 
@@ -294,23 +260,14 @@ class BookingController {
 
             await BookingModel.adminRejectBooking(id, admin_id, reason);
 
-            // Send notifications
-            await NotificationService.notifyBookingAdminRejected({
-                booking_id: id,
-                user_id: booking.user_id,
-                user_name: `${booking.first_name} ${booking.last_name}`,
-                vendor_id: booking.vendor_id,
-                vendor_name: booking.business_name,
-                event_date: booking.event_date,
-                reason
-            });
+            // Notification will be handled separately if needed
 
             res.status(200).json({
                 success: true,
                 message: 'Booking rejected successfully',
                 data: {
                     booking_id: id,
-                    status: BookingModel.BOOKING_STATUS.REJECTED_BY_ADMIN
+                    status: 'cancelled'
                 }
             });
 
@@ -374,21 +331,9 @@ class BookingController {
 
             await BookingModel.cancelBooking(id, cancelled_by, cancelled_by_type, reason);
 
-            // Send notifications
-            await NotificationService.notifyBookingCancelled({
-                booking_id: id,
-                cancelled_by: cancelled_by_type,
-                user_id: booking.user_id,
-                user_name: `${booking.first_name} ${booking.last_name}`,
-                vendor_id: booking.vendor_id,
-                vendor_name: booking.business_name,
-                event_date: booking.event_date,
-                reason
-            });
+            // Notification will be handled separately if needed
 
-            const newStatus = cancelled_by_type === 'user' 
-                ? BookingModel.BOOKING_STATUS.CANCELLED_BY_USER
-                : BookingModel.BOOKING_STATUS.CANCELLED_BY_VENDOR;
+            const newStatus = 'cancelled';
 
             res.status(200).json({
                 success: true,
@@ -700,21 +645,14 @@ class BookingController {
             // Get booking details for notification
             const booking = await BookingModel.getBookingById(id);
 
-            // Send review reminder to user
-            await NotificationService.notifyReviewReminder({
-                booking_id: id,
-                user_id: booking.user_id,
-                vendor_name: booking.business_name,
-                event_date: booking.event_date,
-                package_name: booking.package_name
-            });
+            // Notification will be handled separately if needed
 
             res.status(200).json({
                 success: true,
                 message: 'Booking marked as awaiting review',
                 data: {
                     booking_id: id,
-                    status: BookingModel.BOOKING_STATUS.AWAITING_REVIEW
+                    status: 'completed'
                 }
             });
 
@@ -730,8 +668,70 @@ class BookingController {
 
     // Legacy functions for backward compatibility with existing routes
     static async insertBooking(req, res) {
-        // Redirect to the new createBooking method
-        return BookingController.createBooking(req, res);
+        try {
+            // For legacy compatibility, get user_id from request body if not authenticated
+            const user_id = req.user?.uuid || req.user?.user_id || req.body.user_id;
+            
+            if (!user_id) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'user_id is required'
+                });
+            }
+
+            const {
+                vendor_id,
+                shift_id,
+                package_id,
+                event_address,
+                event_date,
+                event_time,
+                special_requirement
+            } = req.body;
+
+            // Validate required fields
+            if (!vendor_id || !shift_id || !package_id || !event_address || !event_date || !event_time) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'vendor_id, shift_id, package_id, event_address, event_date, and event_time are required'
+                });
+            }
+
+            // Generate booking UUID
+            const booking_uuid = uuidv4();
+
+            const bookingData = {
+                booking_uuid,
+                user_id,
+                vendor_id,
+                shift_id,
+                package_id,
+                event_address,
+                event_date,
+                event_time,
+                special_requirement
+            };
+
+            const result = await BookingModel.createBooking(bookingData);
+
+            res.status(201).json({
+                success: true,
+                message: 'Booking created successfully',
+                data: {
+                    booking_id: result.booking_id,
+                    booking_uuid: result.booking_uuid,
+                    status: 'pending'
+                }
+            });
+
+        } catch (error) {
+            console.error('Insert booking error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to create booking',
+                error: error.message
+            });
+        }
     }
 
     static async updateBooking(req, res) {

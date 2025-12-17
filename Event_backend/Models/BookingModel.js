@@ -1,18 +1,18 @@
 import db from "../Config/DatabaseCon.js";
 
 class BookingModel {
-    // Booking status constants
+    // Booking status constants (using original shorter values for compatibility)
     static BOOKING_STATUS = {
-        PENDING_VENDOR_RESPONSE: 'pending_vendor_response',
-        ACCEPTED_BY_VENDOR_PENDING_ADMIN: 'accepted_by_vendor_pending_admin',
-        APPROVED_BY_ADMIN_PENDING_OTP: 'approved_by_admin_pending_otp',
-        OTP_VERIFICATION_IN_PROGRESS: 'otp_verification_in_progress',
-        BOOKING_CONFIRMED: 'booking_confirmed',
-        AWAITING_REVIEW: 'awaiting_review',
+        PENDING_VENDOR_RESPONSE: 'pending',
+        ACCEPTED_BY_VENDOR_PENDING_ADMIN: 'confirmed',
+        APPROVED_BY_ADMIN_PENDING_OTP: 'confirmed',
+        OTP_VERIFICATION_IN_PROGRESS: 'confirmed',
+        BOOKING_CONFIRMED: 'confirmed',
+        AWAITING_REVIEW: 'completed',
         COMPLETED: 'completed',
-        CANCELLED_BY_USER: 'cancelled_by_user',
-        CANCELLED_BY_VENDOR: 'cancelled_by_vendor',
-        REJECTED_BY_ADMIN: 'rejected_by_admin'
+        CANCELLED_BY_USER: 'cancelled',
+        CANCELLED_BY_VENDOR: 'cancelled',
+        REJECTED_BY_ADMIN: 'cancelled'
     };
 
     // Create new booking
@@ -41,7 +41,7 @@ class BookingModel {
             db.query(sql, [
                 booking_uuid, user_id, vendor_id, shift_id, package_id,
                 event_address, event_date, event_time, special_requirement,
-                this.BOOKING_STATUS.PENDING_VENDOR_RESPONSE
+                'pending'
             ], (err, result) => {
                 if (err) reject(err);
                 else resolve({ booking_id: result.insertId, booking_uuid });
@@ -123,15 +123,23 @@ class BookingModel {
             throw new Error('Unauthorized: You can only accept your own bookings');
         }
 
-        if (booking.status !== this.BOOKING_STATUS.PENDING_VENDOR_RESPONSE) {
+        if (booking.status !== 'pending') {
             throw new Error('Booking cannot be accepted in current status');
         }
 
-        return await this.updateBookingStatus(
-            booking_id, 
-            this.BOOKING_STATUS.ACCEPTED_BY_VENDOR_PENDING_ADMIN, 
-            `vendor_${vendor_id}`
-        );
+        // Update both status and admin_approval for vendor acceptance
+        const sql = `
+            UPDATE event_booking 
+            SET status = 'confirmed', admin_approval = 'pending', updated_at = CURRENT_TIMESTAMP, updated_by = ?
+            WHERE booking_id = ?
+        `;
+
+        return new Promise((resolve, reject) => {
+            db.query(sql, [`vendor_${vendor_id}`, booking_id], (err, result) => {
+                if (err) reject(err);
+                else resolve(result.affectedRows > 0);
+            });
+        });
     }
 
     // Vendor rejects booking
@@ -166,7 +174,7 @@ class BookingModel {
             throw new Error('Booking not found');
         }
 
-        if (booking.status !== this.BOOKING_STATUS.ACCEPTED_BY_VENDOR_PENDING_ADMIN) {
+        if (booking.status !== 'confirmed' || booking.admin_approval !== 'pending') {
             throw new Error('Booking cannot be approved in current status');
         }
 
@@ -179,7 +187,7 @@ class BookingModel {
 
         return new Promise((resolve, reject) => {
             db.query(sql, [
-                this.BOOKING_STATUS.APPROVED_BY_ADMIN_PENDING_OTP, 
+                'confirmed', 
                 `admin_${admin_id}`, 
                 booking_id
             ], (err, result) => {
@@ -223,39 +231,17 @@ class BookingModel {
 
     // Start OTP verification process
     static async startOTPVerification(booking_id) {
-        const booking = await this.getBookingById(booking_id);
-        
-        if (!booking) {
-            throw new Error('Booking not found');
-        }
-
-        if (booking.status !== this.BOOKING_STATUS.APPROVED_BY_ADMIN_PENDING_OTP) {
-            throw new Error('OTP verification cannot be started in current status');
-        }
-
-        return await this.updateBookingStatus(
-            booking_id, 
-            this.BOOKING_STATUS.OTP_VERIFICATION_IN_PROGRESS, 
-            'system'
-        );
+        // For simplicity, just return true since status is already 'confirmed'
+        return true;
     }
 
     // Complete OTP verification
     static async completeOTPVerification(booking_id) {
-        const booking = await this.getBookingById(booking_id);
-        
-        if (!booking) {
-            throw new Error('Booking not found');
-        }
-
-        if (booking.status !== this.BOOKING_STATUS.OTP_VERIFICATION_IN_PROGRESS) {
-            throw new Error('OTP verification cannot be completed in current status');
-        }
-
+        // Keep status as 'confirmed' but could add a flag or note
         return await this.updateBookingStatus(
             booking_id, 
-            this.BOOKING_STATUS.BOOKING_CONFIRMED, 
-            'system'
+            'confirmed', 
+            'system_otp_verified'
         );
     }
 
@@ -268,29 +254,15 @@ class BookingModel {
         }
 
         // Check if booking can be cancelled
-        const cancellableStatuses = [
-            this.BOOKING_STATUS.PENDING_VENDOR_RESPONSE,
-            this.BOOKING_STATUS.ACCEPTED_BY_VENDOR_PENDING_ADMIN,
-            this.BOOKING_STATUS.APPROVED_BY_ADMIN_PENDING_OTP
-        ];
+        const cancellableStatuses = ['pending', 'confirmed'];
 
         if (!cancellableStatuses.includes(booking.status)) {
             throw new Error('Booking cannot be cancelled in current status');
         }
 
-        // Determine cancellation status based on who is cancelling
-        let newStatus;
-        if (user_type === 'user') {
-            newStatus = this.BOOKING_STATUS.CANCELLED_BY_USER;
-        } else if (user_type === 'vendor') {
-            newStatus = this.BOOKING_STATUS.CANCELLED_BY_VENDOR;
-        } else {
-            throw new Error('Invalid user type for cancellation');
-        }
-
         return await this.updateBookingStatus(
             booking_id, 
-            newStatus, 
+            'cancelled', 
             `${user_type}_${cancelled_by}`,
             reason
         );
@@ -304,32 +276,22 @@ class BookingModel {
             throw new Error('Booking not found');
         }
 
-        if (booking.status !== this.BOOKING_STATUS.BOOKING_CONFIRMED) {
+        if (booking.status !== 'confirmed') {
             throw new Error('Only confirmed bookings can be marked as awaiting review');
         }
 
         return await this.updateBookingStatus(
             booking_id, 
-            this.BOOKING_STATUS.AWAITING_REVIEW, 
+            'completed', 
             'system'
         );
     }
 
     // Complete booking (after review)
     static async completeBooking(booking_id) {
-        const booking = await this.getBookingById(booking_id);
-        
-        if (!booking) {
-            throw new Error('Booking not found');
-        }
-
-        if (booking.status !== this.BOOKING_STATUS.AWAITING_REVIEW) {
-            throw new Error('Only bookings awaiting review can be completed');
-        }
-
         return await this.updateBookingStatus(
             booking_id, 
-            this.BOOKING_STATUS.COMPLETED, 
+            'completed', 
             'system'
         );
     }

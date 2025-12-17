@@ -91,7 +91,7 @@ class ReviewController {
                     rating_id: result.rating_id,
                     rating_uuid: result.rating_uuid,
                     overall_rating: result.overall_rating,
-                    booking_status: BookingModel.BOOKING_STATUS.COMPLETED
+                    booking_status: 'completed'
                 }
             });
 

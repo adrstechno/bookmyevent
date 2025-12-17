@@ -252,7 +252,7 @@ class ReviewModel {
         }
 
         // Check if booking is in a reviewable state
-        const reviewableStatuses = ['awaiting_review', 'completed'];
+        const reviewableStatuses = ['completed'];
         if (!reviewableStatuses.includes(booking.status)) {
             return { canReview: false, reason: 'Booking must be completed to leave a review' };
         }

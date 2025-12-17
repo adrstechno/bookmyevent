@@ -41,11 +41,12 @@ class OTPController {
             }
 
             // Check if booking is in correct status for OTP generation
-            if (booking.status !== BookingModel.BOOKING_STATUS.APPROVED_BY_ADMIN_PENDING_OTP) {
+            if (booking.status !== 'confirmed' || booking.admin_approval !== 'approved') {
                 return res.status(400).json({
                     success: false,
                     message: 'OTP can only be generated for admin-approved bookings',
-                    currentStatus: booking.status
+                    currentStatus: booking.status,
+                    adminApproval: booking.admin_approval
                 });
             }
 
@@ -163,7 +164,7 @@ class OTPController {
                 data: {
                     booking_id,
                     verified_at: new Date(),
-                    booking_status: BookingModel.BOOKING_STATUS.BOOKING_CONFIRMED
+                    booking_status: 'confirmed'
                 }
             });
 
@@ -278,16 +279,12 @@ class OTPController {
             }
 
             // Check booking status
-            const validStatuses = [
-                BookingModel.BOOKING_STATUS.APPROVED_BY_ADMIN_PENDING_OTP,
-                BookingModel.BOOKING_STATUS.OTP_VERIFICATION_IN_PROGRESS
-            ];
-
-            if (!validStatuses.includes(booking.status)) {
+            if (booking.status !== 'confirmed' || booking.admin_approval !== 'approved') {
                 return res.status(400).json({
                     success: false,
-                    message: 'OTP can only be resent for bookings pending OTP verification',
-                    currentStatus: booking.status
+                    message: 'OTP can only be resent for admin-approved bookings',
+                    currentStatus: booking.status,
+                    adminApproval: booking.admin_approval
                 });
             }
 
