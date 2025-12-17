@@ -52,7 +52,8 @@ import {
   FaSearch,             // Leads
   FaHome,               // User Dashboard
   FaTicketAlt,          // Bookings
-  FaCog          // Settingsw
+  FaCog,                // Settings
+  FaClipboardList,      // Booking Management
 } from "react-icons/fa";
 
 export const menuConfig = {
@@ -60,15 +61,17 @@ export const menuConfig = {
     { label: "Dashboard", path: "/admin/dashboard", icon: <FaTachometerAlt /> },
     { label: "Users", path: "/admin/users", icon: <FaUsers /> },
     { label: "Services", path: "/admin/addservices", icon: <FaCalendarAlt /> },
+    { label: "Bookings", path: "/admin/bookings", icon: <FaClipboardList /> },
   ],
 
   vendor: [
     { label: "Create Profile", path: "/vendor/profile-setup", icon: <FaUser /> },
     { label: "Shifts", path: "/vendor/shifts", icon: <FaListAlt /> },
     { label: "Dashboard", path: "/vendor/dashboard", icon: <FaTachometerAlt /> },
+    { label: "Bookings", path: "/vendor/bookings", icon: <FaClipboardList /> },
     { label: "My Events", path: "/vendor/myevents", icon: <FaListAlt /> },
     { label: "Gallery", path: "/vendor/gallery", icon: <FaShoppingCart /> },
-    { label: "My Packege", path: "/vendor/mypackege", icon: <FaShoppingCart /> },
+    { label: "My Package", path: "/vendor/mypackege", icon: <FaShoppingCart /> },
     { label: "Setting", path: "/vendor/setting", icon: <FaCog /> },
   ],
 
