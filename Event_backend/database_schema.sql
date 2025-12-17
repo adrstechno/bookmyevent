@@ -179,7 +179,7 @@ CREATE TABLE IF NOT EXISTS booking_otp (
     vendor_id INT,
     otp VARCHAR(10) NOT NULL,
     expires_at TIMESTAMP NULL DEFAULT NULL,
-    generated_by ENUM('user', 'vendor') DEFAULT 'user',
+    generated_by ENUM('user', 'vendor', 'admin') DEFAULT 'user',
     is_used BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (booking_id) REFERENCES event_booking(booking_id) ON DELETE CASCADE,

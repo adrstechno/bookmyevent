@@ -1,4 +1,6 @@
 import BookingModel from "../Models/BookingModel.js";
+import OTPModel from "../Models/OTPModel.js";
+import NotificationService from "../Services/NotificationService.js";
 import { v4 as uuidv4 } from 'uuid';
 
 class BookingController {
@@ -176,7 +178,7 @@ class BookingController {
         }
     }
 
-    // Admin approves booking
+    // Admin approves booking - generates OTP and sends to user
     static async approveBooking(req, res) {
         try {
             const { id } = req.params;
@@ -207,14 +209,39 @@ class BookingController {
 
             await BookingModel.adminApproveBooking(id, admin_id);
 
-            // Notification will be handled separately if needed
+            // Generate OTP for the user after admin approval
+            let otpResult = null;
+            try {
+                otpResult = await OTPModel.createOTP(
+                    id,
+                    booking.user_id,
+                    booking.vendor_id,
+                    'vendor' // Using 'vendor' as generated_by since ENUM may not have 'admin' yet
+                );
+
+                // Send notification to user with OTP
+                await NotificationService.notifyOTPGenerated({
+                    booking_id: id,
+                    user_id: booking.user_id,
+                    otp_code: otpResult.otp,
+                    vendor_name: booking.business_name,
+                    event_date: booking.event_date,
+                    expires_at: otpResult.expiresAt
+                });
+            } catch (otpError) {
+                console.error('OTP generation error:', otpError);
+                // Continue even if OTP generation fails - booking is still approved
+            }
 
             res.status(200).json({
                 success: true,
-                message: 'Booking approved successfully',
+                message: 'Booking approved successfully. OTP has been sent to the user.',
                 data: {
                     booking_id: id,
-                    status: 'confirmed'
+                    status: 'confirmed',
+                    admin_approval: 'approved',
+                    otp_generated: !!otpResult,
+                    otp_expires_at: otpResult?.expiresAt
                 }
             });
 
@@ -474,14 +501,18 @@ class BookingController {
     // Get vendor bookings
     static async getVendorBookings(req, res) {
         try {
-            const vendor_id = req.user?.vendor_id || req.user?.user_id;
+            console.log('getVendorBookings - req.user:', JSON.stringify(req.user));
+            const vendor_id = req.user?.vendor_id;
             
             if (!vendor_id) {
+                console.log('No vendor_id found for user');
                 return res.status(401).json({
                     success: false,
-                    message: 'Vendor authentication required'
+                    message: 'Vendor authentication required. No vendor profile found.'
                 });
             }
+
+            console.log('Fetching bookings for vendor_id:', vendor_id);
 
             const {
                 page = 1,
@@ -496,6 +527,7 @@ class BookingController {
             };
 
             const bookings = await BookingModel.getBookingsByVendor(vendor_id, options);
+            console.log('Found', bookings.length, 'bookings for vendor');
 
             res.status(200).json({
                 success: true,

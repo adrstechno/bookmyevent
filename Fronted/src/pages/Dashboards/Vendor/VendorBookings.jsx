@@ -10,8 +10,11 @@ import {
   FiX,
   FiRefreshCw,
   FiAlertCircle,
+  FiKey,
+  FiShield,
 } from "react-icons/fi";
 import bookingService, { BOOKING_STATUS } from "../../../services/bookingService";
+import otpService from "../../../services/otpService";
 import toast from "react-hot-toast";
 
 const VendorBookings = () => {
@@ -19,6 +22,13 @@ const VendorBookings = () => {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
   const [filter, setFilter] = useState("all");
+  
+  // OTP Modal State
+  const [otpModal, setOtpModal] = useState({ open: false, booking: null });
+  const [otpCode, setOtpCode] = useState("");
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpError, setOtpError] = useState("");
+  const [attemptsRemaining, setAttemptsRemaining] = useState(3);
 
   // Fetch bookings on mount
   useEffect(() => {
@@ -32,7 +42,6 @@ const VendorBookings = () => {
       setBookings(response.data?.bookings || response.bookings || []);
     } catch (error) {
       console.error("Error fetching bookings:", error);
-      // Don't redirect on error, just show message
       const message = error.response?.data?.message || error.response?.data?.error || "Failed to load bookings";
       toast.error(message);
       setBookings([]);
@@ -83,18 +92,105 @@ const VendorBookings = () => {
     }
   };
 
+  // Open OTP verification modal
+  const openOTPModal = async (booking) => {
+    setOtpModal({ open: true, booking });
+    setOtpCode("");
+    setOtpError("");
+    setAttemptsRemaining(3);
+    
+    // Check OTP status
+    try {
+      const response = await otpService.getRemainingAttempts(booking.booking_id);
+      if (response.data) {
+        setAttemptsRemaining(response.data.attempts_remaining || 3);
+      }
+    } catch (error) {
+      console.log("Could not fetch OTP status");
+    }
+  };
+
+  // Close OTP modal
+  const closeOTPModal = () => {
+    setOtpModal({ open: false, booking: null });
+    setOtpCode("");
+    setOtpError("");
+  };
+
+  // Verify OTP
+  const handleVerifyOTP = async () => {
+    if (!otpCode || otpCode.length !== 6) {
+      setOtpError("Please enter a valid 6-digit OTP");
+      return;
+    }
+
+    try {
+      setOtpLoading(true);
+      setOtpError("");
+      
+      const response = await otpService.verifyOTP(otpModal.booking.booking_id, otpCode);
+      
+      if (response.success) {
+        toast.success("OTP verified successfully! Booking confirmed.");
+        closeOTPModal();
+        fetchBookings();
+      } else {
+        setOtpError(response.message || "Invalid OTP");
+        if (response.data?.attemptsRemaining !== undefined) {
+          setAttemptsRemaining(response.data.attemptsRemaining);
+        }
+      }
+    } catch (error) {
+      const errorData = error.response?.data;
+      setOtpError(errorData?.message || "Failed to verify OTP");
+      if (errorData?.data?.attemptsRemaining !== undefined) {
+        setAttemptsRemaining(errorData.data.attemptsRemaining);
+      }
+      if (errorData?.data?.isLocked) {
+        setOtpError("Too many failed attempts. OTP is locked for 15 minutes.");
+      }
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  // Resend OTP
+  const handleResendOTP = async () => {
+    try {
+      setOtpLoading(true);
+      await otpService.resendOTP(otpModal.booking.booking_id);
+      toast.success("New OTP sent to customer!");
+      setOtpCode("");
+      setOtpError("");
+      setAttemptsRemaining(3);
+    } catch (error) {
+      const message = error.response?.data?.message || "Failed to resend OTP";
+      toast.error(message);
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
   const filteredBookings = bookings.filter((booking) => {
     if (filter === "all") return true;
-    if (filter === "pending") return booking.status === "pending_vendor_response";
-    if (filter === "accepted") return ["accepted_by_vendor_pending_admin", "approved_by_admin_pending_otp", "otp_verification_in_progress"].includes(booking.status);
-    if (filter === "confirmed") return ["booking_confirmed", "confirmed"].includes(booking.status);
+    if (filter === "pending") return booking.status === "pending_vendor_response" || booking.status === "pending";
+    if (filter === "accepted") return ["accepted_by_vendor_pending_admin", "confirmed"].includes(booking.status) && booking.admin_approval === "pending";
+    if (filter === "approved") return booking.status === "confirmed" && booking.admin_approval === "approved";
     if (filter === "completed") return ["completed", "awaiting_review"].includes(booking.status);
     if (filter === "cancelled") return booking.status?.includes("cancelled") || booking.status?.includes("rejected");
     return true;
   });
 
-  const StatusBadge = ({ status }) => {
-    const config = BOOKING_STATUS[status] || BOOKING_STATUS.pending;
+  const StatusBadge = ({ status, adminApproval }) => {
+    // Custom status display based on both status and admin_approval
+    let config = BOOKING_STATUS[status] || BOOKING_STATUS.pending;
+    
+    if (status === "confirmed" && adminApproval === "pending") {
+      config = { label: "Awaiting Admin Approval", color: "blue", icon: "clock" };
+    } else if (status === "confirmed" && adminApproval === "approved") {
+      config = { label: "OTP Verification Required", color: "purple", icon: "key" };
+    }
+    
     const colorClasses = {
       yellow: "bg-yellow-100 text-yellow-800",
       blue: "bg-blue-100 text-blue-800",
@@ -112,8 +208,14 @@ const VendorBookings = () => {
     );
   };
 
-  const canAcceptReject = (status) => status === "pending_vendor_response";
-  const canCancel = (status) => ["accepted_by_vendor_pending_admin", "approved_by_admin_pending_otp"].includes(status);
+  // Vendor can accept/reject when status is pending
+  const canAcceptReject = (status) => status === "pending_vendor_response" || status === "pending";
+  // Vendor can verify OTP when admin has approved
+  const canVerifyOTP = (booking) => booking.status === "confirmed" && booking.admin_approval === "approved";
+  // Vendor can cancel after accepting but before completion
+  const canCancel = (status, adminApproval) => 
+    (status === "confirmed" && adminApproval === "pending") || 
+    (status === "pending");
 
   if (loading) {
     return (
@@ -138,9 +240,9 @@ const VendorBookings = () => {
       <div className="flex flex-wrap gap-2 mb-6">
         {[
           { key: "all", label: "All", count: bookings.length },
-          { key: "pending", label: "Pending", count: bookings.filter(b => b.status === "pending_vendor_response").length },
-          { key: "accepted", label: "Accepted", count: bookings.filter(b => ["accepted_by_vendor_pending_admin", "approved_by_admin_pending_otp", "otp_verification_in_progress"].includes(b.status)).length },
-          { key: "confirmed", label: "Confirmed", count: bookings.filter(b => ["booking_confirmed", "confirmed"].includes(b.status)).length },
+          { key: "pending", label: "Pending", count: bookings.filter(b => b.status === "pending_vendor_response" || b.status === "pending").length },
+          { key: "accepted", label: "Awaiting Admin", count: bookings.filter(b => b.status === "confirmed" && b.admin_approval === "pending").length },
+          { key: "approved", label: "OTP Required", count: bookings.filter(b => b.status === "confirmed" && b.admin_approval === "approved").length },
           { key: "completed", label: "Completed", count: bookings.filter(b => ["completed", "awaiting_review"].includes(b.status)).length },
           { key: "cancelled", label: "Cancelled", count: bookings.filter(b => b.status?.includes("cancelled") || b.status?.includes("rejected")).length },
         ].map((tab) => (
@@ -182,7 +284,9 @@ const VendorBookings = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all overflow-hidden border-l-4 border-[#3c6e71]"
+              className={`bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all overflow-hidden ${
+                canVerifyOTP(booking) ? "border-l-4 border-purple-500" : "border-l-4 border-[#3c6e71]"
+              }`}
             >
               <div className="p-6">
                 {/* Header */}
@@ -190,7 +294,7 @@ const VendorBookings = () => {
                   <div>
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="text-xl font-bold text-gray-800">Booking #{booking.booking_id}</h3>
-                      <StatusBadge status={booking.status} />
+                      <StatusBadge status={booking.status} adminApproval={booking.admin_approval} />
                     </div>
                     <p className="text-sm text-gray-500">
                       Created: {new Date(booking.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
@@ -226,7 +330,20 @@ const VendorBookings = () => {
                         </motion.button>
                       </>
                     )}
-                    {canCancel(booking.status) && (
+                    
+                    {/* OTP Verification Button */}
+                    {canVerifyOTP(booking) && (
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => openOTPModal(booking)}
+                        className="px-5 py-2.5 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg font-semibold flex items-center gap-2 shadow-md hover:shadow-lg"
+                      >
+                        <FiKey /> Verify OTP
+                      </motion.button>
+                    )}
+                    
+                    {canCancel(booking.status, booking.admin_approval) && (
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
@@ -249,8 +366,13 @@ const VendorBookings = () => {
                     </div>
                     <div>
                       <p className="text-xs text-gray-500">Customer</p>
-                      <p className="font-semibold text-gray-800">{booking.user_name || booking.customer_name || "Customer"}</p>
-                      {booking.user_email && <p className="text-xs text-gray-500">{booking.user_email}</p>}
+                      <p className="font-semibold text-gray-800">
+                        {booking.first_name && booking.last_name 
+                          ? `${booking.first_name} ${booking.last_name}` 
+                          : booking.user_name || "Customer"}
+                      </p>
+                      {booking.email && <p className="text-xs text-gray-500">{booking.email}</p>}
+                      {booking.phone && <p className="text-xs text-gray-500">{booking.phone}</p>}
                     </div>
                   </div>
 
@@ -320,9 +442,125 @@ const VendorBookings = () => {
                     </div>
                   </div>
                 )}
+
+                {/* OTP Verification Alert */}
+                {canVerifyOTP(booking) && (
+                  <div className="mt-4 p-4 bg-purple-50 rounded-xl border border-purple-200 flex items-center gap-3">
+                    <FiShield className="text-purple-600 text-xl flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold text-purple-800">OTP Verification Required</p>
+                      <p className="text-sm text-purple-600">Admin has approved this booking. Ask the customer for their OTP to complete the booking.</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Awaiting Admin Approval Alert */}
+                {booking.status === "confirmed" && booking.admin_approval === "pending" && (
+                  <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200 flex items-center gap-3">
+                    <FiClock className="text-blue-600 text-xl flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold text-blue-800">Awaiting Admin Approval</p>
+                      <p className="text-sm text-blue-600">You have accepted this booking. Waiting for admin to approve.</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </motion.div>
           ))}
+        </div>
+      )}
+
+      {/* OTP Verification Modal */}
+      {otpModal.open && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6"
+          >
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FiShield className="text-purple-600 text-3xl" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800">Verify OTP</h2>
+              <p className="text-gray-500 mt-2">
+                Enter the 6-digit OTP provided by the customer to confirm booking #{otpModal.booking?.booking_id}
+              </p>
+            </div>
+
+            {/* Customer Info */}
+            <div className="bg-gray-50 rounded-xl p-4 mb-6">
+              <p className="text-sm text-gray-500">Customer</p>
+              <p className="font-semibold text-gray-800">
+                {otpModal.booking?.first_name && otpModal.booking?.last_name 
+                  ? `${otpModal.booking.first_name} ${otpModal.booking.last_name}` 
+                  : "Customer"}
+              </p>
+              <p className="text-sm text-gray-500 mt-2">Event Date</p>
+              <p className="font-semibold text-gray-800">
+                {new Date(otpModal.booking?.event_date).toLocaleDateString("en-US", { 
+                  weekday: "long", month: "long", day: "numeric", year: "numeric" 
+                })}
+              </p>
+            </div>
+
+            {/* OTP Input */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Enter OTP</label>
+              <input
+                type="text"
+                maxLength={6}
+                value={otpCode}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, "");
+                  setOtpCode(value);
+                  setOtpError("");
+                }}
+                placeholder="Enter 6-digit OTP"
+                className="w-full px-4 py-3 text-center text-2xl tracking-widest border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+              />
+              {otpError && (
+                <p className="text-red-500 text-sm mt-2">{otpError}</p>
+              )}
+              <p className="text-sm text-gray-500 mt-2">
+                Attempts remaining: <span className={attemptsRemaining <= 1 ? "text-red-500 font-semibold" : ""}>{attemptsRemaining}</span>
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <button
+                onClick={closeOTPModal}
+                className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleVerifyOTP}
+                disabled={otpLoading || otpCode.length !== 6}
+                className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {otpLoading ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <>
+                    <FiCheck /> Verify
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Resend OTP */}
+            <div className="mt-4 text-center">
+              <button
+                onClick={handleResendOTP}
+                disabled={otpLoading}
+                className="text-purple-600 hover:text-purple-700 text-sm font-medium"
+              >
+                Resend OTP to customer
+              </button>
+            </div>
+          </motion.div>
         </div>
       )}
     </div>
