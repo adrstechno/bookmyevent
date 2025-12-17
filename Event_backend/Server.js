@@ -10,6 +10,9 @@ import VendorRouter from './Router/VendorRouter.js';
 import BookingRouter from './Router/BookingRouter.js';
 import adminroutes from './Router/adminRoute.js'
 import notificationroutes  from './Router/NotificationRoute.js'
+import OTPRouter from './Router/OTPRoute.js';
+import EnhancedBookingRouter from './Router/EnhancedBookingRoute.js';
+import ReviewRouter from './Router/ReviewRoute.js';
 
 
 dotenv.config();
@@ -33,7 +36,12 @@ app.use('/Service', ServiceRouter);
 app.use('/Vendor', VendorRouter);
 app.use('/Booking', BookingRouter);
 app.use('/admin', adminroutes);
-app.use('/notifiction',  notificationroutes)
+app.use('/notification',  notificationroutes);
+
+// 🟢 Mount new enhanced routers
+app.use('/otp', OTPRouter);
+app.use('/bookings', EnhancedBookingRouter);
+app.use('/reviews', ReviewRouter);
 
 app.get('/', (req, res) => {
   res.send('Welcome to the Event Management API');

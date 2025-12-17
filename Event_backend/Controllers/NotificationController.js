@@ -1,24 +1,471 @@
 import NotificationModel from "../Models/NotificationModel.js";
-import { verifyToken } from "../Utils/Verification.js";
+import NotificationService from "../Services/NotificationService.js";
 
+class NotificationController {
+    // Get user notifications with pagination and filters
+    static async getUserNotifications(req, res) {
+        try {
+            const user_id = req.user?.uuid || req.user?.user_id;
+            if (!user_id) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'User authentication required'
+                });
+            }
 
-export const getUserNotification = (req, res) => {
-    try {
-        const token = req.cookies.auth_token;
-        if(!token) return res.status (401).json({error: "UnAuthorized"})
+            const {
+                page = 1,
+                limit = 20,
+                type,
+                status,
+                dateFrom,
+                dateTo
+            } = req.query;
 
-        const decoded = verifyToken(token);
-        const user_id = decoded.userId;
+            const options = {
+                page: parseInt(page),
+                limit: Math.min(parseInt(limit), 100), // Max 100 per page
+                type,
+                status,
+                dateFrom,
+                dateTo
+            };
 
-        NotificationModel.getUserNotification(user_id, (err, notifications) => {
-            if(err) return res.status(500).json({error: "Database error"});
+            const notifications = await NotificationModel.getUserNotifications(user_id, options);
+            const unreadCount = await NotificationModel.getUnreadCount(user_id);
 
-            res.json({notifications});
-        });
+            res.status(200).json({
+                success: true,
+                data: {
+                    notifications,
+                    pagination: {
+                        page: options.page,
+                        limit: options.limit,
+                        hasMore: notifications.length === options.limit
+                    },
+                    unreadCount
+                }
+            });
 
-
+        } catch (error) {
+            console.error('Get notifications error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to fetch notifications',
+                error: error.message
+            });
+        }
     }
-    catch(err) {
-        res.status(500).json({error: "Internal server error"});
+
+    // Get unread notification count
+    static async getUnreadCount(req, res) {
+        try {
+            const user_id = req.user?.uuid || req.user?.user_id;
+            if (!user_id) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'User authentication required'
+                });
+            }
+
+            const count = await NotificationModel.getUnreadCount(user_id);
+
+            res.status(200).json({
+                success: true,
+                data: { unreadCount: count }
+            });
+
+        } catch (error) {
+            console.error('Get unread count error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to get unread count',
+                error: error.message
+            });
+        }
+    }
+
+    // Mark notification as read
+    static async markAsRead(req, res) {
+        try {
+            const user_id = req.user?.uuid || req.user?.user_id;
+            const { id } = req.params;
+
+            if (!user_id) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'User authentication required'
+                });
+            }
+
+            if (!id) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Notification ID is required'
+                });
+            }
+
+            const success = await NotificationModel.markAsRead(id, user_id);
+
+            if (!success) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Notification not found or unauthorized'
+                });
+            }
+
+            res.status(200).json({
+                success: true,
+                message: 'Notification marked as read'
+            });
+
+        } catch (error) {
+            console.error('Mark as read error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to mark notification as read',
+                error: error.message
+            });
+        }
+    }
+
+    // Mark all notifications as read
+    static async markAllAsRead(req, res) {
+        try {
+            const user_id = req.user?.uuid || req.user?.user_id;
+            if (!user_id) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'User authentication required'
+                });
+            }
+
+            const updatedCount = await NotificationModel.markAllAsRead(user_id);
+
+            res.status(200).json({
+                success: true,
+                message: `${updatedCount} notifications marked as read`,
+                data: { updatedCount }
+            });
+
+        } catch (error) {
+            console.error('Mark all as read error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to mark all notifications as read',
+                error: error.message
+            });
+        }
+    }
+
+    // Archive notification
+    static async archiveNotification(req, res) {
+        try {
+            const user_id = req.user?.uuid || req.user?.user_id;
+            const { id } = req.params;
+
+            if (!user_id) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'User authentication required'
+                });
+            }
+
+            if (!id) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Notification ID is required'
+                });
+            }
+
+            const success = await NotificationModel.archiveNotification(id, user_id);
+
+            if (!success) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Notification not found or unauthorized'
+                });
+            }
+
+            res.status(200).json({
+                success: true,
+                message: 'Notification archived'
+            });
+
+        } catch (error) {
+            console.error('Archive notification error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to archive notification',
+                error: error.message
+            });
+        }
+    }
+
+    // Delete notification
+    static async deleteNotification(req, res) {
+        try {
+            const user_id = req.user?.uuid || req.user?.user_id;
+            const { id } = req.params;
+
+            if (!user_id) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'User authentication required'
+                });
+            }
+
+            if (!id) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Notification ID is required'
+                });
+            }
+
+            const success = await NotificationModel.deleteNotification(id, user_id);
+
+            if (!success) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Notification not found or unauthorized'
+                });
+            }
+
+            res.status(200).json({
+                success: true,
+                message: 'Notification deleted'
+            });
+
+        } catch (error) {
+            console.error('Delete notification error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to delete notification',
+                error: error.message
+            });
+        }
+    }
+
+    // Get notification by ID
+    static async getNotificationById(req, res) {
+        try {
+            const user_id = req.user?.uuid || req.user?.user_id;
+            const { id } = req.params;
+
+            if (!user_id) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'User authentication required'
+                });
+            }
+
+            if (!id) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Notification ID is required'
+                });
+            }
+
+            const notification = await NotificationModel.getNotificationById(id, user_id);
+
+            if (!notification) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Notification not found'
+                });
+            }
+
+            res.status(200).json({
+                success: true,
+                data: notification
+            });
+
+        } catch (error) {
+            console.error('Get notification by ID error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to fetch notification',
+                error: error.message
+            });
+        }
+    }
+
+    // Create notification (admin/system use)
+    static async createNotification(req, res) {
+        try {
+            const {
+                user_id,
+                title,
+                message,
+                type,
+                metadata,
+                related_booking_id
+            } = req.body;
+
+            // Validate required fields
+            if (!user_id || !title || !message) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'user_id, title, and message are required'
+                });
+            }
+
+            const notificationData = {
+                user_id,
+                title,
+                message,
+                type: type || 'general',
+                metadata: metadata || {},
+                related_booking_id
+            };
+
+            const result = await NotificationModel.createNotification(notificationData);
+
+            res.status(201).json({
+                success: true,
+                message: 'Notification created successfully',
+                data: { id: result.insertId }
+            });
+
+        } catch (error) {
+            console.error('Create notification error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to create notification',
+                error: error.message
+            });
+        }
+    }
+
+    // Send bulk notifications (admin use)
+    static async sendBulkNotifications(req, res) {
+        try {
+            const { notifications } = req.body;
+
+            if (!Array.isArray(notifications) || notifications.length === 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'notifications array is required and cannot be empty'
+                });
+            }
+
+            // Validate each notification
+            for (const notification of notifications) {
+                if (!notification.user_id || !notification.title || !notification.message) {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'Each notification must have user_id, title, and message'
+                    });
+                }
+            }
+
+            const result = await NotificationService.sendBulkNotifications(notifications);
+
+            res.status(201).json({
+                success: true,
+                message: `${result.count} notifications sent successfully`,
+                data: result
+            });
+
+        } catch (error) {
+            console.error('Send bulk notifications error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to send bulk notifications',
+                error: error.message
+            });
+        }
+    }
+
+    // Get notification statistics (admin use)
+    static async getNotificationStats(req, res) {
+        try {
+            const { timeframe = '7d' } = req.query;
+            
+            // This would require additional database queries for statistics
+            // For now, return a basic response
+            res.status(200).json({
+                success: true,
+                message: 'Notification statistics endpoint - to be implemented',
+                data: {
+                    timeframe,
+                    totalSent: 0,
+                    totalRead: 0,
+                    readRate: 0
+                }
+            });
+
+        } catch (error) {
+            console.error('Get notification stats error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to get notification statistics',
+                error: error.message
+            });
+        }
+    }
+
+    // Legacy methods for backward compatibility
+    static sendNotification(req, res) {
+        const { user_id, title, message } = req.body;
+        
+        NotificationModel.sendNotification(user_id, title, message, (err, result) => {
+            if (err) {
+                console.error('Send notification error:', err);
+                return res.status(500).json({
+                    success: false,
+                    message: 'Failed to send notification',
+                    error: err.message
+                });
+            }
+            
+            res.status(201).json({
+                success: true,
+                message: 'Notification sent successfully',
+                data: result
+            });
+        });
+    }
+
+    static getUserNotification(req, res) {
+        const { user_id } = req.params;
+        
+        NotificationModel.getUserNotification(user_id, (err, results) => {
+            if (err) {
+                console.error('Get user notifications error:', err);
+                return res.status(500).json({
+                    success: false,
+                    message: 'Failed to fetch notifications',
+                    error: err.message
+                });
+            }
+            
+            res.status(200).json({
+                success: true,
+                data: results
+            });
+        });
+    }
+
+    static markNotificationAsRead(req, res) {
+        const { notification_id } = req.params;
+        
+        NotificationModel.markAsRead(notification_id, (err, result) => {
+            if (err) {
+                console.error('Mark as read error:', err);
+                return res.status(500).json({
+                    success: false,
+                    message: 'Failed to mark notification as read',
+                    error: err.message
+                });
+            }
+            
+            res.status(200).json({
+                success: true,
+                message: 'Notification marked as read'
+            });
+        });
     }
 }
+
+export default NotificationController;

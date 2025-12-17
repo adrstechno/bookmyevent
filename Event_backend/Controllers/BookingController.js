@@ -1,268 +1,777 @@
 import BookingModel from "../Models/BookingModel.js";
-import NotificationModel from "../Models/NotificationModel.js";
-import BookingOtpModel from "../Models/BookingOtpModel.js";
-import { verifyToken } from "../Utils/Verification.js";
-import { v4 as uuidv4 } from "uuid";
+import NotificationService from "../Services/NotificationService.js";
+import { v4 as uuidv4 } from 'uuid';
 
-import crypto from "crypto";
+class BookingController {
+    // Create new booking
+    static async createBooking(req, res) {
+        try {
+            const user_id = req.user?.uuid || req.user?.user_id;
+            
+            if (!user_id) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'User authentication required'
+                });
+            }
 
-export const insertBooking = (req, res) => {
-  try {
-    let data = req.body;
+            const {
+                vendor_id,
+                shift_id,
+                package_id,
+                event_address,
+                event_date,
+                event_time,
+                special_requirement
+            } = req.body;
 
-    // Verify user login
-    const token = req.cookies.auth_token;
-    if (!token) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+            // Validate required fields
+            if (!vendor_id || !shift_id || !package_id || !event_address || !event_date || !event_time) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'vendor_id, shift_id, package_id, event_address, event_date, and event_time are required'
+                });
+            }
 
-    const decoded = verifyToken(token);
-    if (!decoded) {
-      return res.status(401).json({ error: "Invalid Token" });
-    }
+            // Generate booking UUID
+            const booking_uuid = uuidv4();
 
-    // Add generated UUID and user ID into data object
-    data.booking_uuid = uuidv4();
-    data.user_id = decoded.userId;
+            const bookingData = {
+                booking_uuid,
+                user_id,
+                vendor_id,
+                shift_id,
+                package_id,
+                event_address,
+                event_date,
+                event_time,
+                special_requirement
+            };
 
-    data.status = "pending";
-    data.admin_approval = "pending";
+            const result = await BookingModel.createBooking(bookingData);
 
-    // Now call model
-    BookingModel.insertBooking(data, (err, result) => {
-      if (err) {
-        return res.status(500).json({ error: "Database Error", details: err });
-      }
+            // Get full booking details for notifications
+            const booking = await BookingModel.getBookingById(result.booking_id);
 
-      // created a 6 digit otp for booking confirmation
+            // Send notification to vendor
+            await NotificationService.notifyBookingCreated({
+                booking_id: result.booking_id,
+                user_name: `${booking.first_name} ${booking.last_name}`,
+                vendor_id,
+                event_date,
+                package_name: booking.package_name
+            });
 
-    //   const otp = Math.floor(100000 + Math.random() * 900000);
-    // save this otp into cookiesusko 
+            res.status(201).json({
+                success: true,
+                message: 'Booking created successfully',
+                data: {
+                    booking_id: result.booking_id,
+                    booking_uuid: result.booking_uuid,
+                    status: BookingModel.BOOKING_STATUS.PENDING_VENDOR_RESPONSE
+                }
+            });
 
-
-      res.status(201).json({
-        message: "Booking Created Successfully. Awaiting admin approval",
-        bookingId: result.insertId,
-      });
-    });
-  } catch (error) {
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-};
-
-export const updateBooking = (req, res) => {
-  try {
-    const booking_id = req.body.booking_id;
-    const data = req.body;
-
-    const token = req.cookies.auth_token;
-    if (!token) return res.status(401).json({ error: "Unauthorized" });
-
-    const decoded = verifyToken(token);
-    if (!decoded) return res.status(401).json({ error: "Invalid Token" });
-
-    BookingModel.updateBooking(booking_id, data, (err, result) => {
-      if (err) {
-        return res.status(500).json({
-          error: "Database Error",
-          details: err,
-        });
-      }
-
-      res.status(200).json({
-        message: "Booking Updated Successfully",
-      });
-    });
-  } catch (error) {
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-};
-
-export const deleteBooking = (req, res) => {
-  try {
-    const booking_id = req.params.id;
-
-    const token = req.cookies.auth_token;
-    if (!token) return res.status(401).json({ error: "Unauthorized" });
-
-    const decoded = verifyToken(token);
-    if (!decoded) return res.status(401).json({ error: "Invalid Token" });
-
-    BookingModel.deleteBooking(booking_id, (err, result) => {
-      if (err) {
-        return res.status(500).json({
-          error: "Database Error",
-          details: err,
-        });
-      }
-      res.status(200).json({
-        message: "Booking Deleted Successfully",
-      });
-    });
-  } catch (error) {
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-};
-
-export const getBookingsByUserId = (req, res) => {
-  try {
-    const token = req.cookies.auth_token;
-    if (!token) return res.status(401).json({ error: "Unauthorized" });
-
-    const decoded = verifyToken(token);
-    if (!decoded) return res.status(401).json({ error: "Invalid Token" });
-
-    const user_id = decoded.userId;
-
-    BookingModel.getBookingsByUserId(user_id, (err, result) => {
-      if (err) {
-        return res.status(500).json({
-          error: "Database Error",
-          details: err,
-        });
-      }
-
-      res.status(200).json({
-        bookings: result,
-      });
-    });
-  } catch (error) {
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-};
-
-export const getBookingsByVendorId = (req, res) => {
-  try {
-    const vendor_id = req.query.vendorId;
-
-    const token = req.cookies.auth_token;
-    if (!token) return res.status(401).json({ error: "Unauthorized" });
-
-    const decoded = verifyToken(token);
-    if (!decoded) return res.status(401).json({ error: "Invalid Token" });
-
-    BookingModel.getAllByVendorId(vendor_id, (err, result) => {
-      if (err) {
-        return res.status(500).json({
-          error: "Database Error",
-          details: err,
-        });
-      }
-
-      res.status(200).json({
-        bookings: result,
-      });
-    });
-  } catch (error) {
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-};
-
-export const getBookingById = (req, res) => {
-  try {
-    const booking_id = req.query.bookingId;
-
-    const token = req.cookies.auth_token;
-    if (!token) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-
-    const decoded = verifyToken(token);
-    if (!decoded) {
-      return res.status(401).json({ error: "Invalid Token" });
-    }
-
-    BookingModel.getBookingById(booking_id, (err, result) => {
-      if (err) {
-        return res.status(500).json({
-          error: "Database Error",
-          details: err,
-        });
-      }
-
-      if (result.length === 0) {
-        return res.status(404).json({
-          message: "Booking not found",
-        });
-      }
-
-      res.status(200).json({
-        booking: result[0],
-      });
-    });
-  } catch (error) {
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-};
-
-export const approveBooking = (req, res) => {
-  try {
-    const booking_id = req.body.booking_id;
-
-    const token = req.cookies.auth_token;
-    if(!token) return res.status(401).json({error: "UnAuthorized"});
-
-    const decoded = verifyToken(token);
-    if(!decoded || !decoded.isAdmin)
-      return res.status(403).json({error: "Admin access only"});
-
-    const data = {
-      admin_approval: "approved",
-      status: "confirmed"
-    };
-
-    BookingModel.updateBooking(booking_id, data, (err, result) => {
-      if(err) return res.status(500).json({error: "database error", details: err});
-
-      BookingModel.getBookingById(booking_id, (err2, bookingData) => {
-        if(err2 || !bookingData.length){
-          return res.status(500).json({error: "Error fetching booking"});
+        } catch (error) {
+            console.error('Create booking error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to create booking',
+                error: error.message
+            });
         }
+    }
 
-        const booking = bookingData[0];
-        const user_id = booking.user_id;
-        const vendor_id = booking.vendor_id;
+    // Vendor accepts booking
+    static async acceptBooking(req, res) {
+        try {
+            const { id } = req.params;
+            const vendor_id = req.user?.vendor_id || req.user?.user_id;
 
-        const otp = crypto.randomInt(100000, 999999).toString();
-        const expires_at = new Date(Date.now() + 48 * 60 * 60 * 1000);
+            if (!vendor_id) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Vendor authentication required'
+                });
+            }
 
-        BookingOtpModel.createOtp(
-          {
-            booking_id,
-            user_id,
-            vendor_id,
-            otp,
-            expires_at,
-            generated_by: decoded.admin_id
-          },
-          (err3) => {
-            if(err3) console.error("Error saving otp", err3);
-          }
-        );
+            if (!id) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Booking ID is required'
+                });
+            }
 
-        NotificationModel.sendNotification(
-          booking.user_id,
-          "Booking approved 😃",
-          `Your booking (ID: ${booking.booking_uuid}) has been approved by admin.`,
-          () => {}
-        );
+            // Get booking details before update
+            const booking = await BookingModel.getBookingById(id);
+            if (!booking) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Booking not found'
+                });
+            }
 
-        NotificationModel.sendNotification(
-          vendor_id,
-          "New Booking Approved 📌",
-          `A new booking is allocated to you.\nCustomer OTP: ${otp}`,
-          () => {}
-        );
+            await BookingModel.vendorAcceptBooking(id, vendor_id);
 
-        res.status(200).json({
-          message: "Booking Approved successfully"
+            // Send notifications
+            await NotificationService.notifyBookingAccepted({
+                booking_id: id,
+                user_id: booking.user_id,
+                user_name: `${booking.first_name} ${booking.last_name}`,
+                vendor_name: booking.business_name,
+                event_date: booking.event_date,
+                package_name: booking.package_name
+            });
+
+            res.status(200).json({
+                success: true,
+                message: 'Booking accepted successfully',
+                data: {
+                    booking_id: id,
+                    status: BookingModel.BOOKING_STATUS.ACCEPTED_BY_VENDOR_PENDING_ADMIN
+                }
+            });
+
+        } catch (error) {
+            console.error('Accept booking error:', error);
+            res.status(500).json({
+                success: false,
+                message: error.message || 'Failed to accept booking',
+                error: error.message
+            });
+        }
+    }
+
+    // Vendor rejects booking
+    static async rejectBooking(req, res) {
+        try {
+            const { id } = req.params;
+            const { reason } = req.body;
+            const vendor_id = req.user?.vendor_id || req.user?.user_id;
+
+            if (!vendor_id) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Vendor authentication required'
+                });
+            }
+
+            if (!id) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Booking ID is required'
+                });
+            }
+
+            // Get booking details before update
+            const booking = await BookingModel.getBookingById(id);
+            if (!booking) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Booking not found'
+                });
+            }
+
+            await BookingModel.vendorRejectBooking(id, vendor_id, reason);
+
+            // Send notification to user
+            await NotificationService.notifyBookingRejected({
+                booking_id: id,
+                user_id: booking.user_id,
+                vendor_name: booking.business_name,
+                event_date: booking.event_date,
+                reason
+            });
+
+            res.status(200).json({
+                success: true,
+                message: 'Booking rejected successfully',
+                data: {
+                    booking_id: id,
+                    status: BookingModel.BOOKING_STATUS.CANCELLED_BY_VENDOR
+                }
+            });
+
+        } catch (error) {
+            console.error('Reject booking error:', error);
+            res.status(500).json({
+                success: false,
+                message: error.message || 'Failed to reject booking',
+                error: error.message
+            });
+        }
+    }
+
+    // Admin approves booking
+    static async approveBooking(req, res) {
+        try {
+            const { id } = req.params;
+            const admin_id = req.user?.user_id;
+
+            if (!admin_id || req.user?.user_type !== 'admin') {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Admin authentication required'
+                });
+            }
+
+            if (!id) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Booking ID is required'
+                });
+            }
+
+            // Get booking details before update
+            const booking = await BookingModel.getBookingById(id);
+            if (!booking) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Booking not found'
+                });
+            }
+
+            await BookingModel.adminApproveBooking(id, admin_id);
+
+            // Send notifications
+            await NotificationService.notifyBookingApproved({
+                booking_id: id,
+                user_id: booking.user_id,
+                vendor_id: booking.vendor_id,
+                vendor_name: booking.business_name,
+                event_date: booking.event_date,
+                package_name: booking.package_name
+            });
+
+            res.status(200).json({
+                success: true,
+                message: 'Booking approved successfully',
+                data: {
+                    booking_id: id,
+                    status: BookingModel.BOOKING_STATUS.APPROVED_BY_ADMIN_PENDING_OTP
+                }
+            });
+
+        } catch (error) {
+            console.error('Approve booking error:', error);
+            res.status(500).json({
+                success: false,
+                message: error.message || 'Failed to approve booking',
+                error: error.message
+            });
+        }
+    }
+
+    // Admin rejects booking
+    static async adminRejectBooking(req, res) {
+        try {
+            const { id } = req.params;
+            const { reason } = req.body;
+            const admin_id = req.user?.user_id;
+
+            if (!admin_id || req.user?.user_type !== 'admin') {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Admin authentication required'
+                });
+            }
+
+            if (!id) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Booking ID is required'
+                });
+            }
+
+            // Get booking details before update
+            const booking = await BookingModel.getBookingById(id);
+            if (!booking) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Booking not found'
+                });
+            }
+
+            await BookingModel.adminRejectBooking(id, admin_id, reason);
+
+            // Send notifications
+            await NotificationService.notifyBookingAdminRejected({
+                booking_id: id,
+                user_id: booking.user_id,
+                user_name: `${booking.first_name} ${booking.last_name}`,
+                vendor_id: booking.vendor_id,
+                vendor_name: booking.business_name,
+                event_date: booking.event_date,
+                reason
+            });
+
+            res.status(200).json({
+                success: true,
+                message: 'Booking rejected successfully',
+                data: {
+                    booking_id: id,
+                    status: BookingModel.BOOKING_STATUS.REJECTED_BY_ADMIN
+                }
+            });
+
+        } catch (error) {
+            console.error('Admin reject booking error:', error);
+            res.status(500).json({
+                success: false,
+                message: error.message || 'Failed to reject booking',
+                error: error.message
+            });
+        }
+    }
+
+    // Cancel booking (user or vendor)
+    static async cancelBooking(req, res) {
+        try {
+            const { id } = req.params;
+            const { reason } = req.body;
+            const user_id = req.user?.uuid || req.user?.user_id;
+            const vendor_id = req.user?.vendor_id;
+            const user_type = req.user?.user_type;
+
+            if (!user_id) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Authentication required'
+                });
+            }
+
+            if (!id) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Booking ID is required'
+                });
+            }
+
+            // Get booking details before update
+            const booking = await BookingModel.getBookingById(id);
+            if (!booking) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Booking not found'
+                });
+            }
+
+            // Determine who is cancelling and validate access
+            let cancelled_by, cancelled_by_type;
+            
+            if (booking.user_id === user_id) {
+                cancelled_by = user_id;
+                cancelled_by_type = 'user';
+            } else if (booking.vendor_id === vendor_id) {
+                cancelled_by = vendor_id;
+                cancelled_by_type = 'vendor';
+            } else {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Unauthorized: You can only cancel your own bookings'
+                });
+            }
+
+            await BookingModel.cancelBooking(id, cancelled_by, cancelled_by_type, reason);
+
+            // Send notifications
+            await NotificationService.notifyBookingCancelled({
+                booking_id: id,
+                cancelled_by: cancelled_by_type,
+                user_id: booking.user_id,
+                user_name: `${booking.first_name} ${booking.last_name}`,
+                vendor_id: booking.vendor_id,
+                vendor_name: booking.business_name,
+                event_date: booking.event_date,
+                reason
+            });
+
+            const newStatus = cancelled_by_type === 'user' 
+                ? BookingModel.BOOKING_STATUS.CANCELLED_BY_USER
+                : BookingModel.BOOKING_STATUS.CANCELLED_BY_VENDOR;
+
+            res.status(200).json({
+                success: true,
+                message: 'Booking cancelled successfully',
+                data: {
+                    booking_id: id,
+                    status: newStatus,
+                    cancelled_by: cancelled_by_type
+                }
+            });
+
+        } catch (error) {
+            console.error('Cancel booking error:', error);
+            res.status(500).json({
+                success: false,
+                message: error.message || 'Failed to cancel booking',
+                error: error.message
+            });
+        }
+    }
+
+    // Get booking status
+    static async getBookingStatus(req, res) {
+        try {
+            const { id } = req.params;
+            const user_id = req.user?.uuid || req.user?.user_id;
+            const vendor_id = req.user?.vendor_id;
+            const user_type = req.user?.user_type;
+
+            if (!user_id) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Authentication required'
+                });
+            }
+
+            if (!id) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Booking ID is required'
+                });
+            }
+
+            const booking = await BookingModel.getBookingById(id);
+            if (!booking) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Booking not found'
+                });
+            }
+
+            // Check access permissions
+            const hasAccess = booking.user_id === user_id || 
+                            booking.vendor_id === vendor_id ||
+                            user_type === 'admin';
+
+            if (!hasAccess) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Unauthorized: You do not have access to this booking'
+                });
+            }
+
+            res.status(200).json({
+                success: true,
+                data: {
+                    booking_id: id,
+                    status: booking.status,
+                    admin_approval: booking.admin_approval,
+                    created_at: booking.created_at,
+                    updated_at: booking.updated_at,
+                    event_date: booking.event_date,
+                    event_time: booking.event_time,
+                    vendor_name: booking.business_name,
+                    package_name: booking.package_name,
+                    user_name: `${booking.first_name} ${booking.last_name}`
+                }
+            });
+
+        } catch (error) {
+            console.error('Get booking status error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to get booking status',
+                error: error.message
+            });
+        }
+    }
+
+    // Get user bookings
+    static async getUserBookings(req, res) {
+        try {
+            const user_id = req.user?.uuid || req.user?.user_id;
+            
+            if (!user_id) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'User authentication required'
+                });
+            }
+
+            const {
+                page = 1,
+                limit = 20,
+                status
+            } = req.query;
+
+            const options = {
+                page: parseInt(page),
+                limit: Math.min(parseInt(limit), 100),
+                status
+            };
+
+            const bookings = await BookingModel.getBookingsByUser(user_id, options);
+
+            res.status(200).json({
+                success: true,
+                data: {
+                    bookings,
+                    pagination: {
+                        page: options.page,
+                        limit: options.limit,
+                        hasMore: bookings.length === options.limit
+                    }
+                }
+            });
+
+        } catch (error) {
+            console.error('Get user bookings error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to fetch user bookings',
+                error: error.message
+            });
+        }
+    }
+
+    // Get vendor bookings
+    static async getVendorBookings(req, res) {
+        try {
+            const vendor_id = req.user?.vendor_id || req.user?.user_id;
+            
+            if (!vendor_id) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Vendor authentication required'
+                });
+            }
+
+            const {
+                page = 1,
+                limit = 20,
+                status
+            } = req.query;
+
+            const options = {
+                page: parseInt(page),
+                limit: Math.min(parseInt(limit), 100),
+                status
+            };
+
+            const bookings = await BookingModel.getBookingsByVendor(vendor_id, options);
+
+            res.status(200).json({
+                success: true,
+                data: {
+                    bookings,
+                    pagination: {
+                        page: options.page,
+                        limit: options.limit,
+                        hasMore: bookings.length === options.limit
+                    }
+                }
+            });
+
+        } catch (error) {
+            console.error('Get vendor bookings error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to fetch vendor bookings',
+                error: error.message
+            });
+        }
+    }
+
+    // Get all bookings (admin)
+    static async getAllBookings(req, res) {
+        try {
+            const user_type = req.user?.user_type;
+            
+            if (user_type !== 'admin') {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Admin access required'
+                });
+            }
+
+            const {
+                page = 1,
+                limit = 20,
+                status,
+                admin_approval
+            } = req.query;
+
+            const options = {
+                page: parseInt(page),
+                limit: Math.min(parseInt(limit), 100),
+                status,
+                admin_approval
+            };
+
+            const bookings = await BookingModel.getAllBookings(options);
+
+            res.status(200).json({
+                success: true,
+                data: {
+                    bookings,
+                    pagination: {
+                        page: options.page,
+                        limit: options.limit,
+                        hasMore: bookings.length === options.limit
+                    }
+                }
+            });
+
+        } catch (error) {
+            console.error('Get all bookings error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to fetch all bookings',
+                error: error.message
+            });
+        }
+    }
+
+    // Get booking by ID
+    static async getBookingById(req, res) {
+        try {
+            const { id } = req.params;
+            const user_id = req.user?.uuid || req.user?.user_id;
+            const vendor_id = req.user?.vendor_id;
+            const user_type = req.user?.user_type;
+
+            if (!user_id) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Authentication required'
+                });
+            }
+
+            if (!id) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Booking ID is required'
+                });
+            }
+
+            const booking = await BookingModel.getBookingById(id);
+            if (!booking) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Booking not found'
+                });
+            }
+
+            // Check access permissions
+            const hasAccess = booking.user_id === user_id || 
+                            booking.vendor_id === vendor_id ||
+                            user_type === 'admin';
+
+            if (!hasAccess) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Unauthorized: You do not have access to this booking'
+                });
+            }
+
+            res.status(200).json({
+                success: true,
+                data: booking
+            });
+
+        } catch (error) {
+            console.error('Get booking by ID error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to fetch booking',
+                error: error.message
+            });
+        }
+    }
+
+    // Mark booking as awaiting review
+    static async markAwaitingReview(req, res) {
+        try {
+            const { id } = req.params;
+            
+            // This would typically be called by a system process after event completion
+            // For now, allow admin to trigger it
+            if (req.user?.user_type !== 'admin') {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Admin access required'
+                });
+            }
+
+            await BookingModel.markAwaitingReview(id);
+
+            // Get booking details for notification
+            const booking = await BookingModel.getBookingById(id);
+
+            // Send review reminder to user
+            await NotificationService.notifyReviewReminder({
+                booking_id: id,
+                user_id: booking.user_id,
+                vendor_name: booking.business_name,
+                event_date: booking.event_date,
+                package_name: booking.package_name
+            });
+
+            res.status(200).json({
+                success: true,
+                message: 'Booking marked as awaiting review',
+                data: {
+                    booking_id: id,
+                    status: BookingModel.BOOKING_STATUS.AWAITING_REVIEW
+                }
+            });
+
+        } catch (error) {
+            console.error('Mark awaiting review error:', error);
+            res.status(500).json({
+                success: false,
+                message: error.message || 'Failed to mark booking as awaiting review',
+                error: error.message
+            });
+        }
+    }
+
+    // Legacy functions for backward compatibility with existing routes
+    static async insertBooking(req, res) {
+        // Redirect to the new createBooking method
+        return BookingController.createBooking(req, res);
+    }
+
+    static async updateBooking(req, res) {
+        // This would need to be implemented based on your existing logic
+        // For now, return a placeholder response
+        res.status(501).json({
+            success: false,
+            message: 'Update booking functionality moved to specific action endpoints (accept/reject/approve/cancel)'
         });
-      });
-    });
+    }
 
-  }
-  catch (err) {
-    res.status(500).json({error: "Internal server error"});
-  }
+    static async deleteBooking(req, res) {
+        // This would redirect to cancel booking or implement soft delete
+        res.status(501).json({
+            success: false,
+            message: 'Delete booking functionality moved to cancel booking endpoint'
+        });
+    }
+
+    static async getBookingsByUserId(req, res) {
+        // Redirect to getUserBookings
+        return BookingController.getUserBookings(req, res);
+    }
+
+    static async getBookingsByVendorId(req, res) {
+        // Redirect to getVendorBookings
+        return BookingController.getVendorBookings(req, res);
+    }
 }
 
+// Export both class and individual functions for compatibility
+export default BookingController;
+
+// Named exports for legacy compatibility
+export const {
+    insertBooking,
+    updateBooking,
+    deleteBooking,
+    getBookingsByUserId,
+    getBookingsByVendorId,
+    getBookingById,
+    approveBooking
+} = BookingController;
