@@ -2,6 +2,7 @@ import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import MainLayout from "./components/layout/MainLayout";
 import ScrollToTop from "./components/ScrollToTop";
+import { Toaster } from "react-hot-toast";
 
 // Auth Pages
 import Login from "./pages/Auth/Login";
@@ -18,6 +19,7 @@ import ContactPage from "./pages/ContactPage";
 import Admindashboard from "./pages/Dashboards/Admin/Admindashboard";
 import AdminUsers from "./pages/Dashboards/Admin/AdminUsers";
 import AddService from "./pages/Dashboards/Admin/AddServices";
+import AdminBookings from "./pages/Dashboards/Admin/AdminBookings";
 
 // Vendor Pages
 import VendorDashboard from "./pages/Dashboards/Vendor/VendorDashboard";
@@ -27,10 +29,14 @@ import MyEvents from "./pages/Dashboards/Vendor/MyEvents";
 import VendorGallery from "./pages/Dashboards/Vendor/VendorGallery";
 import MyPackege from "./pages/Dashboards/Vendor/MyPackege";
 import VendorSettings from "./pages/Dashboards/Vendor/VendorSettings";
+import VendorBookings from "./pages/Dashboards/Vendor/VendorBookings";
 
 // User Pages
 import UserDashboard from "./pages/Dashboards/User/UserDashboard";
 import MyBookings from "./pages/Dashboards/User/MyBookings";
+
+// Notifications Page
+import NotificationsPage from "./pages/NotificationsPage";
 
 // Category Pages
 import Weddings from "./pages/Category/Weddings";
@@ -45,6 +51,7 @@ import VendorDetail from "./pages/VendorDetail";
 export default function App() {
   return (
     <AuthProvider>
+      <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
       <ScrollToTop />
       <Routes>
         {/* Public Routes */}
@@ -70,25 +77,29 @@ export default function App() {
         {/* Vendor Detail */}
         <Route path="/vendor/:vendorId" element={<VendorDetail />} />
 
+        {/* Notifications Page */}
+        <Route path="/notifications" element={<NotificationsPage />} />
+
         {/* Routes that use MainLayout (dashboard panels) */}
         <Route element={<MainLayout />}>
           {/* Admin */}
           <Route path="admin">
             <Route path="dashboard" element={<Admindashboard />} />
-            <Route path = "users" element = {<AdminUsers/>}/>
+            <Route path="users" element={<AdminUsers />} />
             <Route path="addservices" element={<AddService />} />
+            <Route path="bookings" element={<AdminBookings />} />
           </Route>
 
           {/* Vendor */}
           <Route path="vendor">
             <Route path="profile-setup" element={<VendorProfileSetup />} />
             <Route path="shifts" element={<VendorShiftPage />} />
-            <Route path= "dashboard" element = {<VendorDashboard />} />
-            <Route path = "myevents" element={<MyEvents />} />
-            <Route path ="gallery" element={<VendorGallery />} />
-            <Route path ="mypackege" element={<MyPackege />} />
-            <Route path ="setting" element= {<VendorSettings />}/>
-           
+            <Route path="dashboard" element={<VendorDashboard />} />
+            <Route path="myevents" element={<MyEvents />} />
+            <Route path="gallery" element={<VendorGallery />} />
+            <Route path="mypackege" element={<MyPackege />} />
+            <Route path="setting" element={<VendorSettings />} />
+            <Route path="bookings" element={<VendorBookings />} />
           </Route>
 
           {/* User */}
@@ -96,8 +107,6 @@ export default function App() {
             <Route path="dashboard" element={<UserDashboard />} />
             <Route path="bookings" element={<MyBookings />} />
           </Route>
-
-                  
         </Route>
       </Routes>
     </AuthProvider>

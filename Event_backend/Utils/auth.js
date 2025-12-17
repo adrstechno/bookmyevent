@@ -1,9 +1,15 @@
 import jwt from 'jsonwebtoken';
 
-// Authentication middleware
+// Authentication middleware - supports both Bearer token and cookies
 export const authenticateToken = (req, res, next) => {
+    // Try to get token from Authorization header first
     const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+    let token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+
+    // If no Bearer token, try to get from cookies
+    if (!token && req.cookies) {
+        token = req.cookies.auth_token;
+    }
 
     if (!token) {
         return res.status(401).json({
@@ -12,7 +18,7 @@ export const authenticateToken = (req, res, next) => {
         });
     }
 
-    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
         if (err) {
             return res.status(403).json({
                 success: false,
@@ -20,7 +26,13 @@ export const authenticateToken = (req, res, next) => {
             });
         }
         
-        req.user = user;
+        // Set user info from decoded token
+        // The token contains userId (uuid), we need to set it properly
+        req.user = {
+            uuid: decoded.userId,
+            user_id: decoded.userId,
+            ...decoded
+        };
         next();
     });
 };

@@ -404,6 +404,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { motion, AnimatePresence } from "framer-motion";
 import { VITE_API_BASE_URL } from "../../utils/api";
+import NotificationBell from "../NotificationBell";
 
 const categories = [
   { name: "Weddings", path: "/category/weddings", icon: SparklesIcon, color: "text-pink-500" },
@@ -567,6 +568,9 @@ const HomeNavbar = () => {
 
           {/* Auth Desktop */}
           <div className="hidden lg:flex items-center space-x-4">
+
+            {/* Notification Bell - Only show when logged in */}
+            {isLoggedIn && <NotificationBell />}
 
             {isLoggedIn ? (
               <div className="relative" ref={userMenuRef}>

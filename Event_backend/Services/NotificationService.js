@@ -1,4 +1,4 @@
-import NotificationModel from "../Models/NotificationModel.js";
+import NotificationModel from "../Models/NotificationModel_fixed.js";
 
 class NotificationService {
     // Notification types
