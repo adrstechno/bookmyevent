@@ -26,9 +26,15 @@ app.use(cookieParser()); // ✅ Enables req.cookies
 
 // (optional) if you're working with frontend:
 app.use(cors({
-  origin: 'http://localhost:5173', // or your frontend URL
-  credentials: true, // ✅ allows cookies to be sent
+  origin: [
+    "http://localhost:5173",
+    "https://bookmyevent-e2c3.vercel.app",
+    "https://www.goeventify.com",
+    "https://goeventify.com"
+  ],
+  credentials: true,
 }));
+
 
 // 🟢 Mount routers
 app.use('/User', UserRouter);
