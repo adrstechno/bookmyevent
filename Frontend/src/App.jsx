@@ -136,7 +136,7 @@ import AboutPage from "./pages/AboutPage";
 import ContactPage from "./pages/ContactPage";
 
 // Admin Pages
-import Admindashboard from "./pages/Dashboards/Admin/Admindashboard";
+import Admindashboard from "./pages/Dashboards/Admin/AdminDashboard";
 import AdminUsers from "./pages/Dashboards/Admin/AdminUsers";
 import AddService from "./pages/Dashboards/Admin/AddServices";
 import AdminBookings from "./pages/Dashboards/Admin/AdminBookings";
