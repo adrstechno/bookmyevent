@@ -3,10 +3,10 @@ import { FiStar, FiAward, FiTrendingUp } from "react-icons/fi";
 import TiltedCard from "./TiltedCard";
 
 const vendors = [
-  { name: "Royal Catering", img: "/Vendor1.jpeg", rating: 4.9, projects: 150 },
-  { name: "Bliss Decor", img: "/Vendor2.jpeg", rating: 4.8, projects: 200 },
-  { name: "Elite DJ", img: "/Vendor3.jpeg", rating: 5.0, projects: 180 },
-  { name: "Pixel Moments", img: "/Vendor4.jpeg", rating: 4.9, projects: 220 },
+  { name: "Royal Catering", img: "", rating: 4.9, projects: 150 },
+  { name: "Bliss Decor", img: "", rating: 4.8, projects: 200 },
+  { name: "Elite DJ", img: "", rating: 5.0, projects: 180 },
+  { name: "Pixel Moments", img: "", rating: 4.9, projects: 220 },
 ];
 
 const VendorsSection = () => (
