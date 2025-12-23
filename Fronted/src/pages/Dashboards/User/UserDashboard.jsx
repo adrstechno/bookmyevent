@@ -3,173 +3,166 @@ import {
   CalendarDaysIcon,
   CurrencyRupeeIcon,
   HeartIcon,
-  BellAlertIcon,
   UserCircleIcon,
   LifebuoyIcon,
 } from "@heroicons/react/24/outline";
 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from "recharts";
+
+/* 🔹 Helper: Decode JWT safely */
+const getUserFromToken = () => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) return null;
+
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload;
+  } catch {
+    return null;
+  }
+};
+
 const UserDashboard = () => {
-  const [user, setUser] = useState({});
-  const [bookings, setBookings] = useState([]);
-  const [notifications, setNotifications] = useState([]);
+  const [userName, setUserName] = useState("User");
 
   useEffect(() => {
-    // Demo data until backend integration
-    setUser({ name: "Aarav Mehta", email: "aarav@example.com" });
-    setBookings([
-      { id: 1, event: "Wedding Ceremony", date: "2025-12-20", status: "Confirmed", amount: "₹85,000" },
-      { id: 2, event: "Corporate Launch", date: "2026-01-10", status: "Pending", amount: "₹45,000" },
-    ]);
-    setNotifications([
-      { id: 1, message: "Your payment for 'Wedding Ceremony' was successful.", time: "3 hrs ago" },
-      { id: 2, message: "Vendor has shared decoration layout for your event.", time: "1 day ago" },
-    ]);
+    const decodedUser = getUserFromToken();
+
+    if (decodedUser?.name) {
+      setUserName(decodedUser.name);
+    } else if (decodedUser?.first_name) {
+      setUserName(decodedUser.first_name);
+    }
   }, []);
+
+  /* 🔹 KPI dummy data */
+  const kpiData = {
+    bookings: 5,
+    totalPayment: 160000,
+    savedVendors: 6,
+    tickets: 1,
+  };
+
+  /* 🔹 Colorful monthly chart data */
+  const chartData = [
+    { month: "Jan", bookings: 1, payments: 15000 },
+    { month: "Feb", bookings: 2, payments: 28000 },
+    { month: "Mar", bookings: 1, payments: 12000 },
+    { month: "Apr", bookings: 3, payments: 55000 },
+    { month: "May", bookings: 2, payments: 50000 },
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Navbar */}
+      {/* NAVBAR */}
       <header className="bg-[#3c6e71] text-white shadow-md py-4 px-6 flex justify-between items-center">
-        <h1 className="text-xl md:text-2xl font-semibold">User Dashboard</h1>
-        <div className="flex items-center space-x-3">
-          <UserCircleIcon className="h-8 w-8 text-white" />
-          <span className="font-medium">Hi, {user.name}</span>
+        <h1 className="text-xl font-semibold">User Dashboard</h1>
+        <div className="flex items-center gap-2">
+          <UserCircleIcon className="h-8 w-8" />
+          <span className="font-medium">Hi, {userName}</span>
         </div>
       </header>
 
-      {/* Main Section */}
-      <main className="flex-1 p-6 md:p-10">
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-          {/* Bookings */}
-          <div className="bg-white shadow-lg rounded-2xl p-5 border-t-4 border-[#3c6e71] hover:shadow-2xl transition">
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="text-gray-700 font-medium">My Bookings</h3>
-              <CalendarDaysIcon className="h-6 w-6 text-[#3c6e71]" />
-            </div>
-            <p className="text-2xl font-semibold text-gray-900">
-              {bookings.length}
-            </p>
-            <span className="text-sm text-gray-500">
-              Active event bookings
-            </span>
-          </div>
-
-          {/* Payments */}
-          <div className="bg-white shadow-lg rounded-2xl p-5 border-t-4 border-[#3c6e71] hover:shadow-2xl transition">
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="text-gray-700 font-medium">Payments</h3>
-              <CurrencyRupeeIcon className="h-6 w-6 text-[#3c6e71]" />
-            </div>
-            <p className="text-2xl font-semibold text-gray-900">₹1,30,000</p>
-            <span className="text-sm text-gray-500">Total paid this year</span>
-          </div>
-
-          {/* Saved Vendors */}
-          <div className="bg-white shadow-lg rounded-2xl p-5 border-t-4 border-[#3c6e71] hover:shadow-2xl transition">
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="text-gray-700 font-medium">Saved Vendors</h3>
-              <HeartIcon className="h-6 w-6 text-[#3c6e71]" />
-            </div>
-            <p className="text-2xl font-semibold text-gray-900">5</p>
-            <span className="text-sm text-gray-500">Your favorite partners</span>
-          </div>
-
-          {/* Support Tickets */}
-          <div className="bg-white shadow-lg rounded-2xl p-5 border-t-4 border-[#3c6e71] hover:shadow-2xl transition">
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="text-gray-700 font-medium">Support Tickets</h3>
-              <LifebuoyIcon className="h-6 w-6 text-[#3c6e71]" />
-            </div>
-            <p className="text-2xl font-semibold text-gray-900">2</p>
-            <span className="text-sm text-gray-500">Pending responses</span>
-          </div>
+      {/* MAIN */}
+      <main className="flex-1 p-6 md:p-8 space-y-8">
+        {/* KPI CARDS */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <KpiCard
+            title="My Bookings"
+            value={kpiData.bookings}
+            subtitle="Active events"
+            icon={<CalendarDaysIcon className="h-6 w-6 text-[#3c6e71]" />}
+          />
+          <KpiCard
+            title="Payments"
+            value={`₹${kpiData.totalPayment.toLocaleString()}`}
+            subtitle="Total paid"
+            icon={<CurrencyRupeeIcon className="h-6 w-6 text-[#3c6e71]" />}
+          />
+          <KpiCard
+            title="Saved Vendors"
+            value={kpiData.savedVendors}
+            subtitle="Favorites"
+            icon={<HeartIcon className="h-6 w-6 text-[#3c6e71]" />}
+          />
+          <KpiCard
+            title="Support Tickets"
+            value={kpiData.tickets}
+            subtitle="Open"
+            icon={<LifebuoyIcon className="h-6 w-6 text-[#3c6e71]" />}
+          />
         </div>
 
-        {/* My Bookings */}
-        <section className="bg-white shadow-lg rounded-2xl p-6 mb-8">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">
-            My Bookings
-          </h2>
-          {bookings.length > 0 ? (
-            <table className="w-full text-left border-t border-gray-100">
-              <thead>
-                <tr className="text-gray-700 border-b">
-                  <th className="py-2">Event</th>
-                  <th>Date</th>
-                  <th>Status</th>
-                  <th>Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {bookings.map((booking) => (
-                  <tr key={booking.id} className="border-b hover:bg-gray-50">
-                    <td className="py-2">{booking.event}</td>
-                    <td>{booking.date}</td>
-                    <td>
-                      <span
-                        className={`px-3 py-1 text-sm font-medium rounded-full ${
-                          booking.status === "Confirmed"
-                            ? "bg-green-100 text-green-700"
-                            : "bg-yellow-100 text-yellow-700"
-                        }`}
-                      >
-                        {booking.status}
-                      </span>
-                    </td>
-                    <td>{booking.amount}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <p className="text-gray-500">You have no event bookings yet.</p>
-          )}
-        </section>
-
-        {/* Notifications */}
-        <section className="bg-white shadow-lg rounded-2xl p-6 mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-800">
-              Recent Notifications
-            </h2>
-            <BellAlertIcon className="h-6 w-6 text-[#3c6e71]" />
-          </div>
-          {notifications.length > 0 ? (
-            <ul className="divide-y divide-gray-100">
-              {notifications.map((note) => (
-                <li key={note.id} className="py-3 flex justify-between items-center">
-                  <span className="text-gray-700">{note.message}</span>
-                  <span className="text-xs text-gray-400">{note.time}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-gray-500">No new notifications.</p>
-          )}
-        </section>
-
-        {/* Help Section */}
+        {/* CHART SECTION */}
         <section className="bg-white shadow-lg rounded-2xl p-6">
-          <h2 className="text-lg font-semibold text-gray-800 mb-3">
-            Need Help?
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">
+            Monthly Activity Overview
           </h2>
-          <p className="text-gray-600 mb-4">
-            Facing an issue with your booking or event planning?  
-            Our support team is available 24/7 to assist you.
-          </p>
-          <button className="bg-[#3c6e71] text-white px-5 py-2 rounded-lg hover:bg-[#2d5559] transition">
-            Contact Support
-          </button>
+
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData} barGap={10}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip />
+
+                <defs>
+                  <linearGradient id="bookingGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#3c6e71" />
+                    <stop offset="100%" stopColor="#84a98c" />
+                  </linearGradient>
+
+                  <linearGradient id="paymentGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#f4a261" />
+                    <stop offset="100%" stopColor="#e76f51" />
+                  </linearGradient>
+                </defs>
+
+                <Bar
+                  dataKey="bookings"
+                  fill="url(#bookingGradient)"
+                  radius={[8, 8, 0, 0]}
+                  name="Bookings"
+                />
+                <Bar
+                  dataKey="payments"
+                  fill="url(#paymentGradient)"
+                  radius={[8, 8, 0, 0]}
+                  name="Payments (₹)"
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-[#284b63] text-gray-100 text-center py-4 text-sm mt-auto">
-        © {new Date().getFullYear()} EventPlus — User Dashboard. All rights reserved.
+      {/* FOOTER */}
+      <footer className="bg-[#284b63] text-gray-100 text-center py-4 text-sm">
+        © {new Date().getFullYear()} EventPlus. All rights reserved.
       </footer>
     </div>
   );
 };
+
+/* 🔹 Reusable KPI Card */
+const KpiCard = ({ title, value, subtitle, icon }) => (
+  <div className="bg-white shadow-md rounded-2xl p-5 border-t-4 border-[#3c6e71] hover:shadow-lg transition">
+    <div className="flex justify-between items-center mb-2">
+      <h3 className="text-gray-700 font-medium">{title}</h3>
+      {icon}
+    </div>
+    <p className="text-2xl font-semibold text-gray-900">{value}</p>
+    <span className="text-sm text-gray-500">{subtitle}</span>
+  </div>
+);
 
 export default UserDashboard;
