@@ -103,23 +103,31 @@ const NotificationBell = () => {
     }
   };
 
-  // Handle notification click - navigate based on type
+  // Handle notification click - navigate based on type and role
   const handleNotificationClick = (notification) => {
     if (!notification.is_read) {
       handleMarkAsRead(notification.id, { stopPropagation: () => {} });
     }
 
-    // Navigate based on notification type
-    const { type, related_booking_id } = notification;
-    if (related_booking_id) {
-      if (type?.includes("booking")) {
-        navigate("/user/bookings");
-      } else if (type?.includes("otp")) {
-        navigate("/user/bookings");
-      } else if (type?.includes("review")) {
+    // Get user role for role-based navigation
+    const userRole = localStorage.getItem("role")?.toLowerCase();
+    
+    // Navigate based on notification type and user role
+    const { type } = notification;
+    
+    if (type?.includes("booking") || type?.includes("otp") || type?.includes("review")) {
+      if (userRole === "admin") {
+        navigate("/admin/bookings");
+      } else if (userRole === "vendor") {
+        navigate("/vendor/bookings");
+      } else {
         navigate("/user/bookings");
       }
+    } else {
+      // Default: go to notifications page
+      navigate("/notifications");
     }
+    
     setIsOpen(false);
   };
 

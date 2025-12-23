@@ -61,7 +61,7 @@ const Login = () => {
 
       if (res.data?.token) {
         toast.success("Login Successful");
-
+        const role = res.data.role;
         // Store token + role in both storage systems
         localStorage.setItem("token", res.data.token);
         localStorage.setItem("role", res.data.role);
@@ -69,7 +69,17 @@ const Login = () => {
         sessionStorage.setItem("token", res.data.token);
         sessionStorage.setItem("role", res.data.role);
 
-        setTimeout(() => navigate("/vendor/dashboard"), 700);
+        setTimeout(() =>{ 
+           if (role == "admin"){
+            navigate("/admin/dashboard");
+           } else if (role =="user"){
+            navigate("/user/dashboard");
+           }else if (role=="vendor"){
+            navigate("/vendor/dashboard") 
+           } else{
+            navigate("/");
+           }
+         }, 700);
       } else {
         toast.error("Invalid credentials");
       }
