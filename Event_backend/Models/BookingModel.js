@@ -96,15 +96,15 @@ class BookingModel {
     }
 
     // Update booking status
-    static async updateBookingStatus(booking_id, status, updated_by, notes = null) {
+    static async updateBookingStatus(booking_id, status) {
         const sql = `
             UPDATE event_booking 
-            SET status = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ?, status_notes = ?
+            SET status = ?, updated_at = CURRENT_TIMESTAMP
             WHERE booking_id = ?
         `;
 
         return new Promise((resolve, reject) => {
-            db.query(sql, [status, updated_by, notes, booking_id], (err, result) => {
+            db.query(sql, [status, booking_id], (err, result) => {
                 if (err) reject(err);
                 else resolve(result.affectedRows > 0);
             });
@@ -130,12 +130,12 @@ class BookingModel {
         // Update both status and admin_approval for vendor acceptance
         const sql = `
             UPDATE event_booking 
-            SET status = 'confirmed', admin_approval = 'pending', updated_at = CURRENT_TIMESTAMP, updated_by = ?
+            SET status = 'confirmed', admin_approval = 'pending', updated_at = CURRENT_TIMESTAMP
             WHERE booking_id = ?
         `;
 
         return new Promise((resolve, reject) => {
-            db.query(sql, [`vendor_${vendor_id}`, booking_id], (err, result) => {
+            db.query(sql, [booking_id], (err, result) => {
                 if (err) reject(err);
                 else resolve(result.affectedRows > 0);
             });
@@ -160,9 +160,7 @@ class BookingModel {
 
         return await this.updateBookingStatus(
             booking_id, 
-            this.BOOKING_STATUS.CANCELLED_BY_VENDOR, 
-            `vendor_${vendor_id}`,
-            reason
+            this.BOOKING_STATUS.CANCELLED_BY_VENDOR
         );
     }
 
@@ -178,19 +176,15 @@ class BookingModel {
             throw new Error('Booking cannot be approved in current status');
         }
 
-        // Update both status and admin_approval
+        // Update admin_approval to approved
         const sql = `
             UPDATE event_booking 
-            SET status = ?, admin_approval = 'approved', updated_at = CURRENT_TIMESTAMP, updated_by = ?
+            SET admin_approval = 'approved', updated_at = CURRENT_TIMESTAMP
             WHERE booking_id = ?
         `;
 
         return new Promise((resolve, reject) => {
-            db.query(sql, [
-                'confirmed', 
-                `admin_${admin_id}`, 
-                booking_id
-            ], (err, result) => {
+            db.query(sql, [booking_id], (err, result) => {
                 if (err) reject(err);
                 else resolve(result.affectedRows > 0);
             });
@@ -205,24 +199,18 @@ class BookingModel {
             throw new Error('Booking not found');
         }
 
-        if (booking.status !== this.BOOKING_STATUS.ACCEPTED_BY_VENDOR_PENDING_ADMIN) {
+        if (booking.status !== 'confirmed' || booking.admin_approval !== 'pending') {
             throw new Error('Booking cannot be rejected in current status');
         }
 
         const sql = `
             UPDATE event_booking 
-            SET status = ?, admin_approval = 'rejected', updated_at = CURRENT_TIMESTAMP, 
-                updated_by = ?, status_notes = ?
+            SET status = 'cancelled', admin_approval = 'rejected', updated_at = CURRENT_TIMESTAMP
             WHERE booking_id = ?
         `;
 
         return new Promise((resolve, reject) => {
-            db.query(sql, [
-                this.BOOKING_STATUS.REJECTED_BY_ADMIN, 
-                `admin_${admin_id}`, 
-                reason,
-                booking_id
-            ], (err, result) => {
+            db.query(sql, [booking_id], (err, result) => {
                 if (err) reject(err);
                 else resolve(result.affectedRows > 0);
             });
@@ -237,12 +225,19 @@ class BookingModel {
 
     // Complete OTP verification
     static async completeOTPVerification(booking_id) {
-        // Keep status as 'confirmed' but could add a flag or note
-        return await this.updateBookingStatus(
-            booking_id, 
-            'confirmed', 
-            'system_otp_verified'
-        );
+        // Mark booking as completed after OTP verification
+        const sql = `
+            UPDATE event_booking 
+            SET status = 'completed', updated_at = CURRENT_TIMESTAMP
+            WHERE booking_id = ?
+        `;
+
+        return new Promise((resolve, reject) => {
+            db.query(sql, [booking_id], (err, result) => {
+                if (err) reject(err);
+                else resolve(result.affectedRows > 0);
+            });
+        });
     }
 
     // Cancel booking (user or vendor)
@@ -260,12 +255,7 @@ class BookingModel {
             throw new Error('Booking cannot be cancelled in current status');
         }
 
-        return await this.updateBookingStatus(
-            booking_id, 
-            'cancelled', 
-            `${user_type}_${cancelled_by}`,
-            reason
-        );
+        return await this.updateBookingStatus(booking_id, 'cancelled');
     }
 
     // Mark booking as awaiting review (after completion)
@@ -280,20 +270,12 @@ class BookingModel {
             throw new Error('Only confirmed bookings can be marked as awaiting review');
         }
 
-        return await this.updateBookingStatus(
-            booking_id, 
-            'completed', 
-            'system'
-        );
+        return await this.updateBookingStatus(booking_id, 'completed');
     }
 
     // Complete booking (after review)
     static async completeBooking(booking_id) {
-        return await this.updateBookingStatus(
-            booking_id, 
-            'completed', 
-            'system'
-        );
+        return await this.updateBookingStatus(booking_id, 'completed');
     }
 
     // Get bookings by user

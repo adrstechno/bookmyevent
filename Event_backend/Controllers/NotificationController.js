@@ -2,7 +2,7 @@ import NotificationModel from "../Models/NotificationModel.js";
 import NotificationService from "../Services/NotificationService.js";
 
 class NotificationController {
-    // Get user notifications with pagination and filters
+    // Get user notifications with pagination
     static async getUserNotifications(req, res) {
         try {
             const user_id = req.user?.uuid || req.user?.user_id;
@@ -13,22 +13,11 @@ class NotificationController {
                 });
             }
 
-            const {
-                page = 1,
-                limit = 20,
-                type,
-                status,
-                dateFrom,
-                dateTo
-            } = req.query;
+            const { page = 1, limit = 20 } = req.query;
 
             const options = {
                 page: parseInt(page),
-                limit: Math.min(parseInt(limit), 100), // Max 100 per page
-                type,
-                status,
-                dateFrom,
-                dateTo
+                limit: Math.min(parseInt(limit), 100)
             };
 
             const notifications = await NotificationModel.getUserNotifications(user_id, options);
@@ -43,7 +32,8 @@ class NotificationController {
                         limit: options.limit,
                         hasMore: notifications.length === options.limit
                     },
-                    unreadCount
+                    unreadCount,
+                    count: unreadCount
                 }
             });
 
@@ -72,7 +62,10 @@ class NotificationController {
 
             res.status(200).json({
                 success: true,
-                data: { unreadCount: count }
+                data: { 
+                    unreadCount: count,
+                    count: count 
+                }
             });
 
         } catch (error) {
@@ -153,50 +146,6 @@ class NotificationController {
             res.status(500).json({
                 success: false,
                 message: 'Failed to mark all notifications as read',
-                error: error.message
-            });
-        }
-    }
-
-    // Archive notification
-    static async archiveNotification(req, res) {
-        try {
-            const user_id = req.user?.uuid || req.user?.user_id;
-            const { id } = req.params;
-
-            if (!user_id) {
-                return res.status(401).json({
-                    success: false,
-                    message: 'User authentication required'
-                });
-            }
-
-            if (!id) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Notification ID is required'
-                });
-            }
-
-            const success = await NotificationModel.archiveNotification(id, user_id);
-
-            if (!success) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'Notification not found or unauthorized'
-                });
-            }
-
-            res.status(200).json({
-                success: true,
-                message: 'Notification archived'
-            });
-
-        } catch (error) {
-            console.error('Archive notification error:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Failed to archive notification',
                 error: error.message
             });
         }
@@ -293,16 +242,8 @@ class NotificationController {
     // Create notification (admin/system use)
     static async createNotification(req, res) {
         try {
-            const {
-                user_id,
-                title,
-                message,
-                type,
-                metadata,
-                related_booking_id
-            } = req.body;
+            const { user_id, title, message } = req.body;
 
-            // Validate required fields
             if (!user_id || !title || !message) {
                 return res.status(400).json({
                     success: false,
@@ -310,16 +251,7 @@ class NotificationController {
                 });
             }
 
-            const notificationData = {
-                user_id,
-                title,
-                message,
-                type: type || 'general',
-                metadata: metadata || {},
-                related_booking_id
-            };
-
-            const result = await NotificationModel.createNotification(notificationData);
+            const result = await NotificationModel.createNotification({ user_id, title, message });
 
             res.status(201).json({
                 success: true,
@@ -337,7 +269,33 @@ class NotificationController {
         }
     }
 
-    // Send bulk notifications (admin use)
+    // Archive notification (same as delete for now)
+    static async archiveNotification(req, res) {
+        return NotificationController.deleteNotification(req, res);
+    }
+
+    // Get notification statistics (placeholder)
+    static async getNotificationStats(req, res) {
+        try {
+            res.status(200).json({
+                success: true,
+                message: 'Notification statistics',
+                data: {
+                    totalSent: 0,
+                    totalRead: 0,
+                    readRate: 0
+                }
+            });
+        } catch (error) {
+            res.status(500).json({
+                success: false,
+                message: 'Failed to get notification statistics',
+                error: error.message
+            });
+        }
+    }
+
+    // Send bulk notifications
     static async sendBulkNotifications(req, res) {
         try {
             const { notifications } = req.body;
@@ -349,22 +307,19 @@ class NotificationController {
                 });
             }
 
-            // Validate each notification
-            for (const notification of notifications) {
-                if (!notification.user_id || !notification.title || !notification.message) {
-                    return res.status(400).json({
-                        success: false,
-                        message: 'Each notification must have user_id, title, and message'
-                    });
-                }
-            }
+            const promises = notifications.map(n => 
+                NotificationModel.createNotification({ 
+                    user_id: n.user_id, 
+                    title: n.title, 
+                    message: n.message 
+                })
+            );
 
-            const result = await NotificationService.sendBulkNotifications(notifications);
+            await Promise.all(promises);
 
             res.status(201).json({
                 success: true,
-                message: `${result.count} notifications sent successfully`,
-                data: result
+                message: `${notifications.length} notifications sent successfully`
             });
 
         } catch (error) {
@@ -372,34 +327,6 @@ class NotificationController {
             res.status(500).json({
                 success: false,
                 message: 'Failed to send bulk notifications',
-                error: error.message
-            });
-        }
-    }
-
-    // Get notification statistics (admin use)
-    static async getNotificationStats(req, res) {
-        try {
-            const { timeframe = '7d' } = req.query;
-            
-            // This would require additional database queries for statistics
-            // For now, return a basic response
-            res.status(200).json({
-                success: true,
-                message: 'Notification statistics endpoint - to be implemented',
-                data: {
-                    timeframe,
-                    totalSent: 0,
-                    totalRead: 0,
-                    readRate: 0
-                }
-            });
-
-        } catch (error) {
-            console.error('Get notification stats error:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Failed to get notification statistics',
                 error: error.message
             });
         }
@@ -449,22 +376,23 @@ class NotificationController {
 
     static markNotificationAsRead(req, res) {
         const { notification_id } = req.params;
+        const user_id = req.user?.uuid || req.user?.user_id;
         
-        NotificationModel.markAsRead(notification_id, (err, result) => {
-            if (err) {
+        NotificationModel.markAsRead(notification_id, user_id)
+            .then(success => {
+                res.status(200).json({
+                    success: true,
+                    message: 'Notification marked as read'
+                });
+            })
+            .catch(err => {
                 console.error('Mark as read error:', err);
-                return res.status(500).json({
+                res.status(500).json({
                     success: false,
                     message: 'Failed to mark notification as read',
                     error: err.message
                 });
-            }
-            
-            res.status(200).json({
-                success: true,
-                message: 'Notification marked as read'
             });
-        });
     }
 }
 

@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import db from '../Config/DatabaseCon.js';
 
 // Authentication middleware - supports both Bearer token and cookies
 export const authenticateToken = (req, res, next) => {
@@ -26,14 +27,55 @@ export const authenticateToken = (req, res, next) => {
             });
         }
         
-        // Set user info from decoded token
-        // The token contains userId (uuid), we need to set it properly
-        req.user = {
-            uuid: decoded.userId,
-            user_id: decoded.userId,
-            ...decoded
-        };
-        next();
+        // Get full user info from database
+        const userId = decoded.userId;
+        
+        // Query to get user info and vendor_id if exists
+        // Note: vendor_profiles.user_id might store uuid (string) or user_id (int) depending on how vendor was created
+        const sql = `
+            SELECT u.user_id, u.uuid, u.email, u.first_name, u.last_name, u.user_type,
+                   vp.vendor_id
+            FROM users u
+            LEFT JOIN vendor_profiles vp ON (u.user_id = vp.user_id OR u.uuid = vp.user_id)
+            WHERE u.uuid = ?
+            LIMIT 1
+        `;
+        
+        db.query(sql, [userId], (dbErr, results) => {
+            if (dbErr) {
+                console.error('Auth DB error:', dbErr);
+                return res.status(500).json({
+                    success: false,
+                    message: 'Authentication error'
+                });
+            }
+            
+            if (!results || results.length === 0) {
+                console.log('User not found for uuid:', userId);
+                return res.status(401).json({
+                    success: false,
+                    message: 'User not found'
+                });
+            }
+            
+            const user = results[0];
+            console.log('Auth successful for user:', user.uuid, 'type:', user.user_type, 'vendor_id:', user.vendor_id);
+            
+            // Set user info on request
+            req.user = {
+                uuid: user.uuid,
+                user_id: user.uuid, // Use uuid as user_id for bookings (matches event_booking.user_id which is VARCHAR)
+                db_user_id: user.user_id,
+                email: user.email,
+                first_name: user.first_name,
+                last_name: user.last_name,
+                user_type: user.user_type,
+                vendor_id: user.vendor_id || null
+            };
+            
+            console.log('req.user set:', JSON.stringify(req.user));
+            next();
+        });
     });
 };
 
