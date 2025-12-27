@@ -39,10 +39,16 @@ const BookingSection = () => {
     if (!bookingForm.event_time) return toast.error("Event time is required");
 
     try {
+      const token = localStorage.getItem('token');
       const response = await axios.post(
         `${VITE_API_BASE_URL}/Booking/InsertBooking`,
         bookingForm,
-        { withCredentials: true }
+        { 
+          withCredentials: true,
+          headers: {
+            ...(token && { "Authorization": `Bearer ${token}` })
+          }
+        }
       );
 
       toast.success("Booking created successfully!");

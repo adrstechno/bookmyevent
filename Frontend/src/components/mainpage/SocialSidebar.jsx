@@ -20,7 +20,7 @@ const SocialSidebar = () => {
       >
         {/* WhatsApp (New!) */}
         <SocialIcon
-          href="https://wa.me/919876543210?text=Hi!%20I%20am%20interested%20in%20your%20event%20services"
+          href="https://wa.me/919076927464?text=Hi!%20I%20am%20interested%20in%20your%20event%20services"
           bg="bg-gradient-to-br from-green-500 to-green-400"
           glow="shadow-green-400/50"
         >

@@ -2,20 +2,31 @@ import axios from "axios";
 import { VITE_API_BASE_URL } from "../utils/api";
 
 // Create axios instance with default config
-// Uses cookies for authentication (withCredentials: true)
 const api = axios.create({
   baseURL: VITE_API_BASE_URL,
-  withCredentials: true, // This sends cookies with requests
-  headers: {
-    "Content-Type": "application/json",
-  },
+  withCredentials: true, // Send cookies with requests
+  timeout: 10000, // 10 second timeout
 });
 
-// No need for Authorization header - backend uses cookie-based sessions
+// Request interceptor to add auth token to headers
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
-// Response interceptor - Handle errors globally (no redirects)
+// Response interceptor to handle auth errors
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    return response;
+  },
   (error) => {
     const { response } = error;
     
@@ -23,6 +34,15 @@ api.interceptors.response.use(
       switch (response.status) {
         case 401:
           console.log("Auth error - 401 Unauthorized");
+          // Clear stored auth data on 401
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          localStorage.removeItem('role');
+          
+          // Redirect to login if not already there
+          if (window.location.pathname !== '/login') {
+            window.location.href = '/login';
+          }
           break;
         case 403:
           console.error("Permission denied - 403 Forbidden");
