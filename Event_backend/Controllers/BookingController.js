@@ -474,7 +474,25 @@ class BookingController {
     // Get vendor bookings
     static async getVendorBookings(req, res) {
         try {
-            const vendor_id = req.user?.vendor_id || req.user?.user_id;
+             const token = req.cookies.auth_token;
+                if (!token) {
+                  return res
+                    .status(401)
+                    .json({ message: "Unauthorized: No token provided" });
+                }
+            
+                const decoded = verifyToken(token);
+                if (!decoded) {
+                  return res.status(401).json({ message: "Unauthorized: Invalid token" });
+                }
+            
+                // 2️⃣ Get vendor_id using a promisified helper
+                const vendor_id = await promisifyFindVendorID(decoded.userId);
+                if (!vendor_id) {
+                  return res.status(404).json({ message: "Vendor not found" });
+                }
+
+            // const vendor_id = req.user?.vendor_id || req.user?.user_id;
             
             if (!vendor_id) {
                 return res.status(401).json({
