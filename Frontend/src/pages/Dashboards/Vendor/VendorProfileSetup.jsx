@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Box,
   Card,
@@ -14,14 +14,15 @@ import {
 } from "@mui/material";
 import { PhotoCamera, Save } from "@mui/icons-material";
 import axios from "axios";
-// navigation not required in this form
 import { VITE_API_BASE_URL } from "../../../utils/api";
 import toast from "react-hot-toast";
+import { useAuth } from "../../../context/AuthContext";
 
+// Configure axios to include credentials (cookies) with requests
 axios.defaults.withCredentials = true;
 
 const VendorProfileSetup = () => {
-  // navigation not required in this form
+  const { user } = useAuth();
 
   const [formData, setFormData] = useState({
     business_name: "",
@@ -44,7 +45,9 @@ const VendorProfileSetup = () => {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const res = await axios.get(`${VITE_API_BASE_URL}/Service/GetAllServices`);
+        const res = await axios.get(`${VITE_API_BASE_URL}/Service/GetAllServices`, {
+          withCredentials: true
+        });
         const data = res.data?.data || res.data;
         if (Array.isArray(data)) {
           const formatted = data.map((item) => ({
@@ -53,7 +56,8 @@ const VendorProfileSetup = () => {
           }));
           setServices(formatted);
         }
-      } catch {
+      } catch (error) {
+        console.error("Error fetching services:", error);
         toast.error("Failed to load services.");
       }
     };
@@ -84,6 +88,12 @@ const VendorProfileSetup = () => {
       toast.error("Please fill all required fields!");
       return false;
     }
+    
+    if (!formData.profilePicture) {
+      toast.error("Please upload a profile picture!");
+      return false;
+    }
+    
     if (!/^[0-9]{10}$/.test(formData.contact)) {
       toast.error("Enter a valid 10-digit contact number.");
       return false;
@@ -95,23 +105,65 @@ const VendorProfileSetup = () => {
     e.preventDefault();
     if (!validateMainForm()) return;
 
+    // Check if user is authenticated
+    if (!user) {
+      toast.error("Please login to create vendor profile");
+      return;
+    }
+
     try {
       setLoading(true);
       const payload = new FormData();
-      Object.keys(formData).forEach((key) => payload.append(key, formData[key]));
+      
+      // Add all form data to FormData object
+      Object.keys(formData).forEach((key) => {
+        if (formData[key] !== null && formData[key] !== "") {
+          payload.append(key, formData[key]);
+        }
+      });
 
+      // Get token from localStorage and add as Authorization header
+      const token = localStorage.getItem("token");
+      
       const response = await axios.post(
         `${VITE_API_BASE_URL}/Vendor/InsertVendor`,
         payload,
         {
           withCredentials: true,
-          headers: { "Content-Type": "multipart/form-data" },
+          headers: { 
+            "Content-Type": "multipart/form-data",
+            ...(token && { "Authorization": `Bearer ${token}` })
+          },
         }
       );
 
-      toast.success(response.data.message || "Vendor profile created!");
-    } catch {
-      toast.error("Failed to save profile.");
+      toast.success(response.data.message || "Vendor profile created successfully!");
+      
+      // Reset form after successful submission
+      setFormData({
+        business_name: "",
+        service_category_id: "",
+        description: "",
+        years_experience: "",
+        contact: "",
+        address: "",
+        city: "",
+        state: "",
+        event_profiles_url: "",
+        profilePicture: null,
+      });
+      setPreview(null);
+      
+    } catch (error) {
+      console.error("Error creating vendor profile:", error);
+      
+      if (error.response?.status === 401) {
+        toast.error("Unauthorized. Please login again.");
+      } else if (error.response?.status === 400) {
+        toast.error(error.response.data.message || "Please upload a profile picture.");
+      } else {
+        toast.error(error.response?.data?.message || "Failed to save profile. Please try again.");
+      }
     } finally {
       setLoading(false);
     }

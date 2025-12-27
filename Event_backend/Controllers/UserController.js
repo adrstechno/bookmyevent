@@ -58,11 +58,11 @@ export const login = (req, res) => {
         // Generate token
         const token = generateToken(user.uuid);
 
-        // Set cookie
+        // Set cookie with cross-origin friendly settings
         res.cookie('auth_token', token, {
             httpOnly: true,
-            secure: true,
-            sameSite: 'strict',
+            secure: process.env.NODE_ENV === 'production', // Only secure in production
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Allow cross-site in production
             maxAge: 3600000 // 1 hour
         });
 
