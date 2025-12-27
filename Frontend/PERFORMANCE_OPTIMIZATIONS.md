@@ -1,6 +1,6 @@
 # Performance Optimizations Applied
 
-## 1. Scroll to Top on Route Change ✅
+## 1. Scroll to Top on Route Change ✅  
 **File**: `Fronted/src/components/ScrollToTop.jsx`
 - Created a ScrollToTop component that automatically scrolls to the top of the page when navigating between routes
 - Uses `useLocation` hook to detect route changes
