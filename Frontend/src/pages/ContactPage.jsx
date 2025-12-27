@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { FiMail, FiPhone, FiMapPin, FiSend, FiClock } from "react-icons/fi";
-import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from "react-icons/fa";
+import { FaFacebook, FaInstagram, FaLinkedin, FaWhatsapp } from "react-icons/fa";
 import Footer from "../components/mainpage/Footer";
 import HomeNavbar from "../components/mainpage/HomeNavbar";
 import toast from "react-hot-toast";
@@ -21,19 +21,19 @@ const ContactPage = () => {
     {
       icon: FiPhone,
       title: "Phone",
-      details: ["+91 98765 43210", "+91 98765 43211"],
+      details: ["+91 9201976523"],
       color: "from-blue-500 to-cyan-500",
     },
     {
       icon: FiMail,
       title: "Email",
-      details: ["info@bookmyevent.com", "support@bookmyevent.com"],
+      details: ["goeventify@gmail.com"],
       color: "from-purple-500 to-pink-500",
     },
     {
       icon: FiMapPin,
       title: "Address",
-      details: ["123 Event Street, Mumbai", "Maharashtra, India - 400001"],
+      details: ["71,Dadda Nagar Near Katangi Highway jabalpur"],
       color: "from-green-500 to-emerald-500",
     },
     {
@@ -186,7 +186,7 @@ const ContactPage = () => {
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
-                    placeholder="+91 98765 43210"
+                    placeholder="+91 9201976523"
                     className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:border-[#3c6e71] focus:ring-2 focus:ring-[#3c6e71]/20 outline-none transition-all"
                   />
                 </div>
@@ -270,34 +270,38 @@ const ContactPage = () => {
               
               <div className="flex gap-4">
                 <a
-                  href="https://facebook.com"
+                  href="https://www.facebook.com/profile.php?id=61585660263887"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110"
+                  aria-label="Facebook"
                 >
                   <FaFacebook className="text-2xl" />
                 </a>
                 <a
-                  href="https://twitter.com"
+                  href="https://wa.me/919201976523?text=Hi!%20I%20want%20to%20know%20more%20about%20your%20services"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110"
+                  aria-label="WhatsApp"
                 >
-                  <FaTwitter className="text-2xl" />
+                  <FaWhatsapp className="text-2xl" />
                 </a>
                 <a
-                  href="https://instagram.com"
+                  href="https://www.instagram.com/goeventify/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110"
+                  aria-label="Instagram"
                 >
                   <FaInstagram className="text-2xl" />
                 </a>
                 <a
-                  href="https://linkedin.com"
+                  href="https://www.linkedin.com/in/go-eventify/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110"
+                  aria-label="LinkedIn"
                 >
                   <FaLinkedin className="text-2xl" />
                 </a>

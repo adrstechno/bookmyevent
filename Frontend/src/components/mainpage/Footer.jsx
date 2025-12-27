@@ -77,25 +77,25 @@ const Footer = () => {
             </li>
             <li className="flex items-center gap-2">
               <Phone size={18} className="text-[#f9a826]" />
-              <span>+91 92019 76523 </span>
+              <a href="tel:+919201976523" className="hover:underline">9201976523</a>
             </li>
             <li className="flex items-center gap-2">
               <Mail size={18} className="text-[#f9a826]" />
-              <span>GoEventify@gmail.com</span>
+              <a href="mailto:goeventify@gmail.com" className="hover:underline">goeventify@gmail.com</a>
             </li>
           </ul>
 
           {/* Social Icons */}
           <div className="flex gap-4 mt-6">
-            {[Facebook, Instagram, Linkedin].map((Icon, i) => (
-              <a
-                key={i}
-                href="#"
-                className="w-9 h-9 flex items-center justify-center rounded-full border border-gray-400 hover:border-[#f9a826] hover:text-[#f9a826] transition"
-              >
-                <Icon size={18} />
-              </a>
-            ))}
+            <a href="https://www.facebook.com/profile.php?id=61585660263887" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="w-9 h-9 flex items-center justify-center rounded-full border border-gray-400 hover:border-[#f9a826] hover:text-[#f9a826] transition">
+              <Facebook size={18} />
+            </a>
+            <a href="https://www.instagram.com/goeventify/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="w-9 h-9 flex items-center justify-center rounded-full border border-gray-400 hover:border-[#f9a826] hover:text-[#f9a826] transition">
+              <Instagram size={18} />
+            </a>
+            <a href="https://www.linkedin.com/in/go-eventify/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="w-9 h-9 flex items-center justify-center rounded-full border border-gray-400 hover:border-[#f9a826] hover:text-[#f9a826] transition">
+              <Linkedin size={18} />
+            </a>
           </div>
         </div>
       </div>

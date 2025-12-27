@@ -18,7 +18,7 @@ const WhyChooseUs = () => {
 
       {/* Title */}
       <h2 className="relative text-4xl md:text-5xl font-bold text-[#284b63] mb-14 z-10">
-        Why <span className="text-[#f9a826]">Festyfi</span>
+        Why <span className="text-[#f9a826]">Eventify</span>
       </h2>
 
       {/* Cards */}

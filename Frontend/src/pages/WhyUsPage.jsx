@@ -30,7 +30,7 @@ const WhyUsPage = () => {
 
       {/* Page Title */}
       <h1 className="text-4xl md:text-5xl font-bold text-center text-[#284b63] mb-12">
-        Why <span className="text-[#f9a826]">Festyfi</span> Stands Out
+        Why <span className="text-[#f9a826]">Eventify</span> Stands Out
       </h1>
 
       <p className="text-center text-gray-600 mb-16 max-w-2xl mx-auto">

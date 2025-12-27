@@ -20,7 +20,7 @@ const SocialSidebar = () => {
       >
         {/* WhatsApp (New!) */}
         <SocialIcon
-          href="https://wa.me/919076927464?text=Hi!%20I%20am%20interested%20in%20your%20event%20services"
+          href="https://wa.me/919201976523?text=Hi!%20I%20am%20interested%20in%20your%20event%20services"
           bg="bg-gradient-to-br from-green-500 to-green-400"
           glow="shadow-green-400/50"
         >
@@ -29,7 +29,7 @@ const SocialSidebar = () => {
 
         {/* Instagram */}
         <SocialIcon
-          href="https://instagram.com/YOUR_INSTAGRAM"
+          href="https://www.instagram.com/goeventify/"
           bg="bg-gradient-to-br from-pink-500 to-orange-400"
           glow="shadow-orange-400/50"
         >
@@ -38,7 +38,7 @@ const SocialSidebar = () => {
 
         {/* Facebook */}
         <SocialIcon
-          href="https://facebook.com/YOUR_FACEBOOK"
+          href="https://www.facebook.com/profile.php?id=61585660263887"
           bg="bg-blue-600"
           glow="shadow-blue-400/50"
         >
@@ -47,7 +47,7 @@ const SocialSidebar = () => {
 
         {/* LinkedIn */}
         <SocialIcon
-          href="https://linkedin.com/in/YOUR_LINKEDIN"
+          href="https://www.linkedin.com/in/go-eventify/"
           bg="bg-blue-700"
           glow="shadow-blue-500/50"
         >
