@@ -147,7 +147,7 @@ const UserDashboard = () => {
 
       {/* FOOTER */}
       <footer className="bg-[#284b63] text-gray-100 text-center py-4 text-sm">
-        © {new Date().getFullYear()} EventPlus. All rights reserved.
+        © {new Date().getFullYear()} GoEventify. All rights reserved.
       </footer>
     </div>
   );
