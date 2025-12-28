@@ -17,29 +17,24 @@ import {
   CartesianGrid,
 } from "recharts";
 
-/* 🔹 Helper: Decode JWT safely */
-const getUserFromToken = () => {
-  try {
-    const token = localStorage.getItem("token");
-    if (!token) return null;
-
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    return payload;
-  } catch {
-    return null;
-  }
-};
-
 const UserDashboard = () => {
   const [userName, setUserName] = useState("User");
 
+  /* 🔹 Read user email from localStorage */
   useEffect(() => {
-    const decodedUser = getUserFromToken();
+    const userStr = localStorage.getItem("user");
 
-    if (decodedUser?.name) {
-      setUserName(decodedUser.name);
-    } else if (decodedUser?.first_name) {
-      setUserName(decodedUser.first_name);
+    if (userStr) {
+      try {
+        const userObj = JSON.parse(userStr);
+
+        if (userObj?.email) {
+          const displayName = userObj.email.split("@")[0];
+          setUserName(displayName);
+        }
+      } catch (err) {
+        console.error("Invalid user data in localStorage", err);
+      }
     }
   }, []);
 
@@ -51,7 +46,7 @@ const UserDashboard = () => {
     tickets: 1,
   };
 
-  /* 🔹 Colorful monthly chart data */
+  /* 🔹 Chart data */
   const chartData = [
     { month: "Jan", bookings: 1, payments: 15000 },
     { month: "Feb", bookings: 2, payments: 28000 },
