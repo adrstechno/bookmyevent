@@ -58,22 +58,23 @@ class VendorModel {
 
   static findVendorID(decodedUserID, callback) {
     const sql = `
-      SELECT vp.vendor_id 
-      FROM vendor_profiles vp 
-      JOIN users u ON vp.user_id = u.user_id 
-      WHERE u.uuid = ?
+      SELECT vp.vendor_id
+      FROM vendor_profiles vp
+      LEFT JOIN users u ON (vp.user_id = u.user_id OR vp.user_id = u.uuid)
+      WHERE u.uuid = ? OR vp.user_id = ?
     `;
-    db.query(sql, [decodedUserID], callback);
+    // Try to match either by users.uuid or by vendor_profiles.user_id directly
+    db.query(sql, [decodedUserID, decodedUserID], callback);
   }
 
   static findVendor(decodedUserID, callback) {
     const sql = `
-      SELECT vp.* 
-      FROM vendor_profiles vp 
-      JOIN users u ON vp.user_id = u.user_id 
-      WHERE u.uuid = ?
+      SELECT vp.*
+      FROM vendor_profiles vp
+      LEFT JOIN users u ON (vp.user_id = u.user_id OR vp.user_id = u.uuid)
+      WHERE u.uuid = ? OR vp.user_id = ?
     `;
-    db.query(sql, [decodedUserID], callback);
+    db.query(sql, [decodedUserID, decodedUserID], callback);
   }
 
   static updateVendor(vendor_id, data, callback) {
