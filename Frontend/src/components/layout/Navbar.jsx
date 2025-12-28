@@ -68,9 +68,10 @@ const Navbar = ({ onMenuClick, isMobile }) => {
             navigate(dest);
           }}
         >
+          
           <img
             src={isMobile ? "/logo2.png" : "/logo2.png"}
-            alt="Celebria"
+            alt="GoEventify"
             className="h-10 md:h-12 w-auto"
           />
         </div>

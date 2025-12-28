@@ -4,16 +4,16 @@ import React from "react";
 import CircularGallery from './CircularGallery';
 
 const images = [
-  { image: "/images/event/event1.jpg", text: "Event 1" },
-  { image: "/images/event/event2.jpg", text: "Event 2" },
-  { image: "/images/event/event3.jpg", text: "Event 3" },
-  { image: "/images/event/event4.jpg", text: "Event 4" },
-  { image: "/images/event/event5.jpg", text: "Event 5" },
-  { image: "/images/event/event6.jpg", text: "Event 6" },
-  { image: "/images/event/event7.jpg", text: "Event 7" },
-  { image: "/images/event/event8.jpg", text: "Event 8" },
-  { image: "/images/event/event9.jpg", text: "Event 9" },
-  { image: "/images/event/event10.jpg", text: "Event 10" },
+  { image: "/images/event/event1.jpg", text: "Dj Show" },
+  { image: "/images/event/event2.jpg", text: "Exivision" },
+  { image: "/images/event/event3.jpg", text: "Caterings" },
+  { image: "/images/event/event4.jpg", text: "Cafe" },
+  { image: "/images/event/event5.jpg", text: "Dinner" },
+  { image: "/images/event/event6.jpg", text: "College Event" },
+  { image: "/images/event/event7.jpg", text: "School Function" },
+  { image: "/images/event/event8.jpg", text: "Old Function" },
+  { image: "/images/event/event9.jpg", text: "Dj Night" },
+  { image: "/images/event/event10.jpg", text: "Late Night Show" },
 ];
 
 const ShowcaseSection = () => {
@@ -35,7 +35,7 @@ const ShowcaseSection = () => {
         <CircularGallery 
           items={images}
           bend={3} 
-          textColor="#ffffff" 
+          textColor="#3C6E71" 
           borderRadius={0.05} 
           scrollEase={0.02}
         />
