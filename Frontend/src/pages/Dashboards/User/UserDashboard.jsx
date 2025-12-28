@@ -19,19 +19,6 @@ import {
   CartesianGrid,
 } from "recharts";
 
-/* 🔹 Helper: Decode JWT safely */
-const getUserFromToken = () => {
-  try {
-    const token = localStorage.getItem("token");
-    if (!token) return null;
-
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    return payload;
-  } catch {
-    return null;
-  }
-};
-
 const UserDashboard = () => {
   const [userName, setUserName] = useState("User");
   const [kpis, setKpis] = useState(null);
@@ -39,17 +26,20 @@ const UserDashboard = () => {
   const [loadingChart, setLoadingChart] = useState(true);
   const { user } = useAuth();
 
+  /* 🔹 Read user email from localStorage */
   useEffect(() => {
-    // Prefer AuthContext user if available
-    if (user && (user.first_name || user.name)) {
-      setUserName(user.first_name || user.name);
-    } else {
-      const decodedUser = getUserFromToken();
+    const userStr = localStorage.getItem("user");
 
-      if (decodedUser?.name) {
-        setUserName(decodedUser.name);
-      } else if (decodedUser?.first_name) {
-        setUserName(decodedUser.first_name);
+    if (userStr) {
+      try {
+        const userObj = JSON.parse(userStr);
+
+        if (userObj?.email) {
+          const displayName = userObj.email.split("@")[0];
+          setUserName(displayName);
+        }
+      } catch (err) {
+        console.error("Invalid user data in localStorage", err);
       }
     }
     // fetch dashboard data

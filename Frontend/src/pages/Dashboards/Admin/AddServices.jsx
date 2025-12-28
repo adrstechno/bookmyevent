@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { toast, Toaster } from "react-hot-toast";
 import { VITE_API_BASE_URL } from "../../../utils/api";
 
-const AddService = () => {
+const AddServices = () => {
   const [formData, setFormData] = useState({
     category_name: "",
     description: "",
@@ -14,27 +14,45 @@ const AddService = () => {
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // ✅ Handle text input change
+  const [services, setServices] = useState([]);
+  const [fetching, setFetching] = useState(true);
+
+  const fetchServices = async () => {
+    try {
+      setFetching(true);
+      const res = await axios.get(
+        `${VITE_API_BASE_URL}/Service/getAllServices`
+      );
+      setServices(res.data || []);
+    } catch {
+      toast.error("Failed to load services");
+    } finally {
+      setFetching(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchServices();
+  }, []);
+
+  /* ===== handlers (unchanged) ===== */
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((p) => ({ ...p, [name]: value }));
   };
 
-  // ✅ Handle toggle
   const handleToggle = () => {
-    setFormData((prev) => ({ ...prev, is_active: !prev.is_active }));
+    setFormData((p) => ({ ...p, is_active: !p.is_active }));
   };
 
-  // ✅ Handle file upload
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setFormData((prev) => ({ ...prev, serviceIcon: file }));
+      setFormData((p) => ({ ...p, serviceIcon: file }));
       setPreview(URL.createObjectURL(file));
     }
   };
 
-  // ✅ Submit form
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -45,23 +63,19 @@ const AddService = () => {
 
     try {
       setLoading(true);
-      const formDataToSend = new FormData();
-      formDataToSend.append("category_name", formData.category_name);
-      formDataToSend.append("description", formData.description);
-      formDataToSend.append("serviceIcon", formData.serviceIcon);
-      formDataToSend.append("is_active", formData.is_active ? 1 : 0);
+      const fd = new FormData();
+      fd.append("category_name", formData.category_name);
+      fd.append("description", formData.description);
+      fd.append("serviceIcon", formData.serviceIcon);
+      fd.append("is_active", formData.is_active ? 1 : 0);
 
-      const res = await axios.post(
+      await axios.post(
         `${VITE_API_BASE_URL}/Service/InsertService`,
-        formDataToSend,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        }
+        fd,
+        { headers: { "Content-Type": "multipart/form-data" } }
       );
 
-      toast.success(res.data?.message || "Service added successfully!");
-
-      // Reset form
+      toast.success("Service added successfully!");
       setFormData({
         category_name: "",
         description: "",
@@ -69,9 +83,9 @@ const AddService = () => {
         is_active: true,
       });
       setPreview(null);
-    } catch (err) {
-      console.error("❌ Error adding service:", err);
-      toast.error(err.response?.data?.message || "Something went wrong!");
+      fetchServices();
+    } catch {
+      toast.error("Something went wrong!");
     } finally {
       setLoading(false);
     }
@@ -79,93 +93,86 @@ const AddService = () => {
 
   return (
     <>
-      <Toaster position="top-center" reverseOrder={false} />
+      <Toaster position="top-center" />
 
-      <div className="min-h-screen flex justify-center items-center bg-[#f9fafb] py-10 px-4">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-lg border-t-4 border-[#3c6e71]">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <div className="flex justify-center mb-3">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="#3c6e71"
-                className="w-12 h-12"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-semibold text-gray-800">Add New Service</h2>
-            <p className="text-gray-500 text-sm mt-1">
-              Define your service category and details below 🛠️
-            </p>
-          </div>
+      <div className="min-h-screen bg-[#f9fafb] py-12 px-4">
+        {/* ================= ADD SERVICE CARD ================= */}
+        <div className="max-w-4xl mx-auto bg-white rounded-3xl shadow-xl border-t-4 border-[#3c6e71] p-8 md:p-10">
+          <h2 className="text-3xl font-semibold text-center text-[#284b63]">
+            Add New Service
+          </h2>
+          <p className="text-center text-gray-500 text-sm mt-2 mb-10">
+            Create and manage service categories professionally
+          </p>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form
+            onSubmit={handleSubmit}
+            className="grid grid-cols-1 md:grid-cols-2 gap-8"
+          >
             {/* Category Name */}
-            <div>
-              <label className="block text-gray-700 font-medium mb-1">
+            <div className="flex flex-col gap-1">
+              <label className="font-medium text-gray-700">
                 Category Name
               </label>
               <input
-                type="text"
                 name="category_name"
                 value={formData.category_name}
                 onChange={handleChange}
-                placeholder="Enter category name"
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#3c6e71] focus:outline-none"
-                required
+                placeholder="e.g. DJ Shows"
+                className="px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-[#3c6e71] focus:outline-none"
               />
             </div>
 
+            {/* Status Toggle */}
+            <div className="flex flex-col gap-1">
+              <label className="font-medium text-gray-700">
+                Service Status
+              </label>
+              <div className="flex items-center gap-4 mt-1">
+                <button
+                  type="button"
+                  onClick={handleToggle}
+                  className={`w-14 h-8 rounded-full transition relative ${
+                    formData.is_active ? "bg-[#3c6e71]" : "bg-gray-300"
+                  }`}
+                >
+                  <span
+                    className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow transition ${
+                      formData.is_active ? "translate-x-6" : ""
+                    }`}
+                  />
+                </button>
+                <span className="font-medium text-gray-600">
+                  {formData.is_active ? "Active" : "Inactive"}
+                </span>
+              </div>
+            </div>
+
             {/* Description */}
-            <div>
-              <label className="block text-gray-700 font-medium mb-1">
+            <div className="md:col-span-2 flex flex-col gap-1">
+              <label className="font-medium text-gray-700">
                 Description
               </label>
               <textarea
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
-                rows="3"
-                placeholder="Describe your service..."
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#3c6e71] focus:outline-none"
-                required
-              ></textarea>
+                rows="4"
+                placeholder="Brief description of the service"
+                className="px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-[#3c6e71] focus:outline-none resize-none"
+              />
             </div>
 
             {/* Upload Icon */}
-            <div>
-              <label className="block text-gray-700 font-medium mb-1">
+            <div className="md:col-span-2 flex flex-col gap-2">
+              <label className="font-medium text-gray-700">
                 Service Icon
               </label>
-              <label className="flex items-center justify-center w-full cursor-pointer border-2 border-dashed border-[#3c6e71] rounded-xl py-4 hover:bg-[#f0f4f5] transition">
-                <div className="flex flex-col items-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                    stroke="#3c6e71"
-                    className="w-10 h-10 mb-1"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M12 4v16m8-8H4"
-                    />
-                  </svg>
-                  <span className="text-[#3c6e71] font-medium">
-                    {formData.serviceIcon ? "Change Icon" : "Upload Service Icon"}
-                  </span>
-                </div>
+
+              <label className="border-2 border-dashed border-[#3c6e71] rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-[#f0f4f5] transition">
+                <span className="text-[#3c6e71] font-medium">
+                  {formData.serviceIcon ? "Change Icon" : "Upload Service Icon"}
+                </span>
                 <input
                   type="file"
                   accept="image/*"
@@ -175,53 +182,78 @@ const AddService = () => {
               </label>
 
               {preview && (
-                <div className="flex justify-center mt-4">
+                <div className="flex justify-center mt-3">
                   <img
                     src={preview}
                     alt="Preview"
-                    className="w-24 h-24 object-cover rounded-lg border border-gray-300 shadow-sm"
+                    className="w-24 h-24 rounded-xl border shadow-sm object-cover"
                   />
                 </div>
               )}
             </div>
 
-            {/* Toggle */}
-            <div className="flex items-center space-x-3 mt-4">
+            {/* Submit */}
+            <div className="md:col-span-2 flex justify-center pt-4">
               <button
-                type="button"
-                onClick={handleToggle}
-                className={`w-14 h-8 rounded-full transition-all ${
-                  formData.is_active ? "bg-[#3c6e71]" : "bg-gray-300"
-                } relative`}
+                type="submit"
+                disabled={loading}
+                className={`px-12 py-3 rounded-xl text-white font-semibold shadow-lg transition ${
+                  loading
+                    ? "bg-[#3c6e71] opacity-70 cursor-not-allowed"
+                    : "bg-[#3c6e71] hover:bg-[#284b63]"
+                }`}
               >
-                <span
-                  className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow transition-all ${
-                    formData.is_active ? "translate-x-6" : ""
-                  }`}
-                ></span>
+                {loading ? "Saving..." : "Add Service"}
               </button>
-              <span className="font-medium text-gray-700">
-                {formData.is_active ? "Active" : "Inactive"}
-              </span>
             </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className={`w-full py-2.5 mt-4 rounded-lg text-white font-semibold shadow-md transition ${
-                loading
-                  ? "bg-[#3c6e71] opacity-70 cursor-not-allowed"
-                  : "bg-[#3c6e71] hover:bg-[#284b63]"
-              }`}
-            >
-              {loading ? "Saving..." : "Add Service"}
-            </button>
           </form>
+        </div>
+
+        {/* ================= SERVICES LIST ================= */}
+        <div className="max-w-7xl mx-auto mt-16">
+          <h3 className="text-2xl font-semibold text-[#284b63] text-center mb-10">
+            All Services
+          </h3>
+
+          {fetching ? (
+            <p className="text-center text-gray-500">Loading services...</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {services.map((s) => (
+                <div
+                  key={s.category_id}
+                  className="bg-white p-6 rounded-2xl shadow-md hover:shadow-xl transition border-t-4 border-[#3c6e71]"
+                >
+                  <img
+                    src={s.icon_url}
+                    alt={s.category_name}
+                    className="w-20 h-20 mx-auto rounded-xl border object-cover"
+                  />
+                  <h4 className="text-lg font-semibold text-center mt-4">
+                    {s.category_name}
+                  </h4>
+                  <p className="text-sm text-gray-500 text-center mt-2">
+                    {s.description}
+                  </p>
+                  <div className="mt-4 text-center">
+                    <span
+                      className={`px-4 py-1 text-sm rounded-full ${
+                        s.is_active
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-700"
+                      }`}
+                    >
+                      {s.is_active ? "Active" : "Inactive"}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </>
   );
 };
 
-export default AddService;
+export default AddServices;

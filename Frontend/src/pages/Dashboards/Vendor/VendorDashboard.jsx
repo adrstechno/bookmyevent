@@ -8,32 +8,62 @@ import {
   UserCircleIcon,
 } from "@heroicons/react/24/outline";
 
+
+
 const VendorDashboard = () => {
   const [kpis, setKpis] = useState({ totalSales: 0, newOrders: 0, activeEvents: 0, totalClients: 0 });
   const [activities, setActivities] = useState([]);
+  const [vendorName, setVendorName] = useState("Vendor");
 
-  useEffect(() => {
-    const fetchKPIs = async () => {
-      try {
-        const res = await axios.get(`${VITE_API_BASE_URL}/Vendor/GetVendorKPIs`, { withCredentials: true });
-        if (res.data?.kpis) setKpis(res.data.kpis);
-      } catch (err) {
-        console.error('Error loading KPIs', err);
+useEffect(() => {
+  
+  const userStr = localStorage.getItem("user");
+
+  if (userStr) {
+    try {
+      const userObj = JSON.parse(userStr);
+
+      if (userObj?.email) {
+        // email se name part nikaal rahe hain
+        const displayName = userObj.email.split("@")[0];
+        setVendorName(displayName);
       }
-    };
+    } catch (err) {
+      console.error("Invalid user data in localStorage", err);
+    }
+  }
 
-    const fetchActivities = async () => {
-      try {
-        const res = await axios.get(`${VITE_API_BASE_URL}/Vendor/GetVendorRecentActivities?limit=5`, { withCredentials: true });
-        if (Array.isArray(res.data.activities)) setActivities(res.data.activities);
-      } catch (err) {
-        console.error('Error loading activities', err);
-      }
-    };
+  // ---- EXISTING LOGIC (UNCHANGED) ----
+  const fetchKPIs = async () => {
+    try {
+      const res = await axios.get(
+        `${VITE_API_BASE_URL}/Vendor/GetVendorKPIs`,
+        { withCredentials: true }
+      );
+      if (res.data?.kpis) setKpis(res.data.kpis);
+    } catch (err) {
+      console.error("Error loading KPIs", err);
+    }
+  };
 
-    fetchKPIs();
-    fetchActivities();
-  }, []);
+  const fetchActivities = async () => {
+    try {
+      const res = await axios.get(
+        `${VITE_API_BASE_URL}/Vendor/GetVendorRecentActivities?limit=5`,
+        { withCredentials: true }
+      );
+      if (Array.isArray(res.data.activities)) setActivities(res.data.activities);
+    } catch (err) {
+      console.error("Error loading activities", err);
+    }
+  };
+
+  fetchKPIs();
+  fetchActivities();
+}, []);
+
+
+
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -42,7 +72,10 @@ const VendorDashboard = () => {
         <h1 className="text-xl md:text-2xl font-semibold">Vendor Dashboard</h1>
         <div className="flex items-center space-x-4">
           <UserCircleIcon className="h-8 w-8 text-white" />
-          <span className="font-medium">Welcome, Vendor</span>
+        <span className="font-medium">
+  Welcome, {vendorName}
+</span>
+
         </div>
       </header>
 
@@ -116,10 +149,7 @@ const VendorDashboard = () => {
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-[#284b63] text-gray-100 text-center py-4 text-sm mt-auto">
-        © {new Date().getFullYear()} Vendor Management System. All rights reserved.
-      </footer>
+     
     </div>
   );
 };
