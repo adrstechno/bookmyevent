@@ -272,6 +272,54 @@ static findVendorsByDayAndService(day, service_category_id, callback) {
   db.query(sql, [`"${day}"`, service_category_id], callback);
 }
 
+  static getTotalSales(vendor_id, callback) {
+    const sql = `
+      SELECT IFNULL(SUM(vp.amount), 0) AS total_sales
+      FROM event_booking eb
+      JOIN vendor_packages vp ON eb.package_id = vp.package_id
+      WHERE eb.vendor_id = ? AND eb.status IN ('confirmed','completed')
+    `;
+    db.query(sql, [vendor_id], callback);
+  }
+
+  static getNewOrdersCount(vendor_id, callback) {
+    const sql = `
+      SELECT COUNT(*) AS new_orders
+      FROM event_booking
+      WHERE vendor_id = ? AND status = 'pending'
+    `;
+    db.query(sql, [vendor_id], callback);
+  }
+
+  static getActiveEventsCount(vendor_id, callback) {
+    const sql = `
+      SELECT COUNT(*) AS active_events
+      FROM event_booking
+      WHERE vendor_id = ? AND status IN ('confirmed','pending') AND (removed_at IS NULL OR removed_at IS NULL)
+    `;
+    db.query(sql, [vendor_id], callback);
+  }
+
+  static getTotalClientsCount(vendor_id, callback) {
+    const sql = `
+      SELECT COUNT(DISTINCT user_id) AS total_clients
+      FROM event_booking
+      WHERE vendor_id = ?
+    `;
+    db.query(sql, [vendor_id], callback);
+  }
+
+  static getRecentActivities(vendor_id, limit, callback) {
+    const sql = `
+      SELECT booking_id, booking_uuid, user_id, event_date, event_time, status, created_at
+      FROM event_booking
+      WHERE vendor_id = ?
+      ORDER BY created_at DESC
+      LIMIT ?
+    `;
+    db.query(sql, [vendor_id, limit], callback);
+  }
+
 }
 
 

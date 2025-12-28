@@ -13,6 +13,8 @@ router.post('/updateVendorProfile' ,upload.single('profilePicture') , updateVend
 router.post('/AddvendorShifts', VendorShift);
 router.get('/getVendorShiftforVendor', getVendorShiftforVendor);
 router.get('/GetvendorEventImages', GetvendorEventImages);
+router.get('/GetVendorKPIs', GetVendorKPIs);
+router.get('/GetVendorRecentActivities', GetVendorRecentActivities);
 router.post('/updateVendorShiftbyId', updateVendorShiftbyId);
 router.get('/deleteVendorShiftbyId', deleteVendorShiftbyId);
 router.post('/insertVendorPackage', insertVendorPackage);

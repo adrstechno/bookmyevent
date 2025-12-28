@@ -1324,11 +1324,12 @@ const VendorSettings = () => {
             city: vendor.city || "",
             state: vendor.state || "",
             event_profiles_url: vendor.event_profiles_url || "",
+            
           });
 
           // ✅ Set profile image preview
-          if (vendor.profilePictureUrl) {
-            setPreview(`${VITE_API_BASE_URL}/${vendor.profilePictureUrl}`);
+          if (vendor.profile_url) {
+            setPreview(`${vendor.profile_url}`);
           }
         }
       } catch (err) {

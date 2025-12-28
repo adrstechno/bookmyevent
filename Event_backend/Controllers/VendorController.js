@@ -386,10 +386,34 @@ export const getVendorShiftforVendor = async (req, res) => {
 
 export const GetvendorEventImages = async (req, res) => {
   try {
-    const vendor_id = req.query.vendor_id;
+    let vendor_id = req.query.vendor_id;
 
+    // If vendor_id not provided, try to derive it from auth token
     if (!vendor_id) {
-      return res.status(400).json({ message: "vendor_id is required" });
+      const token = req.cookies.auth_token;
+      if (!token) {
+        return res
+          .status(401)
+          .json({ message: "Unauthorized: No token provided and vendor_id missing" });
+      }
+
+      const decoded = verifyToken(token);
+      if (!decoded) {
+        return res.status(401).json({ message: "Unauthorized: Invalid token" });
+      }
+
+      const foundVendorId = await new Promise((resolve, reject) => {
+        VendorModel.findVendorID(decoded.userId, (err, result) => {
+          if (err) return reject(err);
+          resolve(result && result.length > 0 ? result[0].vendor_id : null);
+        });
+      });
+
+      if (!foundVendorId) {
+        return res.status(404).json({ message: "Vendor not found" });
+      }
+
+      vendor_id = foundVendorId;
     }
 
     // Directly use vendor_id to get event images
@@ -714,5 +738,82 @@ export const getFreeVendorsByDay = async (req, res) => {
       error: "Server error",
       details: err.message
     });
+  }
+};
+
+export const GetVendorKPIs = async (req, res) => {
+  try {
+    const token = req.cookies.auth_token;
+    if (!token) return res.status(401).json({ message: 'Unauthorized: No token provided' });
+
+    const decoded = verifyToken(token);
+    if (!decoded) return res.status(401).json({ message: 'Unauthorized: Invalid token' });
+
+    const vendor_id = await new Promise((resolve, reject) => {
+      VendorModel.findVendorID(decoded.userId, (err, result) => {
+        if (err) return reject(err);
+        resolve(result && result.length > 0 ? result[0].vendor_id : null);
+      });
+    });
+
+    if (!vendor_id) return res.status(404).json({ message: 'Vendor not found' });
+
+    const [totalSales] = await new Promise((resolve, reject) => {
+      VendorModel.getTotalSales(vendor_id, (err, result) => (err ? reject(err) : resolve(result)));
+    });
+
+    const [newOrders] = await new Promise((resolve, reject) => {
+      VendorModel.getNewOrdersCount(vendor_id, (err, result) => (err ? reject(err) : resolve(result)));
+    });
+
+    const [activeEvents] = await new Promise((resolve, reject) => {
+      VendorModel.getActiveEventsCount(vendor_id, (err, result) => (err ? reject(err) : resolve(result)));
+    });
+
+    const [totalClients] = await new Promise((resolve, reject) => {
+      VendorModel.getTotalClientsCount(vendor_id, (err, result) => (err ? reject(err) : resolve(result)));
+    });
+
+    return res.status(200).json({
+      message: 'KPIs retrieved successfully',
+      kpis: {
+        totalSales: totalSales?.total_sales || 0,
+        newOrders: newOrders?.new_orders || 0,
+        activeEvents: activeEvents?.active_events || 0,
+        totalClients: totalClients?.total_clients || 0,
+      },
+    });
+  } catch (err) {
+    console.error('Error getting KPIs:', err);
+    return res.status(500).json({ error: 'Server error', details: err.message });
+  }
+};
+
+export const GetVendorRecentActivities = async (req, res) => {
+  try {
+    const token = req.cookies.auth_token;
+    if (!token) return res.status(401).json({ message: 'Unauthorized: No token provided' });
+
+    const decoded = verifyToken(token);
+    if (!decoded) return res.status(401).json({ message: 'Unauthorized: Invalid token' });
+
+    const vendor_id = await new Promise((resolve, reject) => {
+      VendorModel.findVendorID(decoded.userId, (err, result) => {
+        if (err) return reject(err);
+        resolve(result && result.length > 0 ? result[0].vendor_id : null);
+      });
+    });
+
+    if (!vendor_id) return res.status(404).json({ message: 'Vendor not found' });
+
+    const limit = parseInt(req.query.limit, 10) || 5;
+    const activities = await new Promise((resolve, reject) => {
+      VendorModel.getRecentActivities(vendor_id, limit, (err, result) => (err ? reject(err) : resolve(result)));
+    });
+
+    return res.status(200).json({ message: 'Recent activities retrieved', activities });
+  } catch (err) {
+    console.error('Error fetching recent activities:', err);
+    return res.status(500).json({ error: 'Server error', details: err.message });
   }
 };
