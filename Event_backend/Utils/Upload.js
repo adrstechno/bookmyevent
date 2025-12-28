@@ -10,25 +10,25 @@ cloudinary.v2.config({
     api_secret: process.env.Cloudnary_API_SECRET
 });
 
-const fieldtodir = { 
+const fieldtodir = {
     serviceIcon: 'Service_Icons',
-    profilePicture: 'Vendor_Profiles' ,
-    eventImages: 'eventImages' 
+    profilePicture: 'Vendor_Profiles',
+    eventImages: 'eventImages'
 }
 
 // Configure Cloudinary Storage
 const storage = new CloudinaryStorage({
-   
-    
+
+
     cloudinary: cloudinary.v2,
     params: async (req, file) => {
-       
+
         const folderName = fieldtodir[file.fieldname] || 'General_Uploads';
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         const publicId = `${folderName}/${file.fieldname}-${uniqueSuffix}`;
-        
+
         req.uploadedFilePath = publicId;
-        
+
         return {
             folder: folderName,
             public_id: publicId,
@@ -39,7 +39,7 @@ const storage = new CloudinaryStorage({
 
 // Add file filter
 const fileFilter = (req, file, cb) => {
-    const allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    const allowedMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
     if (allowedMimes.includes(file.mimetype)) {
         cb(null, true);
     } else {
@@ -47,7 +47,7 @@ const fileFilter = (req, file, cb) => {
     }
 };
 
-const upload = multer({ 
+const upload = multer({
     storage: storage,
     fileFilter: fileFilter,
     limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
