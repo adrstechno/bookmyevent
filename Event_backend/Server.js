@@ -2,7 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser'; // ✅ import cookie-parser
 import cors from 'cors'; // optional but recommended if you’re using frontend
-
+import helmet from 'helmet'
 
 import db from './Config/DatabaseCon.js';   
 import UserRouter from './Router/UserRouter.js';
