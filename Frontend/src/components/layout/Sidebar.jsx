@@ -39,7 +39,7 @@ const Sidebar = ({ mobileOpen = false, handleDrawerToggle = () => {}, isMobile =
           })}
         </nav>
 
-        <div className="p-4 text-center text-sm text-gray-500 border-t">© {new Date().getFullYear()} Vendor System</div>
+        <div className="p-4 text-center text-sm text-gray-500 border-t">© {new Date().getFullYear()} GoEventify</div>
       </aside>
 
       {/* Mobile temporary drawer */}
@@ -73,7 +73,7 @@ const Sidebar = ({ mobileOpen = false, handleDrawerToggle = () => {}, isMobile =
               })}
             </nav>
 
-            <div className="p-4 text-center text-sm text-gray-500 border-t">© {new Date().getFullYear()} Vendor System</div>
+            <div className="p-4 text-center text-sm text-gray-500 border-t">© {new Date().getFullYear()} GoEventify</div>
           </div>
         </div>
       )}

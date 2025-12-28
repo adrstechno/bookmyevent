@@ -3,7 +3,7 @@ import axios from "axios";
 import { toast, Toaster } from "react-hot-toast";
 import { VITE_API_BASE_URL } from "../../../utils/api";
 
-const AddService = () => {
+const AddServices = () => {
   const [formData, setFormData] = useState({
     category_name: "",
     description: "",
@@ -38,19 +38,17 @@ const AddService = () => {
   // ✅ Handle text input change
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((p) => ({ ...p, [name]: value }));
   };
 
-  // ✅ Handle toggle
   const handleToggle = () => {
-    setFormData((prev) => ({ ...prev, is_active: !prev.is_active }));
+    setFormData((p) => ({ ...p, is_active: !p.is_active }));
   };
 
-  // ✅ Handle file upload
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setFormData((prev) => ({ ...prev, serviceIcon: file }));
+      setFormData((p) => ({ ...p, serviceIcon: file }));
       setPreview(URL.createObjectURL(file));
     }
   };
@@ -160,7 +158,7 @@ const AddService = () => {
 
   return (
     <>
-      <Toaster position="top-center" reverseOrder={false} />
+      <Toaster position="top-center" />
 
       <div className="min-h-screen bg-[#f9fafb] p-6">
         <div className="max-w-7xl mx-auto">
@@ -325,8 +323,8 @@ const AddService = () => {
                         type="submit"
                         disabled={loading}
                         className={`flex-1 py-2.5 rounded-lg text-white font-semibold shadow-md transition ${loading
-                            ? "bg-[#3c6e71] opacity-70 cursor-not-allowed"
-                            : "bg-[#3c6e71] hover:bg-[#284b63]"
+                          ? "bg-[#3c6e71] opacity-70 cursor-not-allowed"
+                          : "bg-[#3c6e71] hover:bg-[#284b63]"
                           }`}
                       >
                         {loading ? "Saving..." : editingService ? "Update Service" : "Add Service"}
@@ -427,8 +425,8 @@ const AddService = () => {
                           <div className="flex justify-center mb-4">
                             <span
                               className={`px-3 py-1 rounded-full text-xs font-medium ${service.is_active
-                                  ? "bg-green-100 text-green-800"
-                                  : "bg-red-100 text-red-800"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-red-100 text-red-800"
                                 }`}
                             >
                               {service.is_active ? "Active" : "Inactive"}
@@ -515,4 +513,4 @@ const AddService = () => {
   );
 };
 
-export default AddService;
+export default AddServices;

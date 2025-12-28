@@ -6,13 +6,13 @@ const reviews = [
   { 
     name: "Sneha Reddy", 
     role: "Customer",
-    text: "From start to finish, Eventplus ensured our wedding management was seamless and stress-free. Appreciates their dedication and professionalism, making our big day truly unforgettable",
+    text: "From start to finish, GoEventify ensured our wedding management was seamless and stress-free. Appreciates their dedication and professionalism, making our big day truly unforgettable",
     avatar: "https://ui-avatars.com/api/?name=Sneha+Reddy&background=6366f1&color=fff&size=80"
   },
   { 
     name: "Aarav Mehta", 
     role: "Customer",
-    text: "EventPlus made our wedding unforgettable. Everything was smooth and perfectly managed! The attention to detail was exceptional.",
+    text: "GoEventify made our wedding unforgettable. Everything was smooth and perfectly managed! The attention to detail was exceptional.",
     avatar: "https://ui-avatars.com/api/?name=Aarav+Mehta&background=8b5cf6&color=fff&size=80"
   },
   { 
@@ -42,7 +42,7 @@ const reviews = [
   { 
     name: "Neha Gupta", 
     role: "Customer",
-    text: "Brilliant experience. EventPlus truly connects the right vendors with real customers. Will definitely use again!",
+    text: "Brilliant experience. GoEventify truly connects the right vendors with real customers. Will definitely use again!",
     avatar: "https://ui-avatars.com/api/?name=Neha+Gupta&background=ef4444&color=fff&size=80"
   },
 ];

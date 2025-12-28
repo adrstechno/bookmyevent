@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
-import { UserCircleIcon, Bars3Icon } from "@heroicons/react/24/outline";
+import { UserCircleIcon, Bars3Icon,ArrowRightOnRectangleIcon } from "@heroicons/react/24/outline";
 import { VITE_API_BASE_URL } from "../../utils/api";
 import NotificationBell from "../NotificationBell";
 import toast from "react-hot-toast";
@@ -96,7 +96,13 @@ const Navbar = ({ onMenuClick, isMobile }) => {
           className="px-3 md:px-4 py-2 rounded-md bg-[#3c6e71] text-white font-medium text-sm md:text-base hover:bg-[#284b63] transition-colors"
         >
           <span className="hidden sm:inline">Logout</span>
-          <span className="sm:hidden">Exit</span>
+          <span
+  className="sm:hidden cursor-pointer"
+  onClick={handleLogout}
+>
+  <ArrowRightOnRectangleIcon className="h-6 w-6 text-white-600" />
+</span>
+
         </button>
       </div>
     </header>
