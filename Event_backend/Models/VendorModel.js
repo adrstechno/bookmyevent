@@ -57,13 +57,23 @@ class VendorModel {
   }
 
   static findVendorID(decodedUserID, callback) {
-    const sql = `select vendor_id from vendor_profiles where user_id = '${decodedUserID}'`;
-    db.query(sql, callback);
+    const sql = `
+      SELECT vp.vendor_id 
+      FROM vendor_profiles vp 
+      JOIN users u ON vp.user_id = u.user_id 
+      WHERE u.uuid = ?
+    `;
+    db.query(sql, [decodedUserID], callback);
   }
 
   static findVendor(decodedUserID, callback) {
-    const sql = `select * from vendor_profiles where user_id = '${decodedUserID}'`;
-    db.query(sql, callback);
+    const sql = `
+      SELECT vp.* 
+      FROM vendor_profiles vp 
+      JOIN users u ON vp.user_id = u.user_id 
+      WHERE u.uuid = ?
+    `;
+    db.query(sql, [decodedUserID], callback);
   }
 
   static updateVendor(vendor_id, data, callback) {

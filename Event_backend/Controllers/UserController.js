@@ -2,23 +2,23 @@
 import UserModel from '../Models/UserModel.js';
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
-import { verifyToken , generateToken } from '../Utils/Verification.js';
+import { verifyToken, generateToken } from '../Utils/Verification.js';
 
 
 
 export const insertUser = (req, res) => {
 
     const userData = req.body;
-   //gen unique uuid for user 
-          userData.uuid = uuidv4();
-          //hash password
-          const saltRounds = 10;
-          const plainPassword = userData.password;
-          const hashedPassword = bcrypt.hashSync(plainPassword, saltRounds);
-          userData.password_hash = hashedPassword;
-          //set default values
-          userData.is_verified = false;
-          userData.is_active = true;
+    //gen unique uuid for user 
+    userData.uuid = uuidv4();
+    //hash password
+    const saltRounds = 10;
+    const plainPassword = userData.password;
+    const hashedPassword = bcrypt.hashSync(plainPassword, saltRounds);
+    userData.password_hash = hashedPassword;
+    //set default values
+    userData.is_verified = false;
+    userData.is_active = true;
 
     UserModel.insertUser(userData, (err, results) => {
         if (err) {
@@ -59,11 +59,13 @@ export const login = (req, res) => {
         const token = generateToken(user.uuid);
 
         // Set cookie with cross-origin friendly settings
-        res.cookie('auth_token', token, {
+        const isProd = process.env.RENDER || process.env.NODE_ENV === "production";
+
+        res.cookie("auth_token", token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production', // Only secure in production
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Allow cross-site in production
-            maxAge: 3600000 // 1 hour
+            secure: isProd,
+            sameSite: isProd ? "none" : "lax",
+            maxAge: 3600000
         });
 
         // Send response
@@ -74,7 +76,7 @@ export const login = (req, res) => {
             user_id: user.uuid
         });
     });
-}; 
+};
 export const logout = (req, res) => {
     res.clearCookie('auth_token');
     res.status(200).json({ message: 'Logout successful' });
@@ -122,7 +124,7 @@ export const ChangePassword = async (req, res) => {
 
         // Hash and update password
         const hashedPassword = bcrypt.hashSync(newPassword, 10);
-        
+
         await new Promise((resolve, reject) => {
             UserModel.updatepassword(email, hashedPassword, (err, result) => {
                 if (err) reject(err);

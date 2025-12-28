@@ -10,8 +10,8 @@ class UserModel {
     }
 
     static async findonebyemail(email  , callback) {
-        const sql = `SELECT * FROM users WHERE email = '${email}' `;
-        db.query(sql, callback);
+        const sql = `SELECT * FROM users WHERE email = ?`;
+        db.query(sql, [email], callback);
     }
 
     static async updatepassword(email , hashedPassword , callback){
