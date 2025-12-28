@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import HexCollage from "./HexCollage";
 
@@ -59,22 +60,29 @@ const HeroSection = () => {
           </p>
 
           <div className="flex gap-4 pt-2">
-            <motion.button 
-              whileHover={{ 
-                scale: 1.05,
-                boxShadow: "0 10px 30px rgba(249, 168, 38, 0.4)"
-              }}
-              whileTap={{ scale: 0.95 }}
-              className="px-8 py-3 bg-[#f9a826] text-black rounded-full font-semibold hover:bg-[#f7b733] transition-all duration-300 shadow-lg relative overflow-hidden group"
-            >
-              <span className="relative z-10">Explore Vendors</span>
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-[#f7b733] to-[#f9a826]"
-                initial={{ x: "-100%" }}
-                whileHover={{ x: "0%" }}
-                transition={{ duration: 0.3 }}
-              />
-            </motion.button>
+           <motion.button 
+               whileHover={{ 
+                 scale: 1.05,
+                 boxShadow: "0 10px 30px rgba(249, 168, 38, 0.4)"
+               }}
+               whileTap={{ scale: 0.95 }}
+               className="px-8 py-3 bg-[#f9a826] text-black rounded-full font-semibold hover:bg-[#f7b733] transition-all duration-300 shadow-lg relative overflow-hidden group"
+             >
+               <Link
+                 to="category/weddings"
+                 className="relative z-10 block w-full h-full"
+               >
+                 Explore Our Works
+               </Link>
+             
+               <motion.div
+                 className="absolute inset-0 bg-gradient-to-r from-[#f7b733] to-[#f9a826]"
+                 initial={{ x: "-100%" }}
+                 whileHover={{ x: "0%" }}
+                 transition={{ duration: 0.3 }}
+               />
+             </motion.button>
+
             <motion.button 
               whileHover={{ 
                 scale: 1.05,
@@ -85,10 +93,15 @@ const HeroSection = () => {
               whileTap={{ scale: 0.95 }}
               className="px-8 py-3 border-2 border-white rounded-full font-semibold transition-all duration-300 relative overflow-hidden group"
             >
-              <span className="relative z-10">Become a Vendor</span>
+               <Link
+                 to="/register"
+                 className="relative z-10 block w-full h-full"
+               >
+                 Explore Vendors
+               </Link>
               <motion.div
                 className="absolute inset-0 bg-white opacity-0 group-hover:opacity-100"
-                transition={{ duration: 0.3 }}
+                transition={{ duration: 0.9 }}
               />
             </motion.button>
           </div>
