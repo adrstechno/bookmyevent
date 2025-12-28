@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import { useAuth } from "../../../context/AuthContext";
+import dashboardService from "../../../services/dashboardService";
 import {
   CalendarDaysIcon,
   CurrencyRupeeIcon,
@@ -32,33 +34,60 @@ const getUserFromToken = () => {
 
 const UserDashboard = () => {
   const [userName, setUserName] = useState("User");
+  const [kpis, setKpis] = useState(null);
+  const [chartData, setChartData] = useState([]);
+  const [loadingChart, setLoadingChart] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
-    const decodedUser = getUserFromToken();
+    // Prefer AuthContext user if available
+    if (user && (user.first_name || user.name)) {
+      setUserName(user.first_name || user.name);
+    } else {
+      const decodedUser = getUserFromToken();
 
-    if (decodedUser?.name) {
-      setUserName(decodedUser.name);
-    } else if (decodedUser?.first_name) {
-      setUserName(decodedUser.first_name);
+      if (decodedUser?.name) {
+        setUserName(decodedUser.name);
+      } else if (decodedUser?.first_name) {
+        setUserName(decodedUser.first_name);
+      }
     }
+    // fetch dashboard data
+    (async () => {
+      try {
+        const k = await dashboardService.getUserKpis();
+        if (k?.success) setKpis(k.data);
+
+        const c = await dashboardService.getMonthlyChart();
+        if (c?.success) {
+          // convert YYYY-MM to short month names and ensure numbers
+          const formatMonth = (ym) => {
+            try {
+              const [y, m] = ym.split("-");
+              const d = new Date(Number(y), Number(m) - 1, 1);
+              return d.toLocaleString("en", { month: "short" });
+            } catch {
+              return ym;
+            }
+          };
+
+          setChartData(
+            c.data.map((r) => ({ month: formatMonth(r.month), bookings: Number(r.bookings) || 0, payments: Number(r.payments) || 0 }))
+          );
+        }
+      } catch (err) {
+        console.error("Dashboard load error", err);
+      } finally {
+        setLoadingChart(false);
+      }
+    })();
   }, []);
 
   /* 🔹 KPI dummy data */
-  const kpiData = {
-    bookings: 5,
-    totalPayment: 160000,
-    savedVendors: 6,
-    tickets: 1,
-  };
+  const kpiData = kpis || { bookings: 0, totalPayment: 0, savedVendors: 0, tickets: 0 };
 
   /* 🔹 Colorful monthly chart data */
-  const chartData = [
-    { month: "Jan", bookings: 1, payments: 15000 },
-    { month: "Feb", bookings: 2, payments: 28000 },
-    { month: "Mar", bookings: 1, payments: 12000 },
-    { month: "Apr", bookings: 3, payments: 55000 },
-    { month: "May", bookings: 2, payments: 50000 },
-  ];
+  const finalChartData = chartData; // rely on API; show loading/no-data states below
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -83,7 +112,7 @@ const UserDashboard = () => {
           />
           <KpiCard
             title="Payments"
-            value={`₹${kpiData.totalPayment.toLocaleString()}`}
+            value={`₹${Number(kpiData.totalPayment || 0).toLocaleString()}`}
             subtitle="Total paid"
             icon={<CurrencyRupeeIcon className="h-6 w-6 text-[#3c6e71]" />}
           />
@@ -109,7 +138,12 @@ const UserDashboard = () => {
 
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} barGap={10}>
+              {loadingChart ? (
+                <div className="flex items-center justify-center h-full">Loading chart...</div>
+              ) : finalChartData.length === 0 ? (
+                <div className="flex items-center justify-center h-full">No chart data for the last 6 months</div>
+              ) : (
+                <BarChart data={finalChartData} barGap={10}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis dataKey="month" />
                 <YAxis />
@@ -139,7 +173,8 @@ const UserDashboard = () => {
                   radius={[8, 8, 0, 0]}
                   name="Payments (₹)"
                 />
-              </BarChart>
+                </BarChart>
+              )}
             </ResponsiveContainer>
           </div>
         </section>
