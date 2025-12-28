@@ -2,7 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser'; // ✅ import cookie-parser
 import cors from 'cors'; // optional but recommended if you’re using frontend
-
+import helmet from 'helmet'
 
 import db from './Config/DatabaseCon.js';   
 import UserRouter from './Router/UserRouter.js';
@@ -14,6 +14,7 @@ import notificationroutes  from './Router/NotificationRoute.js'
 import OTPRouter from './Router/OTPRoute.js';
 import EnhancedBookingRouter from './Router/EnhancedBookingRoute.js';
 import ReviewRouter from './Router/ReviewRoute.js';
+import DashboardRouter from './Router/DashboardRouter.js';
 
 
 dotenv.config();
@@ -22,6 +23,7 @@ const app = express();
 
 // 🟢 Middleware
 
+app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser()); // ✅ Enables req.cookies
@@ -52,6 +54,7 @@ app.use('/notification',  notificationroutes);
 app.use('/otp', OTPRouter);
 app.use('/bookings', EnhancedBookingRouter);
 app.use('/reviews', ReviewRouter);
+app.use('/dashboard', DashboardRouter);
 
 app.get('/', (req, res) => {
   res.send('Welcome to the Event Management API');
