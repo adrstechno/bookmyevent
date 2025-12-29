@@ -427,8 +427,13 @@ import {
   TableRow,
   Paper,
   InputAdornment,
+  Card,
+  CardContent,
+  Divider,
+  useTheme,
+  useMediaQuery,
 } from "@mui/material";
-import { Add, Search, ArrowUpward, ArrowDownward,ArrowBack } from "@mui/icons-material";
+import { Add, Search, ArrowUpward, ArrowDownward, ArrowBack } from "@mui/icons-material";
 import { FiEdit3 } from "react-icons/fi";
 import { RiDeleteBin6Line } from "react-icons/ri";
 import axios from "axios";
@@ -469,6 +474,9 @@ const timeToMinutes = (timeStr) => {
 };
 
 const VendorShiftPage = () => {
+  const theme = useTheme();
+  const isSmUp = useMediaQuery(theme.breakpoints.up("sm")); // true for sm and up
+
   const [vendorShifts, setVendorShifts] = useState([]);
   const [vendorLoading, setVendorLoading] = useState(false);
   const [open, setOpen] = useState(false);
@@ -517,7 +525,6 @@ const VendorShiftPage = () => {
     });
     setOpen(true);
   };
-
   const handleOpenEdit = (s) => {
     setIsEdit(true);
     setShift({
@@ -649,16 +656,15 @@ const VendorShiftPage = () => {
         </Stack>
       </Stack>
 
-      {/* Table */}
+      {/* Table / Cards responsive */}
       {vendorLoading ? (
         <Box textAlign="center">
           <CircularProgress />
         </Box>
-      ) : (
-        <TableContainer
-          component={Paper}
-          sx={{ width: "100%", overflowX: "auto" }}
-        >
+      ) : filteredShifts.length === 0 ? (
+        <Typography>No vendor shifts found.</Typography>
+      ) : isSmUp ? (
+        <TableContainer component={Paper} sx={{ width: "100%", overflowX: "auto" }}>
           <Table>
             <TableHead sx={{ bgcolor: "#e8e8e8" }}>
               <TableRow>
@@ -668,7 +674,10 @@ const VendorShiftPage = () => {
                     sx={{
                       fontWeight: 700,
                       fontSize: { xs: "0.85rem", sm: "0.95rem" },
-                      whiteSpace: "nowrap",
+                      // allow days header to wrap
+                      whiteSpace: h === "Days" ? "normal" : "nowrap",
+                      wordBreak: h === "Days" ? "break-word" : undefined,
+                      maxWidth: h === "Days" ? { xs: 140, sm: 360 } : undefined,
                     }}
                   >
                     {h}
@@ -684,10 +693,9 @@ const VendorShiftPage = () => {
                     {s.shift_name}
                   </TableCell>
                   <TableCell sx={{ whiteSpace: "nowrap" }}>
-                    {s.start_time?.slice(0, 5)} -{" "}
-                    {s.end_time?.slice(0, 5)}
+                    {s.start_time?.slice(0, 5)} - {s.end_time?.slice(0, 5)}
                   </TableCell>
-                  <TableCell sx={{ whiteSpace: "nowrap" }}>
+                  <TableCell sx={{ whiteSpace: "normal", wordBreak: "break-word", overflowWrap: "anywhere", maxWidth: { xs: 140, sm: 400 }, fontSize: { xs: "0.75rem", sm: "0.9rem" } }}>
                     {parseDays(s.days_of_week).join(", ")}
                   </TableCell>
                   <TableCell align="right">
@@ -701,20 +709,20 @@ const VendorShiftPage = () => {
                             color: "white",
                           },
                         }}
+                        aria-label={`Edit ${s.shift_name}`}
                       >
                         <FiEdit3 />
                       </IconButton>
                       <IconButton
                         size="small"
-                        onClick={() =>
-                          handleDelete(s.shift_id ?? s.id)
-                        }
+                        onClick={() => handleDelete(s.shift_id ?? s.id)}
                         sx={{
                           "&:hover": {
                             bgcolor: "#d32f2f",
                             color: "white",
                           },
                         }}
+                        aria-label={`Delete ${s.shift_name}`}
                       >
                         <RiDeleteBin6Line />
                       </IconButton>
@@ -725,6 +733,40 @@ const VendorShiftPage = () => {
             </TableBody>
           </Table>
         </TableContainer>
+      ) : (
+        // XS / Mobile - show stacked cards for better readability
+        <Stack spacing={2}>
+          {filteredShifts.map((s) => (
+            <Card key={s.shift_id ?? s.id} variant="outlined">
+              <CardContent>
+                <Stack direction="row" spacing={2} alignItems="flex-start" justifyContent="space-between">
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="subtitle1" fontWeight={700} sx={{ wordBreak: "break-word" }}>
+                      {s.shift_name}
+                    </Typography>
+
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                      {s.start_time?.slice(0, 5)} - {s.end_time?.slice(0, 5)}
+                    </Typography>
+
+                    <Typography variant="body2" sx={{ mt: 0.75, whiteSpace: "normal", wordBreak: "break-word" }}>
+                      {parseDays(s.days_of_week).join(", ")}
+                    </Typography>
+                  </Box>
+
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <IconButton size="small" onClick={() => handleOpenEdit(s)} aria-label={`Edit ${s.shift_name}`}>
+                      <FiEdit3 />
+                    </IconButton>
+                    <IconButton size="small" onClick={() => handleDelete(s.shift_id ?? s.id)} aria-label={`Delete ${s.shift_name}`}>
+                      <RiDeleteBin6Line />
+                    </IconButton>
+                  </Stack>
+                </Stack>
+              </CardContent>
+            </Card>
+          ))}
+        </Stack>
       )}
 
       {/* Dialog */}

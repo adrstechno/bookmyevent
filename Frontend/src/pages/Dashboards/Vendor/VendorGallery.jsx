@@ -300,7 +300,7 @@ const VendorGallery = () => {
       <div className="bg-white shadow-2xl rounded-3xl p-10 max-w-4xl mx-auto border-t-4 border-[#3c6e71]">
 
         <h2 className="text-xl font-semibold text-gray-800 mb-6 pb-3 border-b">
-          Upload Images (Max 5)
+          Upload Images<br />(Max 5)
         </h2>
 
         <div
