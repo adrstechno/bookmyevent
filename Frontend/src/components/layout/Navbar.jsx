@@ -61,8 +61,8 @@ const Navbar = ({ onMenuClick, isMobile }) => {
             let dest = "/";
 
             if (role === "admin") dest = "/admin/dashboard";
-            else if (role === "vendor") dest = "/vendor/dashboard";
-            else if (role === "user") dest = "/user/dashboard";
+            else if (role === "vendor") dest = "/";
+            else if (role === "user") dest = "/";
             else if (role === "marketer") dest = "/marketer/dashboard";
 
             navigate(dest);

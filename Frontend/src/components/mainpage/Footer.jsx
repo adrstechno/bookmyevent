@@ -60,10 +60,10 @@ const Footer = () => {
         <div>
           <h4 className="text-xl font-semibold mb-4">Quick Links</h4>
           <ul className="space-y-2 text-gray-300 text-sm">
-            <li className="hover:text-[#f9a826] transition">About Us</li>
-            <li className="hover:text-[#f9a826] transition">Vendors</li>
-            <li className="hover:text-[#f9a826] transition">Gallery</li>
-            <li className="hover:text-[#f9a826] transition">Contact</li>
+            <li className="hover:text-[#f9a826] transition"><Link to='/about'>About Us</Link></li>
+            <li className="hover:text-[#f9a826] transition"><Link to='/vendors/:serviceId'>Vendors</Link></li>
+            <li className="hover:text-[#f9a826] transition"><Link to='/category/fashion-shows'>Gallery</Link></li>
+            <li className="hover:text-[#f9a826] transition"><Link to='/contact'>Contact</Link></li>
           </ul>
         </div>
 

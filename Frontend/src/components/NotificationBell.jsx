@@ -183,7 +183,7 @@ const NotificationBell = () => {
             initial={{ opacity: 0, y: -10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            className="absolute right-0 mt-2 w-80 md:w-96 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden z-50"
+            className="absolute md:right-0 -right-14 mt-2 w-70 md:w-96 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden z-50"
           >
             {/* Header */}
             <div className="bg-gradient-to-r from-[#284b63] to-[#3c6e71] px-4 py-3 flex items-center justify-between">
