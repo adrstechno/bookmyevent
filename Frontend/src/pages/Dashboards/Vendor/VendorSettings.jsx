@@ -18,6 +18,11 @@ const VendorSettings = () => {
     event_profiles_url: "",
   });
 
+  // Multiple contacts support
+  const [contacts, setContacts] = useState([]); // list of phone numbers
+  const [newContact, setNewContact] = useState("");
+  const MAX_CONTACTS = 10;
+
   const [categories, setCategories] = useState([]);
   const [errors, setErrors] = useState({});
   const [profileImage, setProfileImage] = useState(null);
@@ -51,12 +56,28 @@ const VendorSettings = () => {
 
         if (res.status === 200 && res.data) {
           const vendor = res.data.vendor || res.data; // handle both structures
+
+          // populate contacts
+          let initialContacts = [];
+          if (vendor.contacts && Array.isArray(vendor.contacts)) {
+            initialContacts = vendor.contacts.filter(Boolean).map(String);
+          } else if (vendor.contact) {
+            // contact might be comma separated or single
+            if (typeof vendor.contact === 'string' && vendor.contact.includes(',')) {
+              initialContacts = vendor.contact.split(',').map(s => s.trim()).filter(Boolean);
+            } else if (vendor.contact) {
+              initialContacts = [String(vendor.contact)];
+            }
+          }
+          initialContacts = initialContacts.slice(0, MAX_CONTACTS);
+          setContacts(initialContacts);
+
           setProfile({
             business_name: vendor.business_name || "",
             service_category_id: vendor.service_category_id || "",
             description: vendor.description || "",
             years_experience: vendor.years_experience?.toString() || "",
-            contact: vendor.contact || "",
+            contact: initialContacts[0] || vendor.contact || "",
             address: vendor.address || "",
             city: vendor.city || "",
             state: vendor.state || "",
@@ -110,8 +131,16 @@ const VendorSettings = () => {
       profile.years_experience <= 0
     )
       newErrors.years_experience = "Enter valid years of experience.";
-    if (!/^[0-9]{10}$/.test(profile.contact))
-      newErrors.contact = "Enter a valid 10-digit contact number.";
+
+    // validate contacts array - must have at least one and all should be 10 digits
+    if (!Array.isArray(contacts) || contacts.length === 0)
+      newErrors.contact = "Add at least one 10-digit contact number.";
+    else {
+      const invalid = contacts.find((c) => !/^[0-9]{10}$/.test(c));
+      if (invalid) newErrors.contact = "All contact numbers must be valid 10-digit numbers.";
+      if (contacts.length > MAX_CONTACTS) newErrors.contact = `Maximum ${MAX_CONTACTS} contact numbers allowed.`;
+    }
+
     if (!profile.address.trim()) newErrors.address = "Address is required.";
     if (!profile.city.trim()) newErrors.city = "City is required.";
     if (!profile.state.trim()) newErrors.state = "State is required.";
@@ -314,24 +343,65 @@ const VendorSettings = () => {
             )}
           </div>
 
-          {/* Contact */}
+          {/* Contact Numbers (multiple, max 10) */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">
-              Contact Number
+              Contact Numbers <span className="text-sm text-gray-500">({contacts.length}/{MAX_CONTACTS})</span>
             </label>
-            <input
-              type="text"
-              name="contact"
-              value={profile.contact}
-              onChange={handleChange}
-              placeholder="10-digit mobile number"
-              className={`w-full border ${
-                errors.contact ? "border-red-500" : "border-gray-300"
-              } rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#3c6e71]`}
-            />
+
+            <div className="flex gap-2">
+              <input
+                type="text"
+                inputMode="numeric"
+                value={newContact}
+                onChange={(e) => setNewContact(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                placeholder="Enter 10-digit number"
+                className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#3c6e71]"
+              />
+
+              <button
+                type="button"
+                onClick={() => {
+                  // add new contact
+                  if (contacts.length >= MAX_CONTACTS) return;
+                  if (!/^[0-9]{10}$/.test(newContact)) {
+                    setErrors((prev) => ({ ...prev, contact: "Enter a valid 10-digit number before adding." }));
+                    return;
+                  }
+                  if (contacts.includes(newContact)) {
+                    setErrors((prev) => ({ ...prev, contact: "Number already added." }));
+                    return;
+                  }
+                  setContacts((prev) => [...prev, newContact]);
+                  setNewContact("");
+                  setErrors((prev) => ({ ...prev, contact: "" }));
+                }}
+                disabled={contacts.length >= MAX_CONTACTS}
+                className={`bg-[#3c6e71] text-white px-4 py-2 rounded-lg ${contacts.length >= MAX_CONTACTS ? 'opacity-60 cursor-not-allowed' : 'hover:bg-[#284b63]'}`}
+              >
+                Add
+              </button>
+            </div>
+
             {errors.contact && (
-              <p className="text-red-500 text-sm mt-1">{errors.contact}</p>
+              <p className="text-red-500 text-sm mt-2">{errors.contact}</p>
             )}
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              {contacts.map((c, idx) => (
+                <div key={c + idx} className="inline-flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-full">
+                  <span className="font-medium text-gray-800">{c}</span>
+                  <button
+                    type="button"
+                    onClick={() => setContacts((prev) => prev.filter((_, i) => i !== idx))}
+                    className="text-red-500 bg-white rounded-full p-0.5 w-6 h-6 flex items-center justify-center"
+                    aria-label={`Remove ${c}`}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Address */}

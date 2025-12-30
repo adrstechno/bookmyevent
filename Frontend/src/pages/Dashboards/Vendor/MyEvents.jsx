@@ -50,30 +50,32 @@ const MyEvents = () => {
           <p className="text-gray-500 text-sm">Manage all your organized events</p>
         </div>
 
-        <button
+        {/* <button
           onClick={() => toast("Add New Event clicked")}
           className="flex items-center gap-2 bg-[#3c6e71] hover:bg-[#284b63] text-white md:px-5 md:py-2  px-10 py-2 rounded-lg shadow-md transition"
         >
           <PlusCircleIcon className="h-5 w-5" />
           Add New Event
-        </button>
+        </button> */}
       </div>
 
       {/* Filters */}
-      <div className="flex gap-3 mb-6">
-        {["all", "active", "completed", "cancelled"].map((type) => (
-          <button
-            key={type}
-            onClick={() => setFilter(type)}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium border transition ${
-              filter === type
-                ? "bg-[#3c6e71] text-white border-[#3c6e71]"
-                : "bg-white text-gray-600 border-gray-300 hover:bg-gray-100"
-            }`}
-          >
-            {type.charAt(0).toUpperCase() + type.slice(1)}
-          </button>
-        ))}
+      <div className="mb-6">
+        <div className="flex flex-wrap gap-3 items-center">
+          {["all", "active", "completed", "cancelled"].map((type) => (
+            <button
+              key={type}
+              onClick={() => setFilter(type)}
+              className={`min-w-[76px] px-4 py-1.5 rounded-full text-sm font-medium border transition whitespace-nowrap ${
+                filter === type
+                  ? "bg-[#3c6e71] text-white border-[#3c6e71]"
+                  : "bg-white text-gray-600 border-gray-300 hover:bg-gray-100"
+              }`}
+            >
+              {type.charAt(0).toUpperCase() + type.slice(1)}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Loading */}
