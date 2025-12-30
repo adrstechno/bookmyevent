@@ -44,7 +44,7 @@ const MyEvents = () => {
   return (
     <div className="min-h-screen bg-[#f7f7f8] p-6">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col md:flex-row justify-between gap-2 items-center mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-[#284b63]">My Events</h1>
           <p className="text-gray-500 text-sm">Manage all your organized events</p>
@@ -52,7 +52,7 @@ const MyEvents = () => {
 
         <button
           onClick={() => toast("Add New Event clicked")}
-          className="flex items-center gap-2 bg-[#3c6e71] hover:bg-[#284b63] text-white px-5 py-2 rounded-lg shadow-md transition"
+          className="flex items-center gap-2 bg-[#3c6e71] hover:bg-[#284b63] text-white md:px-5 md:py-2  px-10 py-2 rounded-lg shadow-md transition"
         >
           <PlusCircleIcon className="h-5 w-5" />
           Add New Event

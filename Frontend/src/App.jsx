@@ -168,6 +168,8 @@ import Exhibitions from "./pages/Category/Exhibitions";
 import VendorsByService from "./pages/VendorsByService";
 import VendorDetail from "./pages/VendorDetail";
 
+import ShowcaseSection from "./components/mainpage/ShowcaseSection";
+
 export default function App() {
   return (
     <AuthProvider>
@@ -183,6 +185,7 @@ export default function App() {
         <Route path="/why-us" element={<WhyUsPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
+        
 
         {/* Public Category Routes */}
         <Route path="/category/weddings" element={<Weddings />} />

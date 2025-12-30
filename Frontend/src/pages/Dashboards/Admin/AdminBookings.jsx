@@ -75,7 +75,7 @@ const AdminBookings = () => {
   const filteredBookings = bookings
     .filter((booking) => {
       if (filter === "all") return true;
-      if (filter === "pending_approval") return booking.status === "confirmed" && booking.admin_approval === "pending";
+      if (filter === "pending_approval") return booking.status === "pending" && booking.admin_approval === "pending";
       if (filter === "approved") return booking.status === "confirmed" && booking.admin_approval === "approved";
       if (filter === "completed") return ["completed", "awaiting_review"].includes(booking.status);
       if (filter === "cancelled") return booking.status?.includes("cancelled") || booking.status?.includes("rejected");
@@ -92,7 +92,7 @@ const AdminBookings = () => {
         booking.event_address?.toLowerCase().includes(search)
       );
     });
-
+ console.log(bookings,"d")
   const StatusBadge = ({ status, adminApproval }) => {
     let config = BOOKING_STATUS[status] || BOOKING_STATUS.pending;
     
