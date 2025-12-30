@@ -80,7 +80,7 @@ const UserDashboard = () => {
   const finalChartData = chartData; // rely on API; show loading/no-data states below
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen  bg-gray-50 flex flex-col">
       {/* NAVBAR */}
       <header className="bg-[#3c6e71] text-white shadow-md py-4 px-6 flex justify-between items-center">
         <h1 className="text-xl font-semibold">User Dashboard</h1>
@@ -126,10 +126,10 @@ const UserDashboard = () => {
             Monthly Activity Overview
           </h2>
 
-          <div className="h-72">
+          <div className="h-72 ">
             <ResponsiveContainer width="100%" height="100%">
               {loadingChart ? (
-                <div className="flex items-center justify-center h-full">Loading chart...</div>
+                <div className="flex items-center justify-center  h-full">Loading chart...</div>
               ) : finalChartData.length === 0 ? (
                 <div className="flex items-center justify-center h-full">No chart data for the last 6 months</div>
               ) : (

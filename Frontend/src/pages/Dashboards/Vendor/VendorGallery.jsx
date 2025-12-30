@@ -242,11 +242,12 @@ const VendorGallery = () => {
 
   // Upload images
   const handleUpload = async () => {
-    if (!vendorId) return toast.error("Vendor ID not found.");
+    if (vendorId) return toast.error("Vendor ID not found.");
     if (selectedImages.length === 0) return toast.error("Select images first.");
 
     const formData = new FormData();
     formData.append("vendor_id", vendorId);
+    
     selectedImages.forEach((file) => formData.append("eventImages", file));
 
     try {
