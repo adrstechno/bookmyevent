@@ -19,12 +19,12 @@ const Exhibitions = () => {
         { name: "Stall Designing", image: "/images/services/exhibition/stall-design.jpg" },
         { name: "Fabrication & Setup", image: "/images/services/exhibition/fabrication.jpg" },
         { name: "Branding & Printing", image: "/images/services/exhibition/branding.jpg" },
-        { name: "Lighting Setup", image: "/images/services/exhibition/lighting.jpg" },
-        { name: "Product Display Units", image: "/images/services/exhibition/display-units.jpg" },
-        { name: "LED Wall Support", image: "/images/services/exhibition/led-wall.jpg" },
-        { name: "Reception Counter", image: "/images/services/exhibition/reception.jpg" },
-        { name: "Brochure Stands", image: "/images/services/exhibition/brochure-stands.jpg" },
-        { name: "Dismantling & Logistics", image: "/images/services/exhibition/logistics.jpg" },
+        { name: "Lighting Setup", image: "/images/services/exhibition/lightingsetup.jpg" },
+        { name: "Product Display Units", image: "/images/services/exhibition/productdisplayunits.jpg" },
+        { name: "LED Wall Support", image: "/images/services/exhibition/ledwall.png" },
+        { name: "Reception Counter", image: "/images/services/exhibition/receptioncounter.jpg" },
+        { name: "Brochure Stands", image: "/images/services/exhibition/broucherstand.jpg" },
+        { name: "Dismantling & Logistics", image: "/images/services/exhibition/dismantlingandlogistics.jpg" },
       ]}
     />
   );
