@@ -14,14 +14,14 @@ const ConcertsFestivals = () => {
         "Convention Auditoriums",
       ]}
       services={[
-        { name: "Stage & Truss Setup", image: "/images/services/concert/stage-truss.jpg" },
-        { name: "LED Wall Setup", image: "/images/services/concert/led-wall.jpg" },
-        { name: "Sound Line Array Systems", image: "/images/services/concert/sound-system.jpg" },
-        { name: "Architectural Lighting", image: "/images/services/concert/lighting.jpg" },
-        { name: "Artist Management", image: "/images/services/concert/artist-management.jpg" },
-        { name: "Backstage Coordination", image: "/images/services/concert/backstage.jpg" },
-        { name: "Security & Crowd Control", image: "/images/services/concert/security.jpg" },
-        { name: "Ticketing Support", image: "/images/services/concert/ticketing.jpg" },
+        { name: "Stage & Truss Setup", image: "/images/services/concert/stageandtrusssetup.png" },
+        { name: "LED Wall Setup", image: "/images/services/concert/ledwalls.jpg" },
+        { name: "Sound Line Array Systems", image: "/images/services/concert/soundline.jpg" },
+        { name: "Architectural Lighting", image: "/images/services/concert/architecturelighting.jpg" },
+        { name: "Artist Management", image: "/images/services/concert/artistmanagement.jpg" },
+        { name: "Backstage Coordination", image: "/images/services/concert/backstagecoordination.jpg" },
+        { name: "Security & Crowd Control", image: "/images/services/concert/securityandcrowd.jpg" },
+        { name: "Ticketing Support", image: "/images/services/concert/ticketbooking.jpg" },
         { name: "Special Effects Setup", image: "/images/services/concert/special-effects.jpg" },
       ]}
     />
