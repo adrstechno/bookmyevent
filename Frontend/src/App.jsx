@@ -62,13 +62,13 @@ export default function App() {
       <Routes>
         {/* PUBLIC ROUTES */}
          <Route path="/" element={<ComingSoon />} />
-        <Route path="/homeq" element={<Home />} />
-        <Route path="/loginq" element={<Login />} />
-        <Route path="/registerq" element={<Register />} />
-        <Route path="/changepasswordq" element={<ChangePassword />} />
-        <Route path="/why-usq" element={<WhyUsPage />} />
-        <Route path="/aboutq" element={<AboutPage />} />
-        <Route path="/contactq" element={<ContactPage />} />
+        <Route path="/home" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/changepassword" element={<ChangePassword />} />
+        <Route path="/why-us" element={<WhyUsPage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/contact" element={<ContactPage />} />
         
 
         {/* Public Category Routes */}
