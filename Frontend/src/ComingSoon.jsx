@@ -141,7 +141,7 @@ const ComingSoon = () => {
         </h1>
 
         <p className="text-sm text-slate-500 tracking-widest uppercase mb-12">
-          Event Management Platform
+          Our Very Usefull Platform
         </p>
 
         {/* Main Banner */}
@@ -171,11 +171,6 @@ const ComingSoon = () => {
             Launching Soon
           </div>
         </div>
-
-        {/* Footer */}
-        <p className="mt-8 text-sm text-slate-500 tracking-wide">
-          Weddings · Corporate · Celebrations
-        </p>
 
       </div>
     </div>
