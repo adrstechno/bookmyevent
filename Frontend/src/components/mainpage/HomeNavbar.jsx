@@ -801,8 +801,15 @@ const HomeNavbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
 
   const categoriesRef = useRef(null);
+  const mobileCategoriesRef = useRef(null);
   const userMenuRef = useRef(null);
   const navigate = useNavigate();
+
+  const handleMobileCategoryNavigate = (path) => {
+    navigate(path);
+    setMenuOpen(false);
+    setCategoriesOpen(false);
+  };
 
   /* ---------- Scroll ---------- */
   useEffect(() => {
@@ -838,7 +845,10 @@ const HomeNavbar = () => {
   /* ---------- Click Outside ---------- */
   useEffect(() => {
     const handleClick = (e) => {
-      if (categoriesRef.current && !categoriesRef.current.contains(e.target)) {
+      const clickedInsideDesktopCategories = categoriesRef.current?.contains(e.target);
+      const clickedInsideMobileCategories = mobileCategoriesRef.current?.contains(e.target);
+
+      if (!clickedInsideDesktopCategories && !clickedInsideMobileCategories) {
         setCategoriesOpen(false);
       }
       if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
@@ -1017,30 +1027,25 @@ const HomeNavbar = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             className="lg:hidden mx-4 mt-2 bg-white rounded-2xl shadow-xl"
+            style={{ pointerEvents: "auto" }}
           >
             <div className="p-4 space-y-2">
               {["/", "/about", "/contact"].map((path) => {
                 const label = path === "/" ? "Home" : path.replace("/", "");
                 return (
-                  <NavLink
+                  <Link
                     key={path}
                     to={path}
                     onClick={() => setMenuOpen(false)}
-                    className={({ isActive }) =>
-                      `block px-4 py-3 rounded-xl ${
-                        isActive
-                          ? "bg-[#3c6e71] text-white"
-                          : "hover:bg-gray-100"
-                      }`
-                    }
+                    className="block px-4 py-3 rounded-xl hover:bg-gray-100 transition-colors"
                   >
                     {label.charAt(0).toUpperCase() + label.slice(1)}
-                  </NavLink>
+                  </Link>
                 );
               })}
 
               {/* Mobile Categories */}
-              <div className="bg-gray-50 rounded-xl p-3">
+              <div ref={mobileCategoriesRef} className="bg-gray-50 rounded-xl p-3">
                 <div
                   className="flex justify-between font-semibold cursor-pointer"
                   onClick={() => setCategoriesOpen(!categoriesOpen)}
@@ -1053,24 +1058,15 @@ const HomeNavbar = () => {
                     {categories.map((c) => {
                       const Icon = c.icon;
                       return (
-                        <NavLink
+                        <button
+                          type="button"
                           key={c.name}
-                          to={c.path}
-                          onClick={() => {
-                            setMenuOpen(false);
-                            setCategoriesOpen(false);
-                          }}
-                          className={({ isActive }) =>
-                            `flex items-center gap-3 p-2 rounded-lg ${
-                              isActive
-                                ? "bg-[#3c6e71]/10 text-[#3c6e71] font-semibold"
-                                : "hover:bg-gray-100"
-                            }`
-                          }
+                          onClick={() => handleMobileCategoryNavigate(c.path)}
+                          className="flex w-full items-center gap-3 p-2 rounded-lg hover:bg-gray-100 transition-colors text-left"
                         >
                           <Icon className={`w-5 h-5 ${c.color}`} />
-                          {c.name}
-                        </NavLink>
+                          <span>{c.name}</span>
+                        </button>
                       );
                     })}
                   </div>
@@ -1081,19 +1077,19 @@ const HomeNavbar = () => {
               <div className="pt-3 space-y-2">
                 {isLoggedIn ? (
                   <>
-                    <NavLink
+                    <Link
                       to={getDashboardPath()}
                       onClick={() => setMenuOpen(false)}
-                      className="block px-4 py-3 rounded-xl hover:bg-gray-100"
+                      className="block px-4 py-3 rounded-xl hover:bg-gray-100 transition-colors"
                     >
                       Dashboard
-                    </NavLink>
+                    </Link>
                     <button
                       onClick={() => {
                         handleLogout();
                         setMenuOpen(false);
                       }}
-                      className="block w-full text-left px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl"
+                      className="block w-full text-left px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition-colors"
                     >
                       Logout
                     </button>
@@ -1103,14 +1099,14 @@ const HomeNavbar = () => {
                     <NavLink
                       to="/login"
                       onClick={() => setMenuOpen(false)}
-                      className="block px-4 py-3 border border-[#3c6e71] text-[#3c6e71] rounded-xl hover:bg-[#3c6e71] hover:text-white"
+                      className="block px-4 py-3 border border-[#3c6e71] text-[#3c6e71] rounded-xl hover:bg-[#3c6e71] hover:text-white transition-colors"
                     >
                       Login
                     </NavLink>
                     <NavLink
                       to="/register"
                       onClick={() => setMenuOpen(false)}
-                      className="block px-4 py-3 bg-[#3c6e71] text-white rounded-xl shadow"
+                      className="block px-4 py-3 bg-[#3c6e71] text-white rounded-xl shadow hover:bg-[#2f5b60] transition-colors"
                     >
                       Sign Up
                     </NavLink>
