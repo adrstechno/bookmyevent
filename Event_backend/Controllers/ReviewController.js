@@ -135,9 +135,23 @@ class ReviewController {
             }
 
             // Check access permissions
-            const hasAccess = booking.user_id === user_id || 
-                            booking.vendor_id === req.user?.vendor_id ||
-                            req.user?.user_type === 'admin';
+            let hasAccess = booking.user_id === user_id || req.user?.user_type === 'admin';
+            
+            // For vendors, check if they own this booking
+            if (!hasAccess && req.user?.user_type === 'vendor') {
+                const VendorModel = (await import('../Models/VendorModel.js')).default;
+                
+                const vendorResult = await new Promise((resolve, reject) => {
+                    VendorModel.findVendorID(user_id, (err, results) => {
+                        if (err) reject(err);
+                        else resolve(results);
+                    });
+                });
+
+                if (vendorResult && vendorResult.length > 0) {
+                    hasAccess = booking.vendor_id === vendorResult[0].vendor_id;
+                }
+            }
 
             if (!hasAccess) {
                 return res.status(403).json({

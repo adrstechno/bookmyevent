@@ -77,9 +77,9 @@ class BookingController {
     static async acceptBooking(req, res) {
         try {
             const { id } = req.params;
-            const vendor_id = req.user?.vendor_id || req.user?.user_id;
+            const user_id = req.user?.uuid || req.user?.user_id;
 
-            if (!vendor_id) {
+            if (!user_id) {
                 return res.status(401).json({
                     success: false,
                     message: 'Vendor authentication required'
@@ -93,12 +93,39 @@ class BookingController {
                 });
             }
 
+            // Get the vendor_id for this user
+            const VendorModel = (await import('../Models/VendorModel.js')).default;
+            
+            const vendorResult = await new Promise((resolve, reject) => {
+                VendorModel.findVendorID(user_id, (err, results) => {
+                    if (err) reject(err);
+                    else resolve(results);
+                });
+            });
+
+            if (!vendorResult || vendorResult.length === 0) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Vendor authentication required. No vendor profile found.'
+                });
+            }
+
+            const vendor_id = vendorResult[0].vendor_id;
+
             // Get booking details before update
             const booking = await BookingModel.getBookingById(id);
             if (!booking) {
                 return res.status(404).json({
                     success: false,
                     message: 'Booking not found'
+                });
+            }
+
+            // Verify this vendor owns this booking
+            if (booking.vendor_id !== vendor_id) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Unauthorized: You can only accept your own bookings'
                 });
             }
 
@@ -130,9 +157,9 @@ class BookingController {
         try {
             const { id } = req.params;
             const { reason } = req.body;
-            const vendor_id = req.user?.vendor_id || req.user?.user_id;
+            const user_id = req.user?.uuid || req.user?.user_id;
 
-            if (!vendor_id) {
+            if (!user_id) {
                 return res.status(401).json({
                     success: false,
                     message: 'Vendor authentication required'
@@ -146,12 +173,39 @@ class BookingController {
                 });
             }
 
+            // Get the vendor_id for this user
+            const VendorModel = (await import('../Models/VendorModel.js')).default;
+            
+            const vendorResult = await new Promise((resolve, reject) => {
+                VendorModel.findVendorID(user_id, (err, results) => {
+                    if (err) reject(err);
+                    else resolve(results);
+                });
+            });
+
+            if (!vendorResult || vendorResult.length === 0) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Vendor authentication required. No vendor profile found.'
+                });
+            }
+
+            const vendor_id = vendorResult[0].vendor_id;
+
             // Get booking details before update
             const booking = await BookingModel.getBookingById(id);
             if (!booking) {
                 return res.status(404).json({
                     success: false,
                     message: 'Booking not found'
+                });
+            }
+
+            // Verify this vendor owns this booking
+            if (booking.vendor_id !== vendor_id) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Unauthorized: You can only reject your own bookings'
                 });
             }
 
@@ -314,7 +368,6 @@ class BookingController {
             const { id } = req.params;
             const { reason } = req.body;
             const user_id = req.user?.uuid || req.user?.user_id;
-            const vendor_id = req.user?.vendor_id;
             const user_type = req.user?.user_type;
 
             if (!user_id) {
@@ -346,14 +399,30 @@ class BookingController {
             if (booking.user_id === user_id) {
                 cancelled_by = user_id;
                 cancelled_by_type = 'user';
-            } else if (booking.vendor_id === vendor_id) {
-                cancelled_by = vendor_id;
-                cancelled_by_type = 'vendor';
             } else {
-                return res.status(403).json({
-                    success: false,
-                    message: 'Unauthorized: You can only cancel your own bookings'
+                // For vendors, we need to check if the user_id matches the vendor's user_id
+                // The vendor_id in booking table should match the vendor profile's vendor_id
+                // where the vendor profile's user_id matches the current user's user_id
+                
+                // First, let's get the vendor_id for this user
+                const VendorModel = (await import('../Models/VendorModel.js')).default;
+                
+                const vendorResult = await new Promise((resolve, reject) => {
+                    VendorModel.findVendorID(user_id, (err, results) => {
+                        if (err) reject(err);
+                        else resolve(results);
+                    });
                 });
+
+                if (vendorResult && vendorResult.length > 0 && vendorResult[0].vendor_id === booking.vendor_id) {
+                    cancelled_by = vendorResult[0].vendor_id;
+                    cancelled_by_type = 'vendor';
+                } else {
+                    return res.status(403).json({
+                        success: false,
+                        message: 'Unauthorized: You can only cancel your own bookings'
+                    });
+                }
             }
 
             await BookingModel.cancelBooking(id, cancelled_by, cancelled_by_type, reason);
@@ -387,7 +456,6 @@ class BookingController {
         try {
             const { id } = req.params;
             const user_id = req.user?.uuid || req.user?.user_id;
-            const vendor_id = req.user?.vendor_id;
             const user_type = req.user?.user_type;
 
             if (!user_id) {
@@ -413,9 +481,23 @@ class BookingController {
             }
 
             // Check access permissions
-            const hasAccess = booking.user_id === user_id || 
-                            booking.vendor_id === vendor_id ||
-                            user_type === 'admin';
+            let hasAccess = booking.user_id === user_id || user_type === 'admin';
+            
+            // For vendors, check if they own this booking
+            if (!hasAccess && user_type === 'vendor') {
+                const VendorModel = (await import('../Models/VendorModel.js')).default;
+                
+                const vendorResult = await new Promise((resolve, reject) => {
+                    VendorModel.findVendorID(user_id, (err, results) => {
+                        if (err) reject(err);
+                        else resolve(results);
+                    });
+                });
+
+                if (vendorResult && vendorResult.length > 0) {
+                    hasAccess = booking.vendor_id === vendorResult[0].vendor_id;
+                }
+            }
 
             if (!hasAccess) {
                 return res.status(403).json({
@@ -501,16 +583,35 @@ class BookingController {
     // Get vendor bookings
     static async getVendorBookings(req, res) {
         try {
-            const vendor_id = req.user?.vendor_id || req.user?.user_id;
+            const user_id = req.user?.uuid || req.user?.user_id;
             
-            if (!vendor_id) {
-                console.log('No vendor_id found for user');
+            if (!user_id) {
+                console.log('No user_id found for vendor');
+                return res.status(401).json({
+                    success: false,
+                    message: 'Vendor authentication required'
+                });
+            }
+
+            // Get the vendor_id for this user
+            const VendorModel = (await import('../Models/VendorModel.js')).default;
+            
+            const vendorResult = await new Promise((resolve, reject) => {
+                VendorModel.findVendorID(user_id, (err, results) => {
+                    if (err) reject(err);
+                    else resolve(results);
+                });
+            });
+
+            if (!vendorResult || vendorResult.length === 0) {
+                console.log('No vendor profile found for user_id:', user_id);
                 return res.status(401).json({
                     success: false,
                     message: 'Vendor authentication required. No vendor profile found.'
                 });
             }
 
+            const vendor_id = vendorResult[0].vendor_id;
             console.log('Fetching bookings for vendor_id:', vendor_id);
 
             const {
@@ -605,7 +706,6 @@ class BookingController {
         try {
             const { id } = req.params;
             const user_id = req.user?.uuid || req.user?.user_id;
-            const vendor_id = req.user?.vendor_id;
             const user_type = req.user?.user_type;
 
             if (!user_id) {
@@ -631,9 +731,23 @@ class BookingController {
             }
 
             // Check access permissions
-            const hasAccess = booking.user_id === user_id || 
-                            booking.vendor_id === vendor_id ||
-                            user_type === 'admin';
+            let hasAccess = booking.user_id === user_id || user_type === 'admin';
+            
+            // For vendors, check if they own this booking
+            if (!hasAccess && user_type === 'vendor') {
+                const VendorModel = (await import('../Models/VendorModel.js')).default;
+                
+                const vendorResult = await new Promise((resolve, reject) => {
+                    VendorModel.findVendorID(user_id, (err, results) => {
+                        if (err) reject(err);
+                        else resolve(results);
+                    });
+                });
+
+                if (vendorResult && vendorResult.length > 0) {
+                    hasAccess = booking.vendor_id === vendorResult[0].vendor_id;
+                }
+            }
 
             if (!hasAccess) {
                 return res.status(403).json({
