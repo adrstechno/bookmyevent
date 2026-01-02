@@ -43,6 +43,9 @@ useEffect(() => {
       if (res.data?.kpis) setKpis(res.data.kpis);
     } catch (err) {
       console.error("Error loading KPIs", err);
+      if (err.response?.status === 404 && err.response?.data?.message === "Vendor not found") {
+        console.log("Vendor profile not found - user needs to complete setup");
+      }
     }
   };
 
@@ -55,6 +58,9 @@ useEffect(() => {
       if (Array.isArray(res.data.activities)) setActivities(res.data.activities);
     } catch (err) {
       console.error("Error loading activities", err);
+      if (err.response?.status === 404 && err.response?.data?.message === "Vendor not found") {
+        console.log("Vendor profile not found - user needs to complete setup");
+      }
     }
   };
 

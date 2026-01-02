@@ -27,7 +27,20 @@ const MyEvents = () => {
         }
       } catch (error) {
         console.error("Error fetching events:", error);
-        toast.error("Failed to load events.");
+        
+        // Handle vendor not found - redirect to profile setup
+        if (error.response?.status === 404 && error.response?.data?.message === "Vendor not found") {
+          toast("Please complete your vendor profile setup first!", {
+            icon: "⚠️",
+            duration: 4000,
+          });
+          // You can add navigation logic here if needed
+          // window.location.href = "/vendor/profile-setup";
+        } else if (error.response?.status === 401) {
+          toast.error("Please log in again.");
+        } else {
+          toast.error("Failed to load events.");
+        }
       } finally {
         setLoading(false);
       }
