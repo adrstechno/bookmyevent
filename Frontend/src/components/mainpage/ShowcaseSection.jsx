@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react';
 import CircularGallery from './CircularGallery';
 
+import { useNavigate } from 'react-router-dom';
+
+
 const images = [
   { image: "/images/event/event1.jpg", text: "Dj Show" },
   { image: "/images/event/event2.jpg", text: "Exivision" },
@@ -15,10 +18,6 @@ const images = [
   { image: "/images/event/event9.jpg", text: "Dj Night" },
   { image: "/images/event/event10.jpg", text: "Late Night Show" },
 ];
-
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import CircularGallery from './CircularGallery';
 
 const categoryImages = [
   { image: "/images/event/event1.jpg", text: "DJ Show", route: "/category/concerts-festivals" },

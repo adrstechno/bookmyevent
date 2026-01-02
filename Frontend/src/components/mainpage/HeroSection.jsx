@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useAuth } from "../../context/AuthContext";
 import HexCollage from "./HexCollage";
 
 const bgImages = [
@@ -12,6 +13,8 @@ const bgImages = [
 
 const HeroSection = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Auto-slide background every 5 seconds
   useEffect(() => {
@@ -20,6 +23,32 @@ const HeroSection = () => {
     }, 5000);
     return () => clearInterval(interval);
   }, []);
+
+  // Handle explore vendors click based on auth status
+  const handleExploreVendors = () => {
+    if (user) {
+      // User is logged in, scroll to services section on current page
+      const servicesSection = document.getElementById('services-section');
+      if (servicesSection) {
+        servicesSection.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'start'
+        });
+      } else {
+        // Fallback: navigate to home and then scroll
+        navigate('/home');
+        setTimeout(() => {
+          const section = document.getElementById('services-section');
+          if (section) {
+            section.scrollIntoView({ behavior: 'smooth' });
+          }
+        }, 100);
+      }
+    } else {
+      // User not logged in, navigate to register
+      navigate('/register');
+    }
+  };
 
   return (
     <section className="relative text-white overflow-hidden">
@@ -55,7 +84,10 @@ const HeroSection = () => {
           </h1>
 
           <p className="text-lg text-gray-100 drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]">
-            Discover the best venues, vendors, and services — all in one place.
+            {user 
+              ? `Welcome back, ${user.name || 'User'}! Discover the best venues, vendors, and services for your next celebration.`
+              : "Discover the best venues, vendors, and services — all in one place. Let's make your celebration unforgettable."
+            }
             Let’s make your celebration unforgettable.
           </p>
 
@@ -69,7 +101,7 @@ const HeroSection = () => {
                className="px-8 py-3 bg-[#f9a826] text-black rounded-full font-semibold hover:bg-[#f7b733] transition-all duration-300 shadow-lg relative overflow-hidden group"
              >
                <Link
-                 to="category/weddings"
+                 to="/category/weddings"
                  className="relative z-10 block w-full h-full"
                >
                  Explore Our Works
@@ -91,17 +123,16 @@ const HeroSection = () => {
                 boxShadow: "0 10px 30px rgba(255, 255, 255, 0.3)"
               }}
               whileTap={{ scale: 0.95 }}
+              onClick={handleExploreVendors}
               className="px-8 py-3 border-2 border-white rounded-full font-semibold transition-all duration-300 relative overflow-hidden group"
+              title={user ? 'Browse available vendors and services' : 'Sign up to explore vendors'}
             >
-               <Link
-                 to="/register"
-                 className="relative z-10 block w-full h-full"
-               >
-                 Explore Vendors
-               </Link>
+              <span className="relative z-10">
+                {user ? 'Explore Vendors' : 'Join Us Today'}
+              </span>
               <motion.div
                 className="absolute inset-0 bg-white opacity-0 group-hover:opacity-100"
-                transition={{ duration: 0.9 }}
+                transition={{ duration: 0.3 }}
               />
             </motion.button>
           </div>

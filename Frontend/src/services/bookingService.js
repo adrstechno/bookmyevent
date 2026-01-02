@@ -73,8 +73,8 @@ const bookingService = {
   },
 
   // Cancel booking (user/vendor) - uses enhanced route
-  cancelBooking: async (bookingId) => {
-    const response = await api.put(`/bookings/${bookingId}/cancel`);
+  cancelBooking: async (bookingId, reason = "Cancelled by user") => {
+    const response = await api.put(`/bookings/${bookingId}/cancel`, { reason });
     return response.data;
   },
 
