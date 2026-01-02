@@ -14,15 +14,15 @@ const CorporateEvents = () => {
         "Corporate Auditoriums",
       ]}
       services={[
-        { name: "Conference Management", image: "/images/services/corporate/conference.jpg" },
-        { name: "Product Launch", image: "/images/services/corporate/product-launch.jpg" },
-        { name: "Annual Day Events", image: "/images/services/corporate/annual-day.jpg" },
-        { name: "Award Ceremonies", image: "/images/services/corporate/awards.jpg" },
-        { name: "Brand Activations", image: "/images/services/corporate/brand-activation.jpg" },
-        { name: "Seminars & Workshops", image: "/images/services/corporate/seminar.jpg" },
-        { name: "Stage Design & Setup", image: "/images/services/corporate/stage.jpg" },
-        { name: "LED Wall & AV System", image: "/images/services/corporate/led-av.jpg" },
-        { name: "Professional Lighting", image: "/images/services/corporate/lighting.jpg" },
+        { name: "Conference Management", image: "/images/services/corporate/conferencemanagement.jpg" },
+        { name: "Product Launch", image: "/images/services/corporate/productlaunch.jpg" },
+        { name: "Annual Day Events", image: "/images/services/corporate/annualday.jpg" },
+        { name: "Award Ceremonies", image: "/images/services/corporate/awardcermony.jpg" },
+        { name: "Brand Activations", image: "/images/services/corporate/brandactivation.jpg" },
+        { name: "Seminars & Workshops", image: "/images/services/corporate/seminarsandworkshops.jpg" },
+        { name: "Stage Design & Setup", image: "/images/services/corporate/stagedesignandsetup.jpg" },
+        { name: "LED Wall & AV System", image: "/images/services/corporate/ledwallsandavsystem.jpg" },
+        { name: "Professional Lighting", image: "/images/services/corporate/professionallightening.jpg" },
       ]}
     />
   );
