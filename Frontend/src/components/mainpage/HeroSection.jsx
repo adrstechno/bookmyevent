@@ -28,25 +28,25 @@ const HeroSection = () => {
   const handleExploreVendors = () => {
     if (user) {
       // User is logged in, scroll to services section on current page
-      const servicesSection = document.getElementById('services-section');
+      const servicesSection = document.getElementById("services-section");
       if (servicesSection) {
-        servicesSection.scrollIntoView({ 
-          behavior: 'smooth',
-          block: 'start'
+        servicesSection.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
         });
       } else {
         // Fallback: navigate to home and then scroll
-        navigate('/home');
+        navigate("/home");
         setTimeout(() => {
-          const section = document.getElementById('services-section');
+          const section = document.getElementById("services-section");
           if (section) {
-            section.scrollIntoView({ behavior: 'smooth' });
+            section.scrollIntoView({ behavior: "smooth" });
           }
         }, 100);
       }
     } else {
       // User not logged in, navigate to register
-      navigate('/register');
+      navigate("/register");
     }
   };
 
@@ -80,55 +80,61 @@ const HeroSection = () => {
           className="md:w-[45%] space-y-6 backdrop-blur-[2px] bg-black/30 p-8 rounded-2xl shadow-lg md:ml-[-30px]"
         >
           <h1 className="text-5xl font-bold leading-tight drop-shadow-[0_2px_5px_rgba(0,0,0,0.5)]">
-            Plan Your <span className="text-[#f9a826]">Perfect Event</span> with Celebria
+            Plan Your <span className="text-[#f9a826]">Perfect Event</span> with
+            Celebria
           </h1>
 
           <p className="text-lg text-gray-100 drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]">
-            {user 
-              ? `Welcome back, ${user.name || 'User'}! Discover the best venues, vendors, and services for your next celebration.`
-              : "Discover the best venues, vendors, and services — all in one place. Let's make your celebration unforgettable."
-            }
+            {user
+              ? `Welcome back, ${
+                  user.name || "User"
+                }! Discover the best venues, vendors, and services for your next celebration.`
+              : "Discover the best venues, vendors, and services — all in one place. Let's make your celebration unforgettable."}
             Let’s make your celebration unforgettable.
           </p>
 
           <div className="flex gap-4 pt-2">
-           <motion.button 
-               whileHover={{ 
-                 scale: 1.05,
-                 boxShadow: "0 10px 30px rgba(249, 168, 38, 0.4)"
-               }}
-               whileTap={{ scale: 0.95 }}
-               className="px-8 py-3 bg-[#f9a826] text-black rounded-full font-semibold hover:bg-[#f7b733] transition-all duration-300 shadow-lg relative overflow-hidden group"
-             >
-               <Link
-                 to="/category/weddings"
-                 className="relative z-10 block w-full h-full"
-               >
-                 Explore Our Works
-               </Link>
-             
-               <motion.div
-                 className="absolute inset-0 bg-gradient-to-r from-[#f7b733] to-[#f9a826]"
-                 initial={{ x: "-100%" }}
-                 whileHover={{ x: "0%" }}
-                 transition={{ duration: 0.3 }}
-               />
-             </motion.button>
+            <motion.div
+              whileHover={{
+                scale: 1.05,
+                boxShadow: "0 10px 30px rgba(249, 168, 38, 0.4)",
+              }}
+              whileTap={{ scale: 0.95 }}
+              className="relative"
+            >
+              <Link
+                to="/category/weddings"
+                className="px-8 py-3 bg-[#f9a826] text-black rounded-full font-semibold hover:bg-[#f7b733] transition-all duration-300 shadow-lg relative overflow-hidden group inline-block"
+              >
+                <span className="relative z-10">Explore Our Works</span>
 
-            <motion.button 
-              whileHover={{ 
+                <motion.span
+                  className="absolute inset-0 bg-gradient-to-r from-[#f7b733] to-[#f9a826]"
+                  initial={{ x: "-100%" }}
+                  whileHover={{ x: "0%" }}
+                  transition={{ duration: 0.3 }}
+                />
+              </Link>
+            </motion.div>
+
+            <motion.button
+              whileHover={{
                 scale: 1.05,
                 backgroundColor: "rgba(255, 255, 255, 1)",
                 color: "#3c6e71",
-                boxShadow: "0 10px 30px rgba(255, 255, 255, 0.3)"
+                boxShadow: "0 10px 30px rgba(255, 255, 255, 0.3)",
               }}
               whileTap={{ scale: 0.95 }}
               onClick={handleExploreVendors}
               className="px-8 py-3 border-2 border-white rounded-full font-semibold transition-all duration-300 relative overflow-hidden group"
-              title={user ? 'Browse available vendors and services' : 'Sign up to explore vendors'}
+              title={
+                user
+                  ? "Browse available vendors and services"
+                  : "Sign up to explore vendors"
+              }
             >
               <span className="relative z-10">
-                {user ? 'Explore Vendors' : 'Join Us Today'}
+                {user ? "Explore Vendors" : "Join Us Today"}
               </span>
               <motion.div
                 className="absolute inset-0 bg-white opacity-0 group-hover:opacity-100"
