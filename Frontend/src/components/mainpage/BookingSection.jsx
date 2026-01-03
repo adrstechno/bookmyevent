@@ -12,6 +12,7 @@ import {
   FiPackage,
   FiUser,
 } from "react-icons/fi";
+import Footer from "../../components/Footer"; // ✅ adjust path if needed
 
 const BookingSection = () => {
   const navigate = useNavigate();
@@ -34,25 +35,26 @@ const BookingSection = () => {
     if (!bookingForm.vendor_id) return toast.error("Please enter Vendor ID");
     if (!bookingForm.package_id) return toast.error("Please enter Package ID");
     if (!bookingForm.shift_id) return toast.error("Please enter Shift ID");
-    if (!bookingForm.event_address) return toast.error("Event address is required");
+    if (!bookingForm.event_address)
+      return toast.error("Event address is required");
     if (!bookingForm.event_date) return toast.error("Event date is required");
     if (!bookingForm.event_time) return toast.error("Event time is required");
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       const response = await axios.post(
         `${VITE_API_BASE_URL}/Booking/InsertBooking`,
         bookingForm,
-        { 
+        {
           withCredentials: true,
           headers: {
-            ...(token && { "Authorization": `Bearer ${token}` })
-          }
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
         }
       );
 
       toast.success("Booking created successfully!");
-      
+
       // Reset form
       setBookingForm({
         vendor_id: "",
@@ -124,7 +126,8 @@ const BookingSection = () => {
             Quick <span className="text-[#f9a826]">Booking</span>
           </h2>
           <p className="text-gray-600 text-xl max-w-2xl mx-auto">
-            Book your event in minutes! Fill in the details and we'll take care of the rest.
+            Book your event in minutes! Fill in the details and we'll take care
+            of the rest.
           </p>
         </motion.div>
 
@@ -161,7 +164,10 @@ const BookingSection = () => {
                     type="number"
                     value={bookingForm.vendor_id}
                     onChange={(e) =>
-                      setBookingForm({ ...bookingForm, vendor_id: e.target.value })
+                      setBookingForm({
+                        ...bookingForm,
+                        vendor_id: e.target.value,
+                      })
                     }
                     placeholder="Enter vendor ID"
                     className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:border-[#3c6e71] focus:ring-2 focus:ring-[#3c6e71]/20 outline-none transition-all"
@@ -182,7 +188,10 @@ const BookingSection = () => {
                     type="number"
                     value={bookingForm.package_id}
                     onChange={(e) =>
-                      setBookingForm({ ...bookingForm, package_id: e.target.value })
+                      setBookingForm({
+                        ...bookingForm,
+                        package_id: e.target.value,
+                      })
                     }
                     placeholder="Enter package ID"
                     className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:border-[#3c6e71] focus:ring-2 focus:ring-[#3c6e71]/20 outline-none transition-all"
@@ -203,7 +212,10 @@ const BookingSection = () => {
                     type="number"
                     value={bookingForm.shift_id}
                     onChange={(e) =>
-                      setBookingForm({ ...bookingForm, shift_id: e.target.value })
+                      setBookingForm({
+                        ...bookingForm,
+                        shift_id: e.target.value,
+                      })
                     }
                     placeholder="Enter shift ID"
                     className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:border-[#3c6e71] focus:ring-2 focus:ring-[#3c6e71]/20 outline-none transition-all"
@@ -225,7 +237,10 @@ const BookingSection = () => {
                 <textarea
                   value={bookingForm.event_address}
                   onChange={(e) =>
-                    setBookingForm({ ...bookingForm, event_address: e.target.value })
+                    setBookingForm({
+                      ...bookingForm,
+                      event_address: e.target.value,
+                    })
                   }
                   placeholder="Enter complete event address"
                   rows="3"
@@ -249,7 +264,10 @@ const BookingSection = () => {
                     type="date"
                     value={bookingForm.event_date}
                     onChange={(e) =>
-                      setBookingForm({ ...bookingForm, event_date: e.target.value })
+                      setBookingForm({
+                        ...bookingForm,
+                        event_date: e.target.value,
+                      })
                     }
                     min={new Date().toISOString().split("T")[0]}
                     className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:border-[#3c6e71] focus:ring-2 focus:ring-[#3c6e71]/20 outline-none transition-all"
@@ -270,7 +288,10 @@ const BookingSection = () => {
                     type="time"
                     value={bookingForm.event_time}
                     onChange={(e) =>
-                      setBookingForm({ ...bookingForm, event_time: e.target.value })
+                      setBookingForm({
+                        ...bookingForm,
+                        event_time: e.target.value,
+                      })
                     }
                     className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:border-[#3c6e71] focus:ring-2 focus:ring-[#3c6e71]/20 outline-none transition-all"
                   />
@@ -320,7 +341,8 @@ const BookingSection = () => {
 
               {/* Info Text */}
               <p className="text-center text-sm text-gray-500 mt-4">
-                By booking, you agree to our terms and conditions. Your booking will be pending until admin approval.
+                By booking, you agree to our terms and conditions. Your booking
+                will be pending until admin approval.
               </p>
             </form>
           </div>
@@ -336,7 +358,10 @@ const BookingSection = () => {
         >
           <p className="text-gray-600">
             Need help? Browse our{" "}
-            <a href="/category/weddings" className="text-[#3c6e71] font-semibold hover:underline">
+            <a
+              href="/category/weddings"
+              className="text-[#3c6e71] font-semibold hover:underline"
+            >
               vendors
             </a>{" "}
             to find the perfect match for your event!
@@ -346,5 +371,5 @@ const BookingSection = () => {
     </section>
   );
 };
-
+<Footer />;
 export default BookingSection;
