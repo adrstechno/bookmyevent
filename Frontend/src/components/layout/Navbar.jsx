@@ -59,7 +59,7 @@ const Navbar = ({ onMenuClick, isMobile }) => {
 
   return (
     <header
-      className="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-6 z-50"
+      className="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-6 z-40 pointer-events-auto"
       style={{ height: navHeight, boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}
     >
       {/* ================= LEFT SIDE ================= */}
