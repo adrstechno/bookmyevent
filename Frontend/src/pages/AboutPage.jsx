@@ -416,12 +416,28 @@ const AboutPage = () => {
           <p className="text-xl text-gray-200 mb-8">
             Let's work together to make your next event unforgettable
           </p>
-          <button
-            onClick={() => window.location.href = "/contact"}
-            className="px-8 py-4 bg-[#f9a826] text-white text-lg font-bold rounded-full hover:bg-[#f9a826]/90 transition-all duration-300 hover:scale-105 shadow-2xl"
-          >
-            Get In Touch
-          </button>
+         <button
+  onClick={() => window.location.href = "/contact"}
+  className="
+    px-6 py-3             /* default padding for mobile */
+    sm:px-8 sm:py-4       /* tablet */
+    md:px-10 md:py-5      /* desktop */
+    lg:px-12 lg:py-6      /* large desktop/MacBook */
+    bg-[#f9a826] 
+    text-white 
+    text-base sm:text-lg md:text-xl lg:text-2xl 
+    font-bold 
+    rounded-full 
+    hover:bg-[#f9a826]/90 
+    transition-all 
+    duration-300 
+    hover:scale-105 
+    shadow-2xl
+  "
+>
+  Get In Touch
+</button>
+
         </motion.div>
       </div>
 
