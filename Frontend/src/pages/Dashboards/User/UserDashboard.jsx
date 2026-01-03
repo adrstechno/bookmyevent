@@ -62,7 +62,11 @@ const UserDashboard = () => {
           };
 
           setChartData(
-            c.data.map((r) => ({ month: formatMonth(r.month), bookings: Number(r.bookings) || 0, payments: Number(r.payments) || 0 }))
+            c.data.map((r) => ({
+              month: formatMonth(r.month),
+              bookings: Number(r.bookings) || 0,
+              payments: Number(r.payments) || 0,
+            }))
           );
         }
       } catch (err) {
@@ -74,7 +78,12 @@ const UserDashboard = () => {
   }, []);
 
   /* 🔹 KPI dummy data */
-  const kpiData = kpis || { bookings: 0, totalPayment: 0, savedVendors: 0, tickets: 0 };
+  const kpiData = kpis || {
+    bookings: 0,
+    totalPayment: 0,
+    savedVendors: 0,
+    tickets: 0,
+  };
 
   /* 🔹 Colorful monthly chart data */
   const finalChartData = chartData; // rely on API; show loading/no-data states below
@@ -121,51 +130,66 @@ const UserDashboard = () => {
         </div>
 
         {/* CHART SECTION */}
+        {/* CHART SECTION */}
         <section className="bg-white shadow-lg rounded-2xl p-6">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">
             Monthly Activity Overview
           </h2>
 
-          <div className="h-72 ">
-            <ResponsiveContainer width="100%" height="100%">
-              {loadingChart ? (
-                <div className="flex items-center justify-center  h-full">Loading chart...</div>
-              ) : finalChartData.length === 0 ? (
-                <div className="flex items-center justify-center h-full">No chart data for the last 6 months</div>
-              ) : (
+          <div className="h-72 flex items-center justify-center">
+            {loadingChart ? (
+              <p className="text-gray-500">Loading chart...</p>
+            ) : finalChartData.length === 0 ? (
+              <p className="text-gray-500">
+                No chart data for the last 6 months
+              </p>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={finalChartData} barGap={10}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip />
 
-                <defs>
-                  <linearGradient id="bookingGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#3c6e71" />
-                    <stop offset="100%" stopColor="#84a98c" />
-                  </linearGradient>
+                  <defs>
+                    <linearGradient
+                      id="bookingGradient"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop offset="0%" stopColor="#3c6e71" />
+                      <stop offset="100%" stopColor="#84a98c" />
+                    </linearGradient>
 
-                  <linearGradient id="paymentGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#f4a261" />
-                    <stop offset="100%" stopColor="#e76f51" />
-                  </linearGradient>
-                </defs>
+                    <linearGradient
+                      id="paymentGradient"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop offset="0%" stopColor="#f4a261" />
+                      <stop offset="100%" stopColor="#e76f51" />
+                    </linearGradient>
+                  </defs>
 
-                <Bar
-                  dataKey="bookings"
-                  fill="url(#bookingGradient)"
-                  radius={[8, 8, 0, 0]}
-                  name="Bookings"
-                />
-                <Bar
-                  dataKey="payments"
-                  fill="url(#paymentGradient)"
-                  radius={[8, 8, 0, 0]}
-                  name="Payments (₹)"
-                />
+                  <Bar
+                    dataKey="bookings"
+                    fill="url(#bookingGradient)"
+                    radius={[8, 8, 0, 0]}
+                    name="Bookings"
+                  />
+                  <Bar
+                    dataKey="payments"
+                    fill="url(#paymentGradient)"
+                    radius={[8, 8, 0, 0]}
+                    name="Payments (₹)"
+                  />
                 </BarChart>
-              )}
-            </ResponsiveContainer>
+              </ResponsiveContainer>
+            )}
           </div>
         </section>
       </main>
