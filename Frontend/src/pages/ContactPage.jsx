@@ -18,30 +18,30 @@ const ContactPage = () => {
   const [loading, setLoading] = useState(false);
 
   const contactInfo = [
-    {
-      icon: FiPhone,
-      title: "Phone",
-      details: ["+91 9201976523"],
-      color: "from-blue-500 to-cyan-500",
-    },
-    {
-      icon: FiMail,
-      title: "Email",
-      details: ["goeventify@gmail.com"],
-      color: "from-purple-500 to-pink-500",
-    },
-    {
-      icon: FiMapPin,
-      title: "Address",
-      details: ["71,Dadda Nagar Near Katangi Highway jabalpur"],
-      color: "from-green-500 to-emerald-500",
-    },
-    {
-      icon: FiClock,
-      title: "Working Hours",
-      details: ["Mon - Sat: 9:00 AM - 8:00 PM", "Sunday: 10:00 AM - 6:00 PM"],
-      color: "from-orange-500 to-red-500",
-    },
+    // {
+    //   icon: FiPhone,
+    //   title: "Phone",
+    //   details: ["+91 9201976523"],
+    //   color: "from-blue-500 to-cyan-500",
+    // },
+    // {
+    //   icon: FiMail,
+    //   title: "Email",
+    //   details: ["goeventify@gmail.com"],
+    //   color: "from-purple-500 to-pink-500",
+    // },
+    // {
+    //   icon: FiMapPin,
+    //   title: "Address",
+    //   details: ["71,Dadda Nagar Near Katangi Highway jabalpur"],
+    //   color: "from-green-500 to-emerald-500",
+    // },
+    // {
+    //   icon: FiClock,
+    //   title: "Working Hours",
+    //   details: ["Mon - Sat: 9:00 AM - 8:00 PM", "Sunday: 10:00 AM - 6:00 PM"],
+    //   color: "from-orange-500 to-red-500",
+    // },
   ];
 
   const handleSubmit = (e) => {
