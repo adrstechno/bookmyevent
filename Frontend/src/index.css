@@ -1,1 +1,96 @@
 @import "tailwindcss";
+
+/* Custom responsive utilities */
+@media (min-width: 475px) {
+  .xs\:inline {
+    display: inline;
+  }
+  
+  .xs\:hidden {
+    display: none;
+  }
+}
+
+/* Ensure line-clamp works properly */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Mobile optimizations for ShowcaseSection */
+@media (max-width: 767px) {
+  /* Improve touch scrolling performance */
+  .showcase-gallery {
+    -webkit-overflow-scrolling: touch;
+    transform: translateZ(0);
+    will-change: transform;
+  }
+  
+  /* Optimize WebGL canvas for mobile */
+  canvas {
+    touch-action: pan-x;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+  
+  /* Mobile category grid improvements */
+  .mobile-category-grid {
+    padding: 0 1rem;
+  }
+  
+  .mobile-category-item {
+    aspect-ratio: 16/9;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+  }
+  
+  .mobile-category-item:active {
+    transform: scale(0.95);
+    box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Reduce motion for users who prefer it */
+  @media (prefers-reduced-motion: reduce) {
+    .showcase-gallery * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+    
+    .mobile-category-item {
+      transition: none !important;
+    }
+    
+    .mobile-category-item:active {
+      transform: none !important;
+    }
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .showcase-gallery {
+    transform: translateZ(0);
+    will-change: transform;
+  }
+  
+  /* Better touch targets for tablets */
+  canvas {
+    touch-action: pan-x;
+  }
+}
+
+/* Desktop hover effects */
+@media (min-width: 1024px) {
+  .showcase-gallery canvas {
+    cursor: pointer;
+  }
+}

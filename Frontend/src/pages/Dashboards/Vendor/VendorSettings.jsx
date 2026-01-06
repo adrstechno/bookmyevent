@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { PhotoIcon, UserCircleIcon } from "@heroicons/react/24/outline";
 import ChangePassword from "../../../components/ChangePassword";
-import { toast } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { VITE_API_BASE_URL } from "../../../utils/api";
 
 const VendorSettings = () => {
@@ -24,6 +24,7 @@ const VendorSettings = () => {
   const [preview, setPreview] = useState(null);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isNewProfile, setIsNewProfile] = useState(false);
 
   // ✅ Fetch all service categories
   useEffect(() => {
@@ -32,16 +33,24 @@ const VendorSettings = () => {
         const res = await axios.get(`${VITE_API_BASE_URL}/Service/GetAllServices`, {
           withCredentials: true,
         });
-        setCategories(res.data || []);
+        const data = res.data?.data || res.data;
+        if (Array.isArray(data)) {
+          const formatted = data.map((item) => ({
+            id: item.category_id || item.service_category_id,
+            name: item.category_name || item.service_name,
+          }));
+          setCategories(formatted);
+        }
       } catch (err) {
         console.error("Error fetching categories:", err);
         toast.error("Failed to load service categories.");
       }
     };
-    fetchCategories();
+    
+    fetchCategories().catch(console.error);
   }, []);
 
-  // ✅ Fetch vendor details by ID (using cookie/session)
+  // ✅ Fetch vendor profile or determine if new profile needed
   useEffect(() => {
     const fetchVendorProfile = async () => {
       try {
@@ -50,7 +59,9 @@ const VendorSettings = () => {
         });
 
         if (res.status === 200 && res.data) {
-          const vendor = res.data.vendor || res.data; // handle both structures
+          const vendor = res.data.vendor || res.data;
+          setIsNewProfile(false);
+          
           setProfile({
             business_name: vendor.business_name || "",
             service_category_id: vendor.service_category_id || "",
@@ -61,21 +72,33 @@ const VendorSettings = () => {
             city: vendor.city || "",
             state: vendor.state || "",
             event_profiles_url: vendor.event_profiles_url || "",
-            
           });
 
-          // ✅ Set profile image preview
+          // Set profile image preview
           if (vendor.profile_url) {
-            setPreview(`${vendor.profile_url}`);
+            setPreview(vendor.profile_url);
           }
         }
       } catch (err) {
         console.error("Error fetching vendor profile:", err);
-        toast.error("Failed to load profile details.");
+        
+        // If 404, it means vendor profile doesn't exist - show create form
+        if (err.response?.status === 404 && err.response?.data?.message === "Vendor not found") {
+          setIsNewProfile(true);
+          toast("Please complete your vendor profile setup.", {
+            icon: "ℹ️",
+            duration: 4000,
+          });
+        } else if (err.response?.status === 401) {
+          toast.error("Please log in again.");
+          // Optionally redirect to login
+        } else {
+          toast.error("Failed to load profile details.");
+        }
       }
     };
 
-    fetchVendorProfile();
+    fetchVendorProfile().catch(console.error);
   }, []);
 
   // ✅ Handle input changes
@@ -122,11 +145,16 @@ const VendorSettings = () => {
       newErrors.event_profiles_url =
         "Enter a valid URL (starting with http or https).";
 
+    // For new profiles, require profile picture
+    if (isNewProfile && !profileImage) {
+      newErrors.profileImage = "Profile picture is required for new profiles.";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // ✅ Submit updated vendor profile
+  // ✅ Submit vendor profile (create or update)
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) {
@@ -140,31 +168,60 @@ const VendorSettings = () => {
       Object.entries(profile).forEach(([key, value]) => {
         formData.append(key, value);
       });
-      if (profileImage) formData.append("profilePicture", profileImage);
+      
+      if (profileImage) {
+        formData.append("profilePicture", profileImage);
+      }
 
-      const res = await axios.post(
-        `${VITE_API_BASE_URL}/Vendor/updateVendorProfile`,
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-          withCredentials: true,
+      let res;
+      if (isNewProfile) {
+        // Create new vendor profile
+        res = await axios.post(
+          `${VITE_API_BASE_URL}/Vendor/InsertVendor`,
+          formData,
+          {
+            headers: { "Content-Type": "multipart/form-data" },
+            withCredentials: true,
+          }
+        );
+      } else {
+        // Update existing vendor profile
+        res = await axios.post(
+          `${VITE_API_BASE_URL}/Vendor/updateVendorProfile`,
+          formData,
+          {
+            headers: { "Content-Type": "multipart/form-data" },
+            withCredentials: true,
+          }
+        );
+      }
+
+      if (res.status === 200 || res.status === 201) {
+        const message = isNewProfile 
+          ? "Vendor profile created successfully!" 
+          : "Profile updated successfully!";
+        toast.success(res.data?.message || message);
+        
+        // If it was a new profile, update state
+        if (isNewProfile) {
+          setIsNewProfile(false);
         }
-      );
-
-      if (res.status === 200) {
-        toast.success(res.data?.message || "Profile updated successfully!");
+        
         setTimeout(() => window.location.reload(), 1200);
       } else {
         toast.error("Unexpected server response.");
       }
     } catch (error) {
-      console.error("Error updating profile:", error);
+      console.error("Error saving profile:", error);
       if (error.response?.status === 401) {
         toast.error("Unauthorized. Please log in again.");
+      } else if (error.response?.status === 400) {
+        toast.error(error.response.data.message || "Please upload a profile picture.");
       } else if (error.response?.data?.message) {
         toast.error(error.response.data.message);
       } else {
-        toast.error("Failed to update profile. Please try again.");
+        const action = isNewProfile ? "create" : "update";
+        toast.error(`Failed to ${action} profile. Please try again.`);
       }
     } finally {
       setLoading(false);
@@ -175,17 +232,32 @@ const VendorSettings = () => {
     <div className="relative min-h-screen bg-[#f9fafb] p-6">
       {/* Header */}
       <div className="bg-[#3c6e71] text-white shadow-lg rounded-xl px-6 py-4 mb-8 flex justify-between items-center">
-        <h1 className="text-xl md:text-2xl font-semibold">Vendor Settings</h1>
+        <h1 className="text-xl md:text-2xl font-semibold">
+          {isNewProfile ? "Complete Vendor Profile" : "Vendor Settings"}
+        </h1>
         <div className="flex items-center space-x-3">
           <UserCircleIcon className="h-8 w-8 text-white" />
           <span className="font-medium">Welcome, Vendor</span>
         </div>
       </div>
 
+      {/* Status Banner for New Profile */}
+      {isNewProfile && (
+        <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6 max-w-5xl mx-auto rounded-r-lg">
+          <div className="flex">
+            <div className="ml-3">
+              <p className="text-sm text-blue-700">
+                <strong>Profile Setup Required:</strong> Please complete your vendor profile to access all features.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Profile Card */}
       <div className="bg-white shadow-xl rounded-2xl p-8 max-w-5xl mx-auto border-t-4 border-[#3c6e71]">
         <h2 className="text-xl font-semibold text-gray-800 mb-8 border-b pb-3">
-          Update Profile Details
+          {isNewProfile ? "Create Your Vendor Profile" : "Update Profile Details"}
         </h2>
 
         {/* Profile Picture */}
@@ -199,7 +271,7 @@ const VendorSettings = () => {
             <label className="cursor-pointer bg-[#3c6e71] text-white px-5 py-2 rounded-lg shadow-md hover:bg-[#284b63] transition">
               <div className="flex items-center space-x-2">
                 <PhotoIcon className="h-5 w-5" />
-                <span>Change Photo</span>
+                <span>{isNewProfile ? "Upload Photo" : "Change Photo"}</span>
               </div>
               <input
                 type="file"
@@ -209,7 +281,19 @@ const VendorSettings = () => {
               />
             </label>
           </div>
+          {isNewProfile && (
+            <p className="text-sm text-gray-600 mt-2 md:mt-0">
+              Profile picture is required for new profiles
+            </p>
+          )}
         </div>
+
+        {/* Profile Image Error */}
+        {errors.profileImage && (
+          <div className="mb-4">
+            <p className="text-red-500 text-sm">{errors.profileImage}</p>
+          </div>
+        )}
 
         {/* Profile Form */}
         <form
@@ -255,11 +339,8 @@ const VendorSettings = () => {
             >
               <option value="">-- Select Service Category --</option>
               {categories.map((cat) => (
-                <option
-                  key={cat.category_id || cat.service_id}
-                  value={cat.category_id || cat.service_id}
-                >
-                  {cat.category_name || cat.service_name}
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
                 </option>
               ))}
             </select>
@@ -314,7 +395,7 @@ const VendorSettings = () => {
             )}
           </div>
 
-          {/* Contact */}
+          {/* Contact Number */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">
               Contact Number
@@ -322,6 +403,7 @@ const VendorSettings = () => {
             <input
               type="text"
               name="contact"
+              maxLength={10}
               value={profile.contact}
               onChange={handleChange}
               placeholder="10-digit mobile number"
@@ -416,13 +498,17 @@ const VendorSettings = () => {
 
           {/* Buttons */}
          <div className="md:col-span-2 flex justify-around gap-3 mt-8">
-  <button
-    type="button"
-    onClick={() => setShowPasswordModal(true)}
-    className="bg-[#3c6e71] hover:bg-[#284b63] text-white font-medium py-2 px-6 rounded-lg shadow-md transition"
-  >
-    Change Password
-  </button>
+  {!isNewProfile && (
+    <button
+      type="button"
+      onClick={() => setShowPasswordModal(true)}
+      className="bg-[#3c6e71] hover:bg-[#284b63] text-white font-medium py-2 px-6 rounded-lg shadow-md transition"
+    >
+      Change Password
+    </button>
+  )}
+  
+  {isNewProfile && <div></div>} {/* Spacer for new profiles */}
 
   <button
     type="submit"
@@ -431,18 +517,23 @@ const VendorSettings = () => {
       loading ? "opacity-70 cursor-not-allowed" : ""
     } bg-[#3c6e71] hover:bg-[#284b63] text-white font-medium py-2 px-6 rounded-lg shadow-md transition`}
   >
-    {loading ? "Saving..." : "Save Changes"}
+    {loading 
+      ? (isNewProfile ? "Creating Profile..." : "Saving Changes...") 
+      : (isNewProfile ? "Create Profile" : "Save Changes")
+    }
   </button>
 </div>
 
         </form>
       </div>
 
-      {/* Change Password Modal */}
-      <ChangePassword
-        visible={showPasswordModal}
-        onClose={() => setShowPasswordModal(false)}
-      />
+      {/* Change Password Modal - Only for existing profiles */}
+      {!isNewProfile && (
+        <ChangePassword
+          visible={showPasswordModal}
+          onClose={() => setShowPasswordModal(false)}
+        />
+      )}
     </div>
   );
 };

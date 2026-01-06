@@ -7,9 +7,9 @@ class OTPController {
     static async generateOTP(req, res) {
         try {
             const { booking_id } = req.body;
-            const vendor_id = req.user?.vendor_id || req.user?.user_id;
+            const user_id = req.user?.uuid || req.user?.user_id;
 
-            if (!vendor_id) {
+            if (!user_id) {
                 return res.status(401).json({
                     success: false,
                     message: 'Vendor authentication required'
@@ -23,6 +23,25 @@ class OTPController {
                 });
             }
 
+            // Get the vendor_id for this user
+            const VendorModel = (await import('../Models/VendorModel.js')).default;
+            
+            const vendorResult = await new Promise((resolve, reject) => {
+                VendorModel.findVendorID(user_id, (err, results) => {
+                    if (err) reject(err);
+                    else resolve(results);
+                });
+            });
+
+            if (!vendorResult || vendorResult.length === 0) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Vendor authentication required. No vendor profile found.'
+                });
+            }
+
+            const vendor_id = vendorResult[0].vendor_id;
+
             // Get booking details
             const booking = await BookingModel.getBookingById(booking_id);
             if (!booking) {
@@ -33,7 +52,7 @@ class OTPController {
             }
 
             // Verify vendor owns this booking
-            if (booking.vendor_id !== parseInt(vendor_id)) {
+            if (booking.vendor_id !== vendor_id) {
                 return res.status(403).json({
                     success: false,
                     message: 'Unauthorized: You can only generate OTP for your own bookings'
@@ -95,9 +114,9 @@ class OTPController {
     static async verifyOTP(req, res) {
         try {
             const { booking_id, otp_code } = req.body;
-            const vendor_id = req.user?.vendor_id || req.user?.user_id;
+            const user_id = req.user?.uuid || req.user?.user_id;
 
-            if (!vendor_id) {
+            if (!user_id) {
                 return res.status(401).json({
                     success: false,
                     message: 'Vendor authentication required'
@@ -111,6 +130,25 @@ class OTPController {
                 });
             }
 
+            // Get the vendor_id for this user
+            const VendorModel = (await import('../Models/VendorModel.js')).default;
+            
+            const vendorResult = await new Promise((resolve, reject) => {
+                VendorModel.findVendorID(user_id, (err, results) => {
+                    if (err) reject(err);
+                    else resolve(results);
+                });
+            });
+
+            if (!vendorResult || vendorResult.length === 0) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Vendor authentication required. No vendor profile found.'
+                });
+            }
+
+            const vendor_id = vendorResult[0].vendor_id;
+
             // Get booking details
             const booking = await BookingModel.getBookingById(booking_id);
             if (!booking) {
@@ -121,7 +159,7 @@ class OTPController {
             }
 
             // Verify vendor owns this booking
-            if (booking.vendor_id !== parseInt(vendor_id)) {
+            if (booking.vendor_id !== vendor_id) {
                 return res.status(403).json({
                     success: false,
                     message: 'Unauthorized: You can only verify OTP for your own bookings'
@@ -183,7 +221,7 @@ class OTPController {
         try {
             const { bookingId } = req.params;
             const user_id = req.user?.uuid || req.user?.user_id;
-            const vendor_id = req.user?.vendor_id;
+            const user_type = req.user?.user_type;
 
             if (!user_id) {
                 return res.status(401).json({
@@ -209,9 +247,23 @@ class OTPController {
             }
 
             // Check if user has access to this booking
-            const hasAccess = booking.user_id === user_id || 
-                            booking.vendor_id === vendor_id ||
-                            req.user?.user_type === 'admin';
+            let hasAccess = booking.user_id === user_id || user_type === 'admin';
+            
+            // For vendors, check if they own this booking
+            if (!hasAccess && user_type === 'vendor') {
+                const VendorModel = (await import('../Models/VendorModel.js')).default;
+                
+                const vendorResult = await new Promise((resolve, reject) => {
+                    VendorModel.findVendorID(user_id, (err, results) => {
+                        if (err) reject(err);
+                        else resolve(results);
+                    });
+                });
+
+                if (vendorResult && vendorResult.length > 0) {
+                    hasAccess = booking.vendor_id === vendorResult[0].vendor_id;
+                }
+            }
 
             if (!hasAccess) {
                 return res.status(403).json({
@@ -245,9 +297,9 @@ class OTPController {
     static async resendOTP(req, res) {
         try {
             const { booking_id } = req.body;
-            const vendor_id = req.user?.vendor_id || req.user?.user_id;
+            const user_id = req.user?.uuid || req.user?.user_id;
 
-            if (!vendor_id) {
+            if (!user_id) {
                 return res.status(401).json({
                     success: false,
                     message: 'Vendor authentication required'
@@ -261,6 +313,25 @@ class OTPController {
                 });
             }
 
+            // Get the vendor_id for this user
+            const VendorModel = (await import('../Models/VendorModel.js')).default;
+            
+            const vendorResult = await new Promise((resolve, reject) => {
+                VendorModel.findVendorID(user_id, (err, results) => {
+                    if (err) reject(err);
+                    else resolve(results);
+                });
+            });
+
+            if (!vendorResult || vendorResult.length === 0) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Vendor authentication required. No vendor profile found.'
+                });
+            }
+
+            const vendor_id = vendorResult[0].vendor_id;
+
             // Get booking details
             const booking = await BookingModel.getBookingById(booking_id);
             if (!booking) {
@@ -271,7 +342,7 @@ class OTPController {
             }
 
             // Verify vendor owns this booking
-            if (booking.vendor_id !== parseInt(vendor_id)) {
+            if (booking.vendor_id !== vendor_id) {
                 return res.status(403).json({
                     success: false,
                     message: 'Unauthorized: You can only resend OTP for your own bookings'
@@ -341,9 +412,9 @@ class OTPController {
     static async getRemainingAttempts(req, res) {
         try {
             const { bookingId } = req.params;
-            const vendor_id = req.user?.vendor_id || req.user?.user_id;
+            const user_id = req.user?.uuid || req.user?.user_id;
 
-            if (!vendor_id) {
+            if (!user_id) {
                 return res.status(401).json({
                     success: false,
                     message: 'Vendor authentication required'
@@ -357,6 +428,25 @@ class OTPController {
                 });
             }
 
+            // Get the vendor_id for this user
+            const VendorModel = (await import('../Models/VendorModel.js')).default;
+            
+            const vendorResult = await new Promise((resolve, reject) => {
+                VendorModel.findVendorID(user_id, (err, results) => {
+                    if (err) reject(err);
+                    else resolve(results);
+                });
+            });
+
+            if (!vendorResult || vendorResult.length === 0) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Vendor authentication required. No vendor profile found.'
+                });
+            }
+
+            const vendor_id = vendorResult[0].vendor_id;
+
             // Get booking details to verify access
             const booking = await BookingModel.getBookingById(bookingId);
             if (!booking) {
@@ -366,7 +456,7 @@ class OTPController {
                 });
             }
 
-            if (booking.vendor_id !== parseInt(vendor_id)) {
+            if (booking.vendor_id !== vendor_id) {
                 return res.status(403).json({
                     success: false,
                     message: 'Unauthorized: You can only check attempts for your own bookings'

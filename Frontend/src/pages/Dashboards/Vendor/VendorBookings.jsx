@@ -271,7 +271,7 @@ const VendorBookings = () => {
 
       {/* Bookings List */}
       {filteredBookings.length === 0 ? (
-        <div className="text-center py-20 bg-white rounded-2xl shadow-lg">
+        <div className="text-center px-10 md:px-0 py-20 bg-white  rounded-2xl shadow-lg">
           <FiCalendar className="mx-auto text-6xl text-gray-300 mb-4" />
           <h2 className="text-2xl font-bold text-gray-800 mb-2">No Bookings Found</h2>
           <p className="text-gray-600">{filter === "all" ? "You don't have any booking requests yet." : `No ${filter} bookings.`}</p>

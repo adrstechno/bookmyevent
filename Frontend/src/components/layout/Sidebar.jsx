@@ -45,7 +45,7 @@ const Sidebar = ({ mobileOpen = false, handleDrawerToggle = () => {}, isMobile =
       {/* Mobile temporary drawer */}
       {isMobile && (
         <div className={`fixed inset-0 z-40 ${mobileOpen ? "" : "pointer-events-none"}`} aria-hidden={!mobileOpen}>
-          <div className={`fixed inset-0 bg-black bg-opacity-40 transition-opacity ${mobileOpen ? "opacity-100 backdrop-blur-sm" : "opacity-0"}`} onClick={handleDrawerToggle}></div>
+          <div className={`fixed inset-0 bg-black bg-opacity-40 transition-opacity ${mobileOpen ? "opacity-100 bg-transparent" : "opacity-0"}`} onClick={handleDrawerToggle}></div>
 
           <div className={`fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 transform transition-transform ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
             <div className="h-16 flex items-center justify-between px-4 border-b">

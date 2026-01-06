@@ -144,7 +144,7 @@ const ServicesSection = () => {
   }
 
   return (
-    <section className="py-20 bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
+    <section id="services-section" className="py-20 bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
       {/* Animated Background Pattern */}
       <div className="absolute inset-0 opacity-5 pointer-events-none">
         <motion.div

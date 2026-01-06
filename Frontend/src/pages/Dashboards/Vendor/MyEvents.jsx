@@ -27,7 +27,20 @@ const MyEvents = () => {
         }
       } catch (error) {
         console.error("Error fetching events:", error);
-        toast.error("Failed to load events.");
+        
+        // Handle vendor not found - redirect to profile setup
+        if (error.response?.status === 404 && error.response?.data?.message === "Vendor not found") {
+          toast("Please complete your vendor profile setup first!", {
+            icon: "⚠️",
+            duration: 4000,
+          });
+          // You can add navigation logic here if needed
+          // window.location.href = "/vendor/profile-setup";
+        } else if (error.response?.status === 401) {
+          toast.error("Please log in again.");
+        } else {
+          toast.error("Failed to load events.");
+        }
       } finally {
         setLoading(false);
       }
@@ -44,36 +57,38 @@ const MyEvents = () => {
   return (
     <div className="min-h-screen bg-[#f7f7f8] p-6">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col md:flex-row justify-between gap-2 items-center mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-[#284b63]">My Events</h1>
           <p className="text-gray-500 text-sm">Manage all your organized events</p>
         </div>
 
-        <button
+        {/* <button
           onClick={() => toast("Add New Event clicked")}
-          className="flex items-center gap-2 bg-[#3c6e71] hover:bg-[#284b63] text-white px-5 py-2 rounded-lg shadow-md transition"
+          className="flex items-center gap-2 bg-[#3c6e71] hover:bg-[#284b63] text-white md:px-5 md:py-2  px-10 py-2 rounded-lg shadow-md transition"
         >
           <PlusCircleIcon className="h-5 w-5" />
           Add New Event
-        </button>
+        </button> */}
       </div>
 
       {/* Filters */}
-      <div className="flex gap-3 mb-6">
-        {["all", "active", "completed", "cancelled"].map((type) => (
-          <button
-            key={type}
-            onClick={() => setFilter(type)}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium border transition ${
-              filter === type
-                ? "bg-[#3c6e71] text-white border-[#3c6e71]"
-                : "bg-white text-gray-600 border-gray-300 hover:bg-gray-100"
-            }`}
-          >
-            {type.charAt(0).toUpperCase() + type.slice(1)}
-          </button>
-        ))}
+      <div className="mb-6">
+        <div className="flex flex-wrap gap-3 items-center">
+          {["all", "active", "completed", "cancelled"].map((type) => (
+            <button
+              key={type}
+              onClick={() => setFilter(type)}
+              className={`min-w-[76px] px-4 py-1.5 rounded-full text-sm font-medium border transition whitespace-nowrap ${
+                filter === type
+                  ? "bg-[#3c6e71] text-white border-[#3c6e71]"
+                  : "bg-white text-gray-600 border-gray-300 hover:bg-gray-100"
+              }`}
+            >
+              {type.charAt(0).toUpperCase() + type.slice(1)}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Loading */}

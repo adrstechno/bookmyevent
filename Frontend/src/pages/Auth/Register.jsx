@@ -455,19 +455,26 @@ const Register = () => {
           {/* Phone */}
           <div className="relative">
             <FaPhoneAlt className="absolute left-3 top-3 text-gray-500" />
+
             <input
+              type="tel"
               name="phone"
               placeholder="Phone Number"
               value={formData.phone}
+              maxLength={10}
+              pattern="[0-9]{10}"
+              inputMode="numeric"
               onChange={handleChange}
               className={`w-full pl-10 py-2.5 rounded-lg border outline-none bg-gray-50/80 ${
                 errors.phone ? "border-red-500" : "border-gray-300"
               } focus:ring-2 focus:ring-[#3c6e71]`}
             />
+
             {errors.phone && (
               <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
             )}
           </div>
+
 
           {/* Password */}
           <div className="relative">

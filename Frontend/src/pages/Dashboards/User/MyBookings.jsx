@@ -28,6 +28,12 @@ const MyBookings = () => {
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [selectedBookingForReview, setSelectedBookingForReview] = useState(null);
   
+  // Cancellation modal state
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [selectedBookingForCancel, setSelectedBookingForCancel] = useState(null);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelLoading, setCancelLoading] = useState(false);
+  
   // OTP display state
   const [otpData, setOtpData] = useState({}); // { bookingId: { otp, expiresAt, status } }
   const [loadingOTP, setLoadingOTP] = useState({});
@@ -36,6 +42,22 @@ const MyBookings = () => {
   useEffect(() => {
     fetchBookings();
   }, []);
+
+  // Handle escape key for modals
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        if (showCancelModal) {
+          setShowCancelModal(false);
+          setSelectedBookingForCancel(null);
+          setCancelReason("");
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [showCancelModal]);
 
   const fetchBookings = async () => {
     try {
@@ -54,13 +76,26 @@ const MyBookings = () => {
   };
 
   const handleCancel = async (bookingId) => {
-    if (!window.confirm("Are you sure you want to cancel this booking?")) return;
+    setSelectedBookingForCancel(bookingId);
+    setShowCancelModal(true);
+    setCancelReason("");
+  };
+
+  const confirmCancel = async () => {
+    if (!selectedBookingForCancel) return;
+    
     try {
-      await bookingService.cancelBooking(bookingId);
+      setCancelLoading(true);
+      await bookingService.cancelBooking(selectedBookingForCancel, cancelReason || "Cancelled by user");
       toast.success("Booking cancelled successfully!");
+      setShowCancelModal(false);
+      setSelectedBookingForCancel(null);
+      setCancelReason("");
       fetchBookings();
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to cancel booking");
+    } finally {
+      setCancelLoading(false);
     }
   };
 
@@ -336,6 +371,85 @@ const MyBookings = () => {
           </div>
         )}
       </div>
+
+      {/* Cancellation Modal */}
+      {showCancelModal && (
+        <div 
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowCancelModal(false);
+              setSelectedBookingForCancel(null);
+              setCancelReason("");
+            }
+          }}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                <MdOutlineCancel className="text-red-600 text-2xl" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-800">Cancel Booking</h3>
+                <p className="text-sm text-gray-600">Please provide a reason for cancellation</p>
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Cancellation Reason (Optional)
+              </label>
+              <textarea
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                placeholder="e.g., Change of plans, Found another vendor, etc."
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3c6e71] focus:border-transparent resize-none"
+                rows={3}
+                maxLength={500}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                {cancelReason.length}/500 characters
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowCancelModal(false);
+                  setSelectedBookingForCancel(null);
+                  setCancelReason("");
+                }}
+                className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition"
+                disabled={cancelLoading}
+              >
+                Keep Booking
+              </button>
+              <button
+                onClick={confirmCancel}
+                disabled={cancelLoading}
+                className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition flex items-center justify-center gap-2"
+              >
+                {cancelLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                    Cancelling...
+                  </>
+                ) : (
+                  <>
+                    <MdOutlineCancel />
+                    Cancel Booking
+                  </>
+                )}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
 
       <ReviewModal isOpen={showReviewModal} onClose={() => { setShowReviewModal(false); setSelectedBookingForReview(null); }} bookingId={selectedBookingForReview?.booking_id} vendorName={selectedBookingForReview?.vendor_name || selectedBookingForReview?.business_name} onSuccess={handleReviewSuccess} />
     </div>

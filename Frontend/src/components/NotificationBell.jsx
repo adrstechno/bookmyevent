@@ -156,7 +156,7 @@ const NotificationBell = () => {
   };
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative inline-block" ref={dropdownRef}>
       {/* Bell Button */}
       <motion.button
         whileHover={{ scale: 1.05 }}
@@ -183,7 +183,7 @@ const NotificationBell = () => {
             initial={{ opacity: 0, y: -10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            className="absolute right-0 mt-2 w-80 md:w-96 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden z-50"
+            className="absolute left-1/2 md:right-4 md:left-auto mt-4 w-auto max-w-[92vw] sm:max-w-xs md:w-96 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden z-50 p-2 transform -translate-x-1/2 md:translate-x-0"
           >
             {/* Header */}
             <div className="bg-gradient-to-r from-[#284b63] to-[#3c6e71] px-4 py-3 flex items-center justify-between">
@@ -208,7 +208,7 @@ const NotificationBell = () => {
             </div>
 
             {/* Notifications List */}
-            <div className="max-h-96 overflow-y-auto">
+            <div className="max-h-96 overflow-y-auto p-1">
               {loading ? (
                 <div className="p-8 text-center text-gray-500">
                   <div className="animate-spin w-6 h-6 border-2 border-[#3c6e71] border-t-transparent rounded-full mx-auto mb-2"></div>

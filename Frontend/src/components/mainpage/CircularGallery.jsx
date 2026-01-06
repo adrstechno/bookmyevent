@@ -107,7 +107,9 @@ class Media {
     bend,
     textColor,
     borderRadius = 0,
-    font
+    font,
+    route,
+    onItemClick
   }) {
     this.extra = 0;
     this.geometry = geometry;
@@ -124,6 +126,8 @@ class Media {
     this.textColor = textColor;
     this.borderRadius = borderRadius;
     this.font = font;
+    this.route = route;
+    this.onItemClick = onItemClick;
     this.createShader();
     this.createMesh();
     this.createTitle();
@@ -270,11 +274,28 @@ class Media {
       }
     }
 
-    this.scale = this.screen.height / 1500;
-    this.plane.scale.y = (this.viewport.height * (900 * this.scale)) / this.screen.height;
-    this.plane.scale.x = (this.viewport.width * (700 * this.scale)) / this.screen.width;
+    // Responsive scaling based on screen size
+    const isMobile = this.screen.width < 768;
+    const isTablet = this.screen.width >= 768 && this.screen.width < 1024;
+    
+    if (isMobile) {
+      this.scale = this.screen.height / 2000; // Smaller scale for mobile
+    } else if (isTablet) {
+      this.scale = this.screen.height / 1750; // Medium scale for tablet
+    } else {
+      this.scale = this.screen.height / 1500; // Original scale for desktop
+    }
+
+    // Adjust plane dimensions based on screen size
+    const heightMultiplier = isMobile ? 600 : isTablet ? 750 : 900;
+    const widthMultiplier = isMobile ? 500 : isTablet ? 600 : 700;
+
+    this.plane.scale.y = (this.viewport.height * (heightMultiplier * this.scale)) / this.screen.height;
+    this.plane.scale.x = (this.viewport.width * (widthMultiplier * this.scale)) / this.screen.width;
     this.plane.program.uniforms.uPlaneSizes.value = [this.plane.scale.x, this.plane.scale.y];
-    this.padding = 2;
+    
+    // Adjust padding for mobile
+    this.padding = isMobile ? 1.5 : 2;
     this.width = this.plane.scale.x + this.padding;
     this.widthTotal = this.width * this.length;
     this.x = this.width * this.index;
@@ -291,13 +312,15 @@ class App {
       borderRadius = 0,
       font = 'bold 30px Figtree',
       scrollSpeed = 2,
-      scrollEase = 0.05
+      scrollEase = 0.05,
+      onItemClick
     } = {}
   ) {
     document.documentElement.classList.remove('no-js');
     this.container = container;
     this.scrollSpeed = scrollSpeed;
     this.scroll = { ease: scrollEase, current: 0, target: 0, last: 0 };
+    this.onItemClick = onItemClick;
     this.onCheckDebounce = debounce(this.onCheck, 200);
     this.createRenderer();
     this.createCamera();
@@ -310,10 +333,14 @@ class App {
   }
 
   createRenderer() {
+    // Optimize for mobile performance
+    const isMobile = window.innerWidth < 768;
+    const dpr = isMobile ? Math.min(window.devicePixelRatio || 1, 1.5) : Math.min(window.devicePixelRatio || 1, 2);
+    
     this.renderer = new Renderer({
       alpha: true,
-      antialias: true,
-      dpr: Math.min(window.devicePixelRatio || 1, 2)
+      antialias: !isMobile, // Disable antialias on mobile for better performance
+      dpr: dpr
     });
     this.gl = this.renderer.gl;
     this.gl.clearColor(0, 0, 0, 0);
@@ -331,9 +358,14 @@ class App {
   }
 
   createGeometry() {
+    // Reduce geometry complexity on mobile for better performance
+    const isMobile = window.innerWidth < 768;
+    const heightSegments = isMobile ? 25 : 50;
+    const widthSegments = isMobile ? 50 : 100;
+    
     this.planeGeometry = new Plane(this.gl, {
-      heightSegments: 50,
-      widthSegments: 100
+      heightSegments: heightSegments,
+      widthSegments: widthSegments
     });
   }
 
@@ -370,7 +402,9 @@ class App {
         bend,
         textColor,
         borderRadius,
-        font
+        font,
+        route: data.route,
+        onItemClick: this.onItemClick
       });
     });
   }
@@ -379,6 +413,7 @@ class App {
     this.isDown = true;
     this.scroll.position = this.scroll.current;
     this.start = e.touches ? e.touches[0].clientX : e.clientX;
+    this.startTime = Date.now();
   }
 
   onTouchMove(e) {
@@ -388,9 +423,53 @@ class App {
     this.scroll.target = this.scroll.position + distance;
   }
 
-  onTouchUp() {
+  onTouchUp(e) {
     this.isDown = false;
+    
+    // Check if this was a click (short duration, minimal movement)
+    const endTime = Date.now();
+    const duration = endTime - this.startTime;
+    const x = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+    const movement = Math.abs(this.start - x);
+    
+    if (duration < 300 && movement < 10) {
+      // This was a click, not a drag
+      this.handleClick(e);
+    }
+    
     this.onCheck();
+  }
+
+  handleClick(e) {
+    if (!this.onItemClick || !this.medias) return;
+    
+    // Get click position relative to canvas
+    const rect = this.gl.canvas.getBoundingClientRect();
+    const x = (e.changedTouches ? e.changedTouches[0].clientX : e.clientX) - rect.left;
+    const y = (e.changedTouches ? e.changedTouches[0].clientY : e.clientY) - rect.top;
+    
+    // Convert to normalized coordinates
+    const normalizedX = (x / rect.width) * 2 - 1;
+    const normalizedY = -((y / rect.height) * 2 - 1);
+    
+    // Find the media item closest to the center (most likely clicked)
+    let closestMedia = null;
+    let minDistance = Infinity;
+    
+    this.medias.forEach(media => {
+      // Calculate distance from center of viewport
+      const mediaX = media.plane.position.x;
+      const distance = Math.abs(mediaX);
+      
+      if (distance < minDistance && Math.abs(mediaX) < media.width / 2) {
+        minDistance = distance;
+        closestMedia = media;
+      }
+    });
+    
+    if (closestMedia && closestMedia.route) {
+      this.onItemClick(closestMedia.route);
+    }
   }
 
   onWheel(e) {
@@ -483,16 +562,26 @@ export default function CircularGallery({
   borderRadius = 0.05,
   font = 'bold 30px Figtree',
   scrollSpeed = 2,
-  scrollEase = 0.05
+  scrollEase = 0.05,
+  onItemClick
 }) {
   const containerRef = useRef(null);
 
   useEffect(() => {
-    const app = new App(containerRef.current, { items, bend, textColor, borderRadius, font, scrollSpeed, scrollEase });
+    const app = new App(containerRef.current, { 
+      items, 
+      bend, 
+      textColor, 
+      borderRadius, 
+      font, 
+      scrollSpeed, 
+      scrollEase,
+      onItemClick 
+    });
     return () => {
       app.destroy();
     };
-  }, [items, bend, textColor, borderRadius, font, scrollSpeed, scrollEase]);
+  }, [items, bend, textColor, borderRadius, font, scrollSpeed, scrollEase, onItemClick]);
 
-  return <div className="w-full h-full overflow-hidden cursor-grab active:cursor-grabbing" ref={containerRef} />;
+  return <div className="w-full h-full overflow-hidden cursor-pointer select-none" ref={containerRef} />;
 }

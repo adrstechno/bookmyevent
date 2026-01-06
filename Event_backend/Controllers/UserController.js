@@ -32,31 +32,47 @@ export const insertUser = (req, res) => {
 export const login = (req, res) => {
     const { email, password } = req.body;
 
+    console.log('Login attempt:', { email, password: password ? '***' : 'missing' });
+
     // Validate inputs
     if (!email || !password) {
+        console.log('Missing email or password');
         return res.status(400).json({ error: 'Email and password are required ' });
     }
 
     UserModel.findonebyemail(email, (err, results) => {
         if (err) {
-            console.error('Error fetching user:', err);
+            console.error('Database error fetching user:', err);
             return res.status(500).json({ error: 'Database query error' });
         }
 
+        console.log('Database query results:', results ? results.length : 'null', 'users found');
+
         if (!results || results.length === 0) {
+            console.log('User not found for email:', email);
             return res.status(401).json({ error: 'Invalid email or password' });
         }
 
         const user = results[0];
+        console.log('User found:', { 
+            uuid: user.uuid, 
+            email: user.email, 
+            user_type: user.user_type,
+            has_password_hash: !!user.password_hash 
+        });
 
         // Compare password with hash
         const passwordMatch = bcrypt.compareSync(password, user.password_hash);
+        console.log('Password match:', passwordMatch);
+        
         if (!passwordMatch) {
+            console.log('Password mismatch for user:', email);
             return res.status(401).json({ error: 'Invalid email or password' });
         }
 
         // Generate token
         const token = generateToken(user.uuid);
+        console.log('Token generated successfully');
 
         // Set cookie with cross-origin friendly settings
         const isProd = process.env.RENDER || process.env.NODE_ENV === "production";
@@ -67,6 +83,8 @@ export const login = (req, res) => {
             sameSite: isProd ? "none" : "lax",
             maxAge: 3600000
         });
+
+        console.log('Login successful for user:', email);
 
         // Send response
         return res.status(200).json({

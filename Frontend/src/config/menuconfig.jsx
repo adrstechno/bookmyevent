@@ -28,10 +28,10 @@ export const menuConfig = {
     // { label: "Create Profile", path: "/vendor/profile-setup", icon: <FaUser /> },
     { label: "Shifts", path: "/vendor/shifts", icon: <FaListAlt /> },
     { label: "Bookings", path: "/vendor/bookings", icon: <FaClipboardList /> },
-    { label: "My Events Images", path: "/vendor/myevents", icon: <FaListAlt /> },
+    { label: "Events", path: "/vendor/myevents", icon: <FaListAlt /> },
     { label: "Gallery", path: "/vendor/gallery", icon: <FaShoppingCart /> },
-    { label: "My Package", path: "/vendor/mypackege", icon: <FaShoppingCart /> },
-    { label: "Setting", path: "/vendor/setting", icon: <FaCog /> },
+    { label: "Package", path: "/vendor/mypackege", icon: <FaShoppingCart /> },
+    { label: "Settings", path: "/vendor/setting", icon: <FaCog /> },
   ],
 
   marketer: [
