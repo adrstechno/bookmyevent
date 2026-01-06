@@ -242,7 +242,7 @@ const VendorGallery = () => {
 
   // Upload images
   const handleUpload = async () => {
-    if (vendorId) return toast.error("Vendor ID not found.");
+    if (!vendorId) return toast.error("Vendor ID not found. Please re-login.");
     if (selectedImages.length === 0) return toast.error("Select images first.");
 
     const formData = new FormData();

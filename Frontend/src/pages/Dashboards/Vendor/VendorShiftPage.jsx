@@ -71,6 +71,13 @@ const timeToMinutes = (timeStr) => {
   return h * 60 + m;
 };
 
+const sameDays = (a = [], b = []) => {
+  if (a.length !== b.length) return false;
+  const setA = new Set(a);
+  for (const d of b) if (!setA.has(d)) return false;
+  return true;
+};
+
 const VendorShiftPage = () => {
   const theme = useTheme();
   const isSmUp = useMediaQuery(theme.breakpoints.up("sm")); // true for sm and up
@@ -141,6 +148,20 @@ const VendorShiftPage = () => {
     if (shift.start_time >= shift.end_time)
       return toast.error("Start time must be before end time");
 
+    // Client-side duplicate guard to avoid server 500 on duplicate
+    const duplicate = vendorShifts.find((s) => {
+      const sameId = (s.shift_id ?? s.id) === shift.shift_id;
+      if (isEdit && sameId) return false; // allow editing current
+      const nameMatch = (s.shift_name || "").trim().toLowerCase() === shift.shift_name.trim().toLowerCase();
+      const startMatch = (s.start_time || "").slice(0, 5) === shift.start_time;
+      const endMatch = (s.end_time || "").slice(0, 5) === shift.end_time;
+      const daysMatch = sameDays(parseDays(s.days_of_week), shift.days_of_week);
+      return nameMatch && startMatch && endMatch && daysMatch;
+    });
+    if (duplicate) {
+      return toast.error("Shift already exists");
+    }
+
     try {
       const payload = new URLSearchParams();
       if (isEdit) payload.append("shift_id", shift.shift_id);
@@ -167,8 +188,25 @@ const VendorShiftPage = () => {
 
       setOpen(false);
       fetchVendorShifts();
-    } catch {
-      toast.error("Failed to save shift");
+    } catch (err) {
+      const raw = err?.response?.data;
+      const apiMsg =
+        (typeof raw === "string" ? raw : null) ||
+        raw?.message ||
+        raw?.msg ||
+        raw?.error ||
+        err?.message;
+      const text = (apiMsg || "").toString().toLowerCase();
+
+      if (err?.response?.status === 409 || text.includes("already") || text.includes("exist") || text.includes("duplicate")) {
+        toast.error("Shift already exists");
+      } else if (err?.response?.status >= 500) {
+        toast.error("Server error, please try again");
+      } else {
+        toast.error(apiMsg || "Failed to save shift");
+      }
+
+      console.error("Vendor shift save failed", { status: err?.response?.status, data: raw, error: err?.message });
     }
   };
 

@@ -92,7 +92,8 @@ const HeroSection = () => {
           </p>
 
           <div className="flex gap-4 pt-2">
-           <motion.button 
+           <Link to="/category/weddings" className="inline-block">
+             <motion.button 
                whileHover={{ 
                  scale: 1.05,
                  boxShadow: "0 10px 30px rgba(249, 168, 38, 0.4)"
@@ -100,13 +101,9 @@ const HeroSection = () => {
                whileTap={{ scale: 0.95 }}
                className="px-8 py-3 bg-[#f9a826] text-black rounded-full font-semibold hover:bg-[#f7b733] transition-all duration-300 shadow-lg relative overflow-hidden group"
              >
-               <Link
-                 to="/category/weddings"
-                 className="relative z-10 block w-full h-full"
-               >
+               <span className="relative z-10">
                  Explore Our Works
-               </Link>
-             
+               </span>
                <motion.div
                  className="absolute inset-0 bg-gradient-to-r from-[#f7b733] to-[#f9a826]"
                  initial={{ x: "-100%" }}
@@ -114,6 +111,7 @@ const HeroSection = () => {
                  transition={{ duration: 0.3 }}
                />
              </motion.button>
+           </Link>
 
             <motion.button 
               whileHover={{ 

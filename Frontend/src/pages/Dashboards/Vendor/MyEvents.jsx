@@ -8,6 +8,7 @@ const MyEvents = () => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState("all");
+  const [selectedImage, setSelectedImage] = useState(null);
 
   // Fetch vendor events from NEW API
   useEffect(() => {
@@ -73,7 +74,7 @@ const MyEvents = () => {
       </div>
 
       {/* Filters */}
-      <div className="mb-6">
+      {/* <div className="mb-6">
         <div className="flex flex-wrap gap-3 items-center">
           {["all", "active", "completed", "cancelled"].map((type) => (
             <button
@@ -89,7 +90,7 @@ const MyEvents = () => {
             </button>
           ))}
         </div>
-      </div>
+      </div> */}
 
       {/* Loading */}
       {loading && <div className="text-center text-gray-500 py-10">Loading events...</div>}
@@ -102,56 +103,55 @@ const MyEvents = () => {
         </div>
       )}
 
-      {/* Events Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Events Gallery */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
         {filteredEvents.map((event) => (
           <div
             key={event.imageID}
-            className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-all duration-200 p-5 border-t-4 border-[#3c6e71]"
+            onClick={() => setSelectedImage(event.imageUrl)}
+            className="group relative overflow-hidden rounded-lg shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer"
           >
-            {/* Event Image */}
             {event.imageUrl && (
               <img
                 src={event.imageUrl}
                 alt="Event"
-                className="w-full h-40 object-cover rounded-lg mb-4"
+                className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
               />
             )}
-
-            {/* Event Name */}
-            <h3 className="text-lg font-semibold text-[#284b63]">
-              Event #{event.imageID}
-            </h3>
-
-            {/* Date */}
-            <div className="flex items-center text-gray-600 text-sm my-2">
-              <CalendarDaysIcon className="h-4 w-4 mr-1 text-[#3c6e71]" />
-              <span>
-                {new Date(event.created_at).toLocaleDateString("en-IN", {
-                  year: "numeric",
-                  month: "short",
-                  day: "numeric",
-                })}
-              </span>
-            </div>
-
-            {/* Status */}
-            <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-700">
-              Active
-            </span>
-
-            {/* Footer */}
-            <div className="flex justify-end mt-4">
-              <button
-                onClick={() => toast(`Viewing event: ${event.imageID}`)}
-                className="text-[#3c6e71] hover:text-[#284b63] text-sm font-medium transition"
-              >
-                View Details →
-              </button>
+            
+            {/* Overlay on hover */}
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+              <span className="text-white text-sm font-medium">View</span>
             </div>
           </div>
         ))}
       </div>
+
+      {/* Image Modal/Lightbox */}
+      {selectedImage && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 animate-fadeIn"
+          onClick={() => setSelectedImage(null)}
+        >
+          <div className="relative max-w-7xl max-h-full">
+            {/* Close Button */}
+            <button
+              onClick={() => setSelectedImage(null)}
+              className="absolute -top-10 right-0 text-white hover:text-gray-300 text-3xl font-bold transition"
+            >
+              ✕
+            </button>
+            
+            {/* Large Image */}
+            <img
+              src={selectedImage}
+              alt="Event Full View"
+              className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

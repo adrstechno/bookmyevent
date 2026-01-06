@@ -20,15 +20,15 @@ const images = [
 ];
 
 const categoryImages = [
-  { image: "/images/event/event1.jpg", text: "DJ Show", route: "/category/concerts-festivals" },
-  { image: "/images/event/event2.jpg", text: "Exhibition", route: "/category/exhibitions" },
-  { image: "/images/event/event3.jpg", text: "Catering", route: "/category/corporate-events" },
-  { image: "/images/event/event4.jpg", text: "Cafe Events", route: "/category/corporate-events" },
-  { image: "/images/event/event5.jpg", text: "Dinner Party", route: "/category/birthday-parties" },
-  { image: "/images/event/event6.jpg", text: "College Event", route: "/category/corporate-events" },
-  { image: "/images/event/event7.jpg", text: "School Function", route: "/category/corporate-events" },
-  { image: "/images/event/event8.jpg", text: "Traditional Event", route: "/category/weddings" },
-  { image: "/images/event/event9.jpg", text: "DJ Night", route: "/category/concerts-festivals" },
+  { image: "/images/event/event1.jpg", text: "DJ Show" },
+  { image: "/images/event/event2.jpg", text: "Exhibition" },
+  { image: "/images/event/event3.jpg", text: "Catering" },
+  { image: "/images/event/event4.jpg", text: "Cafe Events" },
+  { image: "/images/event/event5.jpg", text: "Dinner Party"},
+  { image: "/images/event/event6.jpg", text: "College Event"},
+  { image: "/images/event/event7.jpg", text: "School Function"},
+  { image: "/images/event/event8.jpg", text: "Traditional Event" },
+  { image: "/images/event/event9.jpg", text: "DJ Night"},
   { image: "/images/event/event10.jpg", text: "Fashion Show", route: "/category/fashion-shows" },
 ];
 
