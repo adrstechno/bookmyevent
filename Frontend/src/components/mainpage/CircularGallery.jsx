@@ -424,6 +424,7 @@ class App {
   }
 
   onTouchUp(e) {
+    if (!this.isDown) return;
     this.isDown = false;
     
     // Check if this was a click (short duration, minimal movement)
@@ -432,8 +433,15 @@ class App {
     const x = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
     const movement = Math.abs(this.start - x);
     
-    if (duration < 300 && movement < 10) {
-      // This was a click, not a drag
+    // Check if click was on canvas
+    const rect = this.gl.canvas.getBoundingClientRect();
+    const clickX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+    const clickY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+    const isOnCanvas = clickX >= rect.left && clickX <= rect.right && 
+                       clickY >= rect.top && clickY <= rect.bottom;
+    
+    if (duration < 300 && movement < 10 && isOnCanvas) {
+      // This was a click on the canvas, not a drag
       this.handleClick(e);
     }
     
@@ -527,25 +535,35 @@ class App {
     this.boundOnTouchUp = this.onTouchUp.bind(this);
 
     window.addEventListener('resize', this.boundOnResize);
-    window.addEventListener('mousewheel', this.boundOnWheel);
-    window.addEventListener('wheel', this.boundOnWheel);
-    window.addEventListener('mousedown', this.boundOnTouchDown);
+    
+    // Add event listeners only to the canvas container, not the whole window
+    this.gl.canvas.addEventListener('mousewheel', this.boundOnWheel);
+    this.gl.canvas.addEventListener('wheel', this.boundOnWheel);
+    this.gl.canvas.addEventListener('mousedown', this.boundOnTouchDown);
+    this.gl.canvas.addEventListener('touchstart', this.boundOnTouchDown);
+    
+    // Keep mousemove/touchmove on window for smooth dragging
     window.addEventListener('mousemove', this.boundOnTouchMove);
-    window.addEventListener('mouseup', this.boundOnTouchUp);
-    window.addEventListener('touchstart', this.boundOnTouchDown);
     window.addEventListener('touchmove', this.boundOnTouchMove);
+    window.addEventListener('mouseup', this.boundOnTouchUp);
     window.addEventListener('touchend', this.boundOnTouchUp);
   }
 
   destroy() {
     window.cancelAnimationFrame(this.raf);
     window.removeEventListener('resize', this.boundOnResize);
-    window.removeEventListener('mousewheel', this.boundOnWheel);
-    window.removeEventListener('wheel', this.boundOnWheel);
-    window.removeEventListener('mousedown', this.boundOnTouchDown);
+    
+    // Remove event listeners from canvas
+    if (this.gl && this.gl.canvas) {
+      this.gl.canvas.removeEventListener('mousewheel', this.boundOnWheel);
+      this.gl.canvas.removeEventListener('wheel', this.boundOnWheel);
+      this.gl.canvas.removeEventListener('mousedown', this.boundOnTouchDown);
+      this.gl.canvas.removeEventListener('touchstart', this.boundOnTouchDown);
+    }
+    
+    // Remove window event listeners
     window.removeEventListener('mousemove', this.boundOnTouchMove);
     window.removeEventListener('mouseup', this.boundOnTouchUp);
-    window.removeEventListener('touchstart', this.boundOnTouchDown);
     window.removeEventListener('touchmove', this.boundOnTouchMove);
     window.removeEventListener('touchend', this.boundOnTouchUp);
 
