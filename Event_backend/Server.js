@@ -1,71 +1,95 @@
-import express from 'express';
-import dotenv from 'dotenv';
-import cookieParser from 'cookie-parser'; // ✅ import cookie-parser
-import cors from 'cors'; // optional but recommended if you’re using frontend
-import helmet from 'helmet'
+import express from "express";
+import dotenv from "dotenv";
+import cookieParser from "cookie-parser"; // ✅ parse cookies
+import cors from "cors"; // optional but recommended
+import helmet from "helmet"; // security headers
 
-import db from './Config/DatabaseCon.js';   
-import UserRouter from './Router/UserRouter.js';
-import ServiceRouter from './Router/ServiceROuter.js';
-import VendorRouter from './Router/VendorRouter.js';
-import BookingRouter from './Router/BookingRouter.js';
-import adminroutes from './Router/adminRoute.js'
-import notificationroutes  from './Router/NotificationRoute.js'
-import OTPRouter from './Router/OTPRoute.js';
-import EnhancedBookingRouter from './Router/EnhancedBookingRoute.js';
-import ReviewRouter from './Router/ReviewRoute.js';
-import DashboardRouter from './Router/DashboardRouter.js';
-
+// Routers
+import UserRouter from "./Router/UserRouter.js";
+import ServiceRouter from "./Router/ServiceRouter.js";
+import VendorRouter from "./Router/VendorRouter.js";
+import BookingRouter from "./Router/BookingRouter.js";
+import AdminRouter from "./Router/adminRoute.js";
+import NotificationRouter from "./Router/NotificationRoute.js";
+import OTPRouter from "./Router/OTPRoute.js";
+import EnhancedBookingRouter from "./Router/EnhancedBookingRoute.js";
+import ReviewRouter from "./Router/ReviewRoute.js";
+import DashboardRouter from "./Router/DashboardRouter.js";
 
 dotenv.config();
 
 const app = express();
 
-// 🟢 Middleware
+// ------------------- MIDDLEWARE ------------------- //
+app.use(helmet()); // secure headers
+app.use(express.json()); // parse JSON body
+app.use(express.urlencoded({ extended: true })); // parse form data
+app.use(cookieParser()); // parse cookies
 
-app.use(helmet());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser()); // ✅ Enables req.cookies
+// CORS setup for frontend
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://bookmyevent-e2c3.vercel.app",
+      "https://www.goeventify.com",
+      "https://goeventify.com",
+    ],
+    credentials: true, // allow cookies
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
-// (optional) if you're working with frontend:
-app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "https://bookmyevent-e2c3.vercel.app",
-    "https://www.goeventify.com",
-    "https://goeventify.com"
-  ],
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
-}));
-
-
-// 🟢 Mount routers
-app.use('/User', UserRouter);
-app.use('/Service', ServiceRouter);
-app.use('/Vendor', VendorRouter);
-app.use('/Booking', BookingRouter);
-app.use('/admin', adminroutes);
-app.use('/notification',  notificationroutes);
-
-// 🟢 Mount new enhanced routers
-app.use('/otp', OTPRouter);
-app.use('/bookings', EnhancedBookingRouter);
-app.use('/reviews', ReviewRouter);
-app.use('/dashboard', DashboardRouter);
-
-app.get('/', (req, res) => {
-  res.send('Welcome to the Event Management API');
+// ------------------- ROUTES ------------------- //
+app.get("/", (req, res) => {
+  res.send("Welcome to the Event Management API");
 });
 
-app.listen(process.env.PORT, () => {
-  console.log(`Server is running on port ${process.env.PORT}`);
+// User & Auth
+app.use("/User", UserRouter);
+
+// Services
+app.use("/Service", ServiceRouter);
+
+// Vendors
+app.use("/Vendor", VendorRouter);
+
+// Bookings
+app.use("/Booking", BookingRouter);
+app.use("/bookings", EnhancedBookingRouter);
+
+// Admin
+app.use("/admin", AdminRouter);
+
+// Notifications
+app.use("/notification", NotificationRouter);
+
+// OTP
+app.use("/otp", OTPRouter);
+
+// Reviews
+app.use("/reviews", ReviewRouter);
+
+// Dashboard
+app.use("/dashboard", DashboardRouter);
+
+// ------------------- ERROR HANDLING ------------------- //
+
+// 404 Handler
+app.use((req, res, next) => {
+  res.status(404).json({ message: "Route not found" });
 });
 
-// Custom error-handling middleware
+// Global Error Handler
 app.use((err, req, res, next) => {
-  console.log(err);
+  console.error("🚨 Server Error:", err);
   res.status(500).json({ message: "Oops! Something went wrong." });
+});
+
+// ------------------- START SERVER ------------------- //
+const PORT = process.env.PORT || 3002;
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
 });

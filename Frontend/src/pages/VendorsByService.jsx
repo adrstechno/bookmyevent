@@ -100,6 +100,7 @@ const VendorsByService = () => {
       const response = await fetch(
         `${VITE_API_BASE_URL}/Vendor/getFreeVendorsByDay?date=${formattedDate}&service_id=${serviceId}`
       );
+     
       const result = await response.json();
 
       setVendors(result.vendors || []);
@@ -111,6 +112,7 @@ const VendorsByService = () => {
     } finally {
       setLoading(false);
     }
+  
   };
 
   // Handle date selection

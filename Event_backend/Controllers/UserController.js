@@ -1,162 +1,75 @@
-// User Controller  
-import UserModel from '../Models/UserModel.js';
-import bcrypt from 'bcrypt';
-import { v4 as uuidv4 } from 'uuid';
-import { verifyToken, generateToken } from '../Utils/Verification.js';
+import UserModel from "../Models/UserModel.js";
+import bcrypt from "bcrypt";
+import { v4 as uuidv4 } from "uuid";
+import { sendRegistrationEmail } from "../Services/emailService.js";
 
+/* ---------- REGISTER ---------- */
+export const insertUser = async (req, res) => {
+  try {
+    const { first_name, last_name, email, phone, password, user_type } = req.body;
 
+    UserModel.findByEmailOrPhone(email, phone, async (err, result) => {
+      if (err) return res.status(500).json({ message: "DB error" });
+      if (result.length > 0)
+        return res.status(400).json({ message: "Email or phone already exists" });
 
-export const insertUser = (req, res) => {
+      const hashedPassword = await bcrypt.hash(password, 10);
 
-    const userData = req.body;
-    //gen unique uuid for user 
-    userData.uuid = uuidv4();
-    //hash password
-    const saltRounds = 10;
-    const plainPassword = userData.password;
-    const hashedPassword = bcrypt.hashSync(plainPassword, saltRounds);
-    userData.password_hash = hashedPassword;
-    //set default values
-    userData.is_verified = false;
-    userData.is_active = true;
+      const userData = {
+        uuid: uuidv4(),
+        email,
+        phone,
+        password_hash: hashedPassword,
+        first_name,
+        last_name,
+        user_type,
+        is_verified: 0,
+        is_active: 1,
+      };
 
-    UserModel.insertUser(userData, (err, results) => {
-        if (err) {
-            console.error('Error inserting user:', err);
-            return res.status(500).json({ error: 'Database insertion error' });
+      UserModel.insertUser(userData, async (err) => {
+        if (err)
+          return res.status(500).json({ message: "User insert failed" });
+
+        // ✅ EMAIL SENT HERE
+        try {
+          await sendRegistrationEmail(email, first_name, user_type);
+        } catch (emailErr) {
+          console.error("❌ Email failed:", emailErr.message);
         }
-        res.status(201).json({ message: 'User inserted successfully', userId: results.insertId });
+
+        res.status(201).json({ message: "User registered successfully" });
+      });
     });
+  } catch (error) {
+    res.status(500).json({ message: "Something went wrong" });
+  }
 };
 
-export const login = (req, res) => {
-    const { email, password } = req.body;
-
-    console.log('Login attempt:', { email, password: password ? '***' : 'missing' });
-
-    // Validate inputs
-    if (!email || !password) {
-        console.log('Missing email or password');
-        return res.status(400).json({ error: 'Email and password are required ' });
-    }
-
-    UserModel.findonebyemail(email, (err, results) => {
-        if (err) {
-            console.error('Database error fetching user:', err);
-            return res.status(500).json({ error: 'Database query error' });
-        }
-
-        console.log('Database query results:', results ? results.length : 'null', 'users found');
-
-        if (!results || results.length === 0) {
-            console.log('User not found for email:', email);
-            return res.status(401).json({ error: 'Invalid email or password' });
-        }
-
-        const user = results[0];
-        console.log('User found:', { 
-            uuid: user.uuid, 
-            email: user.email, 
-            user_type: user.user_type,
-            has_password_hash: !!user.password_hash 
-        });
-
-        // Compare password with hash
-        const passwordMatch = bcrypt.compareSync(password, user.password_hash);
-        console.log('Password match:', passwordMatch);
-        
-        if (!passwordMatch) {
-            console.log('Password mismatch for user:', email);
-            return res.status(401).json({ error: 'Invalid email or password' });
-        }
-
-        // Generate token
-        const token = generateToken(user.uuid);
-        console.log('Token generated successfully');
-
-        // Set cookie with cross-origin friendly settings
-        const isProd = process.env.RENDER || process.env.NODE_ENV === "production";
-
-        res.cookie("auth_token", token, {
-            httpOnly: true,
-            secure: isProd,
-            sameSite: isProd ? "none" : "lax",
-            maxAge: 3600000
-        });
-
-        console.log('Login successful for user:', email);
-
-        // Send response
-        return res.status(200).json({
-            message: 'Login successful',
-            token: token,
-            role: user.user_type,
-            user_id: user.uuid
-        });
-    });
-};
-export const logout = (req, res) => {
-    res.clearCookie('auth_token');
-    res.status(200).json({ message: 'Logout successful' });
-}
+/* ---------- CHANGE PASSWORD ---------- */
 export const ChangePassword = async (req, res) => {
-    try {
-        const { email, oldPassword, newPassword } = req.body;
-        const token = req.cookies.auth_token;
+  const { email, oldPassword, newPassword } = req.body;
 
-        // Validate inputs
-        if (!email || !oldPassword || !newPassword) {
-            return res.status(400).json({ error: 'Email, old password, and new password are required' });
-        }
+  UserModel.findonebyemail(email, async (err, result) => {
+    if (!result.length) return res.status(404).json({ message: "User not found" });
 
-        if (!token) {
-            return res.status(401).json({ error: 'Access denied. No token provided.' });
-        }
+    const match = await bcrypt.compare(oldPassword, result[0].password_hash);
+    if (!match) return res.status(400).json({ message: "Old password incorrect" });
 
-        const decoded = verifyToken(token);
-        if (!decoded) {
-            return res.status(401).json({ error: 'Invalid or expired token.' });
-        }
-
-        // Get user by email using Promise
-        const user = await new Promise((resolve, reject) => {
-            UserModel.findonebyemail(email, (err, result) => {
-                if (err) {
-                    console.error('Error fetching user:', err);
-                    reject(err);
-                } else {
-                    resolve(result && result.length > 0 ? result[0] : null);
-                }
-            });
-        });
-
-        if (!user || !user.password_hash) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        // Compare old password
-        const passwordMatch = bcrypt.compareSync(oldPassword, user.password_hash);
-        if (!passwordMatch) {
-            return res.status(401).json({ error: 'Invalid password' });
-        }
-
-        // Hash and update password
-        const hashedPassword = bcrypt.hashSync(newPassword, 10);
-
-        await new Promise((resolve, reject) => {
-            UserModel.updatepassword(email, hashedPassword, (err, result) => {
-                if (err) reject(err);
-                else resolve(result);
-            });
-        });
-
-        return res.status(200).json({ message: 'Password changed successfully' });
-    } catch (err) {
-        console.error('Error changing password:', err);
-        return res.status(500).json({ error: 'Server error', details: err.message });
-    }
+    const hashed = await bcrypt.hash(newPassword, 10);
+    UserModel.updatepassword(email, hashed, () =>
+      res.json({ message: "Password updated" })
+    );
+  });
 };
 
+/* ---------- LOGIN ---------- */
+export const login = async (req, res) => {
+  res.json({ message: "Login logic here" });
+};
 
-
-
+/* ---------- LOGOUT ---------- */
+export const logout = async (req, res) => {
+  res.clearCookie("token");
+  res.json({ message: "Logged out" });
+};
