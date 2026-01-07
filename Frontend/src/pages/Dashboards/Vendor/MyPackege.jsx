@@ -21,7 +21,7 @@
 //       const res = await axios.get(`${VITE_API_BASE_URL}/Vendor/getvendorById`, {
 //         withCredentials: true,
 //       });
-      
+
 //       if (res.data?.vendor?.vendor_id) {
 //         setVendorId(res.data.vendor.vendor_id);
 //         return res.data.vendor.vendor_id;
@@ -45,13 +45,13 @@
 //         params: { vendor_id },
 //         withCredentials: true,
 //       });
-      
+
 //       console.log("API Response:", res.data);
-      
+
 //       // Handle the response structure: { message, count, packages: [...] }
 //       const packagesData = res.data?.packages || [];
 //       setPackages(Array.isArray(packagesData) ? packagesData : []);
-      
+
 //       if (packagesData.length === 0) {
 //         toast.info("No packages found. Create your first package!");
 //       }
@@ -126,12 +126,12 @@
 
 //     try {
 //       console.log("Deleting package with ID:", id);
-      
+
 //       const response = await axios.delete(`${VITE_API_BASE_URL}/Vendor/deleteVendorPackage`, {
 //         params: { package_id: id },
 //         withCredentials: true,
 //       });
-      
+
 //       console.log("Delete response:", response.data);
 //       toast.success("Package deleted successfully!");
 //       if (vendorId) fetchPackages(vendorId);
@@ -410,8 +410,13 @@ export default function MyPackage() {
 
       const data = res.data?.packages || [];
       setPackages(Array.isArray(data) ? data : []);
+      console.log(data);
 
-      if (data.length === 0) toast.info("No packages found.");
+
+      if (data.length === 0) toast('No packages found!', {
+        icon: '❗',
+      });
+
     } catch (e) {
       console.error("Fetch packages error:", e);
       toast.error(
@@ -504,7 +509,7 @@ export default function MyPackage() {
 
     try {
       console.log("Deleting package ID:", id);
-      
+
       const response = await axios.get(
         `${VITE_API_BASE_URL}/Vendor/deleteVendorPackage`,
         {

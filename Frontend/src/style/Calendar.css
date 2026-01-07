@@ -136,7 +136,7 @@
 
 .react-calendar__navigation button:hover {
   background: #284b63;
-  color: white;
+  color: #284b63;
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(40,75,99,0.35);
 }
@@ -155,10 +155,7 @@
   flex: 1;
   text-align: center;
 
-  font-size: 16px !important;
-  font-weight: 800 !important;
-  letter-spacing: 0.5px;
-  color: #1c2b36 !important;
+  font-size: 12px !important;
 
   box-shadow: 0 4px 16px rgba(0,0,0,0.15);
 }
@@ -167,16 +164,7 @@
   .react-calendar__navigation__label {
     padding: 10px 16px;
     border-radius: 14px;
-    font-size: 18px !important;
-    letter-spacing: 0.8px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .react-calendar__navigation__label {
-    padding: 12px 20px;
-    border-radius: 18px;
-    font-size: 24px !important;
+    font-size: 14px !important;
     font-weight: 900 !important;
     letter-spacing: 1px;
   }
