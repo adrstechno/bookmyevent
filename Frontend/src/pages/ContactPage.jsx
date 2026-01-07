@@ -1,16 +1,10 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { FiMail, FiPhone, FiMapPin, FiSend, FiClock } from "react-icons/fi";
-import {
-  FaFacebook,
-  FaInstagram,
-  FaLinkedin,
-  FaWhatsapp,
-} from "react-icons/fa";
+import { FaFacebook, FaInstagram, FaLinkedin, FaWhatsapp } from "react-icons/fa";
 import Footer from "../components/mainpage/Footer";
 import HomeNavbar from "../components/mainpage/HomeNavbar";
 import toast from "react-hot-toast";
-const phoneRegex = /^[6-9]\d{9}$/;
 
 const ContactPage = () => {
   const [formData, setFormData] = useState({
@@ -52,19 +46,15 @@ const ContactPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
+    
     if (!formData.name || !formData.email || !formData.message) {
       toast.error("Please fill in all required fields");
       return;
     }
 
-    if (formData.phone && !phoneRegex.test(formData.phone)) {
-      toast.error("Please enter a valid 10-digit phone number");
-      return;
-    }
-
     setLoading(true);
-
+    
+    // Simulate API call
     setTimeout(() => {
       toast.success("Message sent successfully! We'll get back to you soon.");
       setFormData({
@@ -128,18 +118,12 @@ const ContactPage = () => {
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 border border-gray-100"
               >
-                <div
-                  className={`inline-flex items-center justify-center w-14 h-14 bg-gradient-to-r ${info.color} rounded-xl mb-4`}
-                >
+                <div className={`inline-flex items-center justify-center w-14 h-14 bg-gradient-to-r ${info.color} rounded-xl mb-4`}>
                   <Icon className="text-2xl text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">
-                  {info.title}
-                </h3>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">{info.title}</h3>
                 {info.details.map((detail, idx) => (
-                  <p key={idx} className="text-gray-600 mb-1">
-                    {detail}
-                  </p>
+                  <p key={idx} className="text-gray-600 mb-1">{detail}</p>
                 ))}
               </motion.div>
             );
@@ -158,13 +142,8 @@ const ContactPage = () => {
             transition={{ duration: 0.6 }}
             className="bg-white rounded-3xl p-8 shadow-xl"
           >
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              Send us a Message
-            </h2>
-            <p className="text-gray-600 mb-8">
-              Fill out the form below and we'll get back to you as soon as
-              possible
-            </p>
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Send us a Message</h2>
+            <p className="text-gray-600 mb-8">Fill out the form below and we'll get back to you as soon as possible</p>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
@@ -206,12 +185,8 @@ const ContactPage = () => {
                     type="tel"
                     name="phone"
                     value={formData.phone}
-                    onChange={(e) => {
-                      e.target.value = e.target.value.replace(/\D/g, "");
-                      handleChange(e);
-                    }}
+                    onChange={handleChange}
                     placeholder="+91 9201976523"
-                    maxLength={10}
                     className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:border-[#3c6e71] focus:ring-2 focus:ring-[#3c6e71]/20 outline-none transition-all"
                   />
                 </div>
@@ -291,11 +266,8 @@ const ContactPage = () => {
             {/* Social Media */}
             <div className="bg-gradient-to-br from-[#3c6e71] to-[#284b63] rounded-3xl p-8 shadow-xl text-white">
               <h3 className="text-2xl font-bold mb-4">Follow Us</h3>
-              <p className="text-gray-200 mb-6">
-                Stay connected with us on social media for updates and
-                inspiration
-              </p>
-
+              <p className="text-gray-200 mb-6">Stay connected with us on social media for updates and inspiration</p>
+              
               <div className="flex gap-4">
                 <a
                   href="https://www.facebook.com/profile.php?id=61585660263887"
