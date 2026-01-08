@@ -17,6 +17,9 @@ import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import "../style/Calendar.css";
 import { VITE_API_BASE_URL } from "../utils/api";
+import { useApiCall } from "../hooks/useApiCall";
+import { LoadingSpinner, NoDataFound, ErrorDisplay, CardSkeleton } from "../components/common/StateComponents";
+import { ERROR_TYPES } from "../utils/errorHandler";
 
 const VendorsByService = () => {
   const { serviceId } = useParams();
@@ -24,23 +27,27 @@ const VendorsByService = () => {
   const location = useLocation();
   const { serviceName, serviceDescription } = location.state || {};
 
-  const [vendors, setVendors] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [showCalendar, setShowCalendar] = useState(false);
-
-  // filterType = category | all
   const [filterType, setFilterType] = useState("category");
-
-  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const vendorsPerPage = 6;
 
+  // Use the custom hook for API calls
+  const {
+    data: vendors,
+    loading,
+    error,
+    execute: fetchVendors,
+    isLoading,
+    isEmpty,
+    isError
+  } = useApiCall([]);
+
   const indexOfLastVendor = currentPage * vendorsPerPage;
   const indexOfFirstVendor = indexOfLastVendor - vendorsPerPage;
-  const currentVendors = vendors.slice(indexOfFirstVendor, indexOfLastVendor);
-  const totalPages = Math.ceil(vendors.length / vendorsPerPage);
+  const currentVendors = vendors?.slice(indexOfFirstVendor, indexOfLastVendor) || [];
+  const totalPages = Math.ceil((vendors?.length || 0) / vendorsPerPage);
 
   useEffect(() => {
     if (filterType === "category" && !selectedDate) {
@@ -56,61 +63,54 @@ const VendorsByService = () => {
 
   // -------- FETCH CATEGORY VENDORS --------
   const fetchVendorsByCategory = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(
+    await fetchVendors(
+      () => fetch(
         `${VITE_API_BASE_URL}/Vendor/getvendorsByServiceId?service_category_id=${serviceId}`,
         { method: "GET", credentials: "include" }
-      );
-
-      if (!response.ok) throw new Error("Failed to fetch vendors");
-
-      const result = await response.json();
-      setVendors(result.vendors || []);
-      setError(null);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+      ).then(res => {
+        if (!res.ok) throw new Error("Failed to fetch vendors");
+        return res.json().then(data => ({ data: data.vendors || [] }));
+      }),
+      {
+        emptyMessage: `No vendors found for this service category`,
+        showEmptyToast: false
+      }
+    );
   };
 
   // -------- FETCH ALL VENDORS --------
   const fetchAllVendors = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(`${VITE_API_BASE_URL}/Vendor/Getallvendors`);
-      const result = await response.json();
-
-      setVendors(result || []);
-      setError(null);
-    } catch (err) {
-      setError("Failed to fetch all vendors");
-    } finally {
-      setLoading(false);
-    }
+    await fetchVendors(
+      () => fetch(`${VITE_API_BASE_URL}/Vendor/Getallvendors`)
+        .then(res => {
+          if (!res.ok) throw new Error("Failed to fetch vendors");
+          return res.json().then(data => ({ data: data || [] }));
+        }),
+      {
+        emptyMessage: "No vendors available at the moment",
+        showEmptyToast: false
+      }
+    );
   };
 
   // -------- FETCH FREE VENDORS BY DATE --------
   const fetchFreeVendorsByDate = async (dateObj) => {
-    try {
-      setLoading(true);
-      const formattedDate = dateObj.toISOString().split("T")[0];
+    const formattedDate = dateObj.toISOString().split("T")[0];
 
-      const response = await fetch(
+    await fetchVendors(
+      () => fetch(
         `${VITE_API_BASE_URL}/Vendor/getFreeVendorsByDay?date=${formattedDate}&service_id=${serviceId}`
-      );
-      const result = await response.json();
+      ).then(res => {
+        if (!res.ok) throw new Error("Failed to fetch available vendors");
+        return res.json().then(data => ({ data: data.vendors || [] }));
+      }),
+      {
+        emptyMessage: `No vendors available on ${dateObj.toLocaleDateString()}`,
+        showEmptyToast: false
+      }
+    );
 
-      setVendors(result.vendors || []);
-      setError(null);
-      setShowCalendar(false);
-    } catch (err) {
-      setError("Failed to load free vendors");
-      setVendors([]);
-    } finally {
-      setLoading(false);
-    }
+    setShowCalendar(false);
   };
 
   // Handle date selection
@@ -231,7 +231,7 @@ const VendorsByService = () => {
                 <FiX className="text-xl sm:text-2xl" />
               </button>
             </div>
-            
+
             {/* Calendar Container */}
             <div className="p-4 sm:p-6">
               <div className="calendar-container">
@@ -248,7 +248,7 @@ const VendorsByService = () => {
                   }}
                 />
               </div>
-              
+
               {/* Action Buttons */}
               <div className="flex gap-3 mt-4 pt-4 border-t border-gray-200">
                 <button
@@ -293,11 +293,10 @@ const VendorsByService = () => {
             setFilterType("category");
             clearDateFilter();
           }}
-          className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-semibold shadow-md transition-all text-sm sm:text-base ${
-            filterType === "category" && !selectedDate
-              ? "bg-[#284b63] text-white"
-              : "bg-white text-[#284b63] hover:bg-gray-100"
-          }`}
+          className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-semibold shadow-md transition-all text-sm sm:text-base ${filterType === "category" && !selectedDate
+            ? "bg-[#284b63] text-white"
+            : "bg-white text-[#284b63] hover:bg-gray-100"
+            }`}
         >
           By Category
         </button>
@@ -307,11 +306,10 @@ const VendorsByService = () => {
             setFilterType("all");
             clearDateFilter();
           }}
-          className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-semibold shadow-md transition-all text-sm sm:text-base ${
-            filterType === "all" && !selectedDate
-              ? "bg-[#284b63] text-white"
-              : "bg-white text-[#284b63] hover:bg-gray-100"
-          }`}
+          className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-semibold shadow-md transition-all text-sm sm:text-base ${filterType === "all" && !selectedDate
+            ? "bg-[#284b63] text-white"
+            : "bg-white text-[#284b63] hover:bg-gray-100"
+            }`}
         >
           Show All Vendors
         </button>
@@ -347,44 +345,72 @@ const VendorsByService = () => {
       {/* CONTENT SECTION */}
       <div className="max-w-7xl mx-auto px-6 py-16 flex-grow">
         <AnimatePresence mode="wait">
-          {loading ? (
+          {isLoading ? (
             <motion.div
               key="loading"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="text-center py-20"
             >
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                className="inline-block"
-              >
-                <div className="w-16 h-16 border-4 border-[#284b63] border-t-[#f9a826] rounded-full"></div>
-              </motion.div>
-              <p className="mt-6 text-gray-600 text-lg font-semibold">
-                Loading vendors...
-              </p>
+              <CardSkeleton count={6} />
             </motion.div>
-          ) : vendors.length === 0 ? (
+          ) : isError ? (
+            <motion.div
+              key="error"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+            >
+              <ErrorDisplay
+                message={error?.message || "Failed to load vendors"}
+                description="Please check your connection and try again"
+                onRetry={() => {
+                  if (selectedDate) {
+                    fetchFreeVendorsByDate(selectedDate);
+                  } else if (filterType === "category") {
+                    fetchVendorsByCategory();
+                  } else {
+                    fetchAllVendors();
+                  }
+                }}
+                type={error?.type === ERROR_TYPES.NETWORK ? "network" : "error"}
+              />
+            </motion.div>
+          ) : isEmpty ? (
             <motion.div
               key="empty"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="text-center py-20"
             >
-              <div className="text-6xl mb-4">🔍</div>
-              <p className="text-gray-600 text-xl mb-2">
-                {selectedDate 
+              <NoDataFound
+                message={selectedDate
                   ? `No vendors available on ${selectedDate.toLocaleDateString()}`
-                  : "No vendors found for this service yet."}
-              </p>
-              <p className="text-gray-500 mb-6">
-                {selectedDate 
-                  ? "Try selecting a different date"
-                  : "Check back soon or explore other services!"}
-              </p>
+                  : "No vendors found for this service"
+                }
+                description={selectedDate
+                  ? "Try selecting a different date or browse all vendors"
+                  : "Check back soon or explore other services!"
+                }
+                icon={<div className="text-6xl">🔍</div>}
+                actionButton={
+                  selectedDate ? (
+                    <button
+                      onClick={clearDateFilter}
+                      className="bg-[#3c6e71] hover:bg-[#284b63] text-white px-6 py-3 rounded-lg transition duration-200"
+                    >
+                      Clear Date Filter
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => navigate("/")}
+                      className="bg-[#3c6e71] hover:bg-[#284b63] text-white px-6 py-3 rounded-lg transition duration-200"
+                    >
+                      Explore Other Services
+                    </button>
+                  )
+                }
+              />
             </motion.div>
           ) : (
             <motion.div
@@ -403,7 +429,7 @@ const VendorsByService = () => {
                   Found <span className="text-[#f9a826]">{vendors.length}</span> {selectedDate ? "Available" : "Amazing"} Vendors
                 </h2>
                 <p className="text-gray-600">
-                  {selectedDate 
+                  {selectedDate
                     ? `Free on ${selectedDate.toLocaleDateString()}`
                     : "Choose the perfect match for your event"}
                 </p>
@@ -426,11 +452,10 @@ const VendorsByService = () => {
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                     disabled={currentPage === 1}
-                    className={`px-3 sm:px-4 py-2 rounded-lg font-semibold transition-all duration-300 text-sm sm:text-base ${
-                      currentPage === 1
-                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                        : 'bg-white text-[#284b63] hover:bg-[#284b63] hover:text-white shadow-md'
-                    }`}
+                    className={`px-3 sm:px-4 py-2 rounded-lg font-semibold transition-all duration-300 text-sm sm:text-base ${currentPage === 1
+                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                      : 'bg-white text-[#284b63] hover:bg-[#284b63] hover:text-white shadow-md'
+                      }`}
                   >
                     <span className="hidden sm:inline">Previous</span>
                     <span className="sm:hidden">Prev</span>
@@ -458,11 +483,10 @@ const VendorsByService = () => {
                               whileHover={{ scale: 1.1 }}
                               whileTap={{ scale: 0.95 }}
                               onClick={() => setCurrentPage(page)}
-                              className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg font-semibold transition-all duration-300 text-sm sm:text-base ${
-                                currentPage === page
-                                  ? 'bg-gradient-to-r from-[#284b63] to-[#3c6e71] text-white shadow-lg'
-                                  : 'bg-white text-gray-700 hover:bg-gray-100 shadow-md'
-                              }`}
+                              className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg font-semibold transition-all duration-300 text-sm sm:text-base ${currentPage === page
+                                ? 'bg-gradient-to-r from-[#284b63] to-[#3c6e71] text-white shadow-lg'
+                                : 'bg-white text-gray-700 hover:bg-gray-100 shadow-md'
+                                }`}
                             >
                               {page}
                             </motion.button>
@@ -476,11 +500,10 @@ const VendorsByService = () => {
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                     disabled={currentPage === totalPages}
-                    className={`px-3 sm:px-4 py-2 rounded-lg font-semibold transition-all duration-300 text-sm sm:text-base ${
-                      currentPage === totalPages
-                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                        : 'bg-white text-[#284b63] hover:bg-[#284b63] hover:text-white shadow-md'
-                    }`}
+                    className={`px-3 sm:px-4 py-2 rounded-lg font-semibold transition-all duration-300 text-sm sm:text-base ${currentPage === totalPages
+                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                      : 'bg-white text-[#284b63] hover:bg-[#284b63] hover:text-white shadow-md'
+                      }`}
                   >
                     <span className="hidden sm:inline">Next</span>
                     <span className="sm:hidden">Next</span>

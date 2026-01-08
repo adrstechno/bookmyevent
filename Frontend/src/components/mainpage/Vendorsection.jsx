@@ -3,10 +3,10 @@ import { FiStar, FiAward, FiTrendingUp } from "react-icons/fi";
 import TiltedCard from "./TiltedCard";
 
 const vendors = [
-  { name: "Royal Catering", img: "https://content3.jdmagicbox.com/v2/comp/thrissur/w7/0484px484.x484.151211182026.r3w7/catalogue/royal-treat-kuttikkad-thrissur-caterers-YZjlYJT0yT.jpg", rating: 4.9, projects: 150 },
-  { name: "Bliss Decor", img: "https://scontent.fdel5-3.fna.fbcdn.net/v/t51.82787-15/572151405_17934789912101861_7688204166942092089_n.jpg?stp=dst-jpegr_tt6&_nc_cat=108&ccb=1-7&_nc_sid=127cfc&_nc_ohc=dXPf2jNxxjYQ7kNvwExwMTD&_nc_oc=Adn5qWTM4wW4_maNZwFQZYXRaZt4i-Fms7bjjY79VyIYcM-AF7qayw4uA8RurjN7b0U&_nc_zt=23&se=-1&_nc_ht=scontent.fdel5-3.fna&_nc_gid=tUEDvozNjXTCNrvtSF1gTQ&oh=00_AflxseOlOEvcjHmAcIte2iPKj5kBgXb7v6hT0cTWjYbk4A&oe=695944BD", rating: 4.8, projects: 200 },
-  { name: "Elite DJ", img: "https://i.scdn.co/image/ab67616d0000b27396f587b971b1a59c5e76ecae", rating: 5.0, projects: 180 },
-  { name: "Pixel Moments", img: "https://cdn.sanity.io/images/soj3d0g3/production/76be518e03b0dbc79ebd68216909390841f09e86-5184x3456.jpg", rating: 4.9, projects: 220 },
+  { name: "Royal Catering", img: "https://venuehub.pk/wp-content/uploads/outdoor-catering.jpg", rating: 4.9, projects: 150 },
+  { name: "Bliss Decor", img: "https://wallpaperaccess.com/full/3732122.jpg", rating: 4.8, projects: 200 },
+  { name: "Elite DJ", img: "https://www.pngmart.com/files/5/DJ-PNG-Transparent.png", rating: 5.0, projects: 180 },
+  { name: "Pixel Moments", img: "https://j5u8f2v8.rocketcdn.me/wp-content/uploads/images/overcoming-photography-challenges-LCu.jpeg", rating: 4.9, projects: 220 },
 ];
 
 const VendorsSection = () => (
@@ -37,7 +37,7 @@ const VendorsSection = () => (
       transition={{ duration: 0.6 }}
       className="relative z-10"
     >
-      <motion.h2 
+      <motion.h2
         className="text-5xl font-bold text-[#3c6e71] mb-4"
         initial={{ scale: 0.9 }}
         whileInView={{ scale: 1 }}
@@ -53,7 +53,7 @@ const VendorsSection = () => (
         transition={{ delay: 0.3, duration: 0.8 }}
         className="h-1 bg-[#f9a826] mx-auto mb-4 rounded-full"
       />
-      <motion.p 
+      <motion.p
         className="text-gray-600 text-lg max-w-2xl mx-auto mb-12"
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
@@ -71,8 +71,8 @@ const VendorsSection = () => (
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ 
-            duration: 0.5, 
+          transition={{
+            duration: 0.5,
             delay: index * 0.1
           }}
           className="cursor-pointer"

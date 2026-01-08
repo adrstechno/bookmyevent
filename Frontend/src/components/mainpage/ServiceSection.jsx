@@ -13,6 +13,9 @@ import {
 } from "@heroicons/react/24/outline";
 import { VITE_API_BASE_URL } from "../../utils/api";
 import TiltedCard from "./TiltedCard";
+import { useApiCall } from "../../hooks/useApiCall";
+import { LoadingSpinner, NoDataFound, ErrorDisplay, CardSkeleton } from "../common/StateComponents";
+import { ERROR_TYPES } from "../../utils/errorHandler";
 
 const defaultIcons = [
   SparklesIcon,
@@ -45,13 +48,13 @@ const ServicesSection = () => {
           "Content-Type": "application/json",
         },
       });
-      
+
       if (!response.ok) {
         throw new Error("Failed to fetch services");
       }
 
       const data = await response.json();
-      
+
       // Transform API data to match component structure
       const transformedServices = data.map((service, index) => ({
         category_id: service.category_id,
@@ -89,9 +92,9 @@ const ServicesSection = () => {
   const handleServiceClick = (service) => {
     // Navigate to vendors page with service ID
     navigate(`/vendors/${service.category_id}`, {
-      state: { 
+      state: {
         serviceName: service.title,
-        serviceDescription: service.description 
+        serviceDescription: service.description
       }
     });
   };
@@ -99,8 +102,8 @@ const ServicesSection = () => {
   // Pagination logic
   const indexOfLastService = currentPage * servicesPerPage;
   const indexOfFirstService = indexOfLastService - servicesPerPage;
-  const currentServices = services.slice(indexOfFirstService, indexOfLastService);
-  const totalPages = Math.ceil(services.length / servicesPerPage);
+  const currentServices = services?.slice(indexOfFirstService, indexOfLastService) || [];
+  const totalPages = Math.ceil((services?.length || 0) / servicesPerPage);
 
   const handleNextPage = () => {
     if (currentPage < totalPages) {
@@ -116,28 +119,55 @@ const ServicesSection = () => {
     }
   };
 
-  if (loading) {
+  // Loading state
+  if (isLoading) {
     return (
       <section className="py-20 bg-gray-50 relative">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#284b63]"></div>
-          <p className="mt-4 text-gray-600">Loading services...</p>
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <div className="h-12 bg-gray-200 rounded w-1/3 mx-auto mb-4 animate-pulse"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto animate-pulse"></div>
+          </div>
+          <CardSkeleton count={6} />
         </div>
       </section>
     );
   }
 
-  if (error) {
+  // Error state
+  if (isError) {
     return (
       <section className="py-20 bg-gray-50 relative">
-        <div className="text-center">
-          <p className="text-red-600">Error loading services: {error}</p>
-          <button 
-            onClick={fetchServices}
-            className="mt-4 px-6 py-2 bg-[#284b63] text-white rounded-lg hover:bg-[#3c6e71] transition-colors"
-          >
-            Retry
-          </button>
+        <div className="max-w-7xl mx-auto px-6">
+          <ErrorDisplay
+            message="Failed to load services"
+            description="We couldn't load the event categories. Please try again."
+            onRetry={loadServices}
+            type={error?.type === ERROR_TYPES.NETWORK ? "network" : "error"}
+          />
+        </div>
+      </section>
+    );
+  }
+
+  // Empty state
+  if (isEmpty) {
+    return (
+      <section className="py-20 bg-gray-50 relative">
+        <div className="max-w-7xl mx-auto px-6">
+          <NoDataFound
+            message="No services available"
+            description="We're working on adding new event categories. Check back soon!"
+            icon={<div className="text-6xl">🎉</div>}
+            actionButton={
+              <button
+                onClick={loadServices}
+                className="bg-[#284b63] hover:bg-[#3c6e71] text-white px-6 py-3 rounded-lg transition duration-200"
+              >
+                Refresh
+              </button>
+            }
+          />
         </div>
       </section>
     );
@@ -171,7 +201,7 @@ const ServicesSection = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <motion.h2 
+          <motion.h2
             className="text-5xl font-bold text-[#284b63] mb-4"
             initial={{ scale: 0.9 }}
             whileInView={{ scale: 1 }}
@@ -187,7 +217,7 @@ const ServicesSection = () => {
             transition={{ delay: 0.3, duration: 0.8 }}
             className="h-1 bg-[#f9a826] mx-auto mb-4 rounded-full"
           />
-          <motion.p 
+          <motion.p
             className="text-gray-600 text-lg max-w-2xl mx-auto"
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
@@ -206,8 +236,8 @@ const ServicesSection = () => {
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ 
-              duration: 0.5, 
+            transition={{
+              duration: 0.5,
               delay: index * 0.1
             }}
             onClick={() => handleServiceClick(service)}
@@ -259,11 +289,10 @@ const ServicesSection = () => {
           <button
             onClick={handlePrevPage}
             disabled={currentPage === 1}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${
-              currentPage === 1
-                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                : "bg-[#284b63] text-white hover:bg-[#3c6e71]"
-            }`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${currentPage === 1
+              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+              : "bg-[#284b63] text-white hover:bg-[#3c6e71]"
+              }`}
           >
             <ChevronLeftIcon className="w-5 h-5" />
             Previous
@@ -277,11 +306,10 @@ const ServicesSection = () => {
                   setCurrentPage(page);
                   window.scrollTo({ top: 0, behavior: "smooth" });
                 }}
-                className={`w-10 h-10 rounded-lg font-semibold transition-all ${
-                  currentPage === page
-                    ? "bg-[#284b63] text-white"
-                    : "bg-white text-gray-700 hover:bg-gray-200"
-                }`}
+                className={`w-10 h-10 rounded-lg font-semibold transition-all ${currentPage === page
+                  ? "bg-[#284b63] text-white"
+                  : "bg-white text-gray-700 hover:bg-gray-200"
+                  }`}
               >
                 {page}
               </button>
@@ -291,11 +319,10 @@ const ServicesSection = () => {
           <button
             onClick={handleNextPage}
             disabled={currentPage === totalPages}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${
-              currentPage === totalPages
-                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                : "bg-[#284b63] text-white hover:bg-[#3c6e71]"
-            }`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${currentPage === totalPages
+              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+              : "bg-[#284b63] text-white hover:bg-[#3c6e71]"
+              }`}
           >
             Next
             <ChevronRightIcon className="w-5 h-5" />
