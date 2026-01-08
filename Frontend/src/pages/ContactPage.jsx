@@ -5,6 +5,7 @@ import { FaFacebook, FaInstagram, FaLinkedin, FaWhatsapp } from "react-icons/fa"
 import Footer from "../components/mainpage/Footer";
 import HomeNavbar from "../components/mainpage/HomeNavbar";
 import toast from "react-hot-toast";
+const phoneRegex = /^[6-9]\d{9}$/;
 
 const ContactPage = () => {
   const [formData, setFormData] = useState({
@@ -45,28 +46,35 @@ const ContactPage = () => {
   ];
 
   const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    if (!formData.name || !formData.email || !formData.message) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
+  e.preventDefault();
+  
+  if (!formData.name || !formData.email || !formData.message) {
+    toast.error("Please fill in all required fields");
+    return;
+  }
 
-    setLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      toast.success("Message sent successfully! We'll get back to you soon.");
-      setFormData({
-        name: "",
-        email: "",
-        phone: "",
-        subject: "",
-        message: "",
-      });
-      setLoading(false);
-    }, 1500);
-  };
+  // ✅ Phone number validation (added only)
+  if (formData.phone && !/^[6-9]\d{9}$/.test(formData.phone)) {
+    toast.error("Please enter a valid 10-digit phone number");
+    return;
+  }
+
+  setLoading(true);
+  
+  // Simulate API call
+  setTimeout(() => {
+    toast.success("Message sent successfully! We'll get back to you soon.");
+    setFormData({
+      name: "",
+      email: "",
+      phone: "",
+      subject: "",
+      message: "",
+    });
+    setLoading(false);
+  }, 1500);
+};
+
 
   const handleChange = (e) => {
     setFormData({
@@ -182,13 +190,18 @@ const ContactPage = () => {
                     Phone
                   </label>
                   <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    placeholder="+91 9201976523"
-                    className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:border-[#3c6e71] focus:ring-2 focus:ring-[#3c6e71]/20 outline-none transition-all"
-                  />
+  type="tel"
+  name="phone"
+  value={formData.phone}
+  onChange={(e) => {
+    const value = e.target.value.replace(/\D/g, "");
+    setFormData({ ...formData, phone: value });
+  }}
+  placeholder="+91 9201976523"
+  maxLength={10}
+  className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:border-[#3c6e71] focus:ring-2 focus:ring-[#3c6e71]/20 outline-none transition-all"
+/>
+
                 </div>
               </div>
 

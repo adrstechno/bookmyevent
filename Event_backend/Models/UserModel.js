@@ -13,7 +13,10 @@ class UserModel {
         const sql = `SELECT * FROM users WHERE email = ?`;
         db.query(sql, [email], callback);
     }
-
+static async findonebyphone(phone, callback) {
+        const sql = `SELECT * FROM users WHERE phone = ?`;
+        db.query(sql, [phone], callback);
+    }
     static async updatepassword(email , hashedPassword , callback){
         const sql = 'UPDATE users SET password_hash = ? WHERE email = ?';
         db.query(sql, [hashedPassword, email], callback);
