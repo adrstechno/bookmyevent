@@ -103,39 +103,142 @@
 // };
 
 // export default ComingSoon;
-import React from "react";
+// import React from "react";
+// import Snowfall from "react-snowfall";
+
+
+// const ComingSoon = () => {
+//   return (
+//     <div className="min-h-screen flex items-center justify-center bg-[#f9fafb] relative overflow-hidden px-4">
+
+//       {/* Multicolor Snowfall (Professional Event Confetti) */}
+//       <Snowfall
+//         snowflakeCount={90}
+//         radius={[0.8, 1.8]}
+//         speed={[0.5, 1.3]}
+//         wind={[-0.3, 0.3]}
+//         color={[
+//           "#6366f1", // indigo
+//           "#818cf8", // soft blue
+//           "#94a3b8", // slate
+//           "#c7d2fe", // light indigo
+//           "#e2e8f0", // soft gray
+//           "#bae6fd", // light sky
+//           "#bbf7d0", // light green
+//           "#fde68a", // soft amber
+//           "#fecaca", // soft rose
+//         ]}
+//       />
+
+//       {/* Subtle background accents */}
+//       <div className="absolute -top-32 -left-32 w-96 h-96 bg-indigo-100 rounded-full blur-3xl opacity-40"></div>
+//       <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-slate-200 rounded-full blur-3xl opacity-40"></div>
+
+//       <div className="relative z-10 w-full max-w-xl text-center">
+
+//         {/* Brand */}
+//         <h1 className="text-4xl md:text-5xl font-semibold text-slate-900 tracking-wide mb-4">
+//           GoEventify
+//         </h1>
+
+//         <p className="text-sm text-slate-500 tracking-widest uppercase mb-12">
+//           Our Very Usefull Platform
+//         </p>
+
+//         {/* Main Banner */}
+//         <div className="relative bg-white rounded-2xl px-10 py-12 shadow-lg border border-slate-200">
+
+//           {/* Soft top accent */}
+//           <div className="absolute top-0 left-0 w-full h-1 
+//             bg-gradient-to-r from-indigo-400 via-slate-400 to-indigo-400 
+//             rounded-t-2xl">
+//           </div>
+
+//           <h2 className="text-3xl md:text-4xl font-bold text-slate-800 tracking-wide mb-4">
+//             Coming Soon
+//           </h2>
+
+//           <div className="w-16 h-[2px] bg-gradient-to-r from-indigo-300 to-slate-300 mx-auto mb-6"></div>
+
+//           <p className="text-slate-600 text-base md:text-lg leading-relaxed">
+//             We are building a refined and reliable platform to help you plan,
+//             organize, and manage events with ease — from weddings to corporate
+//             gatherings and special occasions.
+//           </p>
+
+//           <div className="mt-10 inline-flex items-center px-8 py-3 
+//             rounded-full border border-indigo-400 text-indigo-600 
+//             text-sm font-medium tracking-wide hover:bg-indigo-50 transition">
+//             Launching Soon
+//           </div>
+//         </div>
+
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default ComingSoon;
+
+
+import React, { useEffect, useState } from "react";
 import Snowfall from "react-snowfall";
+import usePWAInstall from "./hooks/usePWAInstall"; // ✅ ADD
 
 const ComingSoon = () => {
+
+  /* ===================== PWA LOGIC (ADD ONLY) ===================== */
+  const { isInstallable, installApp } = usePWAInstall();
+  const [showInstallPopup, setShowInstallPopup] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+
+  useEffect(() => {
+    const ua = navigator.userAgent.toLowerCase();
+    const ios =
+      /iphone|ipad|ipod/.test(ua) &&
+      !window.matchMedia("(display-mode: standalone)").matches;
+    setIsIOS(ios);
+  }, []);
+
+  useEffect(() => {
+    if (!isInstallable && !isIOS) return;
+
+    const timer = setTimeout(() => {
+      setShowInstallPopup(true);
+    }, 2000); // ⏱️ 2 sec after load
+
+    return () => clearTimeout(timer);
+  }, [isInstallable, isIOS]);
+  /* =============================================================== */
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#f9fafb] relative overflow-hidden px-4">
 
-      {/* Multicolor Snowfall (Professional Event Confetti) */}
+      {/* Multicolor Snowfall */}
       <Snowfall
         snowflakeCount={90}
         radius={[0.8, 1.8]}
         speed={[0.5, 1.3]}
         wind={[-0.3, 0.3]}
         color={[
-          "#6366f1", // indigo
-          "#818cf8", // soft blue
-          "#94a3b8", // slate
-          "#c7d2fe", // light indigo
-          "#e2e8f0", // soft gray
-          "#bae6fd", // light sky
-          "#bbf7d0", // light green
-          "#fde68a", // soft amber
-          "#fecaca", // soft rose
+          "#6366f1",
+          "#818cf8",
+          "#94a3b8",
+          "#c7d2fe",
+          "#e2e8f0",
+          "#bae6fd",
+          "#bbf7d0",
+          "#fde68a",
+          "#fecaca",
         ]}
       />
 
-      {/* Subtle background accents */}
+      {/* Background accents */}
       <div className="absolute -top-32 -left-32 w-96 h-96 bg-indigo-100 rounded-full blur-3xl opacity-40"></div>
       <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-slate-200 rounded-full blur-3xl opacity-40"></div>
 
       <div className="relative z-10 w-full max-w-xl text-center">
 
-        {/* Brand */}
         <h1 className="text-4xl md:text-5xl font-semibold text-slate-900 tracking-wide mb-4">
           GoEventify
         </h1>
@@ -144,16 +247,12 @@ const ComingSoon = () => {
           Our Very Usefull Platform
         </p>
 
-        {/* Main Banner */}
         <div className="relative bg-white rounded-2xl px-10 py-12 shadow-lg border border-slate-200">
-
-          {/* Soft top accent */}
           <div className="absolute top-0 left-0 w-full h-1 
             bg-gradient-to-r from-indigo-400 via-slate-400 to-indigo-400 
-            rounded-t-2xl">
-          </div>
+            rounded-t-2xl" />
 
-          <h2 className="text-3xl md:text-4xl font-bold text-slate-800 tracking-wide mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-slate-800 mb-4">
             Coming Soon
           </h2>
 
@@ -171,8 +270,48 @@ const ComingSoon = () => {
             Launching Soon
           </div>
         </div>
-
       </div>
+
+      {/* =================== PWA INSTALL POPUP =================== */}
+      {showInstallPopup && (
+        <div className="fixed bottom-4 left-4 right-4 z-[9999]">
+          <div className="bg-[#0b0f19] border border-white/10 rounded-xl p-4 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <h4 className="text-white font-semibold">
+                Install GoEventify App 🚀
+              </h4>
+              <p className="text-gray-400 text-sm">
+                Faster access • App-like experience
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              {!isIOS && isInstallable && (
+                <button
+                  onClick={installApp}
+                  className="bg-indigo-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-600 transition"
+                >
+                  Install
+                </button>
+              )}
+
+              {isIOS && (
+                <span className="text-gray-300 text-sm">
+                  Tap <b>Share</b> → <b>Add to Home Screen</b>
+                </span>
+              )}
+
+              <button
+                onClick={() => setShowInstallPopup(false)}
+                className="text-gray-400 hover:text-white transition"
+              >
+                Later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ========================================================= */}
     </div>
   );
 };
