@@ -94,9 +94,7 @@ const VendorsSection = () => (
               <div className="w-full h-[360px] flex flex-col justify-between p-3">
                 {/* Verified Badge */}
                 <div className="flex justify-end flex-shrink-0">
-                  <div className="bg-green-500 text-white p-1.5 rounded-full shadow-2xl border-2 border-white/50">
-                    <FiAward className="w-3.5 h-3.5" />
-                  </div>
+
                 </div>
 
                 {/* Stats and Content at bottom */}

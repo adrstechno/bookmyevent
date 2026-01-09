@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
@@ -14,7 +14,7 @@ import {
 import { VITE_API_BASE_URL } from "../../utils/api";
 import TiltedCard from "./TiltedCard";
 import { useApiCall } from "../../hooks/useApiCall";
-import { LoadingSpinner, NoDataFound, ErrorDisplay, CardSkeleton } from "../common/StateComponents";
+import { NoDataFound, ErrorDisplay, CardSkeleton } from "../common/StateComponents";
 import { ERROR_TYPES } from "../../utils/errorHandler";
 
 const defaultIcons = [
@@ -28,52 +28,50 @@ const defaultIcons = [
 
 const ServicesSection = () => {
   const navigate = useNavigate();
-  const [services, setServices] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { data: services, isLoading, isError, isEmpty, error, execute } = useApiCall([]);
   const [currentPage, setCurrentPage] = useState(1);
   const servicesPerPage = 6;
 
   useEffect(() => {
-    fetchServices();
+    loadServices();
   }, []);
 
-  const fetchServices = async () => {
+  const loadServices = async () => {
     try {
-      setLoading(true);
-      const response = await fetch(`${VITE_API_BASE_URL}/service/GetAllServices`, {
-        method: "GET",
-        credentials: "include", // This sends cookies with the request
-        headers: {
-          "Content-Type": "application/json",
-        },
+      await execute(async () => {
+        const response = await fetch(`${VITE_API_BASE_URL}/service/GetAllServices`, {
+          method: "GET",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch services");
+        }
+
+        const data = await response.json();
+
+        // Transform API data to match component structure
+        const transformedServices = data.map((service, index) => ({
+          category_id: service.category_id,
+          title: service.category_name,
+          slug: service.category_name.toLowerCase().replace(/\s+/g, "-"),
+          description: service.description,
+          icon: defaultIcons[index % defaultIcons.length],
+          color: getColorGradient(index),
+          image: service.icon_url,
+          is_active: service.is_active,
+        }));
+
+        return { data: transformedServices.filter(s => s.is_active === 1) };
+      }, {
+        emptyMessage: "No services available at the moment",
+        showEmptyToast: false
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch services");
-      }
-
-      const data = await response.json();
-
-      // Transform API data to match component structure
-      const transformedServices = data.map((service, index) => ({
-        category_id: service.category_id,
-        title: service.category_name,
-        slug: service.category_name.toLowerCase().replace(/\s+/g, "-"),
-        description: service.description,
-        icon: defaultIcons[index % defaultIcons.length],
-        color: getColorGradient(index),
-        image: service.icon_url,
-        is_active: service.is_active,
-      }));
-
-      setServices(transformedServices.filter(s => s.is_active === 1));
-      setError(null);
     } catch (err) {
       console.error("Error fetching services:", err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
     }
   };
 
