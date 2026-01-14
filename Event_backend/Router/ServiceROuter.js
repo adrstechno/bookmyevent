@@ -4,7 +4,9 @@ import {
     getAllServices,
     getServiceById,
     updateService,
-    deleteService
+    deleteService,
+    createSubservice,
+    GetsubservicesByServiceCategoryId
 } from '../Controllers/ServiceController.js';
 
 import { upload } from '../Utils/Upload.js';
@@ -28,5 +30,8 @@ router.put(
 );
 
 router.delete('/DeleteService/:id', deleteService);
+router.post( '/CreateSubservice',upload.single('icon_url'),createSubservice);
+router.get('/GetSubservicesByServiceCategoryId/:service_category_id', GetsubservicesByServiceCategoryId);
+
 
 export default router;

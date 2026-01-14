@@ -3,12 +3,14 @@ import db from "../Config/DatabaseCon.js";
 class VendorModel {
   static insertVendor(vendorData, callback) {
     const sql =
-      "INSERT INTO vendor_profiles (user_id, business_name, service_category_id, description, years_experience, contact, address, city, state, is_verified, is_active, profile_url, event_profiles_url) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
+      "INSERT INTO vendor_profiles (user_id, business_name, service_category_id, subservice_id, description, years_experience, contact, address, city, state, is_verified, is_active, profile_url, event_profiles_url) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
     const values = [
       vendorData.user_id,
       vendorData.business_name,
       vendorData.service_category_id,
+      vendorData.subservice_id,
+      vendorData.subservice_id,
       vendorData.description,
       vendorData.years_experience,
       vendorData.contact,
@@ -320,8 +322,11 @@ static findVendorsByDayAndService(day, service_category_id, callback) {
     db.query(sql, [vendor_id, limit], callback);
   }
 
+  static getVendorBysubserviceId(subservice_id, callback) {
+    const sql = "select * from vendor_profiles where subservice_id = ?";
+    db.query(sql, [subservice_id], callback);
+  } 
+
 }
-
-
 
 export default VendorModel;

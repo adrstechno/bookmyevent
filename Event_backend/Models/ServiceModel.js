@@ -51,6 +51,20 @@ class ServiceModel {
     const sql = "select * from vendor_profiles where service_category_id = ?";
     db.query(sql, [service_category_id], callback);
   }
+
+  static createSubservice(subserviceRows, callback) {
+    const sql = `
+        INSERT INTO subservices 
+        (service_category_id, subservice_name, description, icon_url, is_active)
+        VALUES ?
+    `;
+
+    db.query(sql, [subserviceRows], callback);
 }
 
+ static getsubservicesByServiceCategoryId(service_category_id, callback) {
+    const sql = "SELECT * FROM subservices WHERE service_category_id = ?";
+    db.query(sql, [service_category_id], callback);
+  }
+}
 export default ServiceModel;

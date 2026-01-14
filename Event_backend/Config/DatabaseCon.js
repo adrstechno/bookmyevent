@@ -15,9 +15,8 @@ const pool = mysql.createPool({
         rejectUnauthorized: false
     },
     connectionLimit: 10,
-    acquireTimeout: 60000,
-    timeout: 60000,
-    reconnect: true,
+    acquireTimeoutMillis: 60000,
+    connectTimeout: 60000,
     multipleStatements: true
 });
 

@@ -1,10 +1,6 @@
 import ServiceModel from '../Models/ServiceModel.js';
 
 export const insertService = (req, res) => {
-    console.log('🔍 INSERT Service called');
-    console.log('📝 Request body:', req.body);
-    console.log('📁 Request file:', req.file);
-
     const { category_name, description, is_active } = req.body;
     const icon_url = req.file ? req.file.path : null;
 
@@ -153,4 +149,80 @@ export const deleteService = (req, res) => {
 
         res.status(200).json({ message: 'Service deleted successfully' });
     });
-};
+}
+
+    // function to create Subservices
+   export const  createSubservice = (req, res) => {
+    try {
+        const { service_category_ids, subservice_name, description, is_active } = req.body;
+        const icon_url = req.file ? req.file.path : null;
+
+        // ✅ Validations
+        if (!Array.isArray(service_category_ids) || service_category_ids.length === 0) {
+            return res.status(400).json({ error: 'At least one service_category_id is required' });
+        }
+
+        if (!subservice_name?.trim()) {
+            return res.status(400).json({ error: 'subservice_name is required' });
+        }
+
+        if (!description?.trim()) {
+            return res.status(400).json({ error: 'description is required' });
+        }
+
+        if (is_active === undefined || is_active === null) {
+            return res.status(400).json({ error: 'is_active is required' });
+        }
+
+        if (!icon_url) {
+            return res.status(400).json({ error: 'subserviceIcon file is required' });
+        }
+
+        // ✅ Prepare data for bulk insert
+        const subserviceRows = service_category_ids.map(service_category_id => ([
+            service_category_id,
+            subservice_name,
+            description,
+            icon_url,
+            parseInt(is_active)
+        ]));
+
+        // ✅ Call model
+        ServiceModel.createSubservice(subserviceRows, (err, result) => {
+            if (err) {
+                console.error('❌ Error creating subservice:', err);
+                return res.status(500).json({
+                    error: 'Database insertion error',
+                    details: err.message
+                });
+            }
+
+            res.status(201).json({
+                message: 'Subservice created successfully',
+                insertedRows: result.affectedRows,
+                icon_url
+            });
+        });
+
+    } catch (error) {
+        console.error('❌ Server Error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+
+
+}
+
+export const GetsubservicesByServiceCategoryId = (req, res) => {
+    const { service_category_id } = req.params;
+    if (!service_category_id) {
+        return res.status(400).json({ error: 'service_category_id is required' });
+    }
+    ServiceModel.getsubservicesByServiceCategoryId(service_category_id, (err, results) => {
+        if (err) {
+            console.error('Error fetching subservices:', err);
+            return res.status(500).json({ error: 'Database retrieval error' });
+        }
+        res.status(200).json(results);
+    });
+}
+

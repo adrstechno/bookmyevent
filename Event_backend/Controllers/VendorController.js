@@ -35,6 +35,7 @@ export const insertVendor = (req, res) => {
     user_id: userId,
     business_name: data.business_name,
     service_category_id: data.service_category_id,
+    subservice_id: data.subservice_id,
     description: data.description,
     years_experience: data.years_experience,
     contact: data.contact,
@@ -817,3 +818,19 @@ export const GetVendorRecentActivities = async (req, res) => {
     return res.status(500).json({ error: 'Server error', details: err.message });
   }
 };
+
+export const getvendorsBysubserviceId = (req, res) => {
+  try {
+    const subservice_id = req.query.subservice_id;
+    VendorModel.getVendorBysubserviceId(subservice_id, (err, results) => {
+      if (err) {
+        return res.status(500).json({ message: "Error fetching vendors by subservice ID", error: err });
+      }
+      return res.status(200).json({ message: "Vendors retrieved successfully", count: results.length, vendors: results });
+    });
+  } catch (err) {
+    console.error("Error fetching vendors by subservice ID:", err);
+    return res.status(500).json({ error: "Server error", details: err.message });
+  }
+};
+

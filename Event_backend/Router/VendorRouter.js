@@ -1,5 +1,5 @@
 import express from 'express';
-import {insertVendor , getAllVendor , AddEventImages , getvendorById , updateVendorProfile  , VendorShift , getVendorShiftforVendor  , GetvendorEventImages  , updateVendorShiftbyId  , deleteVendorShiftbyId , insertVendorPackage , updateVendorPackage , deleteVendorPackage , getAllVendorPackages , getvendorsByServiceId, getFreeVendorsByDay, GetVendorKPIs, GetVendorRecentActivities } from '../Controllers/VendorController.js'; 
+import {insertVendor , getAllVendor , AddEventImages , getvendorById , updateVendorProfile  , VendorShift , getVendorShiftforVendor  , GetvendorEventImages  , updateVendorShiftbyId  , deleteVendorShiftbyId , insertVendorPackage , updateVendorPackage , deleteVendorPackage , getAllVendorPackages , getvendorsByServiceId, getFreeVendorsByDay, GetVendorKPIs, GetVendorRecentActivities , getvendorsBysubserviceId } from '../Controllers/VendorController.js'; 
 import { upload } from '../Utils/Upload.js';
 
 const router = express.Router();
@@ -23,6 +23,9 @@ router.get('/deleteVendorPackage', deleteVendorPackage);
 router.get('/getAllVendorPackages', getAllVendorPackages);
 router.get('/getvendorsByServiceId', getvendorsByServiceId);
 router.get('/getFreeVendorsByDay', getFreeVendorsByDay);
+router.get('/getvendorsBysubserviceId', getvendorsBysubserviceId);
+
+
 
 
 export default router;
