@@ -21,6 +21,7 @@ import ContactPage from "./pages/ContactPage";
 import Admindashboard from "./pages/Dashboards/Admin/AdminDashboard";
 import AdminUsers from "./pages/Dashboards/Admin/AdminUsers";
 import AddService from "./pages/Dashboards/Admin/AddServices";
+import MainService from "./pages/Dashboards/Admin/MainService";
 import AdminBookings from "./pages/Dashboards/Admin/AdminBookings";
 
 // Vendor Pages
@@ -91,6 +92,7 @@ export default function App() {
                 <Route path="dashboard" element={<Admindashboard />} />
                 <Route path="users" element={<AdminUsers />} />
                 <Route path="addservices" element={<AddService />} />
+                <Route path="mainservice" element={<MainService />} />
                 <Route path="bookings" element={<AdminBookings />} />
               </Route>
             </Route>

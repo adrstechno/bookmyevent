@@ -20,6 +20,7 @@ export const menuConfig = {
     { label: "Dashboard", path: "/admin/dashboard", icon: <FaTachometerAlt /> },
     { label: "Users", path: "/admin/users", icon: <FaUsers /> },
     { label: "Services", path: "/admin/addservices", icon: <FaCalendarAlt /> },
+    { label: "Main Services", path: "/admin/mainservice", icon: <FaCalendarAlt /> },
     { label: "Bookings", path: "/admin/bookings", icon: <FaClipboardList /> },
   ],
 
