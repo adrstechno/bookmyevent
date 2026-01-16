@@ -88,8 +88,8 @@ const ServicesSection = () => {
   };
 
   const handleServiceClick = (service) => {
-    // Navigate to vendors page with service ID
-    navigate(`/vendors/${service.category_id}`, {
+    // Navigate to service detail page to show subservices
+    navigate(`/service/${service.category_id}`, {
       state: {
         serviceName: service.title,
         serviceDescription: service.description
@@ -270,7 +270,7 @@ const ServicesSection = () => {
                     </p>
                     <div className="text-center">
                       <span className="inline-block text-[#284b63] text-sm font-bold hover:text-[#f9a826] transition-colors">
-                        Explore Vendors →
+                        View Subservices →
                       </span>
                     </div>
                   </div>

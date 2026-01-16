@@ -6,9 +6,9 @@ import Stack from "../components/mainpage/Stack";
 
 const AboutPage = () => {
   const stats = [
-    { icon: FiUsers, value: "500+", label: "Happy Clients", color: "from-blue-500 to-cyan-500" },
-    { icon: FiAward, value: "1000+", label: "Events Completed", color: "from-purple-500 to-pink-500" },
-    { icon: FiTrendingUp, value: "15+", label: "Years Experience", color: "from-green-500 to-emerald-500" },
+    { icon: FiUsers, value: "50+", label: "Happy Clients", color: "from-blue-500 to-cyan-500" },
+    { icon: FiAward, value: "100+", label: "Events Completed", color: "from-purple-500 to-pink-500" },
+    { icon: FiTrendingUp, value: "1+", label: "Years Experience", color: "from-green-500 to-emerald-500" },
     { icon: FiHeart, value: "98%", label: "Satisfaction Rate", color: "from-red-500 to-rose-500" },
   ];
 

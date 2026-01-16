@@ -16,12 +16,13 @@ import Home from "./pages/HomePage";
 import WhyUsPage from "./pages/WhyUsPage";
 import AboutPage from "./pages/AboutPage";
 import ContactPage from "./pages/ContactPage";
+import ServiceDetail from "./pages/ServiceDetail";
 
 // Admin Pages
 import Admindashboard from "./pages/Dashboards/Admin/AdminDashboard";
 import AdminUsers from "./pages/Dashboards/Admin/AdminUsers";
 import AddService from "./pages/Dashboards/Admin/AddServices";
-import MainService from "./pages/Dashboards/Admin/MainService";
+import SubService from "./pages/Dashboards/Admin/SubService";
 import AdminBookings from "./pages/Dashboards/Admin/AdminBookings";
 
 // Vendor Pages
@@ -51,7 +52,6 @@ import Exhibitions from "./pages/Category/Exhibitions";
 import VendorsByService from "./pages/VendorsByService";
 import VendorDetail from "./pages/VendorDetail";
 
-import ShowcaseSection from "./components/mainpage/ShowcaseSection";
 import ComingSoon from "./ComingSoon.jsx";
 
 export default function App() {
@@ -70,6 +70,7 @@ export default function App() {
         <Route path="/why-us" element={<WhyUsPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
+        <Route path="/service/:serviceId" element={<ServiceDetail />} />
         
 
         {/* Public Category Routes */}
@@ -92,7 +93,7 @@ export default function App() {
                 <Route path="dashboard" element={<Admindashboard />} />
                 <Route path="users" element={<AdminUsers />} />
                 <Route path="addservices" element={<AddService />} />
-                <Route path="mainservice" element={<MainService />} />
+                <Route path="subservice" element={<SubService />} />
                 <Route path="bookings" element={<AdminBookings />} />
               </Route>
             </Route>

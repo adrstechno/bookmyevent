@@ -13,9 +13,8 @@ import {
 } from "react-icons/fi";
 import HomeNavbar from "../components/mainpage/HomeNavbar";
 import Footer from "../components/mainpage/Footer";
-import Calendar from "react-calendar";
-import "react-calendar/dist/Calendar.css";
-import "../style/Calendar.css";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import { VITE_API_BASE_URL } from "../utils/api";
 import { useApiCall } from "../hooks/useApiCall";
 import { LoadingSpinner, NoDataFound, ErrorDisplay, CardSkeleton } from "../components/common/StateComponents";
@@ -25,7 +24,7 @@ const VendorsByService = () => {
   const { serviceId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { serviceName, serviceDescription } = location.state || {};
+  const { serviceName, serviceDescription, subserviceId, subserviceName } = location.state || {};
 
   const [selectedDate, setSelectedDate] = useState(null);
   const [showCalendar, setShowCalendar] = useState(false);
@@ -36,7 +35,6 @@ const VendorsByService = () => {
   // Use the custom hook for API calls
   const {
     data: vendors,
-    loading,
     error,
     execute: fetchVendors,
     isLoading,
@@ -223,7 +221,10 @@ const VendorsByService = () => {
           >
             {/* Modal Header */}
             <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
-              <h3 className="text-lg sm:text-xl font-bold text-[#284b63]">Select a Date</h3>
+              <div>
+                <h3 className="text-lg sm:text-xl font-bold text-[#284b63]">Select a Date</h3>
+                <p className="text-sm text-gray-600 mt-1">Find available vendors for your event</p>
+              </div>
               <button
                 onClick={() => setShowCalendar(false)}
                 className="text-gray-500 hover:text-gray-700 p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -234,25 +235,50 @@ const VendorsByService = () => {
 
             {/* Calendar Container */}
             <div className="p-4 sm:p-6">
-              <div className="calendar-container">
-                <Calendar
-                  onChange={handleDateSelect}
-                  value={selectedDate || new Date()}
-                  className="event-calendar w-full"
+              <div className="modern-datepicker-wrapper">
+                <DatePicker
+                  selected={selectedDate}
+                  onChange={(date) => setSelectedDate(date)}
+                  inline
                   minDate={new Date()}
-                  tileClassName={({ date, view }) => {
-                    if (view === 'month') {
-                      // Add custom classes for better mobile experience
-                      return 'calendar-tile';
+                  calendarClassName="modern-calendar"
+                  dayClassName={(date) => {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const checkDate = new Date(date);
+                    checkDate.setHours(0, 0, 0, 0);
+                    
+                    if (checkDate < today) {
+                      return "past-date";
                     }
+                    if (checkDate.getTime() === today.getTime()) {
+                      return "today-date";
+                    }
+                    return "future-date";
                   }}
                 />
               </div>
 
+              {selectedDate && (
+                <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <p className="text-sm text-blue-800 font-medium">
+                    Selected: {selectedDate.toLocaleDateString('en-US', { 
+                      weekday: 'long', 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </p>
+                </div>
+              )}
+
               {/* Action Buttons */}
               <div className="flex gap-3 mt-4 pt-4 border-t border-gray-200">
                 <button
-                  onClick={() => setShowCalendar(false)}
+                  onClick={() => {
+                    setSelectedDate(null);
+                    setShowCalendar(false);
+                  }}
                   className="flex-1 py-2.5 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
                 >
                   Cancel
@@ -263,9 +289,14 @@ const VendorsByService = () => {
                       handleDateSelect(selectedDate);
                     }
                   }}
-                  className="flex-1 py-2.5 px-4 bg-[#284b63] text-white rounded-lg hover:bg-[#3c6e71] transition-colors font-medium"
+                  disabled={!selectedDate}
+                  className={`flex-1 py-2.5 px-4 rounded-lg transition-colors font-medium ${
+                    selectedDate
+                      ? 'bg-[#284b63] text-white hover:bg-[#3c6e71]'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
                 >
-                  Apply
+                  Find Vendors
                 </button>
               </div>
             </div>
@@ -280,6 +311,13 @@ const VendorsByService = () => {
           <h1 className="text-2xl sm:text-3xl lg:text-5xl font-bold leading-tight">
             {serviceName || "Service Vendors"}
           </h1>
+          {subserviceName && (
+            <div className="mt-3 sm:mt-4">
+              <span className="inline-block bg-[#f9a826] text-white px-4 sm:px-6 py-2 rounded-full text-sm sm:text-base font-semibold shadow-lg">
+                {subserviceName}
+              </span>
+            </div>
+          )}
           <p className="text-base sm:text-lg lg:text-xl mt-2 sm:mt-4 max-w-2xl mx-auto">
             {serviceDescription || "Find the best vendors for your event"}
           </p>

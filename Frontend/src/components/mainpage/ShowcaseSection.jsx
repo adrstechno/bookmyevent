@@ -1,10 +1,45 @@
-
-
 import { useState, useEffect } from 'react';
+import React from 'react';
 import CircularGallery from './CircularGallery';
-
 import { useNavigate } from 'react-router-dom';
 
+// Error Boundary Component for CircularGallery
+class CircularGalleryErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('CircularGallery Error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center p-8">
+            <p className="text-gray-600 mb-4">
+              Unable to load 3D gallery. Your browser may not support WebGL.
+            </p>
+            <button
+              onClick={() => this.setState({ hasError: false })}
+              className="bg-[#284b63] text-white px-6 py-2 rounded-lg hover:bg-[#3c6e71] transition"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 const images = [
   { image: "/images/event/event1.jpg", text: "Dj Show" },
@@ -39,6 +74,7 @@ const ShowcaseSection = () => {
     height: typeof window !== 'undefined' ? window.innerHeight : 768
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [webGLError, setWebGLError] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -48,9 +84,29 @@ const ShowcaseSection = () => {
       });
     };
 
+    // Check WebGL support
+    const checkWebGLSupport = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        if (!gl) {
+          setWebGLError(true);
+          setIsLoading(false);
+          return false;
+        }
+        return true;
+      } catch (e) {
+        setWebGLError(true);
+        setIsLoading(false);
+        return false;
+      }
+    };
+
     // Simulate loading time for WebGL initialization
     const timer = setTimeout(() => {
-      setIsLoading(false);
+      if (checkWebGLSupport()) {
+        setIsLoading(false);
+      }
     }, 500);
 
     window.addEventListener('resize', handleResize);
@@ -112,28 +168,41 @@ const ShowcaseSection = () => {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#f9a826]"></div>
           </div>
         )}
-        <CircularGallery 
-          items={categoryImages}
-          bend={gallerySettings.bend} 
-          textColor="#3C6E71" 
-          borderRadius={0.05} 
-          scrollEase={gallerySettings.scrollEase}
-          scrollSpeed={gallerySettings.scrollSpeed}
-          onItemClick={handleCategoryClick}
-        />
+        {!isLoading && !webGLError && (
+          <CircularGalleryErrorBoundary>
+            <CircularGallery 
+              items={categoryImages}
+              bend={gallerySettings.bend} 
+              textColor="#3C6E71" 
+              borderRadius={0.05} 
+              scrollEase={gallerySettings.scrollEase}
+              scrollSpeed={gallerySettings.scrollSpeed}
+              onItemClick={handleCategoryClick}
+            />
+          </CircularGalleryErrorBoundary>
+        )}
+        {webGLError && (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center p-8">
+              <p className="text-gray-600 mb-4">
+                3D Gallery requires WebGL support. Showing grid view instead.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Mobile Category Grid - Fallback for devices that don't support WebGL well */}
-      <div className="block sm:hidden mt-8 mobile-category-grid">
+      {/* Mobile Category Grid - Also shown when WebGL fails */}
+      <div className={`mt-8 mobile-category-grid ${!webGLError ? 'block sm:hidden' : 'block'}`}>
         <h3 className="text-lg font-semibold text-[#284b63] mb-4 text-center">
           Explore Categories
         </h3>
-        <div className="grid grid-cols-2 gap-4">
-          {categoryImages.slice(0, 6).map((item, index) => (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-w-6xl mx-auto px-4">
+          {categoryImages.map((item, index) => (
             <button
               key={index}
               onClick={() => handleCategoryClick(item.route)}
-              className="mobile-category-item relative bg-white shadow-md hover:shadow-lg transition-all duration-300 active:scale-95"
+              className="mobile-category-item relative bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 active:scale-95 overflow-hidden h-40"
             >
               <img
                 src={item.image}
@@ -151,7 +220,7 @@ const ShowcaseSection = () => {
         </div>
         <div className="mt-4 text-center">
           <p className="text-xs text-gray-500">
-            Tap any category to explore our services
+            {webGLError ? 'Click any category to explore our services' : 'Tap any category to explore our services'}
           </p>
         </div>
       </div>

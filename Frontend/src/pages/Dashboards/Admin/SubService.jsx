@@ -128,11 +128,8 @@ export default function MainServices() {
       setLoading(true);
       const formData = new FormData();
       
-      // Append each service_category_id individually as an array
-      subserviceForm.service_category_ids.forEach((id) => {
-        formData.append("service_category_ids[]", id);
-      });
-      
+      // Send as JSON string array - backend expects this format
+      formData.append("service_category_ids", JSON.stringify(subserviceForm.service_category_ids));
       formData.append("subservice_name", subserviceForm.subservice_name);
       formData.append("description", subserviceForm.description);
       formData.append("icon_url", subserviceForm.icon_url);
@@ -143,7 +140,6 @@ export default function MainServices() {
       console.log('- subservice_name:', subserviceForm.subservice_name);
       console.log('- description:', subserviceForm.description);
       console.log('- is_active:', subserviceForm.is_active ? 1 : 0);
-      console.log('- icon_url file:', subserviceForm.icon_url);
 
       await axios.post(`${VITE_API_BASE_URL}/Service/CreateSubservice`, formData, {
         headers: { "Content-Type": "multipart/form-data" },

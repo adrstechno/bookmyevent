@@ -316,20 +316,31 @@ class App {
       onItemClick
     } = {}
   ) {
+    // Safety check for container
+    if (!container) {
+      throw new Error('CircularGallery: Container element is required');
+    }
+
     document.documentElement.classList.remove('no-js');
     this.container = container;
     this.scrollSpeed = scrollSpeed;
     this.scroll = { ease: scrollEase, current: 0, target: 0, last: 0 };
     this.onItemClick = onItemClick;
     this.onCheckDebounce = debounce(this.onCheck, 200);
-    this.createRenderer();
-    this.createCamera();
-    this.createScene();
-    this.onResize();
-    this.createGeometry();
-    this.createMedias(items, bend, textColor, borderRadius, font);
-    this.update();
-    this.addEventListeners();
+    
+    try {
+      this.createRenderer();
+      this.createCamera();
+      this.createScene();
+      this.onResize();
+      this.createGeometry();
+      this.createMedias(items, bend, textColor, borderRadius, font);
+      this.update();
+      this.addEventListeners();
+    } catch (error) {
+      console.error('CircularGallery App initialization error:', error);
+      throw error;
+    }
   }
 
   createRenderer() {
@@ -337,14 +348,32 @@ class App {
     const isMobile = window.innerWidth < 768;
     const dpr = isMobile ? Math.min(window.devicePixelRatio || 1, 1.5) : Math.min(window.devicePixelRatio || 1, 2);
     
-    this.renderer = new Renderer({
-      alpha: true,
-      antialias: !isMobile, // Disable antialias on mobile for better performance
-      dpr: dpr
-    });
-    this.gl = this.renderer.gl;
-    this.gl.clearColor(0, 0, 0, 0);
-    this.container.appendChild(this.gl.canvas);
+    try {
+      this.renderer = new Renderer({
+        alpha: true,
+        antialias: !isMobile, // Disable antialias on mobile for better performance
+        dpr: dpr
+      });
+      
+      this.gl = this.renderer.gl;
+      
+      if (!this.gl || !this.gl.canvas) {
+        console.error('unable to create webgl context');
+        throw new Error('Failed to create WebGL context');
+      }
+      
+      this.gl.clearColor(0, 0, 0, 0);
+      
+      // Ensure container exists before appending
+      if (this.container && this.gl.canvas) {
+        this.container.appendChild(this.gl.canvas);
+      } else {
+        throw new Error('Cannot append canvas: container or canvas is null');
+      }
+    } catch (error) {
+      console.error('unable to create webgl context');
+      throw new Error('WebGL initialization failed: ' + error.message);
+    }
   }
 
   createCamera() {
@@ -550,25 +579,46 @@ class App {
   }
 
   destroy() {
-    window.cancelAnimationFrame(this.raf);
-    window.removeEventListener('resize', this.boundOnResize);
-    
-    // Remove event listeners from canvas
-    if (this.gl && this.gl.canvas) {
-      this.gl.canvas.removeEventListener('mousewheel', this.boundOnWheel);
-      this.gl.canvas.removeEventListener('wheel', this.boundOnWheel);
-      this.gl.canvas.removeEventListener('mousedown', this.boundOnTouchDown);
-      this.gl.canvas.removeEventListener('touchstart', this.boundOnTouchDown);
-    }
-    
-    // Remove window event listeners
-    window.removeEventListener('mousemove', this.boundOnTouchMove);
-    window.removeEventListener('mouseup', this.boundOnTouchUp);
-    window.removeEventListener('touchmove', this.boundOnTouchMove);
-    window.removeEventListener('touchend', this.boundOnTouchUp);
+    try {
+      if (this.raf) {
+        window.cancelAnimationFrame(this.raf);
+      }
+      
+      if (this.boundOnResize) {
+        window.removeEventListener('resize', this.boundOnResize);
+      }
+      
+      // Remove event listeners from canvas
+      if (this.gl && this.gl.canvas) {
+        if (this.boundOnWheel) {
+          this.gl.canvas.removeEventListener('mousewheel', this.boundOnWheel);
+          this.gl.canvas.removeEventListener('wheel', this.boundOnWheel);
+        }
+        if (this.boundOnTouchDown) {
+          this.gl.canvas.removeEventListener('mousedown', this.boundOnTouchDown);
+          this.gl.canvas.removeEventListener('touchstart', this.boundOnTouchDown);
+        }
+      }
+      
+      // Remove window event listeners
+      if (this.boundOnTouchMove) {
+        window.removeEventListener('mousemove', this.boundOnTouchMove);
+        window.removeEventListener('touchmove', this.boundOnTouchMove);
+      }
+      if (this.boundOnTouchUp) {
+        window.removeEventListener('mouseup', this.boundOnTouchUp);
+        window.removeEventListener('touchend', this.boundOnTouchUp);
+      }
 
-    if (this.renderer && this.renderer.gl && this.renderer.gl.canvas.parentNode) {
-      this.renderer.gl.canvas.parentNode.removeChild(this.renderer.gl.canvas);
+      // Remove canvas from DOM
+      if (this.renderer && this.renderer.gl && this.renderer.gl.canvas) {
+        const canvas = this.renderer.gl.canvas;
+        if (canvas.parentNode) {
+          canvas.parentNode.removeChild(canvas);
+        }
+      }
+    } catch (error) {
+      console.error('Error during CircularGallery cleanup:', error);
     }
   }
 }
@@ -584,21 +634,44 @@ export default function CircularGallery({
   onItemClick
 }) {
   const containerRef = useRef(null);
+  const appRef = useRef(null);
 
   useEffect(() => {
-    const app = new App(containerRef.current, { 
-      items, 
-      bend, 
-      textColor, 
-      borderRadius, 
-      font, 
-      scrollSpeed, 
-      scrollEase,
-      onItemClick 
-    });
-    return () => {
-      app.destroy();
-    };
+    // Safety check: ensure container exists and has dimensions
+    if (!containerRef.current) {
+      console.warn('CircularGallery: Container ref is null');
+      return;
+    }
+
+    // Check if container has dimensions
+    const rect = containerRef.current.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) {
+      console.warn('CircularGallery: Container has no dimensions');
+      return;
+    }
+
+    try {
+      const app = new App(containerRef.current, { 
+        items, 
+        bend, 
+        textColor, 
+        borderRadius, 
+        font, 
+        scrollSpeed, 
+        scrollEase,
+        onItemClick 
+      });
+      appRef.current = app;
+      
+      return () => {
+        if (appRef.current) {
+          appRef.current.destroy();
+          appRef.current = null;
+        }
+      };
+    } catch (error) {
+      console.error('CircularGallery initialization error:', error);
+    }
   }, [items, bend, textColor, borderRadius, font, scrollSpeed, scrollEase, onItemClick]);
 
   return <div className="w-full h-full overflow-hidden cursor-pointer select-none" ref={containerRef} />;

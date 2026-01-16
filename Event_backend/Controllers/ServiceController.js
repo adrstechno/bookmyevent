@@ -151,11 +151,20 @@ export const deleteService = (req, res) => {
     });
 }
 
-    // function to create Subservices
-   export const  createSubservice = (req, res) => {
+// function to create Subservices
+export const createSubservice = (req, res) => {
     try {
-        const { service_category_ids, subservice_name, description, is_active } = req.body;
+        let { service_category_ids, subservice_name, description, is_active } = req.body;
         const icon_url = req.file ? req.file.path : null;
+
+        // Parse service_category_ids if it's a JSON string
+        if (typeof service_category_ids === 'string') {
+            try {
+                service_category_ids = JSON.parse(service_category_ids);
+            } catch (e) {
+                return res.status(400).json({ error: 'Invalid service_category_ids format' });
+            }
+        }
 
         // ✅ Validations
         if (!Array.isArray(service_category_ids) || service_category_ids.length === 0) {
@@ -187,6 +196,8 @@ export const deleteService = (req, res) => {
             parseInt(is_active)
         ]));
 
+        console.log('💾 Inserting subservice rows:', subserviceRows);
+
         // ✅ Call model
         ServiceModel.createSubservice(subserviceRows, (err, result) => {
             if (err) {
@@ -208,8 +219,6 @@ export const deleteService = (req, res) => {
         console.error('❌ Server Error:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
-
-
 }
 
 export const GetsubservicesByServiceCategoryId = (req, res) => {
