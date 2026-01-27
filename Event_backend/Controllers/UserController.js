@@ -162,7 +162,7 @@ import UserModel from "../Models/UserModel.js";
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
 import { verifyToken, generateToken } from "../Utils/Verification.js";
-import EmailService from "../Services/EmailService.js";
+import EmailService from "../Services/emailService.js";
 import EmailVerificationService from "../Utils/emailVerification.js";
 import db from "../Config/DatabaseCon.js";
 

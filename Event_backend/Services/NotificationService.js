@@ -1,5 +1,5 @@
 import NotificationModel from "../Models/NotificationModel_fixed.js";
-import EmailService from "./EmailService.js";
+import EmailService from "./emailService.js";
 import db from "../Config/DatabaseCon.js";
 
 class NotificationService {
