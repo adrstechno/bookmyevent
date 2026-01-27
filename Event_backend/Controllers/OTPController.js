@@ -196,6 +196,15 @@ class OTPController {
                 package_name: booking.package_name
             });
 
+            // Send notification to user to add review after booking is confirmed
+            await NotificationService.notifyReviewReminder({
+                booking_id,
+                user_id: booking.user_id,
+                vendor_name: booking.business_name,
+                event_date: booking.event_date,
+                package_name: booking.package_name
+            });
+
             res.status(200).json({
                 success: true,
                 message: 'OTP verified successfully. Booking confirmed!',

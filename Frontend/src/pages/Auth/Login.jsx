@@ -1,7 +1,7 @@
 
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { VITE_API_BASE_URL } from "../../utils/api";
@@ -15,6 +15,7 @@ axios.defaults.withCredentials = true;
 
 const Login = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { login } = useAuth();
 
   const [formData, setFormData] = useState({
@@ -70,36 +71,67 @@ const Login = () => {
       if (res.data?.token) {
         toast.success("Login Successful");
         
-        // Use AuthContext login method
+        // Use AuthContext login method with correct data structure
         login({
           token: res.data.token,
-          user: {
-            role: res.data.role,
-            email: formData.email
-          }
+          role: res.data.role,
+          email: res.data.email || formData.email,
+          user_id: res.data.user_id,
+          first_name: res.data.first_name,
+          last_name: res.data.last_name
         });
-
-        // Also store role in localStorage for ProtectedRoute
-        localStorage.setItem("role", res.data.role);
 
         const role = res.data.role;
 
-        // Navigate immediately after successful login
-        if (role === "admin") {
-          navigate("/admin/dashboard");
-        } else if (role === "user") {
-          navigate("/");
-        } else if (role === "vendor") {
-          navigate("/vendor/dashboard");
-        } else {
-          navigate("/");
-        }
+        // Add a small delay to ensure state is updated
+        setTimeout(() => {
+          // Check for redirect URL first
+          const redirectUrl = searchParams.get('redirect');
+          if (redirectUrl) {
+            navigate(decodeURIComponent(redirectUrl));
+            return;
+          }
+
+          // Navigate based on role if no redirect URL
+          if (role === "admin") {
+            navigate("/admin/dashboard");
+          } else if (role === "user") {
+            navigate("/user/dashboard");
+          } else if (role === "vendor") {
+            navigate("/vendor/dashboard");
+          } else {
+            navigate("/");
+          }
+        }, 100);
       } else {
         toast.error("Invalid credentials");
       }
     } catch (error) {
       console.error("Login Error:", error);
-      toast.error(error.response?.data?.message || error.response?.data?.error || "Something went wrong");
+      
+      // Handle email verification requirement
+      if (error.response?.status === 403 && error.response?.data?.requiresVerification) {
+        toast.error(error.response.data.message);
+        
+        // Show resend verification option
+        const shouldResend = window.confirm(
+          "Would you like to resend the verification email?"
+        );
+        
+        if (shouldResend) {
+          try {
+            await axios.post(`${VITE_API_BASE_URL}/User/resend-verification`, {
+              email: error.response.data.email || formData.email
+            });
+            toast.success("Verification email sent! Please check your inbox.");
+          } catch (resendError) {
+            console.error("Resend verification error:", resendError);
+            toast.error("Failed to resend verification email. Please try again.");
+          }
+        }
+      } else {
+        toast.error(error.response?.data?.message || error.response?.data?.error || "Something went wrong");
+      }
     } finally {
       setLoading(false);
     }

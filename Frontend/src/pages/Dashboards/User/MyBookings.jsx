@@ -451,7 +451,14 @@ const MyBookings = () => {
         </div>
       )}
 
-      <ReviewModal isOpen={showReviewModal} onClose={() => { setShowReviewModal(false); setSelectedBookingForReview(null); }} bookingId={selectedBookingForReview?.booking_id} vendorName={selectedBookingForReview?.vendor_name || selectedBookingForReview?.business_name} onSuccess={handleReviewSuccess} />
+      <ReviewModal 
+        booking={selectedBookingForReview} 
+        onClose={() => { 
+          setShowReviewModal(false); 
+          setSelectedBookingForReview(null); 
+        }} 
+        onSuccess={handleReviewSuccess} 
+      />
     </div>
   );
 };

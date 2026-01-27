@@ -162,7 +162,9 @@ import UserModel from "../Models/UserModel.js";
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
 import { verifyToken, generateToken } from "../Utils/Verification.js";
-import { sendRegistrationEmail } from "../Services/emailService.js";
+import EmailService from "../Services/EmailService.js";
+import EmailVerificationService from "../Utils/emailVerification.js";
+import db from "../Config/DatabaseCon.js";
 
 /* ------------------ REGISTER USER ------------------ */
 export const insertUser = async (req, res) => {
@@ -215,21 +217,41 @@ export const insertUser = async (req, res) => {
         return res.status(500).json({ message: "Database insertion error" });
       }
 
-      // 8️⃣ Send registration email (optional, don't block registration)
+      // 8️⃣ Send email verification (don't block registration)
       try {
-        await sendRegistrationEmail(
+        const verificationToken = EmailVerificationService.generateVerificationToken(
+          userData.email, 
+          userData.uuid
+        );
+        
+        await EmailService.sendEmailVerification({
+          userEmail: userData.email,
+          userName: userData.first_name,
+          verificationToken,
+          userType: userData.user_type || userData.userType || 'user'
+        });
+        
+        console.log('Email verification sent to:', userData.email);
+      } catch (emailErr) {
+        console.error("Error sending email verification:", emailErr.message);
+      }
+
+      // 9️⃣ Send registration welcome email (optional)
+      try {
+        await EmailService.sendRegistrationEmail(
           userData.email,
           userData.first_name,
-          userData.user_type || userData.userType
+          userData.user_type || userData.userType || 'user'
         );
       } catch (emailErr) {
         console.error("Error sending registration email:", emailErr.message);
       }
 
-      // 9️⃣ Send success response
+      // 🔟 Send success response
       return res.status(201).json({
-        message: "Registration successful",
+        message: "Registration successful! Please check your email to verify your account.",
         userId: results.insertId,
+        requiresVerification: true
       });
     });
   } catch (err) {
@@ -263,6 +285,15 @@ export const login = (req, res) => {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
+    // Check if email is verified (optional - you can make this mandatory)
+    if (!user.is_verified) {
+      return res.status(403).json({ 
+        message: "Please verify your email address before logging in. Check your inbox for the verification link.",
+        requiresVerification: true,
+        email: user.email
+      });
+    }
+
     const token = generateToken(user.uuid);
     const isProd = process.env.NODE_ENV === "production";
 
@@ -278,6 +309,9 @@ export const login = (req, res) => {
       token,
       role: user.user_type,
       user_id: user.uuid,
+      email: user.email,
+      first_name: user.first_name,
+      last_name: user.last_name,
     });
   });
 };
@@ -336,5 +370,349 @@ export const ChangePassword = async (req, res) => {
   } catch (err) {
     console.error("ChangePassword error:", err);
     return res.status(500).json({ message: "Server error", details: err.message });
+  }
+};
+
+/* ------------------ EMAIL VERIFICATION ------------------ */
+export const verifyEmail = async (req, res) => {
+  try {
+    const { token } = req.query;
+
+    if (!token) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Verification token is required" 
+      });
+    }
+
+    // Verify the token
+    const tokenVerification = EmailVerificationService.verifyEmailToken(token);
+    if (!tokenVerification.success) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Invalid or expired verification token" 
+      });
+    }
+
+    const { email, user_id } = tokenVerification.data;
+
+    // Check if user exists
+    const user = await new Promise((resolve, reject) => {
+      UserModel.findonebyemail(email, (err, result) => {
+        if (err) return reject(err);
+        resolve(result && result.length > 0 ? result[0] : null);
+      });
+    });
+
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "User not found" 
+      });
+    }
+
+    if (user.is_verified) {
+      return res.status(200).json({ 
+        success: true, 
+        message: "Email is already verified" 
+      });
+    }
+
+    // Update user verification status
+    await new Promise((resolve, reject) => {
+      UserModel.updateVerificationStatus(user.uuid, true, (err, result) => {
+        if (err) reject(err);
+        else resolve(result);
+      });
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Email verified successfully! You can now access all features."
+    });
+
+  } catch (err) {
+    console.error("Email verification error:", err);
+    return res.status(500).json({ 
+      success: false, 
+      message: "Server error", 
+      details: err.message 
+    });
+  }
+};
+
+/* ------------------ RESEND EMAIL VERIFICATION ------------------ */
+export const resendEmailVerification = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Email is required" 
+      });
+    }
+
+    // Check if user exists
+    const user = await new Promise((resolve, reject) => {
+      UserModel.findonebyemail(email, (err, result) => {
+        if (err) return reject(err);
+        resolve(result && result.length > 0 ? result[0] : null);
+      });
+    });
+
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "User not found" 
+      });
+    }
+
+    if (user.is_verified) {
+      return res.status(200).json({ 
+        success: true, 
+        message: "Email is already verified" 
+      });
+    }
+
+    // Generate new verification token
+    const verificationToken = EmailVerificationService.generateVerificationToken(
+      user.email, 
+      user.uuid
+    );
+    
+    // Send verification email
+    await EmailService.sendEmailVerification({
+      userEmail: user.email,
+      userName: user.first_name,
+      verificationToken,
+      userType: user.user_type
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Verification email sent successfully! Please check your inbox."
+    });
+
+  } catch (err) {
+    console.error("Resend verification error:", err);
+    return res.status(500).json({ 
+      success: false, 
+      message: "Server error", 
+      details: err.message 
+    });
+  }
+};
+
+/* ------------------ TEST EMAIL FUNCTIONALITY ------------------ */
+export const testEmail = async (req, res) => {
+  try {
+    const { email, type = 'test' } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Email is required" 
+      });
+    }
+
+    console.log('Testing email functionality...');
+    console.log('Email service config check...');
+    
+    // Test email service configuration
+    const configTest = await EmailService.testEmailConfig();
+    console.log('Email config test result:', configTest);
+
+    if (!configTest.success) {
+      return res.status(500).json({
+        success: false,
+        message: "Email service configuration error",
+        details: configTest.error
+      });
+    }
+
+    // Send test email based on type
+    let result;
+    switch (type) {
+      case 'vendor-booking':
+        result = await EmailService.sendVendorBookingNotification({
+          vendorEmail: email,
+          vendorName: 'Test Vendor',
+          userName: 'Test User',
+          userEmail: 'testuser@example.com',
+          userPhone: '9876543210',
+          packageName: 'Test Package',
+          eventDate: new Date().toISOString().split('T')[0],
+          eventTime: '10:00 AM',
+          amount: '50000',
+          bookingId: 'TEST123',
+          bookingUuid: 'test-uuid-123'
+        });
+        break;
+
+      case 'vendor-approval':
+        result = await EmailService.sendVendorBookingApprovalNotification({
+          vendorEmail: email,
+          vendorName: 'Test Vendor',
+          businessName: 'Test Business',
+          bookingId: 'TEST123',
+          packageName: 'Test Package',
+          eventDate: new Date().toISOString().split('T')[0],
+          customerName: 'Test Customer'
+        });
+        break;
+      
+      case 'verification':
+        const verificationToken = EmailVerificationService.generateVerificationToken(email, 'test-user-id');
+        result = await EmailService.sendEmailVerification({
+          userEmail: email,
+          userName: 'Test User',
+          verificationToken,
+          userType: 'user'
+        });
+        break;
+      
+      default:
+        result = await EmailService.sendRegistrationEmail(email, 'Test User', 'user');
+    }
+
+    console.log('Email send result:', result);
+
+    return res.status(200).json({
+      success: true,
+      message: `Test email sent successfully to ${email}`,
+      details: result
+    });
+
+  } catch (err) {
+    console.error("Test email error:", err);
+    return res.status(500).json({ 
+      success: false, 
+      message: "Failed to send test email", 
+      details: err.message 
+    });
+  }
+};
+
+/* ------------------ DEBUG VENDOR DATA ------------------ */
+export const debugVendorData = async (req, res) => {
+  try {
+    const { vendor_id } = req.params;
+
+    if (!vendor_id) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "vendor_id is required" 
+      });
+    }
+
+    console.log('Debugging vendor data for vendor_id:', vendor_id);
+
+    // Test the vendor query
+    const vendorQuery = `
+      SELECT u.first_name, u.last_name, u.email, vp.vendor_id, vp.business_name, vp.user_id
+      FROM vendor_profiles vp 
+      JOIN users u ON vp.user_id = u.user_id 
+      WHERE vp.vendor_id = ?
+    `;
+    
+    const vendorResult = await new Promise((resolve, reject) => {
+      db.query(vendorQuery, [vendor_id], (err, results) => {
+        if (err) reject(err);
+        else resolve(results);
+      });
+    });
+
+    console.log('Vendor query result:', vendorResult);
+
+    // Also check if vendor exists in vendor_profiles
+    const profileQuery = `SELECT * FROM vendor_profiles WHERE vendor_id = ?`;
+    const profileResult = await new Promise((resolve, reject) => {
+      db.query(profileQuery, [vendor_id], (err, results) => {
+        if (err) reject(err);
+        else resolve(results);
+      });
+    });
+
+    console.log('Vendor profile result:', profileResult);
+
+    return res.status(200).json({
+      success: true,
+      message: "Vendor debug data retrieved",
+      data: {
+        vendor_id,
+        vendorJoinResult: vendorResult,
+        vendorProfileResult: profileResult,
+        vendorFound: vendorResult && vendorResult.length > 0,
+        profileFound: profileResult && profileResult.length > 0
+      }
+    });
+
+  } catch (err) {
+    console.error("Debug vendor data error:", err);
+    return res.status(500).json({ 
+      success: false, 
+      message: "Failed to debug vendor data", 
+      details: err.message 
+    });
+  }
+};
+
+/* ------------------ VALIDATE TOKEN ------------------ */
+export const validateToken = async (req, res) => {
+  try {
+    const token = req.cookies.auth_token || req.headers.authorization?.replace('Bearer ', '');
+
+    if (!token) {
+      return res.status(401).json({ 
+        success: false, 
+        message: "No token provided" 
+      });
+    }
+
+    // Verify the token
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return res.status(401).json({ 
+        success: false, 
+        message: "Invalid or expired token" 
+      });
+    }
+
+    // Get user data to ensure user still exists
+    const user = await new Promise((resolve, reject) => {
+      UserModel.findByUuid(decoded.uuid, (err, result) => {
+        if (err) return reject(err);
+        resolve(result && result.length > 0 ? result[0] : null);
+      });
+    });
+
+    if (!user) {
+      return res.status(401).json({ 
+        success: false, 
+        message: "User not found" 
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Token is valid",
+      user: {
+        uuid: user.uuid,
+        email: user.email,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        user_type: user.user_type,
+        is_verified: user.is_verified
+      }
+    });
+
+  } catch (err) {
+    console.error("Token validation error:", err);
+    return res.status(401).json({ 
+      success: false, 
+      message: "Token validation failed", 
+      details: err.message 
+    });
   }
 };

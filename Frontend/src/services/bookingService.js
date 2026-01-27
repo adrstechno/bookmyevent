@@ -55,8 +55,8 @@ const bookingService = {
   },
 
   // Vendor: Reject booking - uses enhanced route
-  rejectBooking: async (bookingId) => {
-    const response = await api.put(`/bookings/${bookingId}/reject`);
+  rejectBooking: async (bookingId, reason = "Rejected by vendor") => {
+    const response = await api.put(`/bookings/${bookingId}/reject`, { reason });
     return response.data;
   },
 
@@ -67,8 +67,8 @@ const bookingService = {
   },
 
   // Admin: Reject booking - uses enhanced route
-  adminRejectBooking: async (bookingId) => {
-    const response = await api.put(`/bookings/${bookingId}/admin-reject`);
+  adminRejectBooking: async (bookingId, reason = "Rejected by admin") => {
+    const response = await api.put(`/bookings/${bookingId}/admin-reject`, { reason });
     return response.data;
   },
 

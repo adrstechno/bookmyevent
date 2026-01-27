@@ -1,4 +1,6 @@
 import NotificationModel from "../Models/NotificationModel_fixed.js";
+import EmailService from "./EmailService.js";
+import db from "../Config/DatabaseCon.js";
 
 class NotificationService {
     // Notification types
@@ -104,7 +106,7 @@ class NotificationService {
         });
     }
 
-    // 4. Admin approves booking -> Notify user and vendor
+    // 4. Admin approves booking -> Notify user and vendor and send confirmation email
     static async notifyBookingApproved(bookingData) {
         const { booking_id, user_id, vendor_id, vendor_name, event_date, package_name } = bookingData;
         
@@ -112,8 +114,8 @@ class NotificationService {
             // Notify user
             {
                 user_id: user_id,
-                title: 'Booking Approved',
-                message: `Your booking with ${vendor_name} for ${package_name} on ${event_date} has been approved! You will receive an OTP for verification.`,
+                title: 'Booking Approved by Admin! 🎉',
+                message: `Great news! Your booking with ${vendor_name} for ${package_name} on ${event_date} has been approved by our admin team. You will receive an OTP for verification on the event day.`,
                 type: this.NOTIFICATION_TYPES.BOOKING_APPROVED,
                 related_booking_id: booking_id,
                 metadata: { booking_id, vendor_name, event_date, package_name }
@@ -122,7 +124,7 @@ class NotificationService {
             {
                 user_id: `vendor_${vendor_id}`,
                 title: 'Booking Approved by Admin',
-                message: `The booking for ${package_name} on ${event_date} has been approved by admin. OTP verification will begin soon.`,
+                message: `The booking for ${package_name} on ${event_date} has been approved by admin. OTP verification will begin on the event day.`,
                 type: this.NOTIFICATION_TYPES.BOOKING_APPROVED,
                 related_booking_id: booking_id,
                 metadata: { booking_id, event_date, package_name }
@@ -130,6 +132,34 @@ class NotificationService {
         ];
 
         await this.sendBulkNotifications(notifications);
+
+        // Send booking confirmation email
+        try {
+            // Get user email from database
+            const userQuery = `SELECT email, first_name, last_name FROM users WHERE uuid = ?`;
+            const userResult = await new Promise((resolve, reject) => {
+                db.query(userQuery, [user_id], (err, results) => {
+                    if (err) reject(err);
+                    else resolve(results);
+                });
+            });
+
+            if (userResult && userResult.length > 0) {
+                const user = userResult[0];
+                await EmailService.sendBookingConfirmationEmail({
+                    userEmail: user.email,
+                    userName: `${user.first_name} ${user.last_name}`,
+                    vendorName: vendor_name,
+                    eventDate: event_date,
+                    packageName: package_name,
+                    bookingId: booking_id
+                });
+                console.log(`Booking confirmation email sent to ${user.email}`);
+            }
+        } catch (emailError) {
+            console.error('Failed to send booking confirmation email:', emailError);
+            // Don't throw error - notifications were created successfully
+        }
     }
 
     // 5. Admin rejects booking -> Notify user and vendor
@@ -213,10 +243,11 @@ class NotificationService {
 
     // OTP NOTIFICATIONS
 
-    // 7. OTP generated -> Notify user
+    // 7. OTP generated -> Notify user and send email
     static async notifyOTPGenerated(otpData) {
         const { booking_id, user_id, otp_code, vendor_name, event_date, expires_at } = otpData;
         
+        // Create notification
         await NotificationModel.createNotification({
             user_id: user_id,
             title: 'OTP Code for Booking Verification',
@@ -232,9 +263,38 @@ class NotificationService {
                 sensitive: true
             }
         });
+
+        // Send email with OTP
+        try {
+            // Get user email from database
+            const userQuery = `SELECT email, first_name, last_name FROM users WHERE uuid = ?`;
+            const userResult = await new Promise((resolve, reject) => {
+                db.query(userQuery, [user_id], (err, results) => {
+                    if (err) reject(err);
+                    else resolve(results);
+                });
+            });
+
+            if (userResult && userResult.length > 0) {
+                const user = userResult[0];
+                await EmailService.sendOTPEmail({
+                    userEmail: user.email,
+                    userName: `${user.first_name} ${user.last_name}`,
+                    otpCode: otp_code,
+                    vendorName: vendor_name,
+                    eventDate: event_date,
+                    expiresAt: expires_at,
+                    bookingId: booking_id
+                });
+                console.log(`OTP email sent to ${user.email}`);
+            }
+        } catch (emailError) {
+            console.error('Failed to send OTP email:', emailError);
+            // Don't throw error - notification was created successfully
+        }
     }
 
-    // 8. OTP verified -> Notify user, vendor, admin
+    // 8. OTP verified -> Notify user, vendor, admin and send work completion email
     static async notifyOTPVerified(otpData) {
         const { booking_id, user_id, vendor_id, vendor_name, event_date, package_name } = otpData;
         
@@ -242,8 +302,8 @@ class NotificationService {
             // Notify user
             {
                 user_id: user_id,
-                title: 'Booking Confirmed!',
-                message: `Your booking with ${vendor_name} for ${package_name} on ${event_date} has been confirmed via OTP verification.`,
+                title: 'Service Completed Successfully! 🎉',
+                message: `Your service with ${vendor_name} for ${package_name} on ${event_date} has been completed and verified. Please share your experience by leaving a review!`,
                 type: this.NOTIFICATION_TYPES.OTP_VERIFIED,
                 related_booking_id: booking_id,
                 metadata: { booking_id, vendor_name, event_date, package_name }
@@ -251,8 +311,8 @@ class NotificationService {
             // Notify vendor
             {
                 user_id: `vendor_${vendor_id}`,
-                title: 'Booking Confirmed',
-                message: `OTP verification completed! The booking for ${package_name} on ${event_date} is now confirmed.`,
+                title: 'Service Completed Successfully',
+                message: `OTP verification completed! Your service for ${package_name} on ${event_date} has been successfully completed and verified.`,
                 type: this.NOTIFICATION_TYPES.OTP_VERIFIED,
                 related_booking_id: booking_id,
                 metadata: { booking_id, event_date, package_name }
@@ -260,8 +320,8 @@ class NotificationService {
             // Notify admin
             {
                 user_id: 'admin',
-                title: 'Booking Confirmed via OTP',
-                message: `Booking between ${otpData.user_name} and ${vendor_name} for ${event_date} has been confirmed via OTP verification.`,
+                title: 'Service Completed via OTP',
+                message: `Service between ${otpData.user_name} and ${vendor_name} for ${event_date} has been completed and verified via OTP.`,
                 type: this.NOTIFICATION_TYPES.OTP_VERIFIED,
                 related_booking_id: booking_id,
                 metadata: {
@@ -274,6 +334,34 @@ class NotificationService {
         ];
 
         await this.sendBulkNotifications(notifications);
+
+        // Send work completion email with review link
+        try {
+            // Get user email from database
+            const userQuery = `SELECT email, first_name, last_name FROM users WHERE uuid = ?`;
+            const userResult = await new Promise((resolve, reject) => {
+                db.query(userQuery, [user_id], (err, results) => {
+                    if (err) reject(err);
+                    else resolve(results);
+                });
+            });
+
+            if (userResult && userResult.length > 0) {
+                const user = userResult[0];
+                await EmailService.sendWorkCompletionEmail({
+                    userEmail: user.email,
+                    userName: `${user.first_name} ${user.last_name}`,
+                    vendorName: vendor_name,
+                    eventDate: event_date,
+                    packageName: package_name,
+                    bookingId: booking_id
+                });
+                console.log(`Work completion email sent to ${user.email}`);
+            }
+        } catch (emailError) {
+            console.error('Failed to send work completion email:', emailError);
+            // Don't throw error - notifications were created successfully
+        }
     }
 
     // 9. OTP reminder -> Notify vendor
@@ -338,14 +426,15 @@ class NotificationService {
         await this.sendBulkNotifications(notifications);
     }
 
-    // 11. Review submission reminder -> Notify user
+    // 11. Review submission reminder -> Notify user and send email
     static async notifyReviewReminder(bookingData) {
         const { booking_id, user_id, vendor_name, event_date, package_name } = bookingData;
         
+        // Create notification
         await NotificationModel.createNotification({
             user_id: user_id,
-            title: 'Share Your Experience',
-            message: `How was your experience with ${vendor_name} for ${package_name} on ${event_date}? Please leave a review to help other customers.`,
+            title: 'Share Your Experience! ⭐',
+            message: `How was your experience with ${vendor_name} for ${package_name} on ${event_date}? Click here to leave a review and help other customers!`,
             type: this.NOTIFICATION_TYPES.BOOKING_COMPLETION_REMINDER,
             related_booking_id: booking_id,
             metadata: {
@@ -356,6 +445,34 @@ class NotificationService {
                 action_required: true
             }
         });
+
+        // Send review reminder email
+        try {
+            // Get user email from database
+            const userQuery = `SELECT email, first_name, last_name FROM users WHERE uuid = ?`;
+            const userResult = await new Promise((resolve, reject) => {
+                db.query(userQuery, [user_id], (err, results) => {
+                    if (err) reject(err);
+                    else resolve(results);
+                });
+            });
+
+            if (userResult && userResult.length > 0) {
+                const user = userResult[0];
+                await EmailService.sendReviewReminderEmail({
+                    userEmail: user.email,
+                    userName: `${user.first_name} ${user.last_name}`,
+                    vendorName: vendor_name,
+                    eventDate: event_date,
+                    packageName: package_name,
+                    bookingId: booking_id
+                });
+                console.log(`Review reminder email sent to ${user.email}`);
+            }
+        } catch (emailError) {
+            console.error('Failed to send review reminder email:', emailError);
+            // Don't throw error - notification was created successfully
+        }
     }
 
     // ADMIN NOTIFICATIONS

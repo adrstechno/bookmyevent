@@ -766,6 +766,8 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { VITE_API_BASE_URL } from "../../utils/api";
 import NotificationBell from "../NotificationBell";
+import { useAuth } from "../../context/AuthContext";
+import { checkAndCleanAuth } from "../../utils/tokenValidation";
 
 /* ---------------- DATA ---------------- */
 
@@ -795,15 +797,20 @@ const HomeNavbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userRole, setUserRole] = useState("");
-  const [userName, setUserName] = useState("");
   const [isScrolled, setIsScrolled] = useState(false);
 
   const categoriesRef = useRef(null);
   const mobileCategoriesRef = useRef(null);
   const userMenuRef = useRef(null);
   const navigate = useNavigate();
+  
+  // Use AuthContext instead of localStorage
+  const { user, logout: authLogout } = useAuth();
+  
+  // Derive auth state from AuthContext
+  const isLoggedIn = !!user;
+  const userRole = user?.role || "";
+  const userName = user?.first_name || user?.name || "User";
 
   const handleMobileCategoryNavigate = (path) => {
     navigate(path);
@@ -818,29 +825,16 @@ const HomeNavbar = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  /* ---------- Auth ---------- */
+  /* ---------- Validate Auth on Mount ---------- */
   useEffect(() => {
-    const checkAuth = () => {
-      const role = localStorage.getItem("role");
-      const name =
-        localStorage.getItem("name") ||
-        localStorage.getItem("username");
-
-      if (role) {
-        setIsLoggedIn(true);
-        setUserRole(role);
-        setUserName(name || "User");
-      } else {
-        setIsLoggedIn(false);
-        setUserRole("");
-        setUserName("");
-      }
-    };
-
-    checkAuth();
-    window.addEventListener("storage", checkAuth);
-    return () => window.removeEventListener("storage", checkAuth);
-  }, []);
+    // Check if stored auth data is still valid
+    const hasValidAuth = checkAndCleanAuth();
+    if (!hasValidAuth && user) {
+      // If auth is invalid but user is set, logout
+      console.log('Invalid auth detected, logging out');
+      authLogout();
+    }
+  }, [user, authLogout]);
 
   /* ---------- Click Outside ---------- */
   useEffect(() => {
@@ -868,10 +862,12 @@ const HomeNavbar = () => {
         method: "POST",
         credentials: "include",
       });
-    } catch {}
+    } catch (error) {
+      console.log("Logout API failed, but proceeding with client-side cleanup");
+    }
 
-    localStorage.clear();
-    setIsLoggedIn(false);
+    // Use AuthContext logout which will clean up everything
+    authLogout();
     navigate("/");
   };
 

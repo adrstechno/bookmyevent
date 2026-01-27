@@ -59,10 +59,12 @@ const AdminBookings = () => {
   };
 
   const handleReject = async (bookingId) => {
-    if (!window.confirm("Are you sure you want to reject this booking?")) return;
+    const reason = prompt("Please provide a reason for rejection (optional):");
+    if (reason === null) return; // User cancelled
+    
     try {
       setActionLoading(bookingId);
-      await bookingService.adminRejectBooking(bookingId);
+      await bookingService.adminRejectBooking(bookingId, reason || "Rejected by admin");
       toast.success("Booking rejected.");
       fetchBookings();
     } catch (error) {

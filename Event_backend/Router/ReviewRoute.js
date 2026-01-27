@@ -4,7 +4,11 @@ import { authenticateToken } from "../Utils/auth.js";
 
 const router = express.Router();
 
-// Submit review for booking
+// Public route: Submit review using review token (no auth required)
+router.post("/submit-with-token", ReviewController.submitReviewWithToken);
+
+// Submit review for booking (authenticated)
+router.post("/submit", authenticateToken, ReviewController.submitReview);
 router.post("/bookings/:id", authenticateToken, ReviewController.submitReview);
 
 // Get review for booking

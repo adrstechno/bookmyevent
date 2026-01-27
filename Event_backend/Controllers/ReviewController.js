@@ -1,8 +1,140 @@
 import ReviewModel from "../Models/ReviewModel.js";
 import BookingModel from "../Models/BookingModel.js";
 import NotificationService from "../Services/NotificationService.js";
+import ReviewTokenService from "../Utils/reviewToken.js";
 
 class ReviewController {
+    // Submit review using review token (public endpoint)
+    static async submitReviewWithToken(req, res) {
+        try {
+            const {
+                booking_id,
+                review_token,
+                overall_rating,
+                service_quality_rating,
+                communication_rating,
+                value_for_money_rating,
+                punctuality_rating,
+                review_text
+            } = req.body;
+
+            // Validate required fields
+            if (!booking_id || !review_token || !overall_rating) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'booking_id, review_token, and overall_rating are required'
+                });
+            }
+
+            // Verify the review token
+            const tokenVerification = ReviewTokenService.verifyReviewToken(review_token);
+            if (!tokenVerification.success) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Invalid or expired review token'
+                });
+            }
+
+            // Ensure the token is for this specific booking
+            if (tokenVerification.data.booking_id !== booking_id) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Token does not match booking ID'
+                });
+            }
+
+            // Validate rating range
+            if (overall_rating < 1 || overall_rating > 5) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Rating must be between 1 and 5'
+                });
+            }
+
+            // Get booking details
+            const booking = await BookingModel.getBookingById(booking_id);
+            if (!booking) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Booking not found'
+                });
+            }
+
+            // Verify the booking belongs to the user in the token
+            if (booking.user_email !== tokenVerification.data.user_email) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Booking does not belong to the token user'
+                });
+            }
+
+            // Check if booking is eligible for review
+            if (!['awaiting_review', 'completed'].includes(booking.status)) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'This booking is not eligible for review'
+                });
+            }
+
+            // Check if review already exists
+            const existingReview = await ReviewModel.getReviewByBookingId(booking_id);
+            if (existingReview) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Review already exists for this booking'
+                });
+            }
+
+            // Create review
+            const reviewData = {
+                user_id: booking.user_id,
+                booking_id,
+                vendor_id: booking.vendor_id,
+                rating: overall_rating,
+                review_text: review_text || null,
+                service_quality: service_quality_rating || null,
+                communication: communication_rating || null,
+                value_for_money: value_for_money_rating || null,
+                punctuality: punctuality_rating || null
+            };
+
+            const result = await ReviewModel.createReview(reviewData);
+
+            // Update booking status to completed
+            await BookingModel.completeBooking(booking_id);
+
+            // Send notifications
+            await NotificationService.notifyReviewSubmitted({
+                booking_id,
+                user_name: booking.user_name || booking.first_name,
+                vendor_id: booking.vendor_id,
+                vendor_name: booking.business_name,
+                rating: overall_rating,
+                review_text,
+                event_date: booking.event_date
+            });
+
+            res.status(201).json({
+                success: true,
+                message: 'Review submitted successfully',
+                data: {
+                    rating_id: result.rating_id,
+                    rating_uuid: result.rating_uuid,
+                    overall_rating: result.overall_rating,
+                    booking_status: 'completed'
+                }
+            });
+
+        } catch (error) {
+            console.error('Submit review with token error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to submit review',
+                error: error.message
+            });
+        }
+    }
+
     // Submit review for booking
     static async submitReview(req, res) {
         try {

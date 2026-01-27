@@ -65,10 +65,12 @@ const VendorBookings = () => {
   };
 
   const handleReject = async (bookingId) => {
-    if (!window.confirm("Are you sure you want to reject this booking?")) return;
+    const reason = prompt("Please provide a reason for rejection (optional):");
+    if (reason === null) return; // User cancelled
+    
     try {
       setActionLoading(bookingId);
-      await bookingService.rejectBooking(bookingId);
+      await bookingService.rejectBooking(bookingId, reason || "Rejected by vendor");
       toast.success("Booking rejected.");
       fetchBookings();
     } catch (error) {

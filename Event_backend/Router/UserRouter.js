@@ -1,5 +1,5 @@
 import express from 'express';
-import {insertUser , login , logout , ChangePassword } from '../Controllers/UserController.js';
+import {insertUser , login , logout , ChangePassword, verifyEmail, resendEmailVerification, testEmail, debugVendorData, validateToken } from '../Controllers/UserController.js';
 
 const router = express.Router();
 
@@ -11,6 +11,17 @@ router.post('/Login', login);
 router.post('/Logout', logout);
 router.post('/changePassword' , ChangePassword );
 
+// Email verification routes
+router.get('/verify-email', verifyEmail);
+router.post('/resend-verification', resendEmailVerification);
 
+// Test email functionality
+router.post('/test-email', testEmail);
+
+// Debug vendor data
+router.get('/debug-vendor/:vendor_id', debugVendorData);
+
+// Validate token
+router.post('/validate-token', validateToken);
 
 export default router;

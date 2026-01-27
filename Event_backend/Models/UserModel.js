@@ -22,9 +22,17 @@ static async findonebyphone(phone, callback) {
         db.query(sql, [hashedPassword, email], callback);
     }
 
+    // Update email verification status
+    static async updateVerificationStatus(userId, isVerified, callback) {
+        const sql = 'UPDATE users SET is_verified = ? WHERE uuid = ?';
+        db.query(sql, [isVerified, userId], callback);
+    }
 
-
-
+    // Find user by UUID
+    static async findByUuid(uuid, callback) {
+        const sql = 'SELECT * FROM users WHERE uuid = ?';
+        db.query(sql, [uuid], callback);
+    }
 }
 
 

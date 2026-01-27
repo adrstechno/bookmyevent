@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import dashboardService from "../../../services/dashboardService";
 import {
   CalendarDaysIcon,
@@ -7,6 +8,8 @@ import {
   HeartIcon,
   UserCircleIcon,
   LifebuoyIcon,
+  HomeIcon,
+  ArrowLeftIcon,
 } from "@heroicons/react/24/outline";
 
 import {
@@ -25,6 +28,7 @@ const UserDashboard = () => {
   const [chartData, setChartData] = useState([]);
   const [loadingChart, setLoadingChart] = useState(true);
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   /* 🔹 Read user email from localStorage */
   useEffect(() => {
@@ -45,10 +49,19 @@ const UserDashboard = () => {
     // fetch dashboard data
     (async () => {
       try {
+        console.log('Fetching user dashboard data...');
+        
         const k = await dashboardService.getUserKpis();
-        if (k?.success) setKpis(k.data);
+        console.log('User KPIs response:', k);
+        if (k?.success) {
+          console.log('Setting user KPIs:', k.data);
+          setKpis(k.data);
+        } else {
+          console.log('User KPIs request failed or no success flag');
+        }
 
         const c = await dashboardService.getMonthlyChart();
+        console.log('User chart response:', c);
         if (c?.success) {
           // convert YYYY-MM to short month names and ensure numbers
           const formatMonth = (ym) => {
@@ -61,12 +74,20 @@ const UserDashboard = () => {
             }
           };
 
-          setChartData(
-            c.data.map((r) => ({ month: formatMonth(r.month), bookings: Number(r.bookings) || 0, payments: Number(r.payments) || 0 }))
-          );
+          const formattedData = c.data.map((r) => ({ 
+            month: formatMonth(r.month), 
+            bookings: Number(r.bookings) || 0, 
+            payments: Number(r.payments) || 0 
+          }));
+          
+          console.log('Setting user chart data:', formattedData);
+          setChartData(formattedData);
+        } else {
+          console.log('User chart request failed or no success flag');
         }
       } catch (err) {
         console.error("Dashboard load error", err);
+        console.error("Error details:", err.response?.data);
       } finally {
         setLoadingChart(false);
       }
@@ -80,18 +101,88 @@ const UserDashboard = () => {
   const finalChartData = chartData; // rely on API; show loading/no-data states below
 
   return (
-    <div className="min-h-screen  bg-gray-50 flex flex-col">
-      {/* NAVBAR */}
-      <header className="bg-[#3c6e71] text-white shadow-md py-4 px-6 flex justify-between items-center">
-        <h1 className="text-xl font-semibold">User Dashboard</h1>
-        <div className="flex items-center gap-2">
-          <UserCircleIcon className="h-8 w-8" />
-          <span className="font-medium">Hi, {userName}</span>
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Breadcrumb Navigation */}
+      <div className="bg-white border-b border-gray-200 px-6 py-3">
+        <div className="flex items-center text-sm text-gray-600">
+          <button
+            onClick={() => navigate('/')}
+            className="hover:text-[#3c6e71] transition-colors duration-200 flex items-center gap-1"
+          >
+            <HomeIcon className="h-4 w-4" />
+            Home
+          </button>
+          <span className="mx-2">/</span>
+          <span className="text-[#3c6e71] font-medium">Dashboard</span>
         </div>
-      </header>
-
+      </div>
+      
       {/* MAIN */}
       <main className="flex-1 p-6 md:p-8 space-y-8">
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-[#284b63] mb-2">User Dashboard</h1>
+            <p className="text-gray-600">Hi, {userName}! Manage your bookings and explore services.</p>
+          </div>
+          
+          {/* Home Button */}
+          <div className="flex gap-3">
+            <button
+              onClick={() => navigate('/')}
+              className="flex items-center gap-2 px-4 py-2 bg-[#3c6e71] hover:bg-[#284b63] text-white rounded-lg font-medium transition-colors duration-200 shadow-md hover:shadow-lg"
+            >
+              <HomeIcon className="h-5 w-5" />
+              <span className="hidden sm:inline">Go to Home</span>
+            </button>
+            
+            <button
+              onClick={() => navigate('/services')}
+              className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 text-[#3c6e71] border-2 border-[#3c6e71] rounded-lg font-medium transition-colors duration-200 shadow-md hover:shadow-lg"
+            >
+              <CalendarDaysIcon className="h-5 w-5" />
+              <span className="hidden sm:inline">Book Services</span>
+            </button>
+          </div>
+        </div>
+        
+        {/* Quick Navigation */}
+        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <button
+              onClick={() => navigate('/')}
+              className="flex flex-col items-center p-4 bg-gradient-to-br from-[#3c6e71] to-[#284b63] text-white rounded-xl hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+            >
+              <HomeIcon className="h-8 w-8 mb-2" />
+              <span className="text-sm font-medium">Home</span>
+            </button>
+            
+            <button
+              onClick={() => navigate('/services')}
+              className="flex flex-col items-center p-4 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+            >
+              <CalendarDaysIcon className="h-8 w-8 mb-2" />
+              <span className="text-sm font-medium">Book Now</span>
+            </button>
+            
+            <button
+              onClick={() => navigate('/user/bookings')}
+              className="flex flex-col items-center p-4 bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+            >
+              <UserCircleIcon className="h-8 w-8 mb-2" />
+              <span className="text-sm font-medium">My Bookings</span>
+            </button>
+            
+            <button
+              onClick={() => navigate('/contact')}
+              className="flex flex-col items-center p-4 bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-xl hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+            >
+              <LifebuoyIcon className="h-8 w-8 mb-2" />
+              <span className="text-sm font-medium">Support</span>
+            </button>
+          </div>
+        </div>
+        
         {/* KPI CARDS */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <KpiCard

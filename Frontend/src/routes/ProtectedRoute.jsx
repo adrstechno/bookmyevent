@@ -1,27 +1,37 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import LoadingSpinner from "../components/LoadingSpinner";
+import { checkAndCleanAuth } from "../utils/tokenValidation";
+import { useEffect } from "react";
 
 const ProtectedRoute = ({ allowedRoles }) => {
-  const { user, loading } = useAuth();
-  const token = localStorage.getItem("token");
-  const role = localStorage.getItem("role");
+  const { user, loading, logout } = useAuth();
+  
+  // Check token validity on route access
+  useEffect(() => {
+    const hasValidAuth = checkAndCleanAuth();
+    if (!hasValidAuth && user) {
+      console.log('Invalid token detected in ProtectedRoute, logging out');
+      logout();
+    }
+  }, [user, logout]);
 
   // Show loading while AuthContext is initializing
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-[#3c6e71]"></div>
-      </div>
-    );
+    return <LoadingSpinner message="Checking authentication..." fullScreen />;
   }
 
-  // Not logged in - check both AuthContext and localStorage
-  if (!token || (!user && !role)) {
+  // Check both AuthContext and localStorage for authentication
+  const token = localStorage.getItem("token");
+  const isAuthenticated = !!user && !!token;
+
+  // Not logged in - redirect to login
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  // Get role from user object or localStorage
-  const userRole = user?.role || role;
+  // Get role from user object
+  const userRole = user?.role;
 
   // Role-based protection
   if (allowedRoles && !allowedRoles.includes(userRole)) {

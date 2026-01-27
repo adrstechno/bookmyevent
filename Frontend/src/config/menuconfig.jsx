@@ -13,6 +13,7 @@ import {
   FaTicketAlt,          // Bookings
   FaCog,                // Settings
   FaClipboardList,      // Booking Management
+  FaLock,               // Manual Reservations
 } from "react-icons/fa";
 
 export const menuConfig = {
@@ -22,6 +23,7 @@ export const menuConfig = {
     { label: "Services", path: "/admin/addservices", icon: <FaCalendarAlt /> },
     { label: "Main Services", path: "/admin/mainservice", icon: <FaCalendarAlt /> },
     { label: "Bookings", path: "/admin/bookings", icon: <FaClipboardList /> },
+    { label: "Manual Reservations", path: "/admin/reservations", icon: <FaLock /> },
   ],
 
   vendor: [
@@ -29,6 +31,7 @@ export const menuConfig = {
     // { label: "Create Profile", path: "/vendor/profile-setup", icon: <FaUser /> },
     { label: "Shifts", path: "/vendor/shifts", icon: <FaListAlt /> },
     { label: "Bookings", path: "/vendor/bookings", icon: <FaClipboardList /> },
+    { label: "Manual Reservations", path: "/vendor/reservations", icon: <FaLock /> },
     { label: "Events", path: "/vendor/myevents", icon: <FaListAlt /> },
     { label: "Gallery", path: "/vendor/gallery", icon: <FaShoppingCart /> },
     { label: "Package", path: "/vendor/mypackege", icon: <FaShoppingCart /> },

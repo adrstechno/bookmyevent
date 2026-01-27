@@ -5,6 +5,7 @@ import {
   getBookingsByUserId,
   getBookingsByVendorId,
   getBookingById,
+  getBookingForReview,
   approveBooking
 } from "../Controllers/BookingController.js";
 import express from "express";
@@ -31,6 +32,9 @@ router.get("/GetBookingsByUserId", authenticateToken, getBookingsByUserId);
 router.get("/GetBookingsByVendorId", authenticateToken, getBookingsByVendorId);
 
 // Route to get a specific booking by ID (requires auth)
-router.get("/GetBookingById", authenticateToken, getBookingById);
+router.get("/GetBookingById/:id", authenticateToken, getBookingById);
+
+// Public route to get booking details for review (no auth required, uses review token)
+router.get("/review/:bookingId", getBookingForReview);
 
 export default router;

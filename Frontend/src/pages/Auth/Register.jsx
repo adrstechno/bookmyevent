@@ -346,10 +346,23 @@ const Register = () => {
         user_type: isVendorSignup ? "vendor" : "user",
       };
 
-      await axios.post(`${VITE_API_BASE_URL}/User/InsertUser`, payload);
+      const response = await axios.post(`${VITE_API_BASE_URL}/User/InsertUser`, payload);
 
-      toast.success("Registration successful");
-      setTimeout(() => navigate("/login"), 800);
+      // Check if email verification is required
+      if (response.data?.requiresVerification) {
+        toast.success("Registration successful! Please check your email to verify your account.");
+        
+        // Show additional message about email verification
+        setTimeout(() => {
+          toast.success("📧 Verification email sent! Check your inbox to activate your account.", {
+            duration: 5000
+          });
+        }, 1000);
+      } else {
+        toast.success("Registration successful");
+      }
+      
+      setTimeout(() => navigate("/login"), 2000);
     } catch (error) {
       if (error.response?.data?.message) {
         const msg = error.response.data.message.toLowerCase();

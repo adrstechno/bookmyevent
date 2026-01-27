@@ -14,7 +14,11 @@ import notificationroutes  from './Router/NotificationRoute.js'
 import OTPRouter from './Router/OTPRoute.js';
 import EnhancedBookingRouter from './Router/EnhancedBookingRoute.js';
 import ReviewRouter from './Router/ReviewRoute.js';
+import ShiftAvailabilityRouter from './Router/ShiftAvailabilityRoute.js';
 import DashboardRouter from './Router/DashboardRouter.js';
+import ManualReservationRouter from './Router/ManualReservationRoute.js';
+
+import TestRouter from './Router/TestRouter.js';
 
 
 dotenv.config();
@@ -32,6 +36,7 @@ app.use(cookieParser()); // ✅ Enables req.cookies
 app.use(cors({
   origin: [
     "http://localhost:5173",
+    "http://localhost:5174",
     "https://bookmyevent-e2c3.vercel.app",
     "https://www.goeventify.com",
     "https://goeventify.com"
@@ -54,7 +59,12 @@ app.use('/notification',  notificationroutes);
 app.use('/otp', OTPRouter);
 app.use('/bookings', EnhancedBookingRouter);
 app.use('/reviews', ReviewRouter);
+app.use('/shift-availability', ShiftAvailabilityRouter);
 app.use('/dashboard', DashboardRouter);
+app.use('/manual-reservations', ManualReservationRouter);
+
+// 🟢 Test routes (remove in production)
+app.use('/test', TestRouter);
 
 app.get('/', (req, res) => {
   res.send('Welcome to the Event Management API');

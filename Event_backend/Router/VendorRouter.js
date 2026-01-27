@@ -1,6 +1,7 @@
 import express from 'express';
-import {insertVendor , getAllVendor , AddEventImages , getvendorById , updateVendorProfile  , VendorShift , getVendorShiftforVendor  , GetvendorEventImages  , updateVendorShiftbyId  , deleteVendorShiftbyId , insertVendorPackage , updateVendorPackage , deleteVendorPackage , getAllVendorPackages , getvendorsByServiceId, getFreeVendorsByDay, GetVendorKPIs, GetVendorRecentActivities , getvendorsBysubserviceId } from '../Controllers/VendorController.js'; 
+import {insertVendor , getAllVendor , AddEventImages , getvendorById , GetVendorProfile , updateVendorProfile  , VendorShift , getVendorShiftforVendor , GetVendorShifts , GetvendorEventImages  , updateVendorShiftbyId  , deleteVendorShiftbyId , insertVendorPackage , updateVendorPackage , deleteVendorPackage , getAllVendorPackages , getvendorsByServiceId, getFreeVendorsByDay, GetVendorKPIs, GetVendorRecentActivities , getvendorsBysubserviceId } from '../Controllers/VendorController.js'; 
 import { upload } from '../Utils/Upload.js';
+import { authenticateToken } from '../Utils/auth.js';
 
 const router = express.Router();
 
@@ -9,12 +10,17 @@ router.post('/InsertVendor', upload.single('profilePicture'), insertVendor);
 router.get('/Getallvendors' , getAllVendor );
 router.post('/AddEventImages' , upload.array('eventImages', 5), AddEventImages)
 router.get('/getvendorById' , getvendorById);
+router.get('/GetVendorProfile' , GetVendorProfile);
 router.post('/updateVendorProfile' ,upload.single('profilePicture') , updateVendorProfile);
 router.post('/AddvendorShifts', VendorShift);
 router.get('/getVendorShiftforVendor', getVendorShiftforVendor);
+router.get('/GetVendorShifts', GetVendorShifts);
 router.get('/GetvendorEventImages', GetvendorEventImages);
-router.get('/GetVendorKPIs', GetVendorKPIs);
-router.get('/GetVendorRecentActivities', GetVendorRecentActivities);
+
+// Dashboard routes with authentication
+router.get('/GetVendorKPIs', authenticateToken, GetVendorKPIs);
+router.get('/GetVendorRecentActivities', authenticateToken, GetVendorRecentActivities);
+
 router.post('/updateVendorShiftbyId', updateVendorShiftbyId);
 router.get('/deleteVendorShiftbyId', deleteVendorShiftbyId);
 router.post('/insertVendorPackage', insertVendorPackage);
