@@ -3,7 +3,7 @@ import CategoryTemplate from "./CategoryTemplate";
 const Exhibitions = () => {
   return (
     <CategoryTemplate
-      bannerImage="/images/Exivision.jpg"
+      bannerImage="https://d197irk3q85upd.cloudfront.net/catalog/product/3/b/3b6a1130.jpg"
       categoryTitle="Exhibitions"
       categorySlug="exhibitions"
       description1="We design and fabricate exhibition stalls that enhance product visibility and strengthen brand identity."

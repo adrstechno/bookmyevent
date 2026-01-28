@@ -9,7 +9,7 @@ import CTASection from "../components/mainpage/CTASection";
 import Footer from "../components/mainpage/Footer";
 import ShowcaseSection from "../components/mainpage/ShowcaseSection";
 import SocialSidebar from "../components/mainpage/SocialSidebar";
-import ContactPopup from "../components/mainpage/ContactPopup";
+// import ContactPopup from "../components/mainpage/ContactPopup";
 import HomeNavbar from "../components/mainpage/HomeNavbar";
 import ErrorBoundary from "../components/ErrorBoundary";
 
@@ -108,9 +108,9 @@ const HomePage = () => {
         </ErrorBoundary>
 
         {/* Contact Popup */}
-        <ErrorBoundary>
+        {/* <ErrorBoundary>
           <ContactPopup />
-        </ErrorBoundary>
+        </ErrorBoundary> */}
 
         {/* ================= PWA INSTALL POPUP (ONLY ADDITION) ================= */}
         {showInstallPopup && (

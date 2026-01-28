@@ -17,8 +17,8 @@ const Weddings = () => {
         "ITC Maratha",
       ]}
       services={[
-        { name: "Entrance Gate", image: "https://png.pngtree.com/background/20230325/original/pngtree-wedding-interior-scene-beautiful-background-picture-image_2166924.jpg" },
-        { name: "Vidhi Mandap", image: "https://i.pinimg.com/originals/2b/96/3b/2b963b11a7de12f84afd853c87c1988e.jpg" },
+        { name: "Entrance Gate", image: "https://as1.ftcdn.net/v2/jpg/02/85/16/32/1000_F_285163203_idtMHwkK28kxOGOLmDW1sFB206dlc40B.jpg" },
+        { name: "Vidhi Mandap", image: "https://image.wedmegood.com/resized-nw/700X/wp-content/uploads/2017/12/1447912829_Nayantara_Saurabh_Wedding_Reception_web_127.jpg" },
         { name: "Reception Stage", image: "https://getethnic.com/wp-content/uploads/2020/09/207007-AmitaSPhotography-0084-orig.jpg" },
         { name: "Special Entry", image: "https://png.pngtree.com/background/20250103/original/pngtree-new-hd-wedding-background-wall-photo-image-picture-image_15750991.jpg" },
         { name: "Haldi & Mehendi Setup", image: "https://static.vecteezy.com/system/resources/previews/012/002/539/large_2x/traditional-wedding-ceremony-beautiful-culture-of-india-or-decorated-for-haldi-ceremony-photo.jpg" },

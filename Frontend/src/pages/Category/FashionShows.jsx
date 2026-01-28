@@ -3,7 +3,7 @@ import CategoryTemplate from "./CategoryTemplate";
 const FashionShows = () => {
   return (
     <CategoryTemplate
-      bannerImage="/images/FashionShow.jpg"
+      bannerImage="https://i1.wp.com/urbanasian.com/wp-content/uploads/2015/03/sabyasachi-at-lakme-fashion-week-summer-resort-2015-4.jpg?fit=3648%2C2432&ssl=1"
       categoryTitle="Fashion & Shows"
       categorySlug="fashion-shows"
       description1="Runway shows crafted with elegance — lighting, music, stage, and backstage management in complete sync."

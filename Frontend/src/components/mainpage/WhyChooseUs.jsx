@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 
 const points = [
   { icon: <CheckCircle size={30} />, title: "Verified Vendors" },
-  { icon: <Users size={30} />, title: "100+ Happy Clients" },
+  { icon: <Users size={30} />, title: "Happy Clients" },
   { icon: <Star size={30} />, title: "4.5 Rated Platform" },
   { icon: <Calendar size={30} />, title: "24/7 Booking Support" },
 ];

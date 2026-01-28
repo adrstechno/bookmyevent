@@ -1,32 +1,13 @@
-
-node:internal/modules/esm/resolve:275
-    throw new ERR_MODULE_NOT_FOUND(
-          ^
-Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/opt/render/project/src/Event_backend/Services/EmailService.js' imported from /opt/render/project/src/Event_backend/Controllers/UserController.js
-    at finalizeResolution (node:internal/modules/esm/resolve:275:11)
-    at moduleResolve (node:internal/modules/esm/resolve:860:10)
-    at defaultResolve (node:internal/modules/esm/resolve:984:11)
-    at ModuleLoader.defaultResolve (node:internal/modules/esm/loader:780:12)
-    at #cachedDefaultResolve (node:internal/modules/esm/loader:704:25)
-    at ModuleLoader.resolve (node:internal/modules/esm/loader:687:38)
-    at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:305:38)
-    at ModuleJob._link (node:internal/modules/esm/module_job:137:49) {
-  code: 'ERR_MODULE_NOT_FOUND',
-  url: 'file:///opt/render/project/src/Event_backend/Services/EmailService.js'
-}
-Node.js v22.16.0
-==> Exited with status 1
-==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploysimport { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../../context/AuthContext";
-import HexCollage from "./HexCollage";
 
 const bgImages = [
   "/images/herobg.jpg",
   "/images/herobg1.jpg",
   "/images/herobg2.jpg",
-  "/images/herobg3.jpg",
+  "/images/herobg3.jpeg",
 ];
 
 const HeroSection = () => {
@@ -45,7 +26,6 @@ const HeroSection = () => {
   // Handle explore vendors click based on auth status
   const handleExploreVendors = () => {
     if (user) {
-      // User is logged in, scroll to services section on current page
       const servicesSection = document.getElementById('services-section');
       if (servicesSection) {
         servicesSection.scrollIntoView({ 
@@ -53,7 +33,6 @@ const HeroSection = () => {
           block: 'start'
         });
       } else {
-        // Fallback: navigate to home and then scroll
         navigate('/home');
         setTimeout(() => {
           const section = document.getElementById('services-section');
@@ -63,107 +42,269 @@ const HeroSection = () => {
         }, 100);
       }
     } else {
-      // User not logged in, navigate to register
       navigate('/register');
     }
   };
 
   return (
-    <section className="relative text-white overflow-hidden">
-      {/* Background Carousel */}
+    <section className="relative text-white overflow-hidden h-screen">
+      {/* Background Carousel with Smooth Transitions */}
       <div className="absolute inset-0">
-        {bgImages.map((img, index) => (
+        <AnimatePresence mode="sync">
+          {bgImages.map((img, index) => (
+            index === currentIndex && (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, scale: 1.2 }}
+                animate={{ 
+                  opacity: 1, 
+                  scale: 1,
+                  transition: { 
+                    opacity: { duration: 1.5, ease: "easeInOut" },
+                    scale: { duration: 8, ease: "linear" }
+                  }
+                }}
+                exit={{ 
+                  opacity: 0,
+                  transition: { duration: 1.5, ease: "easeInOut" }
+                }}
+                className="absolute inset-0 bg-cover bg-center"
+                style={{ backgroundImage: `url(${img})` }}
+              />
+            )
+          ))}
+        </AnimatePresence>
+      </div>
+
+      {/* Subtle gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/50"></div>
+
+      {/* Animated particles effect (optional decorative elements) */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {[...Array(20)].map((_, i) => (
           <motion.div
-            key={index}
-            className={`absolute inset-0 bg-cover bg-center transition-all duration-1000 ${
-              index === currentIndex ? "opacity-100" : "opacity-0"
-            }`}
-            style={{ backgroundImage: `url(${img})` }}
-            animate={{ scale: index === currentIndex ? 1.1 : 1 }}
-            transition={{ duration: 5, ease: "easeInOut" }}
+            key={i}
+            className="absolute w-2 h-2 bg-white/20 rounded-full"
+            initial={{ 
+              x: Math.random() * window.innerWidth,
+              y: Math.random() * window.innerHeight,
+              scale: Math.random() * 0.5 + 0.5
+            }}
+            animate={{
+              y: [null, Math.random() * window.innerHeight],
+              x: [null, Math.random() * window.innerWidth],
+              opacity: [0, 1, 0],
+              scale: [null, Math.random() * 1.5 + 0.5]
+            }}
+            transition={{
+              duration: Math.random() * 10 + 10,
+              repeat: Infinity,
+              ease: "linear",
+              delay: Math.random() * 5
+            }}
           />
         ))}
       </div>
 
-      {/* Gradient overlay for better text contrast */}
-      <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/30 to-[#284b63]/30"></div>
-
-      {/* Foreground Content */}
-      <div className="relative z-10 max-w-7xl mx-auto px-8 md:px-12 py-24 flex flex-col md:flex-row items-center justify-between gap-10">
-        {/* Left Text Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="md:w-[45%] space-y-6 backdrop-blur-[2px] bg-black/30 p-8 rounded-2xl shadow-lg md:ml-[-30px]"
-        >
-          <h1 className="text-5xl font-bold leading-tight drop-shadow-[0_2px_5px_rgba(0,0,0,0.5)]">
-            Plan Your <span className="text-[#f9a826]">Perfect Event</span> with Celebria
-          </h1>
-
-          <p className="text-lg text-gray-100 drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]">
-            {user 
-              ? `Welcome back, ${user.name || 'User'}! Discover the best venues, vendors, and services for your next celebration.`
-              : "Discover the best venues, vendors, and services — all in one place. Let's make your celebration unforgettable."
-            }
-            Let’s make your celebration unforgettable.
-          </p>
-
-          <div className="flex gap-4 pt-2">
-           <Link to="/category/weddings" className="inline-block">
-             <motion.button 
-               whileHover={{ 
-                 scale: 1.05,
-                 boxShadow: "0 10px 30px rgba(249, 168, 38, 0.4)"
-               }}
-               whileTap={{ scale: 0.95 }}
-               className="px-8 py-3 bg-[#f9a826] text-black rounded-full font-semibold hover:bg-[#f7b733] transition-all duration-300 shadow-lg relative overflow-hidden group"
-             >
-               <span className="relative z-10">
-                 Explore Our Works
-               </span>
-               <motion.div
-                 className="absolute inset-0 bg-gradient-to-r from-[#f7b733] to-[#f9a826]"
-                 initial={{ x: "-100%" }}
-                 whileHover={{ x: "0%" }}
-                 transition={{ duration: 0.3 }}
-               />
-             </motion.button>
-           </Link>
-
-            <motion.button 
-              whileHover={{ 
-                scale: 1.05,
-                backgroundColor: "rgba(255, 255, 255, 1)",
-                color: "#3c6e71",
-                boxShadow: "0 10px 30px rgba(255, 255, 255, 0.3)"
+      {/* Main Content */}
+      <div className="relative z-10 h-full flex items-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 w-full">
+          {/* Text Content with Staggered Animations */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+            className="max-w-3xl space-y-4 sm:space-y-6 md:space-y-8"
+          >
+            {/* Main Heading with Letter Animation */}
+            <motion.h1 
+              className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight"
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ 
+                duration: 0.8, 
+                delay: 0.2,
+                ease: [0.6, -0.05, 0.01, 0.99]
               }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleExploreVendors}
-              className="px-8 py-3 border-2 border-white rounded-full font-semibold transition-all duration-300 relative overflow-hidden group"
-              title={user ? 'Browse available vendors and services' : 'Sign up to explore vendors'}
+              style={{
+                textShadow: '0 2px 10px rgba(0,0,0,0.8), 0 4px 20px rgba(0,0,0,0.6), 0 8px 40px rgba(0,0,0,0.4), 2px 2px 4px rgba(0,0,0,0.9)'
+              }}
             >
-              <span className="relative z-10">
-                {user ? 'Explore Vendors' : 'Join Us Today'}
-              </span>
-              <motion.div
-                className="absolute inset-0 bg-white opacity-0 group-hover:opacity-100"
-                transition={{ duration: 0.3 }}
-              />
-            </motion.button>
-          </div>
-        </motion.div>
+              <motion.span
+                className="inline-block"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+              >
+                Plan Your
+              </motion.span>
+              {" "}
+              <motion.span 
+                className="inline-block text-[#f9a826]"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ 
+                  duration: 0.8, 
+                  delay: 0.5,
+                  type: "spring",
+                  stiffness: 100
+                }}
+                style={{
+                  textShadow: '0 2px 10px rgba(0,0,0,0.9), 0 4px 20px rgba(249,168,38,0.6), 0 8px 40px rgba(249,168,38,0.4), 2px 2px 6px rgba(0,0,0,1), -1px -1px 0 rgba(0,0,0,0.5)'
+                }}
+              >
+                Perfect Event
+              </motion.span>
+              {" "}
+              <motion.span
+                className="inline-block"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.7 }}
+              >
+                with GoEventify
+              </motion.span>
+            </motion.h1>
 
-        {/* Right Side Collage */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8 }}
-          className="md:w-[48%] flex justify-center md:justify-end"
-        >
-          <HexCollage />
-        </motion.div>
+            {/* Description with Fade In */}
+            <motion.p 
+              className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-100 leading-relaxed max-w-2xl font-medium"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ 
+                duration: 0.8, 
+                delay: 0.9,
+                ease: "easeOut"
+              }}
+              style={{
+                textShadow: '0 2px 8px rgba(0,0,0,0.9), 0 4px 16px rgba(0,0,0,0.7), 1px 1px 3px rgba(0,0,0,1)'
+              }}
+            >
+              {user 
+                ? `Welcome back, ${user.name || 'User'}! Discover the best venues, vendors, and services for your next celebration.`
+                : "Discover the best venues, vendors, and services — all in one place. Let's make your celebration unforgettable."
+              }
+            </motion.p>
+
+            {/* Buttons with Staggered Animation */}
+            <motion.div 
+              className="flex flex-wrap gap-4 pt-6"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ 
+                duration: 0.8, 
+                delay: 1.1,
+                ease: "easeOut"
+              }}
+            >
+              <Link to="/category/weddings" className="inline-block">
+                <motion.button 
+                  whileHover={{ 
+                    scale: 1.08,
+                    boxShadow: "0 15px 40px rgba(249, 168, 38, 0.5)",
+                    y: -3
+                  }}
+                  whileTap={{ scale: 0.95 }}
+                  className="px-10 py-4 bg-[#f9a826] text-black rounded-full font-bold text-lg hover:bg-[#f7b733] transition-all duration-300 shadow-2xl relative overflow-hidden group"
+                >
+                  <span className="relative z-10 flex items-center gap-2">
+                    Explore Our Works
+                    <motion.span
+                      animate={{ x: [0, 5, 0] }}
+                      transition={{ 
+                        duration: 1.5, 
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                    >
+                      →
+                    </motion.span>
+                  </span>
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-[#f7b733] via-[#ffd700] to-[#f9a826]"
+                    initial={{ x: "-100%" }}
+                    whileHover={{ x: "0%" }}
+                    transition={{ duration: 0.4 }}
+                  />
+                </motion.button>
+              </Link>
+
+              <motion.button 
+                whileHover={{ 
+                  scale: 1.08,
+                  backgroundColor: "rgba(255, 255, 255, 1)",
+                  color: "#3c6e71",
+                  boxShadow: "0 15px 40px rgba(255, 255, 255, 0.4)",
+                  y: -3
+                }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleExploreVendors}
+                className="px-10 py-4 border-2 border-white rounded-full font-bold text-lg transition-all duration-300 relative overflow-hidden group backdrop-blur-sm bg-white/10"
+                title={user ? 'Browse available vendors and services' : 'Sign up to explore vendors'}
+              >
+                <span className="relative z-10 flex items-center gap-2">
+                  {user ? 'Explore Vendors' : 'Join Us Today'}
+                  <motion.span
+                    animate={{ rotate: [0, 360] }}
+                    transition={{ 
+                      duration: 2, 
+                      repeat: Infinity,
+                      ease: "linear"
+                    }}
+                  >
+                    ✨
+                  </motion.span>
+                </span>
+                <motion.div
+                  className="absolute inset-0 bg-white"
+                  initial={{ scale: 0, opacity: 0 }}
+                  whileHover={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.4 }}
+                />
+              </motion.button>
+            </motion.div>
+          </motion.div>
+        </div>
       </div>
+
+      {/* Scroll Indicator */}
+      <motion.div 
+        className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1.5, duration: 0.8 }}
+      >
+        <motion.div
+          animate={{ y: [0, 10, 0] }}
+          transition={{ 
+            duration: 2, 
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+          className="flex flex-col items-center gap-2 cursor-pointer"
+          onClick={() => {
+            const nextSection = document.querySelector('#services-section, section:nth-of-type(2)');
+            if (nextSection) {
+              nextSection.scrollIntoView({ behavior: 'smooth' });
+            }
+          }}
+        >
+          <span className="text-sm text-white/80 drop-shadow-lg">Scroll Down</span>
+          <svg 
+            className="w-6 h-6 text-white/80 drop-shadow-lg" 
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+          >
+            <path 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+              strokeWidth={2} 
+              d="M19 14l-7 7m0 0l-7-7m7 7V3" 
+            />
+          </svg>
+        </motion.div>
+      </motion.div>
     </section>
   );
 };

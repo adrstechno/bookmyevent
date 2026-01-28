@@ -3,7 +3,7 @@ import CategoryTemplate from "./CategoryTemplate";
 const CorporateEvents = () => {
   return (
     <CategoryTemplate
-      bannerImage="/images/Corporate-event.jpg"
+      bannerImage="https://wallpapercave.com/wp/wp7488400.jpg"
       categoryTitle="Corporate Events"
       categorySlug="corporate-events"
       description1="We deliver structured, professional corporate event solutions that elevate your brand identity."
@@ -14,7 +14,7 @@ const CorporateEvents = () => {
         "Corporate Auditoriums",
       ]}
       services={[
-        { name: "Conference Management", image: "/images/services/corporate/conferencemanagement.jpg" },
+        { name: "Conference Management", image: "https://wallpapercave.com/wp/wp2298408.jpg" },
         { name: "Product Launch", image: "/images/services/corporate/productlaunch.jpg" },
         { name: "Annual Day Events", image: "/images/services/corporate/annualday.jpg" },
         { name: "Award Ceremonies", image: "/images/services/corporate/awardcermony.jpg" },
