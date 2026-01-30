@@ -1,89 +1,118 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   FaWhatsapp,
   FaInstagram,
   FaFacebookF,
   FaLinkedinIn,
+  FaComments
 } from "react-icons/fa";
 
 const SocialSidebar = () => {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
     <>
-      {/* Floating Social Sidebar */}
+      {/* Social Icons Container */}
       <div
-        className="
-          fixed top-1/2 right-0 z-50 flex flex-col items-center gap-4
-          -translate-y-1/2 bg-white/90 backdrop-blur-xl
-          px-3 py-5 rounded-l-3xl shadow-xl border border-gray-200
-          animate-[float_6s_ease-in-out_infinite]
-        "
+        className={`
+          fixed bottom-24 sm:bottom-28 right-3 sm:right-5 z-50
+          flex flex-col items-center
+          gap-3 sm:gap-5
+          px-2.5 sm:px-4
+          py-3 sm:py-5
+          rounded-2xl sm:rounded-3xl
+          bg-white/80 backdrop-blur-xl
+          border border-white/40
+          shadow-[0_18px_40px_rgba(0,0,0,0.25)]
+          transition-all duration-500 ease-out
+          ${isOpen
+            ? "opacity-100 translate-y-0 scale-100"
+            : "opacity-0 translate-y-8 scale-95 pointer-events-none"}
+        `}
       >
-        {/* WhatsApp (New!) */}
-        <SocialIcon
-          href="https://wa.me/919201976523?text=Hi!%20I%20am%20interested%20in%20your%20event%20services"
-          bg="bg-gradient-to-br from-green-500 to-green-400"
-          glow="shadow-green-400/50"
-        >
-          <FaWhatsapp size={15} />
-        </SocialIcon>
-
         {/* Instagram */}
         <SocialIcon
           href="https://www.instagram.com/goeventify/"
-          bg="bg-gradient-to-br from-pink-500 to-orange-400"
-          glow="shadow-orange-400/50"
+          bg="from-pink-500 to-orange-400"
         >
-          <FaInstagram size={15} />
+          <FaInstagram />
         </SocialIcon>
 
         {/* Facebook */}
         <SocialIcon
           href="https://www.facebook.com/profile.php?id=61585660263887"
-          bg="bg-blue-600"
-          glow="shadow-blue-400/50"
+          bg="from-blue-600 to-blue-500"
         >
-          <FaFacebookF size={15} />
+          <FaFacebookF />
         </SocialIcon>
 
         {/* LinkedIn */}
         <SocialIcon
           href="https://www.linkedin.com/in/go-eventify/"
-          bg="bg-blue-700"
-          glow="shadow-blue-500/50"
+          bg="from-blue-700 to-indigo-600"
         >
-          <FaLinkedinIn size={15} />
+          <FaLinkedinIn />
+        </SocialIcon>
+
+        {/* WhatsApp */}
+        <SocialIcon
+          href="https://wa.me/919076927464"
+          bg="from-emerald-500 to-teal-400"
+        >
+          <FaWhatsapp />
         </SocialIcon>
       </div>
+
+      {/* Chat Toggle Button */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="
+          fixed bottom-4 sm:bottom-6 right-4 sm:right-6 z-50
+          p-3.5 sm:p-5
+          rounded-full
+          bg-slate-900
+          text-white
+          shadow-[0_12px_30px_rgba(0,0,0,0.6)]
+          hover:scale-110
+          transition-all duration-300
+        "
+        aria-label="Toggle social links"
+      >
+        <FaComments className="text-base sm:text-lg" />
+      </button>
     </>
   );
 };
 
-/* ---- Reusable Social Icon Component ---- */
-const SocialIcon = ({ href, children, bg, glow }) => (
+/* Responsive Social Icon Component */
+const SocialIcon = ({ href, children, bg }) => (
   <a
     href={href}
     target="_blank"
     rel="noopener noreferrer"
     className={`
-      relative p-3 rounded-full text-white ${bg}
-      shadow-lg hover:shadow-xl
-      hover:${glow}
+      relative
+      flex items-center justify-center
+      w-9 h-9 sm:w-12 sm:h-12
+      rounded-full
+      bg-gradient-to-br ${bg}
+      text-white
+      text-sm sm:text-xl
+      shadow-lg
       transition-all duration-300
-      hover:scale-125 hover:rotate-6
-      group animate-[bounce_3s_ease-in-out_infinite]
+      hover:scale-125 hover:-rotate-6
+      group
     `}
   >
-    {/* Glow Ring */}
+    {/* Glow Effect */}
     <span
       className="
-        absolute inset-0 rounded-full opacity-0
-        group-hover:opacity-40 blur-xl
-        transition-all duration-300
+        absolute inset-0 rounded-full
+        opacity-0 group-hover:opacity-40
+        blur-xl transition-all duration-300
         bg-white
       "
-    ></span>
-
-    {/* Icon */}
+    />
     <span className="relative z-10">{children}</span>
   </a>
 );
