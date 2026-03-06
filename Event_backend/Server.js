@@ -17,6 +17,7 @@ import ReviewRouter from './Router/ReviewRoute.js';
 import ShiftAvailabilityRouter from './Router/ShiftAvailabilityRoute.js';
 import DashboardRouter from './Router/DashboardRouter.js';
 import ManualReservationRouter from './Router/ManualReservationRoute.js';
+import SubscriptionRouter from './Router/SubscriptionRoute.js';
 
 import TestRouter from './Router/TestRouter.js';
 
@@ -62,6 +63,7 @@ app.use('/reviews', ReviewRouter);
 app.use('/shift-availability', ShiftAvailabilityRouter);
 app.use('/dashboard', DashboardRouter);
 app.use('/manual-reservations', ManualReservationRouter);
+app.use('/subscription', SubscriptionRouter);
 
 // 🟢 Test routes (remove in production)
 app.use('/test', TestRouter);

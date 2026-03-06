@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import vendorService from "../../../services/vendorService";
+import SubscriptionStatus from "../../../components/SubscriptionStatus";
 import {
   ChartPieIcon,
   ClipboardDocumentListIcon,
@@ -176,6 +177,12 @@ const VendorDashboard = () => {
           <h1 className="text-3xl font-bold text-[#284b63] mb-2">Vendor Dashboard</h1>
           <p className="text-gray-600">Welcome back, {vendorName}! Here's your business overview.</p>
         </div>
+
+        {/* Subscription Status - Show prominently at top */}
+        <div className="mb-6">
+          <SubscriptionStatus />
+        </div>
+
         {/* Overview Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="bg-white shadow-lg rounded-2xl p-5 border-t-4 border-[#3c6e71] hover:shadow-2xl transition duration-200">

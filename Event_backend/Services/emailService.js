@@ -871,6 +871,135 @@ class EmailService {
             throw error;
         }
     }
+
+    // Send subscription confirmation email
+    async sendSubscriptionConfirmationEmail(emailData) {
+        const {
+            vendorEmail,
+            vendorName,
+            businessName,
+            amount,
+            startDate,
+            endDate,
+            paymentId
+        } = emailData;
+
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: vendorEmail,
+            subject: '🎉 Subscription Activated - GoEventify Vendor Platform',
+            html: `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                        .header { background: linear-gradient(135deg, #284b63, #3c6e71); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                        .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+                        .success-box { background: #d4edda; border: 2px solid #28a745; padding: 20px; text-align: center; margin: 20px 0; border-radius: 10px; }
+                        .details-box { background: #fff; padding: 20px; margin: 20px 0; border-radius: 10px; border-left: 4px solid #f9a826; }
+                        .amount { font-size: 28px; font-weight: bold; color: #28a745; }
+                        .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
+                        .btn { display: inline-block; background: #f9a826; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <h1 style="margin: 0;">🎉 Subscription Activated!</h1>
+                            <p style="margin: 10px 0 0 0;">Welcome to GoEventify Vendor Platform</p>
+                        </div>
+                        
+                        <div class="content">
+                            <h2>Hello ${vendorName}!</h2>
+                            
+                            <div class="success-box">
+                                <h3 style="color: #28a745; margin-top: 0;">✅ Payment Successful</h3>
+                                <p style="margin: 5px 0;">Your annual subscription is now active!</p>
+                            </div>
+                            
+                            <div class="details-box">
+                                <h3 style="color: #284b63; margin-top: 0;">📋 Subscription Details:</h3>
+                                <table style="width: 100%; border-collapse: collapse;">
+                                    <tr style="border-bottom: 1px solid #eee;">
+                                        <td style="padding: 8px 0; font-weight: bold;">Business Name:</td>
+                                        <td style="padding: 8px 0;">${businessName}</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid #eee;">
+                                        <td style="padding: 8px 0; font-weight: bold;">Plan:</td>
+                                        <td style="padding: 8px 0;">Annual Subscription</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid #eee;">
+                                        <td style="padding: 8px 0; font-weight: bold;">Amount Paid:</td>
+                                        <td style="padding: 8px 0;"><span class="amount">₹${amount}</span></td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid #eee;">
+                                        <td style="padding: 8px 0; font-weight: bold;">Start Date:</td>
+                                        <td style="padding: 8px 0;">${new Date(startDate).toLocaleDateString('en-US', { 
+                                            year: 'numeric', 
+                                            month: 'long', 
+                                            day: 'numeric' 
+                                        })}</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid #eee;">
+                                        <td style="padding: 8px 0; font-weight: bold;">Valid Until:</td>
+                                        <td style="padding: 8px 0;">${new Date(endDate).toLocaleDateString('en-US', { 
+                                            year: 'numeric', 
+                                            month: 'long', 
+                                            day: 'numeric' 
+                                        })}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 8px 0; font-weight: bold;">Payment ID:</td>
+                                        <td style="padding: 8px 0; font-size: 12px; color: #666;">${paymentId}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            
+                            <div style="text-align: center; margin: 30px 0;">
+                                <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/vendor/dashboard" class="btn">
+                                    🚀 Go to Dashboard
+                                </a>
+                            </div>
+                            
+                            <p><strong>What's Next?</strong></p>
+                            <ul>
+                                <li>✅ Your vendor profile is now active and visible to customers</li>
+                                <li>✅ You can now accept and manage bookings</li>
+                                <li>✅ Access all premium features of the platform</li>
+                                <li>✅ Receive booking notifications and manage your calendar</li>
+                            </ul>
+                            
+                            <p style="background: #fff3cd; padding: 15px; border-radius: 5px; border-left: 4px solid #f9a826;">
+                                <strong>📅 Renewal Reminder:</strong> Your subscription will automatically expire on 
+                                ${new Date(endDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}. 
+                                We'll send you a reminder 30 days before expiry.
+                            </p>
+                            
+                            <p>Thank you for choosing GoEventify! We're excited to help you grow your business.</p>
+                        </div>
+                        
+                        <div class="footer">
+                            <p>This is an automated message from GoEventify. Please do not reply to this email.</p>
+                            <p>For support, contact us at ${process.env.EMAIL_USER}</p>
+                            <p>&copy; ${new Date().getFullYear()} GoEventify. All rights reserved.</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `
+        };
+
+        try {
+            const info = await this.transporter.sendMail(mailOptions);
+            console.log('Subscription confirmation email sent successfully:', info.messageId);
+            return { success: true, messageId: info.messageId };
+        } catch (error) {
+            console.error('Error sending subscription confirmation email:', error);
+            throw error;
+        }
+    }
 }
 
 export default new EmailService();

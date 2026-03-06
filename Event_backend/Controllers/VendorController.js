@@ -52,36 +52,22 @@ export const insertVendor = (req, res) => {
 
   VendorModel.insertVendor(vendorData, (err, result) => {
     if (err) {
+      console.error('Error inserting vendor:', err);
       return res
         .status(500)
-        .json({ message: "Error inserting vendor", error: err });
+        .json({ message: "Error inserting vendor", error: err.message });
     }
+    
     const vendor_id = result.insertId;
-    const vendorSubscriptionData = {
-      vendor_id: vendor_id,
-      start_date: new Date(),
-      end_date: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
-      billing_cycle: "annual",
-      status: "active",
-    };
-
-    VendorModel.insertVendorSubcription(
-      vendorSubscriptionData,
-      (err, subResult) => {
-        if (err) {
-          return res.status(500).json({
-            message: "Error inserting vendor subscription",
-            error: err,
-          });
-        }
-        return res.status(200).json({
-          message: "Vendor inserted successfully",
-          vendorId: result.insertId,
-          subscriptionId: subResult.insertId,
-          profileUrl: vendorData.profile_url, // ✅ Return the URL
-        });
-      }
-    );
+    
+    // ✅ Return success without creating free subscription
+    // Vendor must subscribe via payment to activate their account
+    return res.status(200).json({
+      message: "Vendor profile created successfully! Please subscribe to start accepting bookings.",
+      vendorId: vendor_id,
+      profileUrl: vendorData.profile_url,
+      requiresSubscription: true
+    });
   });
 };
 

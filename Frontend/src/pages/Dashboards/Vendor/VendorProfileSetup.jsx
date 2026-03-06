@@ -139,20 +139,32 @@ const VendorProfileSetup = () => {
 
       toast.success(response.data.message || "Vendor profile created successfully!");
       
-      // Reset form after successful submission
-      setFormData({
-        business_name: "",
-        service_category_id: "",
-        description: "",
-        years_experience: "",
-        contact: "",
-        address: "",
-        city: "",
-        state: "",
-        event_profiles_url: "",
-        profilePicture: null,
-      });
-      setPreview(null);
+      // Check if subscription is required
+      if (response.data.requiresSubscription) {
+        // Show subscription prompt after a short delay
+        setTimeout(() => {
+          toast.success("🎉 Profile created! Now subscribe to start accepting bookings.", {
+            duration: 5000
+          });
+          // Redirect to dashboard where subscription status will be shown
+          window.location.href = '/vendor/dashboard';
+        }, 1500);
+      } else {
+        // Reset form after successful submission
+        setFormData({
+          business_name: "",
+          service_category_id: "",
+          description: "",
+          years_experience: "",
+          contact: "",
+          address: "",
+          city: "",
+          state: "",
+          event_profiles_url: "",
+          profilePicture: null,
+        });
+        setPreview(null);
+      }
       
     } catch (error) {
       console.error("Error creating vendor profile:", error);

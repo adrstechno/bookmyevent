@@ -70,7 +70,7 @@ import VendorsByService from "./pages/VendorsByService";
 import VendorDetail from "./pages/VendorDetail";
 
 import ShowcaseSection from "./components/mainpage/ShowcaseSection";
-import ComingSoon from "./ComingSoon.jsx";
+// import ComingSoon from "./ComingSoon.jsx";
 
 export default function App() {
   return (
@@ -83,7 +83,7 @@ export default function App() {
           <Routes>
         {/* PUBLIC ROUTES */}
         <Route path="/" element={<HomePageWrapper />} />
-        <Route path="/coming-soon" element={<ComingSoon />} />
+        {/* <Route path="/coming-soon" element={<ComingSoon />} /> */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/changepassword" element={<ChangePassword />} />

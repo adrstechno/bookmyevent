@@ -10,7 +10,6 @@ class VendorModel {
       vendorData.business_name,
       vendorData.service_category_id,
       vendorData.subservice_id,
-      vendorData.subservice_id,
       vendorData.description,
       vendorData.years_experience,
       vendorData.contact,

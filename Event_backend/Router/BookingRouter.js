@@ -10,11 +10,12 @@ import {
 } from "../Controllers/BookingController.js";
 import express from "express";
 import { authenticateToken } from "../Utils/auth.js";
+import { checkBookingEligibility } from "../Utils/subscriptionMiddleware.js";
 
 const router = express.Router();
 
-// Route to insert a new booking (requires auth)
-router.post("/InsertBooking", authenticateToken, insertBooking);
+// Route to insert a new booking (requires auth + subscription check)
+router.post("/InsertBooking", authenticateToken, checkBookingEligibility, insertBooking);
 
 // Route to update a booking (requires auth)
 router.post("/UpdateBooking", authenticateToken, updateBooking);
