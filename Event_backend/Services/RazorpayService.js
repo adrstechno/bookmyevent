@@ -6,10 +6,22 @@ dotenv.config();
 
 class RazorpayService {
     constructor() {
-        this.razorpay = new Razorpay({
-            key_id: process.env.RAZORPAY_KEY_ID,
-            key_secret: process.env.RAZORPAY_KEY_SECRET
-        });
+        // Check if Razorpay credentials are configured
+        const hasCredentials = process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET;
+        
+        if (!hasCredentials) {
+            console.warn('⚠️  Razorpay credentials not configured. Subscription features will be disabled.');
+            console.warn('   Set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in environment variables.');
+            this.razorpay = null;
+            this.isConfigured = false;
+        } else {
+            this.razorpay = new Razorpay({
+                key_id: process.env.RAZORPAY_KEY_ID,
+                key_secret: process.env.RAZORPAY_KEY_SECRET
+            });
+            this.isConfigured = true;
+            console.log('✅ Razorpay configured successfully');
+        }
         
         // Subscription plan details
         // 🧪 TESTING MODE: ₹1 for demo/testing (change back to 99900 for production)
@@ -26,6 +38,13 @@ class RazorpayService {
 
     // Create a subscription order
     async createSubscriptionOrder(vendorData) {
+        if (!this.isConfigured) {
+            return {
+                success: false,
+                error: 'Razorpay is not configured. Please contact administrator.'
+            };
+        }
+        
         try {
             const { vendor_id, business_name, email } = vendorData;
 
@@ -62,6 +81,11 @@ class RazorpayService {
 
     // Verify payment signature
     verifyPaymentSignature(paymentData) {
+        if (!this.isConfigured) {
+            console.error('Razorpay not configured');
+            return false;
+        }
+        
         try {
             const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = paymentData;
 
@@ -81,6 +105,13 @@ class RazorpayService {
 
     // Fetch payment details
     async getPaymentDetails(payment_id) {
+        if (!this.isConfigured) {
+            return {
+                success: false,
+                error: 'Razorpay is not configured'
+            };
+        }
+        
         try {
             const payment = await this.razorpay.payments.fetch(payment_id);
             return {
@@ -98,6 +129,13 @@ class RazorpayService {
 
     // Fetch order details
     async getOrderDetails(order_id) {
+        if (!this.isConfigured) {
+            return {
+                success: false,
+                error: 'Razorpay is not configured'
+            };
+        }
+        
         try {
             const order = await this.razorpay.orders.fetch(order_id);
             return {
@@ -115,6 +153,13 @@ class RazorpayService {
 
     // Create refund (if needed)
     async createRefund(payment_id, amount = null) {
+        if (!this.isConfigured) {
+            return {
+                success: false,
+                error: 'Razorpay is not configured'
+            };
+        }
+        
         try {
             const refundData = { payment_id };
             if (amount) {
