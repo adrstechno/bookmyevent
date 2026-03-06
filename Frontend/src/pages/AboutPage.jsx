@@ -39,12 +39,7 @@ const AboutPage = () => {
     },
   ];
 
-  const team = [
-    { name: "John Doe", role: "Founder & CEO", image: "/images/team/team1.jpg" },
-    { name: "Jane Smith", role: "Creative Director", image: "/images/team/team2.jpg" },
-    { name: "Mike Johnson", role: "Operations Head", image: "/images/team/team3.jpg" },
-    { name: "Sarah Williams", role: "Client Relations", image: "/images/team/team4.jpg" },
-  ];
+ 
 
   const eventImages = [
     { 
@@ -114,7 +109,7 @@ const AboutPage = () => {
           >
             <span className="text-[#3c6e71] font-semibold text-sm tracking-wider uppercase">Our Story</span>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mt-4 mb-6">
-              Crafting Memories Since 2008
+              Crafting Memories Since 2025
             </h2>
             <p className="text-gray-600 text-lg leading-relaxed mb-4">
               We started with a simple vision: to transform ordinary events into extraordinary experiences. 
@@ -172,7 +167,7 @@ const AboutPage = () => {
       </div>
 
       {/* Stats Section */}
-      <div className="bg-gradient-to-r from-[#3c6e71] to-[#284b63] py-20">
+      {/* <div className="bg-gradient-to-r from-[#3c6e71] to-[#284b63] py-20">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
             {stats.map((stat, index) => {
@@ -196,7 +191,7 @@ const AboutPage = () => {
             })}
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Event Showcase with Stack Animation */}
       <div className="bg-gradient-to-br from-gray-50 to-gray-100 py-20">

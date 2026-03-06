@@ -3,7 +3,7 @@ import CategoryTemplate from "./CategoryTemplate";
 const BirthdayParties = () => {
   return (
     <CategoryTemplate
-      bannerImage="/images/Birthday.jpg"
+      bannerImage="https://weezevent.com/wp-content/uploads/2023/04/12163047/organising-surprise-birthday-party.jpg"
       categoryTitle="Birthday Parties"
       categorySlug="birthday-parties"
       description1="Make birthdays unforgettable with joyful themes, vibrant decor, and beautiful party arrangements."

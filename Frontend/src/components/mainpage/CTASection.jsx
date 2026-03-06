@@ -26,7 +26,7 @@ const CTASection = () => {
       {/* Background Image */}
       <div
         className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: "url('/CTA.jpg')" }}
+        style={{ backgroundImage: "url('https://static.vecteezy.com/system/resources/thumbnails/051/247/718/small_2x/golden-confetti-falls-against-a-blue-curtain-backdrop-during-a-vibrant-celebration-event-free-photo.jpeg')" }}
       />
 
       {/* Gradient Overlay */}

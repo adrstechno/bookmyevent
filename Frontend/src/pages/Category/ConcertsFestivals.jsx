@@ -3,7 +3,7 @@ import CategoryTemplate from "./CategoryTemplate";
 const ConcertsFestivals = () => {
   return (
     <CategoryTemplate
-      bannerImage="/images/Concert.jpg"
+      bannerImage="https://assets.cntraveller.in/photos/63121532d0e70c83010bf6f0/master/pass/Jodhpur%20RIFF.jpeg"
       categoryTitle="Concerts & Festivals"
       categorySlug="concerts-festivals"
       description1="High-energy concerts and festivals designed with power-packed sound, lighting, and stage arrangements."

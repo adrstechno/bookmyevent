@@ -3,9 +3,9 @@ import { FiStar, FiAward, FiTrendingUp } from "react-icons/fi";
 import TiltedCard from "./TiltedCard";
 
 const vendors = [
-  { name: "Royal Catering", img: "https://venuehub.pk/wp-content/uploads/outdoor-catering.jpg", rating: 4.9, projects: 150 },
-  { name: "Bliss Decor", img: "https://wallpaperaccess.com/full/3732122.jpg", rating: 4.8, projects: 200 },
-  { name: "Elite DJ", img: "https://www.pngmart.com/files/5/DJ-PNG-Transparent.png", rating: 5.0, projects: 180 },
+  { name: "Royal Catering", img: "https://wallpaperaccess.com/full/5600894.jpg", rating: 4.9, projects: 150 },
+  { name: "Bliss Decor", img: "https://deowgxgt4vwfe.cloudfront.net/uploads/1691055016_large.jpg", rating: 4.8, projects: 200 },
+  { name: "Elite DJ", img: "https://picjumbo.com/wp-content/uploads/party-dj-in-dance-music-club-free-photo.jpg", rating: 5.0, projects: 180 },
   { name: "Pixel Moments", img: "https://j5u8f2v8.rocketcdn.me/wp-content/uploads/images/overcoming-photography-challenges-LCu.jpeg", rating: 4.9, projects: 220 },
 ];
 
