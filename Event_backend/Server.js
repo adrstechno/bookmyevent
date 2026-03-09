@@ -18,6 +18,7 @@ import ShiftAvailabilityRouter from './Router/ShiftAvailabilityRoute.js';
 import DashboardRouter from './Router/DashboardRouter.js';
 import ManualReservationRouter from './Router/ManualReservationRoute.js';
 import SubscriptionRouter from './Router/SubscriptionRoute.js';
+import SubscriptionCronJobs from './Utils/subscriptionCronJobs.js';
 
 import TestRouter from './Router/TestRouter.js';
 
@@ -71,6 +72,9 @@ app.use('/test', TestRouter);
 app.get('/', (req, res) => {
   res.send('Welcome to the Event Management API');
 });
+
+// 🟢 Initialize subscription cron jobs
+SubscriptionCronJobs.init();
 
 app.listen(process.env.PORT, () => {
   console.log(`Server is running on port ${process.env.PORT}`);

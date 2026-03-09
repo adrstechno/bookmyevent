@@ -28,6 +28,7 @@ import AddService from "./pages/Dashboards/Admin/AddServices";
 import MainService from "./pages/Dashboards/Admin/MainService";
 import AdminBookings from "./pages/Dashboards/Admin/AdminBookings";
 import ManualReservations from "./pages/Dashboards/Admin/ManualReservations";
+import AdminSubscriptions from "./pages/Dashboards/Admin/AdminSubscriptions";
 
 // Vendor Pages
 import VendorDashboard from "./pages/Dashboards/Vendor/VendorDashboard";
@@ -130,6 +131,7 @@ export default function App() {
                 <Route path="mainservice" element={<MainService />} />
                 <Route path="bookings" element={<AdminBookings />} />
                 <Route path="reservations" element={<ManualReservations />} />
+                <Route path="subscriptions" element={<AdminSubscriptions />} />
               </Route>
             </Route>
 

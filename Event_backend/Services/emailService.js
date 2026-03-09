@@ -1000,6 +1000,218 @@ class EmailService {
             throw error;
         }
     }
+
+    // Send subscription expiry reminder (7 days before)
+    async sendSubscriptionExpiryReminder(emailData) {
+        const {
+            vendorEmail,
+            vendorName,
+            businessName,
+            expiryDate,
+            daysRemaining
+        } = emailData;
+
+        const formattedExpiryDate = new Date(expiryDate).toLocaleDateString('en-IN', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        });
+
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: vendorEmail,
+            subject: '⚠️ Your Subscription Expires in 7 Days - GoEventify',
+            html: `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                        .header { background: linear-gradient(135deg, #f9a826, #e67e22); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                        .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+                        .warning-box { background: #fff3cd; border: 3px solid #f9a826; padding: 20px; text-align: center; margin: 20px 0; border-radius: 10px; }
+                        .info-box { background: #fff; border: 1px solid #ddd; padding: 15px; margin: 15px 0; border-radius: 8px; }
+                        .btn { display: inline-block; background: #f9a826; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; margin: 15px 0; font-weight: bold; }
+                        .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <h1>⚠️ Subscription Expiry Reminder</h1>
+                            <p>Your subscription is expiring soon!</p>
+                        </div>
+                        
+                        <div class="content">
+                            <h2>Hello ${vendorName}!</h2>
+                            
+                            <p>This is a friendly reminder that your GoEventify vendor subscription for <strong>${businessName}</strong> will expire in <strong>${daysRemaining} days</strong>.</p>
+                            
+                            <div class="warning-box">
+                                <h3 style="color: #f9a826; margin: 0;">📅 Expiry Date</h3>
+                                <p style="font-size: 24px; font-weight: bold; margin: 10px 0;">${formattedExpiryDate}</p>
+                            </div>
+                            
+                            <div class="info-box">
+                                <h4>⚠️ What happens when your subscription expires?</h4>
+                                <ul style="margin: 10px 0; padding-left: 20px;">
+                                    <li>You will no longer be able to accept new bookings</li>
+                                    <li>Your vendor profile will be hidden from customers</li>
+                                    <li>Existing bookings will remain active</li>
+                                    <li>You will lose access to vendor dashboard features</li>
+                                </ul>
+                            </div>
+                            
+                            <div style="text-align: center; margin: 30px 0;">
+                                <a href="${process.env.FRONTEND_URL}/vendor/dashboard" class="btn">
+                                    🔄 Renew Subscription Now
+                                </a>
+                            </div>
+                            
+                            <div class="info-box">
+                                <h4>💰 Subscription Details</h4>
+                                <p><strong>Plan:</strong> Annual Vendor Subscription</p>
+                                <p><strong>Price:</strong> ₹999/year</p>
+                                <p><strong>Benefits:</strong></p>
+                                <ul style="margin: 10px 0; padding-left: 20px;">
+                                    <li>Accept unlimited bookings</li>
+                                    <li>Manage calendar and shifts</li>
+                                    <li>Receive instant notifications</li>
+                                    <li>Customer reviews and ratings</li>
+                                    <li>24/7 customer support</li>
+                                </ul>
+                            </div>
+                            
+                            <p style="margin-top: 20px;">Don't let your business opportunities slip away! Renew your subscription today to continue receiving bookings and growing your business.</p>
+                            
+                            <p>If you have any questions or need assistance, please don't hesitate to contact our support team.</p>
+                            
+                            <div class="footer">
+                                <p>This is an automated reminder from GoEventify</p>
+                                <p>© ${new Date().getFullYear()} GoEventify. All rights reserved.</p>
+                                <p>Need help? Contact us at ${process.env.EMAIL_USER}</p>
+                            </div>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `
+        };
+
+        try {
+            const info = await this.transporter.sendMail(mailOptions);
+            console.log('Subscription expiry reminder sent:', info.messageId);
+            return { success: true, messageId: info.messageId };
+        } catch (error) {
+            console.error('Error sending subscription expiry reminder:', error);
+            throw error;
+        }
+    }
+
+    // Send subscription expired notification
+    async sendSubscriptionExpiredNotification(emailData) {
+        const {
+            vendorEmail,
+            vendorName,
+            businessName,
+            expiryDate
+        } = emailData;
+
+        const formattedExpiryDate = new Date(expiryDate).toLocaleDateString('en-IN', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        });
+
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: vendorEmail,
+            subject: '❌ Your Subscription Has Expired - GoEventify',
+            html: `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                        .header { background: linear-gradient(135deg, #dc3545, #c82333); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                        .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+                        .expired-box { background: #f8d7da; border: 3px solid #dc3545; padding: 20px; text-align: center; margin: 20px 0; border-radius: 10px; }
+                        .info-box { background: #fff; border: 1px solid #ddd; padding: 15px; margin: 15px 0; border-radius: 8px; }
+                        .btn { display: inline-block; background: #28a745; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; margin: 15px 0; font-weight: bold; }
+                        .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <h1>❌ Subscription Expired</h1>
+                            <p>Your subscription has ended</p>
+                        </div>
+                        
+                        <div class="content">
+                            <h2>Hello ${vendorName},</h2>
+                            
+                            <p>Your GoEventify vendor subscription for <strong>${businessName}</strong> has expired as of <strong>${formattedExpiryDate}</strong>.</p>
+                            
+                            <div class="expired-box">
+                                <h3 style="color: #dc3545; margin: 0;">⚠️ Subscription Status</h3>
+                                <p style="font-size: 24px; font-weight: bold; margin: 10px 0; color: #dc3545;">EXPIRED</p>
+                            </div>
+                            
+                            <div class="info-box">
+                                <h4>🚫 Current Limitations</h4>
+                                <ul style="margin: 10px 0; padding-left: 20px;">
+                                    <li>You cannot accept new bookings</li>
+                                    <li>Your vendor profile is hidden from customers</li>
+                                    <li>Limited access to vendor dashboard</li>
+                                    <li>No new customer inquiries</li>
+                                </ul>
+                            </div>
+                            
+                            <div style="text-align: center; margin: 30px 0;">
+                                <a href="${process.env.FRONTEND_URL}/vendor/dashboard" class="btn">
+                                    ✅ Reactivate Subscription - ₹999/year
+                                </a>
+                            </div>
+                            
+                            <div class="info-box">
+                                <h4>💡 Why Renew?</h4>
+                                <ul style="margin: 10px 0; padding-left: 20px;">
+                                    <li><strong>Instant Reactivation:</strong> Start receiving bookings immediately</li>
+                                    <li><strong>Affordable:</strong> Only ₹999 for a full year</li>
+                                    <li><strong>Grow Your Business:</strong> Access to thousands of potential customers</li>
+                                    <li><strong>Professional Tools:</strong> Calendar management, notifications, and more</li>
+                                </ul>
+                            </div>
+                            
+                            <p style="margin-top: 20px;">Don't miss out on potential business opportunities! Renew your subscription today and get back to what you do best - serving your customers.</p>
+                            
+                            <p>If you have any questions or need assistance with renewal, our support team is here to help.</p>
+                            
+                            <div class="footer">
+                                <p>This is an automated notification from GoEventify</p>
+                                <p>© ${new Date().getFullYear()} GoEventify. All rights reserved.</p>
+                                <p>Need help? Contact us at ${process.env.EMAIL_USER}</p>
+                            </div>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `
+        };
+
+        try {
+            const info = await this.transporter.sendMail(mailOptions);
+            console.log('Subscription expired notification sent:', info.messageId);
+            return { success: true, messageId: info.messageId };
+        } catch (error) {
+            console.error('Error sending subscription expired notification:', error);
+            throw error;
+        }
+    }
+
 }
 
 export default new EmailService();

@@ -297,8 +297,28 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-    setErrors({ ...errors, [e.target.name]: "" });
+    const { name, value } = e.target;
+    
+    // Real-time input sanitization
+    let sanitizedValue = value;
+    
+    if (name === "phone") {
+      // Only allow numbers, max 10 digits
+      sanitizedValue = value.replace(/\D/g, "").slice(0, 10);
+    } else if (name === "first_name" || name === "last_name") {
+      // Only allow letters, spaces, and hyphens
+      sanitizedValue = value.replace(/[^a-zA-Z\s-]/g, "");
+    } else if (name === "email") {
+      // Remove spaces from email
+      sanitizedValue = value.replace(/\s/g, "");
+    }
+    
+    setFormData({ ...formData, [name]: sanitizedValue });
+    
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors({ ...errors, [name]: "" });
+    }
   };
 
   /* ---------- Validation ---------- */
@@ -421,16 +441,21 @@ const Register = () => {
             <div className="relative">
               <FaUser className="absolute left-3 top-3 text-gray-500" />
               <input
+                type="text"
                 name="first_name"
                 placeholder="First Name"
                 value={formData.first_name}
                 onChange={handleChange}
+                maxLength={50}
                 className={`w-full pl-10 py-2.5 rounded-lg border bg-gray-50/80 outline-none ${
                   errors.first_name ? "border-red-500" : "border-gray-300"
                 } focus:ring-2 focus:ring-[#3c6e71]`}
               />
               {errors.first_name && (
-                <p className="text-red-500 text-sm mt-1">
+                <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
                   {errors.first_name}
                 </p>
               )}
@@ -439,10 +464,12 @@ const Register = () => {
             <div className="relative">
               <FaUser className="absolute left-3 top-3 text-gray-500" />
               <input
+                type="text"
                 name="last_name"
                 placeholder="Last Name"
                 value={formData.last_name}
                 onChange={handleChange}
+                maxLength={50}
                 className="w-full pl-10 py-2.5 rounded-lg border bg-gray-50/80 border-gray-300 outline-none focus:ring-2 focus:ring-[#3c6e71]"
               />
             </div>
@@ -452,39 +479,53 @@ const Register = () => {
           <div className="relative">
             <FaRegEnvelope className="absolute left-3 top-3 text-gray-500" />
             <input
+              type="email"
               name="email"
               placeholder="Email Address"
               value={formData.email}
               onChange={handleChange}
+              autoComplete="email"
               className={`w-full pl-10 py-2.5 rounded-lg border outline-none bg-gray-50/80 ${
                 errors.email ? "border-red-500" : "border-gray-300"
               } focus:ring-2 focus:ring-[#3c6e71]`}
             />
             {errors.email && (
-              <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+              <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                {errors.email}
+              </p>
             )}
           </div>
 
           {/* Phone */}
           <div className="relative">
             <FaPhoneAlt className="absolute left-3 top-3 text-gray-500" />
-
             <input
               type="tel"
               name="phone"
-              placeholder="Phone Number"
+              placeholder="Phone Number (10 digits)"
               value={formData.phone}
               maxLength={10}
-              pattern="[0-9]{10}"
               inputMode="numeric"
               onChange={handleChange}
               className={`w-full pl-10 py-2.5 rounded-lg border outline-none bg-gray-50/80 ${
                 errors.phone ? "border-red-500" : "border-gray-300"
               } focus:ring-2 focus:ring-[#3c6e71]`}
             />
-
+            {formData.phone && formData.phone.length < 10 && !errors.phone && (
+              <p className="text-yellow-600 text-xs mt-1">
+                {10 - formData.phone.length} digits remaining
+              </p>
+            )}
             {errors.phone && (
-              <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
+              <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                {errors.phone}
+              </p>
             )}
           </div>
 
@@ -510,8 +551,18 @@ const Register = () => {
               {showPassword ? <FaRegEyeSlash /> : <FaRegEye />}
             </span>
 
+            {formData.password && formData.password.length < 6 && !errors.password && (
+              <p className="text-yellow-600 text-xs mt-1">
+                Password strength: {formData.password.length < 3 ? "Weak" : formData.password.length < 6 ? "Fair" : "Good"}
+              </p>
+            )}
             {errors.password && (
-              <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+              <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                {errors.password}
+              </p>
             )}
           </div>
 
