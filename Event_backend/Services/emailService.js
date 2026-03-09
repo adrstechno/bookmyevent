@@ -1,86 +1,171 @@
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import ReviewTokenService from '../Utils/reviewToken.js';
+import SendGridService from './sendgridService.js';
 
 dotenv.config();
 
 class EmailService {
     constructor() {
-        // Create transporter with Gmail SMTP configuration
-        // Using port 587 (TLS/STARTTLS) which is more reliable on hosting platforms like Render
+        this.isConnectionVerified = false;
+        this.connectionError = null;
+        
+        // Check if SendGrid is available (preferred for production)
+        this.useSendGrid = !!process.env.SENDGRID_API_KEY;
+        
+        if (this.useSendGrid) {
+            console.log('📧 Using SendGrid for email delivery (recommended for Render)');
+        } else {
+            console.log('📧 Using SMTP for email delivery (may not work on Render)');
+            // Create transporter with Gmail SMTP configuration
+            // Try multiple port configurations for better compatibility
+            this.createTransporter();
+
+            // Verify connection on startup (non-blocking)
+            this.verifyConnection();
+        }
+    }
+
+    createTransporter(useAlternativePort = false) {
+        const port = useAlternativePort ? 465 : 587;
+        const secure = useAlternativePort ? true : false;
+        
+        console.log(`Creating email transporter with port ${port} (secure: ${secure})`);
+        
         this.transporter = nodemailer.createTransport({
             host: 'smtp.gmail.com',
-            port: 587, // TLS port (more reliable on cloud platforms)
-            secure: false, // Use STARTTLS
+            port: port,
+            secure: secure, // true for 465, false for 587
             auth: {
                 user: process.env.EMAIL_USER,
                 pass: process.env.EMAIL_PASS
             },
             // Additional options for better reliability on production
-            connectionTimeout: 30000, // 30 seconds (increased for slow networks)
+            connectionTimeout: 60000, // 60 seconds (very generous for slow networks)
             greetingTimeout: 30000,
-            socketTimeout: 30000,
+            socketTimeout: 60000,
             pool: true, // Use connection pooling
             maxConnections: 5, // Max concurrent connections
             maxMessages: 100, // Max messages per connection
             rateDelta: 1000, // Rate limiting
             rateLimit: 5, // Max 5 emails per second
             tls: {
-                rejectUnauthorized: true,
+                rejectUnauthorized: false, // More permissive for cloud platforms
                 minVersion: 'TLSv1.2'
             },
-            logger: process.env.NODE_ENV === 'production' ? false : true,
-            debug: process.env.NODE_ENV === 'production' ? false : true
+            logger: process.env.NODE_ENV !== 'production',
+            debug: process.env.NODE_ENV !== 'production'
         });
-
-        // Verify connection on startup (non-blocking)
-        this.verifyConnection();
     }
 
     // Verify SMTP connection (non-blocking)
     async verifyConnection() {
         try {
             await this.transporter.verify();
+            this.isConnectionVerified = true;
+            this.connectionError = null;
             console.log('✅ Email service is ready to send emails');
+            return true;
         } catch (error) {
+            this.isConnectionVerified = false;
+            this.connectionError = error.message;
             console.error('❌ Email service connection failed:', error.message);
             console.error('   Please check EMAIL_USER and EMAIL_PASS in .env file');
             console.error('   Note: Connection will be retried when sending emails');
+            
+            // Don't throw error - allow app to start even if email fails
+            return false;
         }
     }
 
-    // Helper method to send email with retry logic
+    // Helper method to send email with retry logic and port fallback
     async sendMailWithRetry(mailOptions, maxRetries = 3) {
+        // If SendGrid is configured, use it (works on Render)
+        if (this.useSendGrid) {
+            try {
+                console.log(`📧 Sending email via SendGrid to: ${mailOptions.to}`);
+                const result = await SendGridService.sendEmail(mailOptions);
+                return result;
+            } catch (error) {
+                console.error('❌ SendGrid failed:', error.message);
+                return { 
+                    success: false, 
+                    error: error.message,
+                    provider: 'sendgrid'
+                };
+            }
+        }
+        
+        // Otherwise use SMTP (works locally, may fail on Render)
         let lastError;
         
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
             try {
-                console.log(`Sending email (attempt ${attempt}/${maxRetries})...`);
+                console.log(`Sending email to ${mailOptions.to} (attempt ${attempt}/${maxRetries})...`);
+                
+                // If first attempt fails and we haven't verified connection, try alternative port
+                if (attempt === 2 && !this.isConnectionVerified) {
+                    console.log('Trying alternative SMTP port configuration...');
+                    this.createTransporter(true); // Try port 465
+                }
+                
                 const info = await this.transporter.sendMail(mailOptions);
-                console.log(`Email sent successfully on attempt ${attempt}:`, info.messageId);
-                return { success: true, messageId: info.messageId };
+                console.log(`✅ Email sent successfully on attempt ${attempt}:`, info.messageId);
+                this.isConnectionVerified = true;
+                return { success: true, messageId: info.messageId, provider: 'smtp' };
             } catch (error) {
                 lastError = error;
-                console.error(`Email send attempt ${attempt} failed:`, error.message);
+                console.error(`❌ Email send attempt ${attempt} failed:`, error.message);
                 
                 // Don't retry on authentication errors
-                if (error.responseCode === 535 || error.message.includes('authentication')) {
-                    console.error('Authentication error - not retrying');
-                    throw error;
+                if (error.responseCode === 535 || error.message.includes('authentication') || error.message.includes('Invalid login')) {
+                    console.error('🔒 Authentication error - check EMAIL_USER and EMAIL_PASS');
+                    return { 
+                        success: false, 
+                        error: 'Email authentication failed. Please check your email credentials.',
+                        provider: 'smtp'
+                    };
+                }
+                
+                // If connection timeout, try alternative configuration on next attempt
+                if (error.code === 'ETIMEDOUT' || error.code === 'ECONNECTION') {
+                    console.error('⏱️ Connection timeout - network or firewall issue');
                 }
                 
                 // Wait before retrying (exponential backoff)
                 if (attempt < maxRetries) {
-                    const waitTime = Math.min(1000 * Math.pow(2, attempt - 1), 10000);
-                    console.log(`Waiting ${waitTime}ms before retry...`);
+                    const waitTime = Math.min(2000 * Math.pow(2, attempt - 1), 15000);
+                    console.log(`⏳ Waiting ${waitTime}ms before retry...`);
                     await new Promise(resolve => setTimeout(resolve, waitTime));
                 }
             }
         }
         
         // All retries failed
-        console.error(`All ${maxRetries} email send attempts failed`);
-        throw lastError;
+        console.error(`❌ All ${maxRetries} email send attempts failed`);
+        console.error('Last error:', lastError.message);
+        
+        // Log helpful troubleshooting info
+        if (lastError.code === 'ETIMEDOUT') {
+            console.error('');
+            console.error('🔧 SMTP BLOCKED ON RENDER - SOLUTION:');
+            console.error('   1. Sign up for SendGrid: https://sendgrid.com/');
+            console.error('   2. Get API key from SendGrid dashboard');
+            console.error('   3. Add SENDGRID_API_KEY to Render environment variables');
+            console.error('   4. Run: npm install @sendgrid/mail');
+            console.error('   5. Redeploy your app');
+            console.error('   See Event_backend/RENDER_EMAIL_FIX.md for details');
+            console.error('');
+        }
+        
+        // Return error info instead of throwing - allows app to continue
+        return { 
+            success: false, 
+            error: lastError.message,
+            code: lastError.code,
+            provider: 'smtp',
+            troubleshooting: 'SMTP blocked by Render. Use SendGrid instead - see RENDER_EMAIL_FIX.md'
+        };
     }
 
     // Send OTP email to user
