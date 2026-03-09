@@ -14,14 +14,10 @@ class EmailService {
         this.useSendGrid = !!process.env.SENDGRID_API_KEY;
         
         if (this.useSendGrid) {
-            console.log('📧 Using SendGrid for email delivery (recommended for Render)');
+            console.log('📧 Using SendGrid for email delivery');
         } else {
-            console.log('📧 Using SMTP for email delivery (may not work on Render)');
-            // Create transporter with Gmail SMTP configuration
-            // Try multiple port configurations for better compatibility
+            // Using SMTP (Gmail)
             this.createTransporter();
-
-            // Verify connection on startup (non-blocking)
             this.verifyConnection();
         }
     }
@@ -53,8 +49,8 @@ class EmailService {
                 rejectUnauthorized: false, // More permissive for cloud platforms
                 minVersion: 'TLSv1.2'
             },
-            logger: process.env.NODE_ENV !== 'production',
-            debug: process.env.NODE_ENV !== 'production'
+            logger: false, // Disable in production
+            debug: false // Disable in production
         });
     }
 

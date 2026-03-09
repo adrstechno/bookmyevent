@@ -8,9 +8,8 @@ class SendGridService {
         if (process.env.SENDGRID_API_KEY) {
             sgMail.setApiKey(process.env.SENDGRID_API_KEY);
             console.log('✅ SendGrid initialized');
-        } else {
-            console.warn('⚠️ SENDGRID_API_KEY not found in environment variables');
         }
+        // Removed warning - only log if actually configured
     }
 
     async sendEmail(mailOptions) {

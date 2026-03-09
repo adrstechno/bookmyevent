@@ -34,7 +34,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser()); // ✅ Enables req.cookies
 
-// (optional) if you're working with frontend:
+// CORS configuration for production
 app.use(cors({
   origin: [
     "http://localhost:5173",
@@ -44,8 +44,9 @@ app.use(cors({
     "https://goeventify.com"
   ],
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  exposedHeaders: ["Set-Cookie"]
 }));
 
 
