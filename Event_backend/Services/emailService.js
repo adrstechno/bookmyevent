@@ -6,14 +6,81 @@ dotenv.config();
 
 class EmailService {
     constructor() {
-        // Create transporter with your email service configuration
+        // Create transporter with Gmail SMTP configuration
+        // Using port 587 (TLS/STARTTLS) which is more reliable on hosting platforms like Render
         this.transporter = nodemailer.createTransport({
-            service: 'gmail', // or your email service
+            host: 'smtp.gmail.com',
+            port: 587, // TLS port (more reliable on cloud platforms)
+            secure: false, // Use STARTTLS
             auth: {
-                user: process.env.EMAIL_USER, // Your email
-                pass: process.env.EMAIL_PASS  // Your app password
-            }
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
+            },
+            // Additional options for better reliability on production
+            connectionTimeout: 30000, // 30 seconds (increased for slow networks)
+            greetingTimeout: 30000,
+            socketTimeout: 30000,
+            pool: true, // Use connection pooling
+            maxConnections: 5, // Max concurrent connections
+            maxMessages: 100, // Max messages per connection
+            rateDelta: 1000, // Rate limiting
+            rateLimit: 5, // Max 5 emails per second
+            tls: {
+                rejectUnauthorized: true,
+                minVersion: 'TLSv1.2'
+            },
+            logger: process.env.NODE_ENV === 'production' ? false : true,
+            debug: process.env.NODE_ENV === 'production' ? false : true
         });
+
+        // Verify connection on startup (non-blocking)
+        this.verifyConnection();
+    }
+
+    // Verify SMTP connection (non-blocking)
+    async verifyConnection() {
+        try {
+            await this.transporter.verify();
+            console.log('✅ Email service is ready to send emails');
+        } catch (error) {
+            console.error('❌ Email service connection failed:', error.message);
+            console.error('   Please check EMAIL_USER and EMAIL_PASS in .env file');
+            console.error('   Note: Connection will be retried when sending emails');
+        }
+    }
+
+    // Helper method to send email with retry logic
+    async sendMailWithRetry(mailOptions, maxRetries = 3) {
+        let lastError;
+        
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                console.log(`Sending email (attempt ${attempt}/${maxRetries})...`);
+                const info = await this.transporter.sendMail(mailOptions);
+                console.log(`Email sent successfully on attempt ${attempt}:`, info.messageId);
+                return { success: true, messageId: info.messageId };
+            } catch (error) {
+                lastError = error;
+                console.error(`Email send attempt ${attempt} failed:`, error.message);
+                
+                // Don't retry on authentication errors
+                if (error.responseCode === 535 || error.message.includes('authentication')) {
+                    console.error('Authentication error - not retrying');
+                    throw error;
+                }
+                
+                // Wait before retrying (exponential backoff)
+                if (attempt < maxRetries) {
+                    const waitTime = Math.min(1000 * Math.pow(2, attempt - 1), 10000);
+                    console.log(`Waiting ${waitTime}ms before retry...`);
+                    await new Promise(resolve => setTimeout(resolve, waitTime));
+                }
+            }
+        }
+        
+        // All retries failed
+        console.error(`All ${maxRetries} email send attempts failed`);
+        throw lastError;
     }
 
     // Send OTP email to user
@@ -109,9 +176,7 @@ class EmailService {
         };
 
         try {
-            const info = await this.transporter.sendMail(mailOptions);
-            console.log('OTP email sent successfully:', info.messageId);
-            return { success: true, messageId: info.messageId };
+            return await this.sendMailWithRetry(mailOptions);
         } catch (error) {
             console.error('Error sending OTP email:', error);
             throw error;
@@ -220,9 +285,7 @@ class EmailService {
         };
 
         try {
-            const info = await this.transporter.sendMail(mailOptions);
-            console.log('Work completion email sent successfully:', info.messageId);
-            return { success: true, messageId: info.messageId };
+            return await this.sendMailWithRetry(mailOptions);
         } catch (error) {
             console.error('Error sending work completion email:', error);
             throw error;
@@ -296,9 +359,7 @@ class EmailService {
         };
 
         try {
-            const info = await this.transporter.sendMail(mailOptions);
-            console.log('Registration email sent successfully:', info.messageId);
-            return { success: true, messageId: info.messageId };
+            return await this.sendMailWithRetry(mailOptions);
         } catch (error) {
             console.error('Error sending registration email:', error);
             throw error;
@@ -384,9 +445,7 @@ class EmailService {
         };
 
         try {
-            const info = await this.transporter.sendMail(mailOptions);
-            console.log('Booking confirmation email sent successfully:', info.messageId);
-            return { success: true, messageId: info.messageId };
+            return await this.sendMailWithRetry(mailOptions);
         } catch (error) {
             console.error('Error sending booking confirmation email:', error);
             throw error;
@@ -493,9 +552,7 @@ class EmailService {
         };
 
         try {
-            const info = await this.transporter.sendMail(mailOptions);
-            console.log('Review reminder email sent successfully:', info.messageId);
-            return { success: true, messageId: info.messageId };
+            return await this.sendMailWithRetry(mailOptions);
         } catch (error) {
             console.error('Error sending review reminder email:', error);
             throw error;
@@ -631,9 +688,7 @@ class EmailService {
         };
 
         try {
-            const info = await this.transporter.sendMail(mailOptions);
-            console.log('Vendor booking notification email sent successfully:', info.messageId);
-            return { success: true, messageId: info.messageId };
+            return await this.sendMailWithRetry(mailOptions);
         } catch (error) {
             console.error('Error sending vendor booking notification email:', error);
             throw error;
@@ -733,9 +788,7 @@ class EmailService {
         };
 
         try {
-            const info = await this.transporter.sendMail(mailOptions);
-            console.log('Email verification sent successfully:', info.messageId);
-            return { success: true, messageId: info.messageId };
+            return await this.sendMailWithRetry(mailOptions);
         } catch (error) {
             console.error('Error sending email verification:', error);
             throw error;
@@ -863,9 +916,7 @@ class EmailService {
         };
 
         try {
-            const info = await this.transporter.sendMail(mailOptions);
-            console.log('Vendor booking approval notification email sent successfully:', info.messageId);
-            return { success: true, messageId: info.messageId };
+            return await this.sendMailWithRetry(mailOptions);
         } catch (error) {
             console.error('Error sending vendor booking approval notification email:', error);
             throw error;
@@ -992,9 +1043,7 @@ class EmailService {
         };
 
         try {
-            const info = await this.transporter.sendMail(mailOptions);
-            console.log('Subscription confirmation email sent successfully:', info.messageId);
-            return { success: true, messageId: info.messageId };
+            return await this.sendMailWithRetry(mailOptions);
         } catch (error) {
             console.error('Error sending subscription confirmation email:', error);
             throw error;
@@ -1100,9 +1149,7 @@ class EmailService {
         };
 
         try {
-            const info = await this.transporter.sendMail(mailOptions);
-            console.log('Subscription expiry reminder sent:', info.messageId);
-            return { success: true, messageId: info.messageId };
+            return await this.sendMailWithRetry(mailOptions);
         } catch (error) {
             console.error('Error sending subscription expiry reminder:', error);
             throw error;
@@ -1203,9 +1250,7 @@ class EmailService {
         };
 
         try {
-            const info = await this.transporter.sendMail(mailOptions);
-            console.log('Subscription expired notification sent:', info.messageId);
-            return { success: true, messageId: info.messageId };
+            return await this.sendMailWithRetry(mailOptions);
         } catch (error) {
             console.error('Error sending subscription expired notification:', error);
             throw error;
