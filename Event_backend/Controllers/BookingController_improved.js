@@ -28,9 +28,7 @@ class BookingController {
                 event_address,
                 event_date,
                 event_time,
-                special_requirement,
-                event_latitude,
-                event_longitude
+                special_requirement
             } = req.body;
 
             // Validate required fields
@@ -39,20 +37,6 @@ class BookingController {
                     success: false,
                     message: 'vendor_id, shift_id, package_id, event_address, event_date, and event_time are required'
                 });
-            }
-
-            // If coordinates are provided but no address, try reverse geocoding
-            let finalAddress = event_address;
-            if (event_latitude && event_longitude && (!event_address || event_address.includes('Lat:'))) {
-                try {
-                    const geocodeResult = await GeocodingService.reverseGeocode(event_latitude, event_longitude);
-                    if (geocodeResult.success) {
-                        finalAddress = geocodeResult.address;
-                        console.log('✅ Address resolved from coordinates:', finalAddress);
-                    }
-                } catch (geocodeError) {
-                    console.log('⚠️ Reverse geocoding failed, using provided address:', geocodeError.message);
-                }
             }
 
             // Generate booking UUID
@@ -64,12 +48,10 @@ class BookingController {
                 vendor_id,
                 shift_id,
                 package_id,
-                event_address: finalAddress,
+                event_address,
                 event_date,
                 event_time,
-                special_requirement,
-                event_latitude,
-                event_longitude
+                special_requirement
             };
 
             const result = await BookingModel.createBooking(bookingData);
