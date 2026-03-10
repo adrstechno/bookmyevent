@@ -27,9 +27,7 @@ class BookingController {
                 event_address,
                 event_date,
                 event_time,
-                special_requirement,
-                event_latitude,
-                event_longitude
+                special_requirement
             } = req.body;
 
             // Validate required fields
@@ -52,9 +50,7 @@ class BookingController {
                 event_address,
                 event_date,
                 event_time,
-                special_requirement,
-                event_latitude,
-                event_longitude
+                special_requirement
             };
 
             const result = await BookingModel.createBooking(bookingData);
@@ -1023,9 +1019,7 @@ class BookingController {
                 event_address,
                 event_date,
                 event_time,
-                special_requirement,
-                event_latitude,
-                event_longitude
+                special_requirement
             } = req.body;
 
             // Validate required fields
@@ -1048,9 +1042,7 @@ class BookingController {
                 event_address,
                 event_date,
                 event_time,
-                special_requirement,
-                event_latitude,
-                event_longitude
+                special_requirement
             };
 
             const result = await BookingModel.createBooking(bookingData);

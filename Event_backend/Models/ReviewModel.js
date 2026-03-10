@@ -52,7 +52,7 @@ class ReviewModel {
             LEFT JOIN users u ON rar.user_id = u.uuid
             LEFT JOIN event_booking eb ON rar.booking_id = eb.booking_id
             LEFT JOIN vendor_profiles vp ON rar.vendor_id = vp.vendor_id
-            WHERE rar.booking_id = ? AND rar.is_active = TRUE
+            WHERE rar.booking_id = ?
         `;
 
         return new Promise((resolve, reject) => {
@@ -73,7 +73,7 @@ class ReviewModel {
             LEFT JOIN users u ON rar.user_id = u.uuid
             LEFT JOIN event_booking eb ON rar.booking_id = eb.booking_id
             LEFT JOIN vendor_profiles vp ON rar.vendor_id = vp.vendor_id
-            WHERE rar.rating_id = ? AND rar.is_active = TRUE
+            WHERE rar.rating_id = ?
         `;
 
         return new Promise((resolve, reject) => {
@@ -89,7 +89,7 @@ class ReviewModel {
         const { page = 1, limit = 20, rating_filter, sort_by = 'created_at', sort_order = 'DESC' } = options;
         const offset = (page - 1) * limit;
         
-        let whereConditions = ['rar.vendor_id = ?', 'rar.is_active = TRUE'];
+        let whereConditions = ['rar.vendor_id = ?'];
         let params = [vendor_id];
         
         if (rating_filter) {
@@ -137,7 +137,7 @@ class ReviewModel {
                 SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) as two_star_count,
                 SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) as one_star_count
             FROM review_and_rating
-            WHERE vendor_id = ? AND is_active = TRUE
+            WHERE vendor_id = ?
         `;
 
         return new Promise((resolve, reject) => {
