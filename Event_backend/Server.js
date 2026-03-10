@@ -41,7 +41,8 @@ app.use(cors({
     "http://localhost:5174",
     "https://bookmyevent-e2c3.vercel.app",
     "https://www.goeventify.com",
-    "https://goeventify.com"
+    "https://goeventify.com",
+    "https://api.goeventify.com"
   ],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
