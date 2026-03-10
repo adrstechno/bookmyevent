@@ -26,24 +26,22 @@ class BookingModel {
             event_address,
             event_date,
             event_time,
-            special_requirement,
-            event_latitude,
-            event_longitude
+            special_requirement
         } = bookingData;
 
         const sql = `
             INSERT INTO event_booking (
                 booking_uuid, user_id, vendor_id, shift_id, package_id,
                 event_address, event_date, event_time, special_requirement,
-                event_latitude, event_longitude, status, admin_approval
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+                status, admin_approval
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
         `;
 
         return new Promise((resolve, reject) => {
             db.query(sql, [
                 booking_uuid, user_id, vendor_id, shift_id, package_id,
                 event_address, event_date, event_time, special_requirement,
-                event_latitude, event_longitude, 'pending'
+                'pending'
             ], (err, result) => {
                 if (err) reject(err);
                 else resolve({ booking_id: result.insertId, booking_uuid });

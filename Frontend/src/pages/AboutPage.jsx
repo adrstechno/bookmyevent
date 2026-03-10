@@ -156,10 +156,11 @@ const AboutPage = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.8, duration: 0.5 }}
-              className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 bg-white px-6 py-3 rounded-full shadow-lg border border-gray-100"
+              className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 bg-white px-6 py-3 rounded-full shadow-lg border border-gray-100 cursor-pointer hover:shadow-xl hover:scale-105 transition-all"
+              onClick={() => window.scrollTo({ top: document.getElementById('services-section')?.offsetTop || 0, behavior: 'smooth' })}
             >
               <p className="text-sm text-gray-600 font-medium">
-              click to explore our events
+                Click to explore our events →
               </p>
             </motion.div>
           </motion.div>
@@ -293,8 +294,7 @@ const AboutPage = () => {
                 className="mt-8 p-4 bg-white rounded-xl shadow-md border border-gray-100"
               >
                 <p className="text-sm text-gray-500 italic">
-                  💡 <span className="font-semibold text-gray-700">Pro Tip:</span> Drag the cards to see different events, 
-                  or click to cycle through our portfolio!
+                  Click on the cards to explore our portfolio!
                 </p>
               </motion.div>
             </motion.div>

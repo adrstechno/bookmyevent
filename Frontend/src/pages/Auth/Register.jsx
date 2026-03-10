@@ -580,35 +580,30 @@ const Register = () => {
           </button>
 
           {/* Vendor Switch */}
-        <p className="text-center text-sm text-gray-800 py-3 rounded-lg bg-gray-50">
-  {isVendorSignup ? (
-    <>
-      Want a normal account?{" "}
-      <span
-        className="text-[#284b63] cursor-pointer font-semibold hover:underline px-2 py-1 rounded-md hover:bg-[#3c6e71]/10 transition"
-        onClick={() => {
-          setIsVendorSignup(false);
-          setFormData({ ...formData, user_type: "user" });
-        }}
-      >
-        Sign Up as User
-      </span>
-    </>
-  ) : (
-    <>
-      Want to offer services?{" "}
-      <span
-        className="text-[#284b63] cursor-pointer font-semibold hover:underline px-2 py-1 rounded-md hover:bg-[#3c6e71]/10 transition"
-        onClick={() => {
-          setIsVendorSignup(true);
-          setFormData({ ...formData, user_type: "vendor" });
-        }}
-      >
-        Sign Up as Vendor
-      </span>
-    </>
-  )}
-</p>
+        <button
+          type="button"
+          onClick={() => {
+            setIsVendorSignup(!isVendorSignup);
+            setFormData({ ...formData, user_type: isVendorSignup ? "user" : "vendor" });
+          }}
+          className="w-full text-center text-sm text-gray-800 py-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition font-medium cursor-pointer"
+        >
+          {isVendorSignup ? (
+            <>
+              Want a normal account?{" "}
+              <span className="text-[#284b63] font-semibold underline">
+                Sign Up as User
+              </span>
+            </>
+          ) : (
+            <>
+              Want to offer services?{" "}
+              <span className="text-[#284b63] font-semibold underline">
+                Sign Up as Vendor
+              </span>
+            </>
+          )}
+        </button>
 
 
           {/* Login */}

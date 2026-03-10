@@ -257,9 +257,9 @@ const ServicesSection = () => {
               overlayContent={
                 <div className="w-full h-[420px] flex flex-col justify-between p-4">
                   <div className="flex flex-col items-center justify-center flex-1 min-h-0">
-                    <div className="bg-black/50 backdrop-blur-md rounded-xl p-4 shadow-2xl border border-white/20 max-w-full">
-                      <service.icon className="w-12 h-12 text-[#f9a826] drop-shadow-2xl mb-2 mx-auto" />
-                      <h3 className="text-xl font-bold text-white drop-shadow-2xl text-center line-clamp-2" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8)' }}>
+                    <div className="bg-black/50 backdrop-blur-md rounded-xl p-4 shadow-2xl border border-white/20 w-full max-w-xs">
+                      <service.icon className="w-12 h-12 text-[#f9a826] drop-shadow-2xl mb-2 mx-auto flex-shrink-0" />
+                      <h3 className="text-lg font-bold text-white drop-shadow-2xl text-center line-clamp-2 min-h-[3.5rem] flex items-center justify-center" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8)' }}>
                         {service.title}
                       </h3>
                     </div>

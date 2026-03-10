@@ -31,24 +31,7 @@ server {
     listen 80;
     server_name $API_DOMAIN;
 
-    # Redirect HTTP to HTTPS
-    return 301 https://\$server_name\$request_uri;
-}
-
-server {
-    listen 443 ssl http2;
-    server_name $API_DOMAIN;
-
-    # SSL certificates (will be added by certbot)
-    # ssl_certificate /etc/letsencrypt/live/$API_DOMAIN/fullchain.pem;
-    # ssl_certificate_key /etc/letsencrypt/live/$API_DOMAIN/privkey.pem;
-
-    # SSL configuration
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers HIGH:!aNULL:!MD5;
-    ssl_prefer_server_ciphers on;
-
-    # Proxy settings
+    # Proxy settings for HTTP (before SSL)
     location / {
         proxy_pass http://localhost:3232;
         proxy_http_version 1.1;
@@ -60,7 +43,7 @@ server {
         proxy_set_header X-Forwarded-Proto \$scheme;
         proxy_cache_bypass \$http_upgrade;
         
-        # CORS headers (backup, your Express already handles this)
+        # CORS headers
         add_header 'Access-Control-Allow-Origin' 'https://goeventify.com' always;
         add_header 'Access-Control-Allow-Credentials' 'true' always;
         add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS, PATCH' always;
@@ -72,7 +55,7 @@ server {
         }
     }
 
-    # Increase timeouts for long-running requests
+    # Increase timeouts
     proxy_connect_timeout 60s;
     proxy_send_timeout 60s;
     proxy_read_timeout 60s;

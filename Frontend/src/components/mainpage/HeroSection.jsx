@@ -7,7 +7,7 @@ const HeroSection = () => {
 
   const slides = [
     {
-      image: "https://images.unsplash.com/photo-1519167758481-83f29da8c2b6?w=1200&h=600&fit=crop",
+      image: "https://media.istockphoto.com/id/471906412/photo/beautiful-table-setting-for-an-wedding-reception-or-an-event.webp?a=1&b=1&s=612x612&w=0&k=20&c=wrF199YjsZWmbQSqGGiA8LojD7qz602jbfoymHlYiZ4=",
       title: "Make Your Events Unforgettable",
       subtitle: "Connect with the best event vendors in your city",
     },
