@@ -139,11 +139,11 @@ class BookingController {
                     }
                 } else {
                     // console.log('⚠️ Vendor email notification skipped:', {
-                        vendorFound: !!vendor,
-                        vendorEmail: vendor?.email,
-                        vendor_id: vendor_id,
-                        vendorQueryResult: vendorResult
-                    });
+                    //     vendorFound: !!vendor,
+                    //     vendorEmail: vendor?.email,
+                    //     vendor_id: vendor_id,
+                    //     vendorQueryResult: vendorResult
+                    // });
                 }
 
             } catch (notificationError) {

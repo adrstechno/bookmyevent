@@ -9,9 +9,9 @@ class SubscriptionController {
             const user_id = req.user?.uuid || req.user?.user_id;
             
             // console.log('🔍 Create subscription order - User info:', {
-                user_id,
-                full_user: req.user
-            });
+            //     user_id,
+            //     full_user: req.user
+            // });
             
             if (!user_id) {
                 // console.log('❌ No user_id found in request');
@@ -125,9 +125,9 @@ class SubscriptionController {
             const user_id = req.user?.uuid || req.user?.user_id;
             
             // console.log('🔍 Verify payment - User info:', {
-                user_id,
-                body: req.body
-            });
+            //     user_id,
+            //     body: req.body
+            // });
             
             if (!user_id) {
                 // console.log('❌ No user_id found');
@@ -145,11 +145,11 @@ class SubscriptionController {
             } = req.body;
 
             // console.log('🔍 Payment verification data:', {
-                razorpay_order_id,
-                razorpay_payment_id,
-                razorpay_signature: razorpay_signature ? 'present' : 'missing',
-                vendor_id
-            });
+            //     razorpay_order_id,
+            //     razorpay_payment_id,
+            //     razorpay_signature: razorpay_signature ? 'present' : 'missing',
+            //     vendor_id
+            // });
 
             if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
                 // console.log('❌ Missing payment data');
@@ -191,10 +191,10 @@ class SubscriptionController {
 
             const payment = paymentDetails.payment;
             // console.log('✅ Payment details:', {
-                id: payment.id,
-                amount: payment.amount,
-                status: payment.status
-            });
+            //     id: payment.id,
+            //     amount: payment.amount,
+            //     status: payment.status
+            // });
 
             // Calculate subscription dates
             const startDate = new Date();
