@@ -229,7 +229,7 @@ class AdminController {
       // Monthly bookings for the last 12 months
       const monthlyBookingsQuery = `
         SELECT 
-          DATE_FORMAT(created_at, '%Y-%m') as month,
+          DATE_FORMAT(eb.created_at, '%Y-%m') as month,
           COUNT(*) as bookings,
           IFNULL(SUM(vp.amount), 0) as revenue
         FROM event_booking eb

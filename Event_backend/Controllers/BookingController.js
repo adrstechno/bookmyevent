@@ -80,9 +80,6 @@ class BookingController {
                     });
                 });
 
-                console.log('Vendor query result for createBooking:', vendorResult);
-                console.log('Looking for vendor_id:', vendor_id);
-
                 // Get package details
                 const packageQuery = `SELECT package_name, amount FROM vendor_packages WHERE package_id = ?`;
                 const packageResult = await new Promise((resolve, reject) => {

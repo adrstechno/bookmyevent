@@ -22,8 +22,8 @@ class ReviewModel {
             INSERT INTO review_and_rating (
                 rating_uuid, user_id, booking_id, vendor_id, rating, review,
                 service_quality, communication, value_for_money, punctuality,
-                is_verified, is_active
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, TRUE)
+                is_verified
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)
         `;
 
         return new Promise((resolve, reject) => {
@@ -137,7 +137,7 @@ class ReviewModel {
                 SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) as two_star_count,
                 SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) as one_star_count
             FROM review_and_rating
-            WHERE vendor_id = ?
+            WHERE vendor_id = ? AND review IS NOT NULL AND review != ''
         `;
 
         return new Promise((resolve, reject) => {
@@ -218,8 +218,7 @@ class ReviewModel {
         }
 
         const sql = `
-            UPDATE review_and_rating 
-            SET is_active = FALSE, updated_at = CURRENT_TIMESTAMP
+            DELETE FROM review_and_rating 
             WHERE rating_id = ? AND user_id = ?
         `;
 
@@ -275,7 +274,7 @@ class ReviewModel {
             FROM review_and_rating rar
             LEFT JOIN users u ON rar.user_id = u.uuid
             LEFT JOIN vendor_profiles vp ON rar.vendor_id = vp.vendor_id
-            WHERE rar.is_active = TRUE AND rar.review IS NOT NULL AND rar.review != ''
+            WHERE rar.review IS NOT NULL AND rar.review != ''
             ORDER BY rar.created_at DESC
             LIMIT ?
         `;
@@ -296,7 +295,7 @@ class ReviewModel {
                    AVG(rar.rating) as average_rating,
                    sc.category_name
             FROM vendor_profiles vp
-            LEFT JOIN review_and_rating rar ON vp.vendor_id = rar.vendor_id AND rar.is_active = TRUE
+            LEFT JOIN review_and_rating rar ON vp.vendor_id = rar.vendor_id
             LEFT JOIN service_categories sc ON vp.service_category_id = sc.service_category_id
             WHERE vp.is_active = TRUE AND vp.is_verified = TRUE
             GROUP BY vp.vendor_id
@@ -325,7 +324,7 @@ class ReviewModel {
         const { page = 1, limit = 20, vendor_id, rating_filter, is_verified } = options;
         const offset = (page - 1) * limit;
         
-        let whereConditions = ['rar.is_active = TRUE'];
+        let whereConditions = [];
         let params = [];
         
         if (vendor_id) {
@@ -343,7 +342,7 @@ class ReviewModel {
             params.push(is_verified);
         }
         
-        const whereClause = whereConditions.join(' AND ');
+        const whereClause = whereConditions.length > 0 ? 'WHERE ' + whereConditions.join(' AND ') : '';
         
         const sql = `
             SELECT rar.*, u.first_name, u.last_name, u.email,
@@ -352,7 +351,7 @@ class ReviewModel {
             LEFT JOIN users u ON rar.user_id = u.uuid
             LEFT JOIN vendor_profiles vp ON rar.vendor_id = vp.vendor_id
             LEFT JOIN event_booking eb ON rar.booking_id = eb.booking_id
-            WHERE ${whereClause}
+            ${whereClause}
             ORDER BY rar.created_at DESC
             LIMIT ? OFFSET ?
         `;

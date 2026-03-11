@@ -313,7 +313,7 @@ static findVendorsByDayAndService(day, service_category_id, callback) {
   static getRecentActivities(vendor_id, limit, callback) {
     const sql = `
       SELECT eb.booking_id, eb.booking_uuid, eb.user_id, eb.event_date, eb.event_time, eb.status, eb.created_at,
-             u.name as user_name, vp.package_name
+             CONCAT(u.first_name, ' ', u.last_name) as user_name, vp.package_name
       FROM event_booking eb
       LEFT JOIN users u ON eb.user_id = u.uuid
       LEFT JOIN vendor_packages vp ON eb.package_id = vp.package_id

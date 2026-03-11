@@ -1,7 +1,6 @@
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import ReviewTokenService from '../Utils/reviewToken.js';
-import SendGridService from './sendgridService.js';
 
 dotenv.config();
 
@@ -10,16 +9,9 @@ class EmailService {
         this.isConnectionVerified = false;
         this.connectionError = null;
         
-        // Check if SendGrid is available (preferred for production)
-        this.useSendGrid = !!process.env.SENDGRID_API_KEY;
-        
-        if (this.useSendGrid) {
-            console.log('📧 Using SendGrid for email delivery');
-        } else {
-            // Using SMTP (Gmail)
-            this.createTransporter();
-            this.verifyConnection();
-        }
+        // Using SMTP (Gmail) only
+        this.createTransporter();
+        this.verifyConnection();
     }
 
     createTransporter(useAlternativePort = false) {
@@ -76,23 +68,7 @@ class EmailService {
 
     // Helper method to send email with retry logic and port fallback
     async sendMailWithRetry(mailOptions, maxRetries = 3) {
-        // If SendGrid is configured, use it (works on Render)
-        if (this.useSendGrid) {
-            try {
-                console.log(`📧 Sending email via SendGrid to: ${mailOptions.to}`);
-                const result = await SendGridService.sendEmail(mailOptions);
-                return result;
-            } catch (error) {
-                console.error('❌ SendGrid failed:', error.message);
-                return { 
-                    success: false, 
-                    error: error.message,
-                    provider: 'sendgrid'
-                };
-            }
-        }
-        
-        // Otherwise use SMTP (works locally, may fail on Render)
+        // Using SMTP only
         let lastError;
         
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
