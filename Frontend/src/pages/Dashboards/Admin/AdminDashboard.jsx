@@ -37,9 +37,9 @@ export default function AdminDashboard() {
       try {
         setLoading(true);
         
-        console.log('🔍 Fetching admin dashboard data...');
-        console.log('API Base URL:', import.meta.env.VITE_API_BASE_URL);
-        console.log('Current user:', user);
+        // console.log('🔍 Fetching admin dashboard data...');
+        // console.log('API Base URL:', import.meta.env.VITE_API_BASE_URL);
+        // console.log('Current user:', user);
         
         // Set debug info
         setDebugInfo({
@@ -49,10 +49,10 @@ export default function AdminDashboard() {
         });
         
         // Test authentication first
-        console.log('Testing authentication...');
+        // console.log('Testing authentication...');
         
         // Fetch all dashboard data
-        console.log('Making API calls...');
+        // console.log('Making API calls...');
         const [kpisResponse, activitiesResponse, analyticsResponse] = await Promise.all([
           adminService.getAdminKPIs().catch(err => {
             console.error('KPIs API error:', err);
@@ -68,9 +68,9 @@ export default function AdminDashboard() {
           })
         ]);
 
-        console.log('📊 Admin KPIs response:', kpisResponse);
-        console.log('📋 Admin activities response:', activitiesResponse);
-        console.log('📈 Admin analytics response:', analyticsResponse);
+        // console.log('📊 Admin KPIs response:', kpisResponse);
+        // console.log('📋 Admin activities response:', activitiesResponse);
+        // console.log('📈 Admin analytics response:', analyticsResponse);
 
         // Update debug info with API responses
         setDebugInfo(prev => ({
@@ -83,24 +83,24 @@ export default function AdminDashboard() {
         }));
 
         if (kpisResponse.success) {
-          console.log('✅ Setting admin KPIs:', kpisResponse.data);
+          // console.log('✅ Setting admin KPIs:', kpisResponse.data);
           setKpis(kpisResponse.data);
         } else {
-          console.log('❌ Admin KPIs request failed:', kpisResponse);
+          // console.log('❌ Admin KPIs request failed:', kpisResponse);
         }
 
         if (activitiesResponse.success) {
-          console.log('✅ Setting admin activities:', activitiesResponse.data);
+          // console.log('✅ Setting admin activities:', activitiesResponse.data);
           setActivities(activitiesResponse.data);
         } else {
-          console.log('❌ Admin activities request failed:', activitiesResponse);
+          // console.log('❌ Admin activities request failed:', activitiesResponse);
         }
 
         if (analyticsResponse.success) {
-          console.log('✅ Setting admin analytics:', analyticsResponse.data);
+          // console.log('✅ Setting admin analytics:', analyticsResponse.data);
           setAnalytics(analyticsResponse.data);
         } else {
-          console.log('❌ Admin analytics request failed:', analyticsResponse);
+          // console.log('❌ Admin analytics request failed:', analyticsResponse);
         }
 
       } catch (error) {

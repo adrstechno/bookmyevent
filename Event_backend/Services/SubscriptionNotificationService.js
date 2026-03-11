@@ -6,7 +6,7 @@ class SubscriptionNotificationService {
     // Check for subscriptions expiring in 7 days and send notifications
     static async checkExpiringSubscriptions() {
         try {
-            console.log('🔍 Checking for expiring subscriptions...');
+            // console.log('🔍 Checking for expiring subscriptions...');
 
             // Get subscriptions expiring in exactly 7 days
             const query = `
@@ -35,13 +35,13 @@ class SubscriptionNotificationService {
                 });
             });
 
-            console.log(`📊 Found ${expiringSubscriptions.length} subscriptions expiring in 7 days`);
+            // console.log(`📊 Found ${expiringSubscriptions.length} subscriptions expiring in 7 days`);
 
             // Send notification for each expiring subscription
             for (const subscription of expiringSubscriptions) {
                 try {
                     await this.sendExpiryNotification(subscription);
-                    console.log(`✅ Notification sent to ${subscription.email}`);
+                    // console.log(`✅ Notification sent to ${subscription.email}`);
                 } catch (error) {
                     console.error(`❌ Failed to send notification to ${subscription.email}:`, error.message);
                 }
@@ -89,7 +89,7 @@ class SubscriptionNotificationService {
     // Check for subscriptions expiring today
     static async checkExpiredSubscriptions() {
         try {
-            console.log('🔍 Checking for expired subscriptions...');
+            // console.log('🔍 Checking for expired subscriptions...');
 
             const query = `
                 SELECT 
@@ -114,7 +114,7 @@ class SubscriptionNotificationService {
                 });
             });
 
-            console.log(`📊 Found ${expiredSubscriptions.length} subscriptions expired today`);
+            // console.log(`📊 Found ${expiredSubscriptions.length} subscriptions expired today`);
 
             // Update status to expired and send notification
             for (const subscription of expiredSubscriptions) {
@@ -130,7 +130,7 @@ class SubscriptionNotificationService {
                         expiryDate: subscription.end_date
                     });
 
-                    console.log(`✅ Expired notification sent to ${subscription.email}`);
+                    // console.log(`✅ Expired notification sent to ${subscription.email}`);
                 } catch (error) {
                     console.error(`❌ Failed to process expired subscription for ${subscription.email}:`, error.message);
                 }
@@ -178,7 +178,7 @@ class SubscriptionNotificationService {
             db.query(query, [vendorId, notificationType, email], (err, result) => {
                 if (err) {
                     // If table doesn't exist, just log to console
-                    console.log('Notification log:', { vendorId, notificationType, email });
+                    // console.log('Notification log:', { vendorId, notificationType, email });
                     resolve();
                 } else {
                     resolve(result);

@@ -51,7 +51,7 @@ export const authenticateToken = (req, res, next) => {
             }
             
             if (!results || results.length === 0) {
-                console.log('User not found for uuid:', userId);
+                // console.log('User not found for uuid:', userId);
                 return res.status(401).json({
                     success: false,
                     message: 'User not found'
@@ -59,7 +59,7 @@ export const authenticateToken = (req, res, next) => {
             }
             
             const user = results[0];
-            console.log('Auth successful for user:', user.uuid, 'type:', user.user_type, 'vendor_id:', user.vendor_id);
+            // console.log('Auth successful for user:', user.uuid, 'type:', user.user_type, 'vendor_id:', user.vendor_id);
             
             // Set user info on request
             req.user = {
@@ -73,7 +73,7 @@ export const authenticateToken = (req, res, next) => {
                 vendor_id: user.vendor_id || null
             };
             
-            console.log('req.user set:', JSON.stringify(req.user));
+            // console.log('req.user set:', JSON.stringify(req.user));
             next();
         });
     });

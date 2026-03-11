@@ -122,7 +122,7 @@ const MyBookings = () => {
         }));
       }
     } catch (error) {
-      console.log("Could not fetch OTP status for booking", bookingId);
+      // console.log("Could not fetch OTP status for booking", bookingId);
     } finally {
       setLoadingOTP(prev => ({ ...prev, [bookingId]: false }));
     }

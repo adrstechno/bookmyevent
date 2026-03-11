@@ -154,7 +154,7 @@ class NotificationService {
                     packageName: package_name,
                     bookingId: booking_id
                 });
-                console.log(`Booking confirmation email sent to ${user.email}`);
+                // console.log(`Booking confirmation email sent to ${user.email}`);
             }
         } catch (emailError) {
             console.error('Failed to send booking confirmation email:', emailError);
@@ -286,7 +286,7 @@ class NotificationService {
                     expiresAt: expires_at,
                     bookingId: booking_id
                 });
-                console.log(`OTP email sent to ${user.email}`);
+                // console.log(`OTP email sent to ${user.email}`);
             }
         } catch (emailError) {
             console.error('Failed to send OTP email:', emailError);
@@ -356,7 +356,7 @@ class NotificationService {
                     packageName: package_name,
                     bookingId: booking_id
                 });
-                console.log(`Work completion email sent to ${user.email}`);
+                // console.log(`Work completion email sent to ${user.email}`);
             }
         } catch (emailError) {
             console.error('Failed to send work completion email:', emailError);
@@ -467,7 +467,7 @@ class NotificationService {
                     packageName: package_name,
                     bookingId: booking_id
                 });
-                console.log(`Review reminder email sent to ${user.email}`);
+                // console.log(`Review reminder email sent to ${user.email}`);
             }
         } catch (emailError) {
             console.error('Failed to send review reminder email:', emailError);
@@ -520,7 +520,7 @@ class NotificationService {
     static async scheduleNotification(notificationData, scheduleTime) {
         // This would integrate with a job queue system like Bull or Agenda
         // For now, we'll just create the notification immediately
-        console.log(`Notification scheduled for ${scheduleTime}:`, notificationData);
+        // console.log(`Notification scheduled for ${scheduleTime}:`, notificationData);
         return await NotificationModel.createNotification(notificationData);
     }
 

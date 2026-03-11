@@ -30,11 +30,11 @@
 // export const login = (req, res) => {
 //     const { email, password } = req.body;
 
-//     console.log('Login attempt:', { email, password: password ? '***' : 'missing' });
+//     // console.log('Login attempt:', { email, password: password ? '***' : 'missing' });
 
 //     // Validate inputs
 //     if (!email || !password) {
-//         console.log('Missing email or password');
+//         // console.log('Missing email or password');
 //         return res.status(400).json({ error: 'Email and password are required ' });
 //     }
 
@@ -44,15 +44,15 @@
 //             return res.status(500).json({ error: 'Database query error' });
 //         }
 
-//         console.log('Database query results:', results ? results.length : 'null', 'users found');
+//         // console.log('Database query results:', results ? results.length : 'null', 'users found');
 
 //         if (!results || results.length === 0) {
-//             console.log('User not found for email:', email);
+//             // console.log('User not found for email:', email);
 //             return res.status(401).json({ error: 'Invalid email or password' });
 //         }
 
 //         const user = results[0];
-//         console.log('User found:', {
+//         // console.log('User found:', {
 //             uuid: user.uuid,
 //             email: user.email,
 //             user_type: user.user_type,
@@ -61,16 +61,16 @@
 
 //         // Compare password with hash
 //         const passwordMatch = bcrypt.compareSync(password, user.password_hash);
-//         console.log('Password match:', passwordMatch);
+//         // console.log('Password match:', passwordMatch);
 
 //         if (!passwordMatch) {
-//             console.log('Password mismatch for user:', email);
+//             // console.log('Password mismatch for user:', email);
 //             return res.status(401).json({ error: 'Invalid email or password' });
 //         }
 
 //         // Generate token
 //         const token = generateToken(user.uuid);
-//         console.log('Token generated successfully');
+//         // console.log('Token generated successfully');
 
 //         // Set cookie with cross-origin friendly settings
 //         const isProd = process.env.RENDER || process.env.NODE_ENV === "production";
@@ -82,7 +82,7 @@
 //             maxAge: 3600000
 //         });
 
-//         console.log('Login successful for user:', email);
+//         // console.log('Login successful for user:', email);
 
 //         // Send response
 //         return res.status(200).json({
@@ -231,7 +231,7 @@ export const insertUser = async (req, res) => {
           userType: userData.user_type || userData.userType || 'user'
         });
         
-        console.log('Email verification sent to:', userData.email);
+        // console.log('Email verification sent to:', userData.email);
       } catch (emailErr) {
         console.error("Error sending email verification:", emailErr.message);
       }
@@ -516,12 +516,12 @@ export const testEmail = async (req, res) => {
       });
     }
 
-    console.log('Testing email functionality...');
-    console.log('Email service config check...');
+    // console.log('Testing email functionality...');
+    // console.log('Email service config check...');
     
     // Test email service configuration
     const configTest = await EmailService.testEmailConfig();
-    console.log('Email config test result:', configTest);
+    // console.log('Email config test result:', configTest);
 
     if (!configTest.success) {
       return res.status(500).json({
@@ -576,7 +576,7 @@ export const testEmail = async (req, res) => {
         result = await EmailService.sendRegistrationEmail(email, 'Test User', 'user');
     }
 
-    console.log('Email send result:', result);
+    // console.log('Email send result:', result);
 
     return res.status(200).json({
       success: true,
@@ -606,7 +606,7 @@ export const debugVendorData = async (req, res) => {
       });
     }
 
-    console.log('Debugging vendor data for vendor_id:', vendor_id);
+    // console.log('Debugging vendor data for vendor_id:', vendor_id);
 
     // Test the vendor query
     const vendorQuery = `
@@ -623,7 +623,7 @@ export const debugVendorData = async (req, res) => {
       });
     });
 
-    console.log('Vendor query result:', vendorResult);
+    // console.log('Vendor query result:', vendorResult);
 
     // Also check if vendor exists in vendor_profiles
     const profileQuery = `SELECT * FROM vendor_profiles WHERE vendor_id = ?`;
@@ -634,7 +634,7 @@ export const debugVendorData = async (req, res) => {
       });
     });
 
-    console.log('Vendor profile result:', profileResult);
+    // console.log('Vendor profile result:', profileResult);
 
     return res.status(200).json({
       success: true,

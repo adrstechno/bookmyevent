@@ -122,7 +122,7 @@ class BookingController {
                         bookingId: result.booking_id,
                         bookingUuid: booking_uuid
                     });
-                    console.log('Vendor booking notification email sent to:', vendor.email);
+                    // console.log('Vendor booking notification email sent to:', vendor.email);
                 }
 
             } catch (notificationError) {
@@ -156,8 +156,8 @@ class BookingController {
             const { id } = req.params;
             const user_id = req.user?.uuid || req.user?.user_id;
 
-            console.log('Accept booking - user:', req.user);
-            console.log('Accept booking - booking_id:', id);
+            // console.log('Accept booking - user:', req.user);
+            // console.log('Accept booking - booking_id:', id);
 
             if (!user_id) {
                 return res.status(401).json({
@@ -186,7 +186,7 @@ class BookingController {
                 });
 
                 if (!vendorResult || vendorResult.length === 0) {
-                    console.log('No vendor profile found for user_id:', user_id);
+                    // console.log('No vendor profile found for user_id:', user_id);
                     return res.status(401).json({
                         success: false,
                         message: 'Vendor authentication required. No vendor profile found.'
@@ -196,7 +196,7 @@ class BookingController {
                 vendor_id = vendorResult[0].vendor_id;
             }
 
-            console.log('Using vendor_id:', vendor_id);
+            // console.log('Using vendor_id:', vendor_id);
 
             // Get booking details before update
             const booking = await BookingModel.getBookingById(id);
@@ -207,7 +207,7 @@ class BookingController {
                 });
             }
 
-            console.log('Booking found:', booking.booking_id, 'vendor_id:', booking.vendor_id);
+            // console.log('Booking found:', booking.booking_id, 'vendor_id:', booking.vendor_id);
 
             // Verify this vendor owns this booking
             if (booking.vendor_id !== vendor_id) {
@@ -273,8 +273,8 @@ class BookingController {
             const { reason } = req.body;
             const user_id = req.user?.uuid || req.user?.user_id;
 
-            console.log('Reject booking - user:', req.user);
-            console.log('Reject booking - booking_id:', id);
+            // console.log('Reject booking - user:', req.user);
+            // console.log('Reject booking - booking_id:', id);
 
             if (!user_id) {
                 return res.status(401).json({
@@ -303,7 +303,7 @@ class BookingController {
                 });
 
                 if (!vendorResult || vendorResult.length === 0) {
-                    console.log('No vendor profile found for user_id:', user_id);
+                    // console.log('No vendor profile found for user_id:', user_id);
                     return res.status(401).json({
                         success: false,
                         message: 'Vendor authentication required. No vendor profile found.'
@@ -313,7 +313,7 @@ class BookingController {
                 vendor_id = vendorResult[0].vendor_id;
             }
 
-            console.log('Using vendor_id:', vendor_id);
+            // console.log('Using vendor_id:', vendor_id);
 
             // Get booking details before update
             const booking = await BookingModel.getBookingById(id);
@@ -324,7 +324,7 @@ class BookingController {
                 });
             }
 
-            console.log('Booking found:', booking.booking_id, 'vendor_id:', booking.vendor_id);
+            // console.log('Booking found:', booking.booking_id, 'vendor_id:', booking.vendor_id);
 
             // Verify this vendor owns this booking
             if (booking.vendor_id !== vendor_id) {
@@ -429,9 +429,9 @@ class BookingController {
                             customerName: booking.user_name || 'Customer'
                         });
                         
-                        console.log('✅ Vendor approval notification email sent to:', vendor.email);
+                        // console.log('✅ Vendor approval notification email sent to:', vendor.email);
                     } else {
-                        console.log('❌ No vendor found for vendor_id:', booking.vendor_id);
+                        // console.log('❌ No vendor found for vendor_id:', booking.vendor_id);
                     }
                 } catch (vendorEmailError) {
                     console.error('❌ Failed to send vendor approval notification:', vendorEmailError);
@@ -549,8 +549,8 @@ class BookingController {
             const user_id = req.user?.uuid || req.user?.user_id;
             const user_type = req.user?.user_type;
 
-            console.log('Cancel booking - user:', req.user);
-            console.log('Cancel booking - booking_id:', id);
+            // console.log('Cancel booking - user:', req.user);
+            // console.log('Cancel booking - booking_id:', id);
 
             if (!user_id) {
                 return res.status(401).json({
@@ -575,7 +575,7 @@ class BookingController {
                 });
             }
 
-            console.log('Booking found:', booking.booking_id, 'user_id:', booking.user_id, 'vendor_id:', booking.vendor_id);
+            // console.log('Booking found:', booking.booking_id, 'user_id:', booking.user_id, 'vendor_id:', booking.vendor_id);
 
             // Determine who is cancelling and validate access
             let cancelled_by, cancelled_by_type;
@@ -601,7 +601,7 @@ class BookingController {
                     }
                 }
 
-                console.log('Checking vendor access - vendor_id:', vendor_id, 'booking.vendor_id:', booking.vendor_id);
+                // console.log('Checking vendor access - vendor_id:', vendor_id, 'booking.vendor_id:', booking.vendor_id);
 
                 if (vendor_id && vendor_id === booking.vendor_id) {
                     cancelled_by = vendor_id;
@@ -614,7 +614,7 @@ class BookingController {
                 }
             }
 
-            console.log('Cancelling booking - cancelled_by:', cancelled_by, 'type:', cancelled_by_type);
+            // console.log('Cancelling booking - cancelled_by:', cancelled_by, 'type:', cancelled_by_type);
 
             await BookingModel.cancelBooking(id, cancelled_by, cancelled_by_type, reason);
 
@@ -775,7 +775,7 @@ class BookingController {
             const user_id = req.user?.uuid || req.user?.user_id;
             
             if (!user_id) {
-                console.log('No user_id found for vendor');
+                // console.log('No user_id found for vendor');
                 return res.status(401).json({
                     success: false,
                     message: 'Vendor authentication required'
@@ -791,7 +791,7 @@ class BookingController {
             });
 
             if (!vendorResult || vendorResult.length === 0) {
-                console.log('No vendor profile found for user_id:', user_id);
+                // console.log('No vendor profile found for user_id:', user_id);
                 return res.status(401).json({
                     success: false,
                     message: 'Vendor authentication required. No vendor profile found.'
@@ -799,7 +799,7 @@ class BookingController {
             }
 
             const vendor_id = vendorResult[0].vendor_id;
-            console.log('Fetching bookings for vendor_id:', vendor_id);
+            // console.log('Fetching bookings for vendor_id:', vendor_id);
 
             const {
                 page = 1,
@@ -814,7 +814,7 @@ class BookingController {
             };
 
             const bookings = await BookingModel.getBookingsByVendor(vendor_id, options);
-            console.log('Found', bookings.length, 'bookings for vendor');
+            // console.log('Found', bookings.length, 'bookings for vendor');
 
             res.status(200).json({
                 success: true,
@@ -1069,8 +1069,8 @@ class BookingController {
                     });
                 });
 
-                console.log('Vendor query result for insertBooking:', vendorResult);
-                console.log('Looking for vendor_id:', vendor_id);
+                // console.log('Vendor query result for insertBooking:', vendorResult);
+                // console.log('Looking for vendor_id:', vendor_id);
 
                 // Get package details
                 const packageQuery = `SELECT package_name, amount FROM vendor_packages WHERE package_id = ?`;
@@ -1114,7 +1114,7 @@ class BookingController {
                         bookingId: result.booking_id,
                         bookingUuid: booking_uuid
                     });
-                    console.log('Vendor booking notification email sent to:', vendor.email);
+                    // console.log('Vendor booking notification email sent to:', vendor.email);
                 }
 
             } catch (notificationError) {

@@ -17,7 +17,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log('AuthProvider initializing...');
+    // console.log('AuthProvider initializing...');
     
     try {
       const token = localStorage.getItem("token");
@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }) => {
       
       // If no token, just set loading to false
       if (!token) {
-        console.log('No token found, user not authenticated');
+        // console.log('No token found, user not authenticated');
         setUser(null);
         setLoading(false);
         return;
@@ -33,7 +33,7 @@ export const AuthProvider = ({ children }) => {
       
       // Check if token is expired
       if (isTokenExpired(token)) {
-        console.log('Token expired, clearing auth data');
+        // console.log('Token expired, clearing auth data');
         checkAndCleanAuth();
         setUser(null);
         setLoading(false);
@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }) => {
       if (savedUser) {
         try {
           const parsedUser = JSON.parse(savedUser);
-          console.log('Restored user session:', parsedUser);
+          // console.log('Restored user session:', parsedUser);
           setUser(parsedUser);
         } catch (error) {
           console.error("Error parsing saved user:", error);
@@ -58,7 +58,7 @@ export const AuthProvider = ({ children }) => {
       checkAndCleanAuth();
       setUser(null);
     } finally {
-      console.log('AuthProvider initialization complete');
+      // console.log('AuthProvider initialization complete');
       setLoading(false);
     }
   }, []);

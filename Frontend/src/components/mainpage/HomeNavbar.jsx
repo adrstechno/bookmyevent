@@ -77,7 +77,7 @@ const HomeNavbar = () => {
     const hasValidAuth = checkAndCleanAuth();
     if (!hasValidAuth && user) {
       // If auth is invalid but user is set, logout
-      console.log('Invalid auth detected, logging out');
+      // console.log('Invalid auth detected, logging out');
       authLogout();
     }
   }, [user, authLogout]);
@@ -109,7 +109,7 @@ const HomeNavbar = () => {
         credentials: "include",
       });
     } catch (error) {
-      console.log("Logout API failed, but proceeding with client-side cleanup");
+      // console.log("Logout API failed, but proceeding with client-side cleanup");
     }
 
     // Use AuthContext logout which will clean up everything

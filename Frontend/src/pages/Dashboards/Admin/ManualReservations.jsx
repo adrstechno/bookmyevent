@@ -80,7 +80,7 @@ const ManualReservations = () => {
       
       if (response.data?.success) {
         setAvailableShifts(response.data.availableShifts || []);
-        console.log('Fetched available shifts for vendor:', vendorId, 'date:', formattedDate, response.data.availableShifts);
+        // console.log('Fetched available shifts for vendor:', vendorId, 'date:', formattedDate, response.data.availableShifts);
       } else {
         setAvailableShifts([]);
         if (!response.data?.available) {

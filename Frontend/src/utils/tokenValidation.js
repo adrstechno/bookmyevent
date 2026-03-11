@@ -54,7 +54,7 @@ export const clearInvalidAuth = () => {
   localStorage.removeItem('name');
   localStorage.removeItem('username');
   
-  console.log('Cleared invalid authentication data');
+  // console.log('Cleared invalid authentication data');
 };
 
 // Check and clean expired tokens
@@ -67,7 +67,7 @@ export const checkAndCleanAuth = () => {
   }
   
   if (isTokenExpired(token)) {
-    console.log('Token expired, clearing auth data');
+    // console.log('Token expired, clearing auth data');
     clearInvalidAuth();
     return false;
   }
@@ -77,7 +77,7 @@ export const checkAndCleanAuth = () => {
 
 // Emergency cleanup - removes all auth-related data
 export const emergencyAuthCleanup = () => {
-  console.log('Performing emergency auth cleanup...');
+  // console.log('Performing emergency auth cleanup...');
   
   // Clear all possible auth-related keys
   const authKeys = [
@@ -96,5 +96,5 @@ export const emergencyAuthCleanup = () => {
     document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
   });
   
-  console.log('Emergency cleanup complete');
+  // console.log('Emergency cleanup complete');
 };

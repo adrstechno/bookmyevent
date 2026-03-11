@@ -7,19 +7,19 @@ class AdminController {
   // Get admin dashboard KPIs
   static async getAdminKPIs(req, res) {
     try {
-      console.log('🔍 Admin KPIs request received');
-      console.log('User:', req.user);
+      // console.log('🔍 Admin KPIs request received');
+      // console.log('User:', req.user);
 
       // Total users
       const totalUsersQuery = `SELECT COUNT(*) as count FROM users WHERE user_type = 'user'`;
-      console.log('Executing query:', totalUsersQuery);
+      // console.log('Executing query:', totalUsersQuery);
       const totalUsers = await new Promise((resolve, reject) => {
         db.query(totalUsersQuery, (err, results) => {
           if (err) {
             console.error('Total users query error:', err);
             reject(err);
           } else {
-            console.log('Total users result:', results);
+            // console.log('Total users result:', results);
             resolve(results[0]?.count || 0);
           }
         });
@@ -27,14 +27,14 @@ class AdminController {
 
       // Total vendors
       const totalVendorsQuery = `SELECT COUNT(*) as count FROM vendor_profiles`;
-      console.log('Executing query:', totalVendorsQuery);
+      // console.log('Executing query:', totalVendorsQuery);
       const totalVendors = await new Promise((resolve, reject) => {
         db.query(totalVendorsQuery, (err, results) => {
           if (err) {
             console.error('Total vendors query error:', err);
             reject(err);
           } else {
-            console.log('Total vendors result:', results);
+            // console.log('Total vendors result:', results);
             resolve(results[0]?.count || 0);
           }
         });
@@ -42,14 +42,14 @@ class AdminController {
 
       // Total bookings
       const totalBookingsQuery = `SELECT COUNT(*) as count FROM event_booking WHERE removed_at IS NULL`;
-      console.log('Executing query:', totalBookingsQuery);
+      // console.log('Executing query:', totalBookingsQuery);
       const totalBookings = await new Promise((resolve, reject) => {
         db.query(totalBookingsQuery, (err, results) => {
           if (err) {
             console.error('Total bookings query error:', err);
             reject(err);
           } else {
-            console.log('Total bookings result:', results);
+            // console.log('Total bookings result:', results);
             resolve(results[0]?.count || 0);
           }
         });
@@ -62,14 +62,14 @@ class AdminController {
         JOIN vendor_packages vp ON eb.package_id = vp.package_id 
         WHERE eb.status = 'completed' AND eb.removed_at IS NULL
       `;
-      console.log('Executing query:', totalRevenueQuery);
+      // console.log('Executing query:', totalRevenueQuery);
       const totalRevenue = await new Promise((resolve, reject) => {
         db.query(totalRevenueQuery, (err, results) => {
           if (err) {
             console.error('Total revenue query error:', err);
             reject(err);
           } else {
-            console.log('Total revenue result:', results);
+            // console.log('Total revenue result:', results);
             resolve(results[0]?.revenue || 0);
           }
         });
@@ -77,14 +77,14 @@ class AdminController {
 
       // Pending approvals
       const pendingApprovalsQuery = `SELECT COUNT(*) as count FROM event_booking WHERE admin_approval = 'pending'`;
-      console.log('Executing query:', pendingApprovalsQuery);
+      // console.log('Executing query:', pendingApprovalsQuery);
       const pendingApprovals = await new Promise((resolve, reject) => {
         db.query(pendingApprovalsQuery, (err, results) => {
           if (err) {
             console.error('Pending approvals query error:', err);
             reject(err);
           } else {
-            console.log('Pending approvals result:', results);
+            // console.log('Pending approvals result:', results);
             resolve(results[0]?.count || 0);
           }
         });
@@ -92,14 +92,14 @@ class AdminController {
 
       // Active bookings (confirmed/pending)
       const activeBookingsQuery = `SELECT COUNT(*) as count FROM event_booking WHERE status IN ('confirmed', 'pending') AND removed_at IS NULL`;
-      console.log('Executing query:', activeBookingsQuery);
+      // console.log('Executing query:', activeBookingsQuery);
       const activeBookings = await new Promise((resolve, reject) => {
         db.query(activeBookingsQuery, (err, results) => {
           if (err) {
             console.error('Active bookings query error:', err);
             reject(err);
           } else {
-            console.log('Active bookings result:', results);
+            // console.log('Active bookings result:', results);
             resolve(results[0]?.count || 0);
           }
         });
@@ -112,14 +112,14 @@ class AdminController {
           SUM(CASE WHEN MONTH(created_at) = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)) AND YEAR(created_at) = YEAR(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)) THEN 1 ELSE 0 END) as last_month
         FROM users WHERE user_type = 'user'
       `;
-      console.log('Executing query:', monthlyGrowthQuery);
+      // console.log('Executing query:', monthlyGrowthQuery);
       const growthData = await new Promise((resolve, reject) => {
         db.query(monthlyGrowthQuery, (err, results) => {
           if (err) {
             console.error('Monthly growth query error:', err);
             reject(err);
           } else {
-            console.log('Monthly growth result:', results);
+            // console.log('Monthly growth result:', results);
             resolve(results[0] || { this_month: 0, last_month: 0 });
           }
         });
@@ -143,7 +143,7 @@ class AdminController {
         }
       };
 
-      console.log('📊 Final KPI data:', responseData);
+      // console.log('📊 Final KPI data:', responseData);
 
       return res.status(200).json({
         success: true,
@@ -164,7 +164,7 @@ class AdminController {
   // Get admin dashboard recent activities
   static async getAdminRecentActivities(req, res) {
     try {
-      console.log('🔍 Admin activities request received');
+      // console.log('🔍 Admin activities request received');
       const limit = parseInt(req.query.limit) || 10;
 
       const activitiesQuery = `
@@ -190,20 +190,20 @@ class AdminController {
         LIMIT ?
       `;
 
-      console.log('Executing activities query with limit:', limit);
+      // console.log('Executing activities query with limit:', limit);
       const activities = await new Promise((resolve, reject) => {
         db.query(activitiesQuery, [limit], (err, results) => {
           if (err) {
             console.error('Activities query error:', err);
             reject(err);
           } else {
-            console.log('Activities result:', results);
+            // console.log('Activities result:', results);
             resolve(results || []);
           }
         });
       });
 
-      console.log('📋 Activities data:', activities);
+      // console.log('📋 Activities data:', activities);
 
       return res.status(200).json({
         success: true,
@@ -224,7 +224,7 @@ class AdminController {
   // Get admin dashboard analytics (charts data)
   static async getAdminAnalytics(req, res) {
     try {
-      console.log('🔍 Admin analytics request received');
+      // console.log('🔍 Admin analytics request received');
 
       // Monthly bookings for the last 12 months
       const monthlyBookingsQuery = `
@@ -240,14 +240,14 @@ class AdminController {
         ORDER BY month ASC
       `;
 
-      console.log('Executing monthly bookings query');
+      // console.log('Executing monthly bookings query');
       const monthlyData = await new Promise((resolve, reject) => {
         db.query(monthlyBookingsQuery, (err, results) => {
           if (err) {
             console.error('Monthly bookings query error:', err);
             reject(err);
           } else {
-            console.log('Monthly bookings result:', results);
+            // console.log('Monthly bookings result:', results);
             resolve(results || []);
           }
         });
@@ -263,14 +263,14 @@ class AdminController {
         GROUP BY status
       `;
 
-      console.log('Executing status distribution query');
+      // console.log('Executing status distribution query');
       const statusData = await new Promise((resolve, reject) => {
         db.query(statusDistributionQuery, (err, results) => {
           if (err) {
             console.error('Status distribution query error:', err);
             reject(err);
           } else {
-            console.log('Status distribution result:', results);
+            // console.log('Status distribution result:', results);
             resolve(results || []);
           }
         });
@@ -291,14 +291,14 @@ class AdminController {
         LIMIT 10
       `;
 
-      console.log('Executing top vendors query');
+      // console.log('Executing top vendors query');
       const topVendors = await new Promise((resolve, reject) => {
         db.query(topVendorsQuery, (err, results) => {
           if (err) {
             console.error('Top vendors query error:', err);
             reject(err);
           } else {
-            console.log('Top vendors result:', results);
+            // console.log('Top vendors result:', results);
             resolve(results || []);
           }
         });
@@ -310,7 +310,7 @@ class AdminController {
         topVendors: topVendors
       };
 
-      console.log('📈 Analytics data:', responseData);
+      // console.log('📈 Analytics data:', responseData);
 
       return res.status(200).json({
         success: true,
@@ -331,7 +331,7 @@ class AdminController {
   // Test database connectivity
   static async testDatabase(req, res) {
     try {
-      console.log('🔍 Testing database connectivity...');
+      // console.log('🔍 Testing database connectivity...');
 
       // Test basic connection
       const testQuery = `SELECT 1 as test`;
@@ -341,7 +341,7 @@ class AdminController {
             console.error('Database test query error:', err);
             reject(err);
           } else {
-            console.log('Database test result:', results);
+            // console.log('Database test result:', results);
             resolve(results);
           }
         });
@@ -355,7 +355,7 @@ class AdminController {
             console.error('Show tables query error:', err);
             reject(err);
           } else {
-            console.log('Tables result:', results);
+            // console.log('Tables result:', results);
             resolve(results);
           }
         });
@@ -369,7 +369,7 @@ class AdminController {
             console.error('Users count query error:', err);
             reject(err);
           } else {
-            console.log('Users count result:', results);
+            // console.log('Users count result:', results);
             resolve(results[0]?.count || 0);
           }
         });

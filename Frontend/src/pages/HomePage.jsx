@@ -24,7 +24,7 @@ const HomePage = () => {
   const [componentError, setComponentError] = useState(null);
 
   useEffect(() => {
-    console.log('HomePage component mounting...');
+    // console.log('HomePage component mounting...');
     
     try {
       const ua = window.navigator.userAgent.toLowerCase();
@@ -32,7 +32,7 @@ const HomePage = () => {
         /iphone|ipad|ipod/.test(ua) &&
         !window.matchMedia("(display-mode: standalone)").matches;
       setIsIOS(ios);
-      console.log('iOS detection complete:', ios);
+      // console.log('iOS detection complete:', ios);
     } catch (error) {
       console.error('Error in iOS detection:', error);
       setComponentError(error);

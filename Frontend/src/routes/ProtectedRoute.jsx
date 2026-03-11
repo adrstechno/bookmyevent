@@ -11,7 +11,7 @@ const ProtectedRoute = ({ allowedRoles }) => {
   useEffect(() => {
     const hasValidAuth = checkAndCleanAuth();
     if (!hasValidAuth && user) {
-      console.log('Invalid token detected in ProtectedRoute, logging out');
+      // console.log('Invalid token detected in ProtectedRoute, logging out');
       logout();
     }
   }, [user, logout]);

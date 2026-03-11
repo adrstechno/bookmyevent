@@ -6,7 +6,7 @@ dotenv.config();
 // Debug script to check vendor profile data
 const checkVendorProfile = async () => {
     try {
-        console.log('🔍 Checking vendor profiles...\n');
+        // console.log('🔍 Checking vendor profiles...\n');
 
         // Get all users with vendor type
         const usersQuery = `
@@ -23,13 +23,13 @@ const checkVendorProfile = async () => {
                 process.exit(1);
             }
 
-            console.log(`✅ Found ${users.length} vendor users:\n`);
+            // console.log(`✅ Found ${users.length} vendor users:\n`);
             users.forEach(user => {
-                console.log(`User ID: ${user.user_id}`);
-                console.log(`UUID: ${user.uuid}`);
-                console.log(`Email: ${user.email}`);
-                console.log(`Name: ${user.first_name} ${user.last_name}`);
-                console.log('---');
+                // console.log(`User ID: ${user.user_id}`);
+                // console.log(`UUID: ${user.uuid}`);
+                // console.log(`Email: ${user.email}`);
+                // console.log(`Name: ${user.first_name} ${user.last_name}`);
+                // console.log('---');
             });
 
             // Get all vendor profiles
@@ -48,18 +48,18 @@ const checkVendorProfile = async () => {
                     process.exit(1);
                 }
 
-                console.log(`\n✅ Found ${vendors.length} vendor profiles:\n`);
+                // console.log(`\n✅ Found ${vendors.length} vendor profiles:\n`);
                 vendors.forEach(vendor => {
-                    console.log(`Vendor ID: ${vendor.vendor_id}`);
-                    console.log(`User ID (stored): ${vendor.user_id}`);
-                    console.log(`User UUID (from join): ${vendor.user_uuid}`);
-                    console.log(`Business Name: ${vendor.business_name}`);
-                    console.log(`Email: ${vendor.email}`);
-                    console.log('---');
+                    // console.log(`Vendor ID: ${vendor.vendor_id}`);
+                    // console.log(`User ID (stored): ${vendor.user_id}`);
+                    // console.log(`User UUID (from join): ${vendor.user_uuid}`);
+                    // console.log(`Business Name: ${vendor.business_name}`);
+                    // console.log(`Email: ${vendor.email}`);
+                    // console.log('---');
                 });
 
                 // Check if there's a mismatch
-                console.log('\n🔍 Checking for mismatches...\n');
+                // console.log('\n🔍 Checking for mismatches...\n');
                 
                 const checkQuery = `
                     SELECT 
@@ -87,14 +87,14 @@ const checkVendorProfile = async () => {
                     }
 
                     results.forEach(result => {
-                        console.log(`UUID: ${result.uuid}`);
-                        console.log(`Email: ${result.email}`);
-                        console.log(`Vendor ID: ${result.vendor_id || 'NOT FOUND'}`);
-                        console.log(`Match Type: ${result.match_type}`);
-                        console.log('---');
+                        // console.log(`UUID: ${result.uuid}`);
+                        // console.log(`Email: ${result.email}`);
+                        // console.log(`Vendor ID: ${result.vendor_id || 'NOT FOUND'}`);
+                        // console.log(`Match Type: ${result.match_type}`);
+                        // console.log('---');
                     });
 
-                    console.log('\n✅ Debug complete!');
+                    // console.log('\n✅ Debug complete!');
                     process.exit(0);
                 });
             });

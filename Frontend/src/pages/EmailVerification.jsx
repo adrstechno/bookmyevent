@@ -17,18 +17,18 @@ const EmailVerification = () => {
   useEffect(() => {
     // Only run verification if we're actually on the verify-email route
     if (location.pathname !== '/verify-email') {
-      console.log('EmailVerification component loaded on wrong route, redirecting to home');
+      // console.log('EmailVerification component loaded on wrong route, redirecting to home');
       navigate('/', { replace: true });
       return;
     }
 
-    console.log('EmailVerification: checking token...');
+    // console.log('EmailVerification: checking token...');
     
     if (token) {
-      console.log('Token found, verifying...');
+      // console.log('Token found, verifying...');
       verifyEmailToken();
     } else {
-      console.log('No token found in URL');
+      // console.log('No token found in URL');
       setVerificationStatus('error');
       setMessage('Invalid verification link. No token provided.');
     }

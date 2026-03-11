@@ -44,21 +44,21 @@ const ReviewPage = () => {
       
       if (token) {
         // Use public endpoint with review token
-        console.log('Using review token for booking access');
+        // console.log('Using review token for booking access');
         setIsTokenAccess(true);
         response = await axios.get(
           `${VITE_API_BASE_URL}/Booking/review/${bookingId}?token=${token}`
         );
       } else {
         // Try authenticated endpoint first
-        console.log('Attempting authenticated booking access');
+        // console.log('Attempting authenticated booking access');
         try {
           response = await axios.get(
             `${VITE_API_BASE_URL}/Booking/GetBookingById/${bookingId}`,
             { withCredentials: true }
           );
         } catch (authError) {
-          console.log('Authenticated access failed, redirecting to login');
+          // console.log('Authenticated access failed, redirecting to login');
           // If no token and auth fails, redirect to login with return URL
           const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
           navigate(`/login?redirect=${returnUrl}`);

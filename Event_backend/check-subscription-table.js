@@ -5,7 +5,7 @@ dotenv.config();
 
 // Check if vendor_subscriptions table has required columns
 const checkSubscriptionTable = () => {
-    console.log('🔍 Checking vendor_subscriptions table structure...\n');
+    // console.log('🔍 Checking vendor_subscriptions table structure...\n');
 
     const query = `DESCRIBE vendor_subscriptions`;
 
@@ -15,9 +15,9 @@ const checkSubscriptionTable = () => {
             process.exit(1);
         }
 
-        console.log('✅ Table structure:\n');
+        // console.log('✅ Table structure:\n');
         results.forEach(column => {
-            console.log(`- ${column.Field} (${column.Type}) ${column.Null === 'YES' ? 'NULL' : 'NOT NULL'}`);
+            // console.log(`- ${column.Field} (${column.Type}) ${column.Null === 'YES' ? 'NULL' : 'NOT NULL'}`);
         });
 
         // Check for required columns
@@ -27,13 +27,13 @@ const checkSubscriptionTable = () => {
             'amount_paid'
         ];
 
-        console.log('\n🔍 Checking required columns:');
+        // console.log('\n🔍 Checking required columns:');
         requiredColumns.forEach(col => {
             const exists = results.find(r => r.Field === col);
             if (exists) {
-                console.log(`✅ ${col} - EXISTS`);
+                // console.log(`✅ ${col} - EXISTS`);
             } else {
-                console.log(`❌ ${col} - MISSING (need to run migration!)`);
+                // console.log(`❌ ${col} - MISSING (need to run migration!)`);
             }
         });
 
@@ -43,7 +43,7 @@ const checkSubscriptionTable = () => {
             if (err) {
                 console.error('❌ Error counting subscriptions:', err);
             } else {
-                console.log(`\n📊 Total subscriptions: ${countResult[0].count}`);
+                // console.log(`\n📊 Total subscriptions: ${countResult[0].count}`);
             }
             process.exit(0);
         });

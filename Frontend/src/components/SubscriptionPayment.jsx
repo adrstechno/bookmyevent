@@ -66,7 +66,7 @@ const SubscriptionPayment = ({ onClose, onSuccess }) => {
         order_id: orderResponse.data.order_id,
         handler: async function (response) {
           try {
-            console.log('💳 Payment successful, verifying...', {
+            // console.log('💳 Payment successful, verifying...', {
               order_id: response.razorpay_order_id,
               payment_id: response.razorpay_payment_id,
               signature: response.razorpay_signature ? 'present' : 'missing'
@@ -80,7 +80,7 @@ const SubscriptionPayment = ({ onClose, onSuccess }) => {
               vendor_id: orderResponse.data.vendor_id,
             });
 
-            console.log('✅ Verification response:', verifyResponse);
+            // console.log('✅ Verification response:', verifyResponse);
 
             if (verifyResponse.success) {
               toast.success("🎉 Subscription activated successfully!");

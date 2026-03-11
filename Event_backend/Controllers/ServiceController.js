@@ -25,7 +25,7 @@ export const insertService = (req, res) => {
         is_active: parseInt(is_active)
     };
 
-    console.log('💾 Inserting service data:', serviceData);
+    // console.log('💾 Inserting service data:', serviceData);
 
     ServiceModel.insertService(serviceData, (err, results) => {
         if (err) {
@@ -37,7 +37,7 @@ export const insertService = (req, res) => {
             });
         }
 
-        console.log('✅ Service inserted successfully:', results);
+        // console.log('✅ Service inserted successfully:', results);
 
         res.status(201).json({
             message: 'Service category inserted successfully',
@@ -64,10 +64,10 @@ export const getAllServices = (req, res) => {
 export const getServiceById = (req, res) => {
     const { id } = req.params;
 
-    console.log('🔍 GET Service by ID called with ID:', id);
+    // console.log('🔍 GET Service by ID called with ID:', id);
 
     if (!id) {
-        console.log('❌ No ID provided');
+        // console.log('❌ No ID provided');
         return res.status(400).json({ error: 'Service ID is required' });
     }
 
@@ -82,14 +82,14 @@ export const getServiceById = (req, res) => {
                 });
             }
 
-            console.log('✅ Query executed successfully, results:', results);
+            // console.log('✅ Query executed successfully, results:', results);
 
             if (!results || results.length === 0) {
-                console.log('⚠️ No service found with ID:', id);
+                // console.log('⚠️ No service found with ID:', id);
                 return res.status(404).json({ error: 'Service not found' });
             }
 
-            console.log('✅ Returning service data');
+            // console.log('✅ Returning service data');
             res.status(200).json(results[0]);
         });
     } catch (error) {

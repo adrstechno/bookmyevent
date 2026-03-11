@@ -18,7 +18,7 @@ export const executeWithRetry = async (query, params = [], maxRetries = 3) => {
                     if (err) {
                         // Check if it's a connection error that can be retried
                         if (isRetryableError(err) && attempt < maxRetries) {
-                            console.log(`Database query failed (attempt ${attempt}/${maxRetries}), retrying...`);
+                            // console.log(`Database query failed (attempt ${attempt}/${maxRetries}), retrying...`);
                             reject(err);
                         } else {
                             reject(err);
@@ -34,7 +34,7 @@ export const executeWithRetry = async (query, params = [], maxRetries = 3) => {
             // If it's a retryable error and we have attempts left, wait and retry
             if (isRetryableError(error) && attempt < maxRetries) {
                 const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000); // Exponential backoff
-                console.log(`Waiting ${delay}ms before retry...`);
+                // console.log(`Waiting ${delay}ms before retry...`);
                 await sleep(delay);
                 continue;
             }
@@ -90,7 +90,7 @@ export const executeCallbackWithRetry = async (operation, maxRetries = 3) => {
                 operation((err, results) => {
                     if (err) {
                         if (isRetryableError(err) && attempt < maxRetries) {
-                            console.log(`Database operation failed (attempt ${attempt}/${maxRetries}), retrying...`);
+                            // console.log(`Database operation failed (attempt ${attempt}/${maxRetries}), retrying...`);
                             reject(err);
                         } else {
                             reject(err);
@@ -105,7 +105,7 @@ export const executeCallbackWithRetry = async (operation, maxRetries = 3) => {
             
             if (isRetryableError(error) && attempt < maxRetries) {
                 const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
-                console.log(`Waiting ${delay}ms before retry...`);
+                // console.log(`Waiting ${delay}ms before retry...`);
                 await sleep(delay);
                 continue;
             }

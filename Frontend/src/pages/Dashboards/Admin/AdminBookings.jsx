@@ -94,7 +94,7 @@ const AdminBookings = () => {
         booking.event_address?.toLowerCase().includes(search)
       );
     });
- console.log(bookings,"d")
+ // console.log(bookings,"d")
   const StatusBadge = ({ status, adminApproval }) => {
     let config = BOOKING_STATUS[status] || BOOKING_STATUS.pending;
     

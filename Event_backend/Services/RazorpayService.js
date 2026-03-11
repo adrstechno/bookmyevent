@@ -20,7 +20,7 @@ class RazorpayService {
                 key_secret: process.env.RAZORPAY_KEY_SECRET
             });
             this.isConfigured = true;
-            console.log('✅ Razorpay configured successfully');
+            // console.log('✅ Razorpay configured successfully');
         }
         
         // Subscription plan details

@@ -35,7 +35,7 @@
 
 //   const fetchPackages = async (vendor_id) => {
 //     if (!vendor_id) {
-//       console.log("No vendor_id provided");
+//       // console.log("No vendor_id provided");
 //       return;
 //     }
 
@@ -46,7 +46,7 @@
 //         withCredentials: true,
 //       });
 
-//       console.log("API Response:", res.data);
+//       // console.log("API Response:", res.data);
 
 //       // Handle the response structure: { message, count, packages: [...] }
 //       const packagesData = res.data?.packages || [];
@@ -125,14 +125,14 @@
 //     if (!window.confirm("Are you sure you want to delete this package?")) return;
 
 //     try {
-//       console.log("Deleting package with ID:", id);
+//       // console.log("Deleting package with ID:", id);
 
 //       const response = await axios.delete(`${VITE_API_BASE_URL}/Vendor/deleteVendorPackage`, {
 //         params: { package_id: id },
 //         withCredentials: true,
 //       });
 
-//       console.log("Delete response:", response.data);
+//       // console.log("Delete response:", response.data);
 //       toast.success("Package deleted successfully!");
 //       if (vendorId) fetchPackages(vendorId);
 //     } catch (e) {
@@ -410,7 +410,7 @@ export default function MyPackage() {
 
       const data = res.data?.packages || [];
       setPackages(Array.isArray(data) ? data : []);
-      console.log(data);
+      // console.log(data);
 
 
       if (data.length === 0) toast('No packages found!', {
@@ -469,7 +469,7 @@ export default function MyPackage() {
       return toast.error("Package ID missing!");
 
     try {
-      console.log("Updating package:", {
+      // console.log("Updating package:", {
         package_id: form.package_id,
         package_name: form.package_name,
         package_desc: form.package_desc,
@@ -489,7 +489,7 @@ export default function MyPackage() {
         }
       );
 
-      console.log("Update response:", response.data);
+      // console.log("Update response:", response.data);
       toast.success("Package updated successfully!");
       setOpenModal(false);
       if (vendorId) fetchPackages(vendorId);
@@ -508,7 +508,7 @@ export default function MyPackage() {
       return;
 
     try {
-      console.log("Deleting package ID:", id);
+      // console.log("Deleting package ID:", id);
 
       const response = await axios.get(
         `${VITE_API_BASE_URL}/Vendor/deleteVendorPackage`,
@@ -518,7 +518,7 @@ export default function MyPackage() {
         }
       );
 
-      console.log("Delete response:", response.data);
+      // console.log("Delete response:", response.data);
       toast.success("Package deleted successfully!");
       if (vendorId) fetchPackages(vendorId);
     } catch (e) {

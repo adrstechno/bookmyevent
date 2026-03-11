@@ -108,7 +108,7 @@ const VendorBookings = () => {
         setAttemptsRemaining(response.data.attempts_remaining || 3);
       }
     } catch (error) {
-      console.log("Could not fetch OTP status");
+      // console.log("Could not fetch OTP status");
     }
   };
 

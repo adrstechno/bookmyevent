@@ -61,14 +61,14 @@ const VendorDashboard = () => {
     // Fetch KPIs using service
     const fetchKPIs = async () => {
       try {
-        console.log('Fetching vendor KPIs...');
+        // console.log('Fetching vendor KPIs...');
         const response = await vendorService.getVendorKPIs();
-        console.log('KPI response:', response);
+        // console.log('KPI response:', response);
         if (response?.kpis) {
-          console.log('Setting KPIs:', response.kpis);
+          // console.log('Setting KPIs:', response.kpis);
           setKpis(response.kpis);
         } else {
-          console.log('No KPIs in response, using defaults');
+          // console.log('No KPIs in response, using defaults');
         }
       } catch (err) {
         console.error("Error loading KPIs", err);
@@ -79,14 +79,14 @@ const VendorDashboard = () => {
     // Fetch activities using service
     const fetchActivities = async () => {
       try {
-        console.log('Fetching vendor activities...');
+        // console.log('Fetching vendor activities...');
         const response = await vendorService.getVendorRecentActivities(5);
-        console.log('Activities response:', response);
+        // console.log('Activities response:', response);
         if (Array.isArray(response.activities)) {
-          console.log('Setting activities:', response.activities);
+          // console.log('Setting activities:', response.activities);
           setActivities(response.activities);
         } else {
-          console.log('No activities in response or not an array');
+          // console.log('No activities in response or not an array');
         }
       } catch (err) {
         console.error("Error loading activities", err);

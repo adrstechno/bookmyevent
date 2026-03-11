@@ -48,7 +48,7 @@ export const insertVendor = (req, res) => {
     event_profiles_url: data.event_profiles_url,
   };
 
-  console.log(vendorData);
+  // console.log(vendorData);
 
   VendorModel.insertVendor(vendorData, (err, result) => {
     if (err) {
@@ -105,7 +105,7 @@ export const AddEventImages = async (req, res) => {
       return res.status(404).json({ message: "Vendor not found" });
     }
 
-    console.log("✅ Vendor ID:", vendor_id);
+    // console.log("✅ Vendor ID:", vendor_id);
 
     // 3️⃣ Validate uploaded files
     if (!req.files || req.files.length === 0) {
@@ -340,7 +340,7 @@ export const getVendorShiftforVendor = async (req, res) => {
     // Check if vendor_id is provided as query parameter (admin use case)
     if (req.query.vendor_id) {
       vendor_id = parseInt(req.query.vendor_id);
-      console.log('Using vendor_id from query parameter:', vendor_id);
+      // console.log('Using vendor_id from query parameter:', vendor_id);
     } else {
       // Get vendor_id from logged-in user's token (vendor use case)
       const vendorResult = await new Promise((resolve, reject) => {
@@ -355,7 +355,7 @@ export const getVendorShiftforVendor = async (req, res) => {
       }
 
       vendor_id = vendorResult[0].vendor_id;
-      console.log('Using vendor_id from token:', vendor_id);
+      // console.log('Using vendor_id from token:', vendor_id);
     }
 
     if (!vendor_id) {
@@ -369,7 +369,7 @@ export const getVendorShiftforVendor = async (req, res) => {
       });
     });
 
-    console.log('Fetched shifts for vendor_id', vendor_id, ':', shifts?.length || 0, 'shifts');
+    // console.log('Fetched shifts for vendor_id', vendor_id, ':', shifts?.length || 0, 'shifts');
 
     if (!shifts || shifts.length === 0) {
       return res.status(200).json({ 
@@ -710,7 +710,7 @@ export const getFreeVendorsByDay = async (req, res) => {
     ];
     const day = dayNames[new Date(date).getDay()];
 
-    console.log("Fetching free vendors for day:", day, "and service:", service_id);
+    // console.log("Fetching free vendors for day:", day, "and service:", service_id);
 
     // Step 1 — Get vendor IDs who match both
     const vendorIds = await new Promise((resolve, reject) => {
@@ -756,7 +756,7 @@ export const GetVendorKPIs = async (req, res) => {
     let vendor_id = req.user?.vendor_id;
     
     if (!vendor_id) {
-      console.log('No vendor_id in req.user, finding by user ID:', req.user?.uuid);
+      // console.log('No vendor_id in req.user, finding by user ID:', req.user?.uuid);
       vendor_id = await new Promise((resolve, reject) => {
         VendorModel.findVendorID(req.user.uuid, (err, result) => {
           if (err) return reject(err);
@@ -765,34 +765,34 @@ export const GetVendorKPIs = async (req, res) => {
       });
     }
 
-    console.log('Found vendor_id:', vendor_id);
+    // console.log('Found vendor_id:', vendor_id);
 
     if (!vendor_id) return res.status(404).json({ message: 'Vendor not found' });
 
     const [totalSales] = await new Promise((resolve, reject) => {
       VendorModel.getTotalSales(vendor_id, (err, result) => {
-        console.log('Total sales query result:', result);
+        // console.log('Total sales query result:', result);
         return err ? reject(err) : resolve(result);
       });
     });
 
     const [newOrders] = await new Promise((resolve, reject) => {
       VendorModel.getNewOrdersCount(vendor_id, (err, result) => {
-        console.log('New orders query result:', result);
+        // console.log('New orders query result:', result);
         return err ? reject(err) : resolve(result);
       });
     });
 
     const [activeEvents] = await new Promise((resolve, reject) => {
       VendorModel.getActiveEventsCount(vendor_id, (err, result) => {
-        console.log('Active events query result:', result);
+        // console.log('Active events query result:', result);
         return err ? reject(err) : resolve(result);
       });
     });
 
     const [totalClients] = await new Promise((resolve, reject) => {
       VendorModel.getTotalClientsCount(vendor_id, (err, result) => {
-        console.log('Total clients query result:', result);
+        // console.log('Total clients query result:', result);
         return err ? reject(err) : resolve(result);
       });
     });
@@ -804,7 +804,7 @@ export const GetVendorKPIs = async (req, res) => {
       totalClients: totalClients?.total_clients || 0,
     };
 
-    console.log('Final KPIs:', kpis);
+    // console.log('Final KPIs:', kpis);
 
     return res.status(200).json({
       message: 'KPIs retrieved successfully',
@@ -822,7 +822,7 @@ export const GetVendorRecentActivities = async (req, res) => {
     let vendor_id = req.user?.vendor_id;
     
     if (!vendor_id) {
-      console.log('No vendor_id in req.user, finding by user ID:', req.user?.uuid);
+      // console.log('No vendor_id in req.user, finding by user ID:', req.user?.uuid);
       vendor_id = await new Promise((resolve, reject) => {
         VendorModel.findVendorID(req.user.uuid, (err, result) => {
           if (err) return reject(err);
@@ -831,19 +831,19 @@ export const GetVendorRecentActivities = async (req, res) => {
       });
     }
 
-    console.log('Found vendor_id for activities:', vendor_id);
+    // console.log('Found vendor_id for activities:', vendor_id);
 
     if (!vendor_id) return res.status(404).json({ message: 'Vendor not found' });
 
     const limit = parseInt(req.query.limit, 10) || 5;
     const activities = await new Promise((resolve, reject) => {
       VendorModel.getRecentActivities(vendor_id, limit, (err, result) => {
-        console.log('Activities query result:', result);
+        // console.log('Activities query result:', result);
         return err ? reject(err) : resolve(result);
       });
     });
 
-    console.log('Final activities:', activities);
+    // console.log('Final activities:', activities);
 
     return res.status(200).json({ message: 'Recent activities retrieved', activities });
   } catch (err) {

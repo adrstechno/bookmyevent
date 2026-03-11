@@ -9,14 +9,14 @@ const HomePageWrapper = () => {
   useEffect(() => {
     // If we're on the home page but have a token parameter, redirect to verification
     if (location.search.includes('token=')) {
-      console.log('Token detected on home page, redirecting to email verification');
+      // console.log('Token detected on home page, redirecting to email verification');
       navigate(`/verify-email${location.search}`, { replace: true });
       return;
     }
 
     // Clear any stale URL parameters that might cause issues
     if (location.search && !location.search.includes('redirect=')) {
-      console.log('Clearing stale URL parameters');
+      // console.log('Clearing stale URL parameters');
       navigate('/', { replace: true });
       return;
     }

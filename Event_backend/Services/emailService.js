@@ -18,7 +18,7 @@ class EmailService {
         const port = useAlternativePort ? 465 : 587;
         const secure = useAlternativePort ? true : false;
         
-        console.log(`Creating email transporter with port ${port} (secure: ${secure})`);
+        // console.log(`Creating email transporter with port ${port} (secure: ${secure})`);
         
         this.transporter = nodemailer.createTransport({
             host: 'smtp.gmail.com',
@@ -52,7 +52,7 @@ class EmailService {
             await this.transporter.verify();
             this.isConnectionVerified = true;
             this.connectionError = null;
-            console.log('✅ Email service is ready to send emails');
+            // console.log('✅ Email service is ready to send emails');
             return true;
         } catch (error) {
             this.isConnectionVerified = false;
@@ -73,16 +73,16 @@ class EmailService {
         
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
             try {
-                console.log(`Sending email to ${mailOptions.to} (attempt ${attempt}/${maxRetries})...`);
+                // console.log(`Sending email to ${mailOptions.to} (attempt ${attempt}/${maxRetries})...`);
                 
                 // If first attempt fails and we haven't verified connection, try alternative port
                 if (attempt === 2 && !this.isConnectionVerified) {
-                    console.log('Trying alternative SMTP port configuration...');
+                    // console.log('Trying alternative SMTP port configuration...');
                     this.createTransporter(true); // Try port 465
                 }
                 
                 const info = await this.transporter.sendMail(mailOptions);
-                console.log(`✅ Email sent successfully on attempt ${attempt}:`, info.messageId);
+                // console.log(`✅ Email sent successfully on attempt ${attempt}:`, info.messageId);
                 this.isConnectionVerified = true;
                 return { success: true, messageId: info.messageId, provider: 'smtp' };
             } catch (error) {
@@ -107,7 +107,7 @@ class EmailService {
                 // Wait before retrying (exponential backoff)
                 if (attempt < maxRetries) {
                     const waitTime = Math.min(2000 * Math.pow(2, attempt - 1), 15000);
-                    console.log(`⏳ Waiting ${waitTime}ms before retry...`);
+                    // console.log(`⏳ Waiting ${waitTime}ms before retry...`);
                     await new Promise(resolve => setTimeout(resolve, waitTime));
                 }
             }
@@ -255,8 +255,8 @@ class EmailService {
         const reviewToken = ReviewTokenService.generateReviewToken(bookingId, userEmail);
         const reviewLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/review/${bookingId}?token=${reviewToken}`;
         
-        console.log('Generated review token for booking:', bookingId, 'user:', userEmail);
-        console.log('Review link:', reviewLink);
+        // console.log('Generated review token for booking:', bookingId, 'user:', userEmail);
+        // console.log('Review link:', reviewLink);
 
         const mailOptions = {
             from: process.env.EMAIL_USER,
@@ -855,7 +855,7 @@ class EmailService {
     async testEmailConfig() {
         try {
             await this.transporter.verify();
-            console.log('Email service is ready');
+            // console.log('Email service is ready');
             return { success: true, message: 'Email service is configured correctly' };
         } catch (error) {
             console.error('Email service configuration error:', error);

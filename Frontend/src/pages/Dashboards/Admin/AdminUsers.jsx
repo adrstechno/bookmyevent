@@ -40,7 +40,7 @@ const AdminUsers = () => {
       });
       setAllUsers(data.users || []);
     } catch (error) {
-      console.log("Error fetching users:", error);
+      // console.log("Error fetching users:", error);
     }
   };
 

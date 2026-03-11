@@ -7,7 +7,7 @@ class SendGridService {
     constructor() {
         if (process.env.SENDGRID_API_KEY) {
             sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-            console.log('✅ SendGrid initialized');
+            // console.log('✅ SendGrid initialized');
         }
         // Removed warning - only log if actually configured
     }
@@ -26,7 +26,7 @@ class SendGridService {
 
         try {
             const response = await sgMail.send(msg);
-            console.log('✅ Email sent via SendGrid to:', mailOptions.to);
+            // console.log('✅ Email sent via SendGrid to:', mailOptions.to);
             return { 
                 success: true, 
                 messageId: response[0].headers['x-message-id'],

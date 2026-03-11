@@ -8,13 +8,13 @@ class SubscriptionController {
         try {
             const user_id = req.user?.uuid || req.user?.user_id;
             
-            console.log('🔍 Create subscription order - User info:', {
+            // console.log('🔍 Create subscription order - User info:', {
                 user_id,
                 full_user: req.user
             });
             
             if (!user_id) {
-                console.log('❌ No user_id found in request');
+                // console.log('❌ No user_id found in request');
                 return res.status(401).json({
                     success: false,
                     message: 'User authentication required'
@@ -30,7 +30,7 @@ class SubscriptionController {
                 WHERE u.uuid = ?
             `;
 
-            console.log('🔍 Querying vendor with UUID:', user_id);
+            // console.log('🔍 Querying vendor with UUID:', user_id);
 
             const vendorResult = await new Promise((resolve, reject) => {
                 db.query(vendorQuery, [user_id], (err, results) => {
@@ -38,14 +38,14 @@ class SubscriptionController {
                         console.error('❌ Database error:', err);
                         reject(err);
                     } else {
-                        console.log('✅ Query results:', results);
+                        // console.log('✅ Query results:', results);
                         resolve(results);
                     }
                 });
             });
 
             if (!vendorResult || vendorResult.length === 0) {
-                console.log('❌ No vendor profile found for user:', user_id);
+                // console.log('❌ No vendor profile found for user:', user_id);
                 return res.status(404).json({
                     success: false,
                     message: 'Vendor profile not found. Please complete your vendor profile first.',
@@ -57,7 +57,7 @@ class SubscriptionController {
             }
 
             const vendor = vendorResult[0];
-            console.log('✅ Found vendor:', vendor);
+            // console.log('✅ Found vendor:', vendor);
 
             // Check if vendor already has an active subscription
             const subscriptionQuery = `
@@ -124,13 +124,13 @@ class SubscriptionController {
         try {
             const user_id = req.user?.uuid || req.user?.user_id;
             
-            console.log('🔍 Verify payment - User info:', {
+            // console.log('🔍 Verify payment - User info:', {
                 user_id,
                 body: req.body
             });
             
             if (!user_id) {
-                console.log('❌ No user_id found');
+                // console.log('❌ No user_id found');
                 return res.status(401).json({
                     success: false,
                     message: 'User authentication required'
@@ -144,7 +144,7 @@ class SubscriptionController {
                 vendor_id
             } = req.body;
 
-            console.log('🔍 Payment verification data:', {
+            // console.log('🔍 Payment verification data:', {
                 razorpay_order_id,
                 razorpay_payment_id,
                 razorpay_signature: razorpay_signature ? 'present' : 'missing',
@@ -152,7 +152,7 @@ class SubscriptionController {
             });
 
             if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-                console.log('❌ Missing payment data');
+                // console.log('❌ Missing payment data');
                 return res.status(400).json({
                     success: false,
                     message: 'Missing payment verification data'
@@ -160,17 +160,17 @@ class SubscriptionController {
             }
 
             // Verify payment signature
-            console.log('🔍 Verifying payment signature...');
+            // console.log('🔍 Verifying payment signature...');
             const isValid = RazorpayService.verifyPaymentSignature({
                 razorpay_order_id,
                 razorpay_payment_id,
                 razorpay_signature
             });
 
-            console.log('✅ Signature verification result:', isValid);
+            // console.log('✅ Signature verification result:', isValid);
 
             if (!isValid) {
-                console.log('❌ Invalid payment signature');
+                // console.log('❌ Invalid payment signature');
                 return res.status(400).json({
                     success: false,
                     message: 'Invalid payment signature. Please contact support with payment ID: ' + razorpay_payment_id
@@ -178,11 +178,11 @@ class SubscriptionController {
             }
 
             // Get payment details from Razorpay
-            console.log('🔍 Fetching payment details from Razorpay...');
+            // console.log('🔍 Fetching payment details from Razorpay...');
             const paymentDetails = await RazorpayService.getPaymentDetails(razorpay_payment_id);
 
             if (!paymentDetails.success) {
-                console.log('❌ Failed to fetch payment details:', paymentDetails.error);
+                // console.log('❌ Failed to fetch payment details:', paymentDetails.error);
                 return res.status(500).json({
                     success: false,
                     message: 'Failed to fetch payment details'
@@ -190,7 +190,7 @@ class SubscriptionController {
             }
 
             const payment = paymentDetails.payment;
-            console.log('✅ Payment details:', {
+            // console.log('✅ Payment details:', {
                 id: payment.id,
                 amount: payment.amount,
                 status: payment.status
@@ -200,7 +200,7 @@ class SubscriptionController {
             const startDate = new Date();
             const endDate = RazorpayService.calculateSubscriptionEndDate(startDate);
 
-            console.log('🔍 Inserting subscription record...');
+            // console.log('🔍 Inserting subscription record...');
             
             // Insert subscription record
             const insertQuery = `

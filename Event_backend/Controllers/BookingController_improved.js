@@ -81,8 +81,8 @@ class BookingController {
                     });
                 });
 
-                console.log('🔍 Vendor lookup for vendor_id:', vendor_id);
-                console.log('📧 Vendor query result:', vendorResult);
+                // console.log('🔍 Vendor lookup for vendor_id:', vendor_id);
+                // console.log('📧 Vendor query result:', vendorResult);
 
                 // Get package details
                 const packageQuery = `SELECT package_name, amount FROM vendor_packages WHERE package_id = ?`;
@@ -128,7 +128,7 @@ class BookingController {
                             bookingUuid: booking_uuid,
                             eventAddress: finalAddress
                         });
-                        console.log('✅ Vendor booking notification email sent to:', vendor.email);
+                        // console.log('✅ Vendor booking notification email sent to:', vendor.email);
                     } catch (emailError) {
                         console.error('❌ Failed to send vendor booking notification email:', emailError);
                         // Log more details for debugging
@@ -138,7 +138,7 @@ class BookingController {
                         });
                     }
                 } else {
-                    console.log('⚠️ Vendor email notification skipped:', {
+                    // console.log('⚠️ Vendor email notification skipped:', {
                         vendorFound: !!vendor,
                         vendorEmail: vendor?.email,
                         vendor_id: vendor_id,

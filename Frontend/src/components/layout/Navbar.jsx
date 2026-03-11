@@ -47,7 +47,7 @@ const Navbar = ({ onMenuClick, isMobile }) => {
       });
 
       if (!response.ok) {
-        console.log("Logout API responded with an error");
+        // console.log("Logout API responded with an error");
       }
     } catch (error) {
       toast.error("Logout API call failed");

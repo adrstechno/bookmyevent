@@ -39,7 +39,7 @@ const NotificationBell = () => {
       setUnreadCount(countRes.data?.count || 0);
     } catch (error) {
       // Silent fail - don't show error or redirect for notification failures
-      console.log("Notifications unavailable");
+      // console.log("Notifications unavailable");
       setNotifications([]);
       setUnreadCount(0);
     } finally {

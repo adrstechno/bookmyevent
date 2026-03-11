@@ -33,7 +33,7 @@ api.interceptors.response.use(
     if (response) {
       switch (response.status) {
         case 401:
-          console.log("Auth error - 401 Unauthorized");
+          // console.log("Auth error - 401 Unauthorized");
           // Clear stored auth data on 401
           localStorage.removeItem('token');
           localStorage.removeItem('user');

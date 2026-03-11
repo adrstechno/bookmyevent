@@ -28,7 +28,7 @@ pool.getConnection((err, connection) => {
     if (err) {
         console.error('Error connecting to database:', err.message);
     } else {
-        console.log('Connected to database successfully!');
+        // console.log('Connected to database successfully!');
         connection.release();
     }
 });
@@ -37,7 +37,7 @@ pool.getConnection((err, connection) => {
 pool.on('error', err => {
     console.error('Database pool error:', err);
     if (err.code === 'PROTOCOL_CONNECTION_LOST') {
-        console.log('Database connection lost, pool will reconnect automatically');
+        // console.log('Database connection lost, pool will reconnect automatically');
     }
 });
 

@@ -138,12 +138,12 @@ export default function MainServices() {
       formData.append("icon_url", subserviceForm.icon_url);
       formData.append("is_active", subserviceForm.is_active ? 1 : 0);
 
-      console.log('📤 Sending subservice data:');
-      console.log('- service_category_ids:', subserviceForm.service_category_ids);
-      console.log('- subservice_name:', subserviceForm.subservice_name);
-      console.log('- description:', subserviceForm.description);
-      console.log('- is_active:', subserviceForm.is_active ? 1 : 0);
-      console.log('- icon_url file:', subserviceForm.icon_url);
+      // console.log('📤 Sending subservice data:');
+      // console.log('- service_category_ids:', subserviceForm.service_category_ids);
+      // console.log('- subservice_name:', subserviceForm.subservice_name);
+      // console.log('- description:', subserviceForm.description);
+      // console.log('- is_active:', subserviceForm.is_active ? 1 : 0);
+      // console.log('- icon_url file:', subserviceForm.icon_url);
 
       await axios.post(`${VITE_API_BASE_URL}/Service/CreateSubservice`, formData, {
         headers: { "Content-Type": "multipart/form-data" },

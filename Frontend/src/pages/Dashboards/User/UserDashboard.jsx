@@ -49,19 +49,19 @@ const UserDashboard = () => {
     // fetch dashboard data
     (async () => {
       try {
-        console.log('Fetching user dashboard data...');
+        // console.log('Fetching user dashboard data...');
         
         const k = await dashboardService.getUserKpis();
-        console.log('User KPIs response:', k);
+        // console.log('User KPIs response:', k);
         if (k?.success) {
-          console.log('Setting user KPIs:', k.data);
+          // console.log('Setting user KPIs:', k.data);
           setKpis(k.data);
         } else {
-          console.log('User KPIs request failed or no success flag');
+          // console.log('User KPIs request failed or no success flag');
         }
 
         const c = await dashboardService.getMonthlyChart();
-        console.log('User chart response:', c);
+        // console.log('User chart response:', c);
         if (c?.success) {
           // convert YYYY-MM to short month names and ensure numbers
           const formatMonth = (ym) => {
@@ -80,10 +80,10 @@ const UserDashboard = () => {
             payments: Number(r.payments) || 0 
           }));
           
-          console.log('Setting user chart data:', formattedData);
+          // console.log('Setting user chart data:', formattedData);
           setChartData(formattedData);
         } else {
-          console.log('User chart request failed or no success flag');
+          // console.log('User chart request failed or no success flag');
         }
       } catch (err) {
         console.error("Dashboard load error", err);

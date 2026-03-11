@@ -19,7 +19,7 @@ connection.execute(sql, (err, results) => {
   if (err) {
     console.error('❌ Migration failed:', err);
   } else {
-    console.log('✅ Migration completed successfully');
+    // console.log('✅ Migration completed successfully');
   }
   connection.end();
 });
