@@ -81,8 +81,8 @@ jobs:
           
           # Health check
           echo "🏥 Running health check..."
-          if curl -f -s --max-time 10 http://localhost:3000 > /dev/null; then
-            echo "✅ Backend is responding on port 3000"
+          if curl -f -s --max-time 10 http://localhost:3232 > /dev/null; then
+            echo "✅ Backend is responding on port 3232"
           else
             echo "❌ Backend health check failed"
             pm2 logs goeventify-backend --lines 20
@@ -99,7 +99,7 @@ jobs:
       run: |
         if [ "${{ job.status }}" == "success" ]; then
           echo "✅ Backend deployment successful!"
-          echo "🌍 Backend API is now live at: http://${{ secrets.EC2_HOST }}:3000"
+          echo "🌍 Backend API is now live at: http://${{ secrets.EC2_HOST }}:3232"
         else
           echo "❌ Backend deployment failed!"
         fi

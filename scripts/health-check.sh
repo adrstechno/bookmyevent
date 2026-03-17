@@ -47,17 +47,17 @@ if pm2 describe goeventify-backend &> /dev/null; then
     print_status 0 "Backend process is running"
     
     # Check if backend is responding
-    if curl -f -s --max-time 5 http://localhost:3000 &> /dev/null; then
-        print_status 0 "Backend is responding on port 3000"
+    if curl -f -s --max-time 5 http://localhost:3232 &> /dev/null; then
+        print_status 0 "Backend is responding on port 3232"
         
         # Test API endpoint
-        if curl -f -s --max-time 5 http://localhost:3000/User/health &> /dev/null; then
+        if curl -f -s --max-time 5 http://localhost:3232/User/health &> /dev/null; then
             print_status 0 "API health endpoint is working"
         else
             print_warning "API health endpoint not responding (this may be normal if not implemented)"
         fi
     else
-        print_status 1 "Backend is not responding on port 3000"
+        print_status 1 "Backend is not responding on port 3232"
     fi
 else
     print_status 1 "Backend process is not running"
@@ -161,8 +161,8 @@ echo -e "\n🔌 External Access:"
 PUBLIC_IP=$(curl -s --max-time 5 http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null)
 if [ ! -z "$PUBLIC_IP" ]; then
     echo "Public IP: $PUBLIC_IP"
-    if curl -f -s --max-time 5 "http://$PUBLIC_IP:3000" &> /dev/null; then
-        print_status 0 "Backend is accessible externally on port 3000"
+    if curl -f -s --max-time 5 "http://$PUBLIC_IP:3232" &> /dev/null; then
+        print_status 0 "Backend is accessible externally on port 3232"
     else
         print_warning "Backend not accessible externally (check security group settings)"
     fi

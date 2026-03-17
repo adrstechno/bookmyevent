@@ -57,8 +57,8 @@ log "⏳ Waiting for application to start..."
 sleep 5
 
 log "🏥 Running backend health check..."
-if curl -f -s --max-time 10 http://localhost:3000 > /dev/null; then
-    log "✅ Backend is responding on port 3000"
+if curl -f -s --max-time 10 http://localhost:3232 > /dev/null; then
+    log "✅ Backend is responding on port 3232"
 else
     log "❌ Backend health check failed"
     pm2 logs goeventify-backend --lines 20
@@ -74,7 +74,7 @@ log "📊 Checking application status..."
 pm2 status
 
 log "✅ Backend deployment completed successfully!"
-log "🌍 Backend API is running at: http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):3000"
+log "🌍 Backend API is running at: http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):3232"
 
 # Optional: Send deployment notification
 if [ ! -z "$SLACK_WEBHOOK" ]; then
