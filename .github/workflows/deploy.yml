@@ -1,0 +1,105 @@
+name: Deploy Backend to AWS EC2
+
+on:
+  push:
+    branches: [ main, master ]
+    paths: 
+      - 'Event_backend/**'  # Only deploy when backend changes
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:  # Allow manual deployment
+
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: Event_backend/package-lock.json
+
+    - name: Install Backend Dependencies
+      run: |
+        cd Event_backend
+        npm ci --only=production
+
+    - name: Run Backend Tests (Optional)
+      run: |
+        cd Event_backend
+        # npm test  # Uncomment if you have tests
+
+    - name: Deploy Backend to EC2
+      uses: appleboy/ssh-action@v0.1.8
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        port: 22
+        timeout: 300s
+        script: |
+          # Set deployment variables
+          export DEPLOYMENT_ID="${{ github.sha }}"
+          export DEPLOYMENT_TIME="$(date '+%Y-%m-%d %H:%M:%S')"
+          
+          echo "🚀 Starting backend deployment: $DEPLOYMENT_ID at $DEPLOYMENT_TIME"
+          
+          # Navigate to project directory
+          cd /home/ubuntu/bookmyevent || {
+            echo "❌ Project directory not found. Please run initial setup first."
+            exit 1
+          }
+          
+          # Pull latest backend changes
+          git fetch origin
+          git reset --hard origin/main
+          
+          # Install backend dependencies
+          cd Event_backend
+          echo "📦 Installing backend dependencies..."
+          npm install --production --silent
+          
+          # Check if PM2 process exists and restart
+          cd /home/ubuntu/bookmyevent
+          if pm2 describe goeventify-backend > /dev/null 2>&1; then
+            echo "♻️ Restarting existing PM2 process..."
+            pm2 restart goeventify-backend
+          else
+            echo "🆕 Starting new PM2 process..."
+            pm2 start ecosystem.config.js --env production
+          fi
+          
+          # Save PM2 configuration
+          pm2 save
+          
+          # Wait for application to start
+          sleep 5
+          
+          # Health check
+          echo "🏥 Running health check..."
+          if curl -f -s --max-time 10 http://localhost:3000 > /dev/null; then
+            echo "✅ Backend is responding on port 3000"
+          else
+            echo "❌ Backend health check failed"
+            pm2 logs goeventify-backend --lines 20
+            exit 1
+          fi
+          
+          # Show PM2 status
+          pm2 status
+          
+          echo "✅ Backend deployment $DEPLOYMENT_ID completed successfully!"
+
+    - name: Notify Deployment Status
+      if: always()
+      run: |
+        if [ "${{ job.status }}" == "success" ]; then
+          echo "✅ Backend deployment successful!"
+          echo "🌍 Backend API is now live at: http://${{ secrets.EC2_HOST }}:3000"
+        else
+          echo "❌ Backend deployment failed!"
+        fi
