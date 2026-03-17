@@ -60,7 +60,18 @@ const HomePage = () => {
 
   return (
     <ErrorBoundary>
-      <div className="bg-gradient-to-b from-gray-50 to-white min-h-screen">
+      <div className="relative min-h-screen">
+        {/* Global Background */}
+        <div className="fixed inset-0 -z-10">
+          <div 
+            className="absolute inset-0 bg-cover bg-center bg-fixed opacity-30"
+            style={{
+              backgroundImage: `url('https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=1920&h=1080&fit=crop&crop=center')`,
+            }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-white/95 via-gray-50/90 to-white/95" />
+        </div>
+
         {/* Navigation */}
         <ErrorBoundary>
           <HomeNavbar />

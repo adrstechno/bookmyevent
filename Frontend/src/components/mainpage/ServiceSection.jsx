@@ -172,9 +172,19 @@ const ServicesSection = () => {
   }
 
   return (
-    <section id="services-section" className="py-24 bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
+    <section id="services-section" className="py-24 relative overflow-hidden">
+      {/* Background Image with Overlay */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-fixed"
+        style={{
+          backgroundImage: `url('https://images.unsplash.com/photo-1511578314322-379afb476865?w=1920&h=1080&fit=crop&crop=center')`,
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-br from-white/95 via-gray-50/90 to-white/95" />
+      </div>
+
       {/* Animated Background Pattern */}
-      <div className="absolute inset-0 opacity-5 pointer-events-none">
+      <div className="absolute inset-0 opacity-10 pointer-events-none">
         <motion.div
           animate={{
             backgroundPosition: ["0% 0%", "100% 100%"],
@@ -186,9 +196,37 @@ const ServicesSection = () => {
           }}
           className="absolute inset-0"
           style={{
-            backgroundImage: 'radial-gradient(circle, #284b63 1px, transparent 1px)',
-            backgroundSize: '50px 50px'
+            backgroundImage: 'radial-gradient(circle, #284b63 2px, transparent 2px)',
+            backgroundSize: '60px 60px'
           }}
+        />
+      </div>
+
+      {/* Floating Elements */}
+      <div className="absolute inset-0 pointer-events-none">
+        <motion.div
+          animate={{ 
+            y: [0, -20, 0],
+            rotate: [0, 5, 0]
+          }}
+          transition={{ duration: 6, repeat: Infinity }}
+          className="absolute top-20 left-10 w-20 h-20 bg-gradient-to-br from-[#f9a826]/20 to-[#f7b733]/20 rounded-full blur-xl"
+        />
+        <motion.div
+          animate={{ 
+            y: [0, 15, 0],
+            rotate: [0, -3, 0]
+          }}
+          transition={{ duration: 8, repeat: Infinity }}
+          className="absolute top-40 right-20 w-32 h-32 bg-gradient-to-br from-[#3c6e71]/20 to-[#284b63]/20 rounded-full blur-xl"
+        />
+        <motion.div
+          animate={{ 
+            y: [0, -10, 0],
+            x: [0, 10, 0]
+          }}
+          transition={{ duration: 7, repeat: Infinity }}
+          className="absolute bottom-20 left-1/4 w-24 h-24 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full blur-xl"
         />
       </div>
 

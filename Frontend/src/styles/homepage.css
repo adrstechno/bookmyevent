@@ -54,6 +54,35 @@ a,
   -webkit-backdrop-filter: blur(4px);
 }
 
+/* Background image optimizations */
+.bg-fixed {
+  background-attachment: fixed;
+}
+
+@media (max-width: 768px) {
+  .bg-fixed {
+    background-attachment: scroll;
+  }
+}
+
+/* Parallax effect for background images */
+.parallax-bg {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* Enhanced gradient overlays */
+.gradient-overlay {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(248, 250, 252, 0.90) 25%,
+    rgba(241, 245, 249, 0.85) 50%,
+    rgba(248, 250, 252, 0.90) 75%,
+    rgba(255, 255, 255, 0.95) 100%
+  );
+}
+
 /* Custom gradient animations */
 @keyframes gradient-shift {
   0%, 100% {
@@ -69,6 +98,39 @@ a,
   animation: gradient-shift 3s ease infinite;
 }
 
+/* Floating animation for decorative elements */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  33% {
+    transform: translateY(-10px) rotate(1deg);
+  }
+  66% {
+    transform: translateY(5px) rotate(-1deg);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Pulse animation for glowing effects */
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.05);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 4s ease-in-out infinite;
+}
+
 /* Enhanced shadow utilities */
 .shadow-3xl {
   box-shadow: 0 35px 60px -12px rgba(0, 0, 0, 0.25);
@@ -76,6 +138,10 @@ a,
 
 .shadow-glow {
   box-shadow: 0 0 20px rgba(249, 168, 38, 0.3);
+}
+
+.shadow-soft {
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
 }
 
 /* Text clamp utilities for better text overflow handling */
@@ -120,6 +186,14 @@ a,
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
 }
 
+/* Glass morphism effect */
+.glass-morphism {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
 /* Loading skeleton animation */
 @keyframes skeleton-loading {
   0% {
@@ -145,6 +219,11 @@ a,
   .padding-responsive {
     padding: clamp(1rem, 4vw, 2rem);
   }
+  
+  /* Disable parallax on mobile for better performance */
+  .bg-fixed {
+    background-attachment: scroll;
+  }
 }
 
 /* Print styles */
@@ -163,6 +242,10 @@ a,
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+  
+  .bg-fixed {
+    background-attachment: scroll;
+  }
 }
 
 /* High contrast mode support */
@@ -178,4 +261,26 @@ a,
   .border-gray-200 {
     border-color: #000;
   }
+}
+
+/* Performance optimizations */
+.will-change-transform {
+  will-change: transform;
+}
+
+.will-change-opacity {
+  will-change: opacity;
+}
+
+/* Custom background patterns */
+.pattern-dots {
+  background-image: radial-gradient(circle, #3c6e71 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.pattern-grid {
+  background-image: 
+    linear-gradient(rgba(60, 110, 113, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(60, 110, 113, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
 }

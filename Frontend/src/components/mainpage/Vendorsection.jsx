@@ -10,23 +10,53 @@ const vendors = [
 ];
 
 const VendorsSection = () => (
-  <section className="py-24 bg-gradient-to-b from-white to-gray-50 text-center relative overflow-hidden">
+  <section className="py-24 text-center relative overflow-hidden">
+    {/* Background Image with Overlay */}
+    <div 
+      className="absolute inset-0 bg-cover bg-center bg-fixed"
+      style={{
+        backgroundImage: `url('https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1920&h=1080&fit=crop&crop=center')`,
+      }}
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-white/92 via-gray-50/85 to-white/92" />
+    </div>
+
     {/* Animated Background Pattern */}
-    <div className="absolute inset-0 opacity-5 pointer-events-none">
+    <div className="absolute inset-0 opacity-8 pointer-events-none">
       <motion.div
         animate={{
           backgroundPosition: ["0% 0%", "100% 100%"],
         }}
         transition={{
-          duration: 20,
+          duration: 25,
           repeat: Infinity,
           repeatType: "reverse",
         }}
         className="absolute inset-0"
         style={{
-          backgroundImage: 'radial-gradient(circle, #3c6e71 1px, transparent 1px)',
-          backgroundSize: '40px 40px'
+          backgroundImage: 'radial-gradient(circle, #3c6e71 1.5px, transparent 1.5px)',
+          backgroundSize: '50px 50px'
         }}
+      />
+    </div>
+
+    {/* Decorative Elements */}
+    <div className="absolute inset-0 pointer-events-none">
+      <motion.div
+        animate={{ 
+          scale: [1, 1.1, 1],
+          opacity: [0.3, 0.6, 0.3]
+        }}
+        transition={{ duration: 4, repeat: Infinity }}
+        className="absolute top-16 right-16 w-40 h-40 bg-gradient-to-br from-[#f9a826]/30 to-transparent rounded-full blur-2xl"
+      />
+      <motion.div
+        animate={{ 
+          scale: [1, 1.2, 1],
+          opacity: [0.2, 0.5, 0.2]
+        }}
+        transition={{ duration: 5, repeat: Infinity, delay: 1 }}
+        className="absolute bottom-20 left-20 w-60 h-60 bg-gradient-to-br from-[#3c6e71]/25 to-transparent rounded-full blur-3xl"
       />
     </div>
 

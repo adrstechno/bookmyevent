@@ -77,14 +77,44 @@ const Testimonials = () => {
   };
 
   return (
-    <section className="py-24 bg-gradient-to-br from-white via-gray-50 to-white relative overflow-hidden">
+    <section className="py-24 relative overflow-hidden">
+      {/* Background Image with Overlay */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-fixed"
+        style={{
+          backgroundImage: `url('https://images.unsplash.com/photo-1556125574-d7f27ec36a06?w=1920&h=1080&fit=crop&crop=center')`,
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-br from-white/93 via-gray-50/88 to-white/93" />
+      </div>
+
       {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-5">
+      <div className="absolute inset-0 opacity-8">
         <div className="absolute inset-0" style={{
           backgroundImage: 'linear-gradient(45deg, #3c6e71 25%, transparent 25%), linear-gradient(-45deg, #3c6e71 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f9a826 75%), linear-gradient(-45deg, transparent 75%, #f9a826 75%)',
-          backgroundSize: '60px 60px',
-          backgroundPosition: '0 0, 0 30px, 30px -30px, -30px 0px'
+          backgroundSize: '80px 80px',
+          backgroundPosition: '0 0, 0 40px, 40px -40px, -40px 0px'
         }} />
+      </div>
+
+      {/* Animated Elements */}
+      <div className="absolute inset-0 pointer-events-none">
+        <motion.div
+          animate={{ 
+            rotate: [0, 360],
+            scale: [0.8, 1.2, 0.8]
+          }}
+          transition={{ duration: 25, repeat: Infinity }}
+          className="absolute top-10 right-10 w-32 h-32 bg-gradient-to-br from-[#f9a826]/20 to-transparent rounded-full blur-xl"
+        />
+        <motion.div
+          animate={{ 
+            y: [0, -30, 0],
+            opacity: [0.3, 0.7, 0.3]
+          }}
+          transition={{ duration: 8, repeat: Infinity }}
+          className="absolute bottom-10 left-10 w-40 h-40 bg-gradient-to-br from-[#3c6e71]/25 to-transparent rounded-full blur-2xl"
+        />
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
