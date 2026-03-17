@@ -13,6 +13,7 @@ import adminroutes from './Router/adminRoute.js'
 import notificationroutes  from './Router/NotificationRoute.js'
 import OTPRouter from './Router/OTPRoute.js';
 import EnhancedBookingRouter from './Router/EnhancedBookingRoute.js';
+import EnhancedBookingRouterV2 from './Router/EnhancedBookingRouter.js';
 import ReviewRouter from './Router/ReviewRoute.js';
 import ShiftAvailabilityRouter from './Router/ShiftAvailabilityRoute.js';
 import DashboardRouter from './Router/DashboardRouter.js';
@@ -62,6 +63,7 @@ app.use('/notification',  notificationroutes);
 // 🟢 Mount new enhanced routers
 app.use('/otp', OTPRouter);
 app.use('/bookings', EnhancedBookingRouter);
+app.use('/bookings-v2', EnhancedBookingRouterV2); // Enhanced booking with comprehensive notifications
 app.use('/reviews', ReviewRouter);
 app.use('/shift-availability', ShiftAvailabilityRouter);
 app.use('/dashboard', DashboardRouter);

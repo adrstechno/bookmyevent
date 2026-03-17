@@ -1314,6 +1314,533 @@ class EmailService {
         }
     }
 
+    // Send booking confirmation email to user when booking is created
+    async sendUserBookingConfirmation(emailData) {
+        try {
+            const { 
+                userEmail, 
+                userName, 
+                vendorName, 
+                packageName, 
+                eventDate, 
+                eventTime, 
+                amount, 
+                bookingId, 
+                bookingUuid 
+            } = emailData;
+
+            const mailOptions = {
+                from: process.env.EMAIL_USER,
+                to: userEmail,
+                subject: '🎉 Booking Confirmation - GoEventify',
+                html: `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <meta charset="utf-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>Booking Confirmation</title>
+                        <style>
+                            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8f9fa; }
+                            .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
+                            .header { background: linear-gradient(135deg, #3c6e71 0%, #284b63 100%); color: white; padding: 30px; text-align: center; }
+                            .content { padding: 30px; }
+                            .booking-card { background-color: #f8f9fa; border-radius: 12px; padding: 25px; margin: 20px 0; border-left: 4px solid #f9a826; }
+                            .status-badge { background-color: #ffc107; color: #000; padding: 8px 16px; border-radius: 20px; font-weight: bold; display: inline-block; margin: 10px 0; }
+                            .info-row { display: flex; justify-content: space-between; margin: 10px 0; padding: 8px 0; border-bottom: 1px solid #e9ecef; }
+                            .info-label { font-weight: bold; color: #495057; }
+                            .info-value { color: #6c757d; }
+                            .next-steps { background-color: #e3f2fd; border-radius: 8px; padding: 20px; margin: 20px 0; }
+                            .footer { background-color: #343a40; color: white; padding: 20px; text-align: center; }
+                            .btn { background-color: #f9a826; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 10px 0; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="container">
+                            <div class="header">
+                                <h1>🎉 Booking Confirmation</h1>
+                                <p>Your booking request has been submitted successfully!</p>
+                            </div>
+                            
+                            <div class="content">
+                                <p>Dear <strong>${userName}</strong>,</p>
+                                
+                                <p>Thank you for choosing GoEventify! Your booking request has been submitted and is now being processed.</p>
+                                
+                                <div class="booking-card">
+                                    <h3>📋 Booking Details</h3>
+                                    <div class="status-badge">⏳ Pending Vendor Response</div>
+                                    
+                                    <div class="info-row">
+                                        <span class="info-label">Booking ID:</span>
+                                        <span class="info-value">#${bookingId}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label">Vendor:</span>
+                                        <span class="info-value">${vendorName}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label">Package:</span>
+                                        <span class="info-value">${packageName}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label">Event Date:</span>
+                                        <span class="info-value">${new Date(eventDate).toLocaleDateString('en-IN', { 
+                                            weekday: 'long', 
+                                            year: 'numeric', 
+                                            month: 'long', 
+                                            day: 'numeric' 
+                                        })}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label">Event Time:</span>
+                                        <span class="info-value">${eventTime}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label">Amount:</span>
+                                        <span class="info-value">₹${amount}</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="next-steps">
+                                    <h4>📋 What happens next?</h4>
+                                    <ol>
+                                        <li><strong>Vendor Review:</strong> ${vendorName} will review your booking request</li>
+                                        <li><strong>Vendor Response:</strong> You'll be notified when they accept or decline</li>
+                                        <li><strong>Admin Approval:</strong> If accepted, our admin team will review and approve</li>
+                                        <li><strong>Confirmation:</strong> Once approved, you'll receive final confirmation with OTP details</li>
+                                    </ol>
+                                </div>
+                                
+                                <p>We'll keep you updated via email and in-app notifications throughout the process.</p>
+                                
+                                <div style="text-align: center; margin: 30px 0;">
+                                    <a href="${process.env.FRONTEND_URL}/user/bookings" class="btn">View My Bookings</a>
+                                </div>
+                                
+                                <p>If you have any questions, feel free to contact our support team.</p>
+                                
+                                <p>Best regards,<br>
+                                <strong>GoEventify Team</strong></p>
+                            </div>
+                            
+                            <div class="footer">
+                                <p>&copy; 2024 GoEventify. All rights reserved.</p>
+                                <p>Making your events unforgettable, one booking at a time.</p>
+                            </div>
+                        </div>
+                    </body>
+                    </html>
+                `
+            };
+
+            return await this.sendMailWithRetry(mailOptions);
+        } catch (error) {
+            console.error('Error sending user booking confirmation email:', error);
+            throw error;
+        }
+    }
+
+    // Send booking notification email to admin
+    async sendAdminBookingNotification(emailData) {
+        try {
+            const { 
+                userName, 
+                userEmail, 
+                vendorName, 
+                vendorEmail, 
+                packageName, 
+                eventDate, 
+                eventTime, 
+                amount, 
+                bookingId, 
+                bookingUuid 
+            } = emailData;
+
+            const adminEmail = process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
+
+            const mailOptions = {
+                from: process.env.EMAIL_USER,
+                to: adminEmail,
+                subject: '🔔 New Booking Alert - Admin Notification',
+                html: `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <meta charset="utf-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>New Booking Alert</title>
+                        <style>
+                            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8f9fa; }
+                            .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
+                            .header { background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; padding: 30px; text-align: center; }
+                            .content { padding: 30px; }
+                            .booking-card { background-color: #f8f9fa; border-radius: 12px; padding: 25px; margin: 20px 0; border-left: 4px solid #dc3545; }
+                            .alert-badge { background-color: #dc3545; color: white; padding: 8px 16px; border-radius: 20px; font-weight: bold; display: inline-block; margin: 10px 0; }
+                            .info-row { display: flex; justify-content: space-between; margin: 10px 0; padding: 8px 0; border-bottom: 1px solid #e9ecef; }
+                            .info-label { font-weight: bold; color: #495057; }
+                            .info-value { color: #6c757d; }
+                            .parties-section { background-color: #e8f4f8; border-radius: 8px; padding: 20px; margin: 20px 0; }
+                            .footer { background-color: #343a40; color: white; padding: 20px; text-align: center; }
+                            .btn { background-color: #dc3545; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 10px 5px; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="container">
+                            <div class="header">
+                                <h1>🔔 New Booking Alert</h1>
+                                <p>A new booking has been created in the system</p>
+                            </div>
+                            
+                            <div class="content">
+                                <p>Dear Admin,</p>
+                                
+                                <p>A new booking has been created on GoEventify platform. Please monitor the booking progress.</p>
+                                
+                                <div class="booking-card">
+                                    <h3>📋 Booking Details</h3>
+                                    <div class="alert-badge">🆕 New Booking</div>
+                                    
+                                    <div class="info-row">
+                                        <span class="info-label">Booking ID:</span>
+                                        <span class="info-value">#${bookingId}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label">Package:</span>
+                                        <span class="info-value">${packageName}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label">Event Date:</span>
+                                        <span class="info-value">${new Date(eventDate).toLocaleDateString('en-IN', { 
+                                            weekday: 'long', 
+                                            year: 'numeric', 
+                                            month: 'long', 
+                                            day: 'numeric' 
+                                        })}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label">Event Time:</span>
+                                        <span class="info-value">${eventTime}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label">Amount:</span>
+                                        <span class="info-value">₹${amount}</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="parties-section">
+                                    <h4>👥 Parties Involved</h4>
+                                    <div style="display: flex; justify-content: space-between; margin: 15px 0;">
+                                        <div style="flex: 1; margin-right: 20px;">
+                                            <h5>👤 Customer</h5>
+                                            <p><strong>Name:</strong> ${userName}</p>
+                                            <p><strong>Email:</strong> ${userEmail}</p>
+                                        </div>
+                                        <div style="flex: 1;">
+                                            <h5>🏪 Vendor</h5>
+                                            <p><strong>Name:</strong> ${vendorName}</p>
+                                            <p><strong>Email:</strong> ${vendorEmail}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div style="text-align: center; margin: 30px 0;">
+                                    <a href="${process.env.FRONTEND_URL}/admin/bookings" class="btn">View All Bookings</a>
+                                    <a href="${process.env.FRONTEND_URL}/admin/dashboard" class="btn" style="background-color: #28a745;">Admin Dashboard</a>
+                                </div>
+                                
+                                <p>Best regards,<br>
+                                <strong>GoEventify System</strong></p>
+                            </div>
+                            
+                            <div class="footer">
+                                <p>&copy; 2024 GoEventify. All rights reserved.</p>
+                                <p>Admin Notification System</p>
+                            </div>
+                        </div>
+                    </body>
+                    </html>
+                `
+            };
+
+            return await this.sendMailWithRetry(mailOptions);
+        } catch (error) {
+            console.error('Error sending admin booking notification email:', error);
+            throw error;
+        }
+    }
+
+    // Send booking accepted notification to user
+    async sendUserBookingAcceptedNotification(emailData) {
+        try {
+            const { 
+                userEmail, 
+                userName, 
+                vendorName, 
+                packageName, 
+                eventDate, 
+                bookingId 
+            } = emailData;
+
+            const mailOptions = {
+                from: process.env.EMAIL_USER,
+                to: userEmail,
+                subject: '✅ Great News! Your Booking Has Been Accepted',
+                html: `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <meta charset="utf-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>Booking Accepted</title>
+                        <style>
+                            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8f9fa; }
+                            .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
+                            .header { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 30px; text-align: center; }
+                            .content { padding: 30px; }
+                            .success-badge { background-color: #28a745; color: white; padding: 8px 16px; border-radius: 20px; font-weight: bold; display: inline-block; margin: 10px 0; }
+                            .next-steps { background-color: #d4edda; border-radius: 8px; padding: 20px; margin: 20px 0; border-left: 4px solid #28a745; }
+                            .footer { background-color: #343a40; color: white; padding: 20px; text-align: center; }
+                            .btn { background-color: #28a745; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 10px 0; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="container">
+                            <div class="header">
+                                <h1>🎉 Booking Accepted!</h1>
+                                <p>Your vendor has accepted your booking request</p>
+                            </div>
+                            
+                            <div class="content">
+                                <p>Dear <strong>${userName}</strong>,</p>
+                                
+                                <p>Great news! <strong>${vendorName}</strong> has accepted your booking request for <strong>${packageName}</strong> on <strong>${new Date(eventDate).toLocaleDateString('en-IN')}</strong>.</p>
+                                
+                                <div class="success-badge">✅ Accepted by Vendor</div>
+                                
+                                <div class="next-steps">
+                                    <h4>📋 What's Next?</h4>
+                                    <p><strong>Admin Review:</strong> Your booking is now pending admin approval. Our team will review and approve it shortly.</p>
+                                    <p><strong>Final Confirmation:</strong> Once approved, you'll receive final confirmation with OTP details for the event day.</p>
+                                </div>
+                                
+                                <div style="text-align: center; margin: 30px 0;">
+                                    <a href="${process.env.FRONTEND_URL}/user/bookings" class="btn">Track Booking Status</a>
+                                </div>
+                                
+                                <p>We'll notify you as soon as the admin approves your booking.</p>
+                                
+                                <p>Best regards,<br>
+                                <strong>GoEventify Team</strong></p>
+                            </div>
+                            
+                            <div class="footer">
+                                <p>&copy; 2024 GoEventify. All rights reserved.</p>
+                            </div>
+                        </div>
+                    </body>
+                    </html>
+                `
+            };
+
+            return await this.sendMailWithRetry(mailOptions);
+        } catch (error) {
+            console.error('Error sending user booking accepted notification email:', error);
+            throw error;
+        }
+    }
+
+    // Send booking accepted notification to admin
+    async sendAdminBookingAcceptedNotification(emailData) {
+        try {
+            const { 
+                userName, 
+                vendorName, 
+                packageName, 
+                eventDate, 
+                amount, 
+                bookingId 
+            } = emailData;
+
+            const adminEmail = process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
+
+            const mailOptions = {
+                from: process.env.EMAIL_USER,
+                to: adminEmail,
+                subject: '⚡ Action Required: Booking Accepted - Needs Admin Approval',
+                html: `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <meta charset="utf-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>Booking Needs Approval</title>
+                        <style>
+                            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8f9fa; }
+                            .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
+                            .header { background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%); color: #000; padding: 30px; text-align: center; }
+                            .content { padding: 30px; }
+                            .action-badge { background-color: #ffc107; color: #000; padding: 8px 16px; border-radius: 20px; font-weight: bold; display: inline-block; margin: 10px 0; }
+                            .urgent-section { background-color: #fff3cd; border-radius: 8px; padding: 20px; margin: 20px 0; border-left: 4px solid #ffc107; }
+                            .footer { background-color: #343a40; color: white; padding: 20px; text-align: center; }
+                            .btn { background-color: #ffc107; color: #000; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 10px 5px; font-weight: bold; }
+                            .approve-btn { background-color: #28a745; color: white; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="container">
+                            <div class="header">
+                                <h1>⚡ Action Required</h1>
+                                <p>Booking accepted by vendor - needs your approval</p>
+                            </div>
+                            
+                            <div class="content">
+                                <p>Dear Admin,</p>
+                                
+                                <p>A booking has been <strong>accepted by the vendor</strong> and is now awaiting your approval.</p>
+                                
+                                <div class="action-badge">⏰ Pending Admin Approval</div>
+                                
+                                <div class="urgent-section">
+                                    <h4>📋 Booking Summary</h4>
+                                    <p><strong>Booking ID:</strong> #${bookingId}</p>
+                                    <p><strong>Customer:</strong> ${userName}</p>
+                                    <p><strong>Vendor:</strong> ${vendorName}</p>
+                                    <p><strong>Package:</strong> ${packageName}</p>
+                                    <p><strong>Event Date:</strong> ${new Date(eventDate).toLocaleDateString('en-IN')}</p>
+                                    <p><strong>Amount:</strong> ₹${amount}</p>
+                                </div>
+                                
+                                <div style="text-align: center; margin: 30px 0;">
+                                    <a href="${process.env.FRONTEND_URL}/admin/bookings" class="btn approve-btn">Review & Approve</a>
+                                    <a href="${process.env.FRONTEND_URL}/admin/dashboard" class="btn">Admin Dashboard</a>
+                                </div>
+                                
+                                <p><strong>Note:</strong> The customer and vendor are waiting for your decision. Please review promptly.</p>
+                                
+                                <p>Best regards,<br>
+                                <strong>GoEventify System</strong></p>
+                            </div>
+                            
+                            <div class="footer">
+                                <p>&copy; 2024 GoEventify. All rights reserved.</p>
+                            </div>
+                        </div>
+                    </body>
+                    </html>
+                `
+            };
+
+            return await this.sendMailWithRetry(mailOptions);
+        } catch (error) {
+            console.error('Error sending admin booking accepted notification email:', error);
+            throw error;
+        }
+    }
+
+    // Send booking approved notification to user
+    async sendUserBookingApprovedNotification(emailData) {
+        try {
+            const { 
+                userEmail, 
+                userName, 
+                vendorName, 
+                packageName, 
+                eventDate, 
+                eventTime, 
+                amount, 
+                bookingId 
+            } = emailData;
+
+            const mailOptions = {
+                from: process.env.EMAIL_USER,
+                to: userEmail,
+                subject: '🎉 Booking Confirmed! Your Event is All Set',
+                html: `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <meta charset="utf-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>Booking Confirmed</title>
+                        <style>
+                            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8f9fa; }
+                            .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
+                            .header { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 30px; text-align: center; }
+                            .content { padding: 30px; }
+                            .confirmed-badge { background-color: #28a745; color: white; padding: 10px 20px; border-radius: 25px; font-weight: bold; display: inline-block; margin: 15px 0; }
+                            .event-details { background-color: #d4edda; border-radius: 12px; padding: 25px; margin: 20px 0; border-left: 4px solid #28a745; }
+                            .otp-section { background-color: #fff3cd; border-radius: 8px; padding: 20px; margin: 20px 0; border-left: 4px solid #ffc107; }
+                            .footer { background-color: #343a40; color: white; padding: 20px; text-align: center; }
+                            .btn { background-color: #28a745; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 10px 0; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="container">
+                            <div class="header">
+                                <h1>🎉 Booking Confirmed!</h1>
+                                <p>Your event is officially booked and approved</p>
+                            </div>
+                            
+                            <div class="content">
+                                <p>Dear <strong>${userName}</strong>,</p>
+                                
+                                <p>Congratulations! Your booking has been <strong>approved by our admin team</strong>. Your event is now officially confirmed!</p>
+                                
+                                <div class="confirmed-badge">✅ BOOKING CONFIRMED</div>
+                                
+                                <div class="event-details">
+                                    <h3>🎊 Your Event Details</h3>
+                                    <p><strong>Booking ID:</strong> #${bookingId}</p>
+                                    <p><strong>Vendor:</strong> ${vendorName}</p>
+                                    <p><strong>Package:</strong> ${packageName}</p>
+                                    <p><strong>Date:</strong> ${new Date(eventDate).toLocaleDateString('en-IN', { 
+                                        weekday: 'long', 
+                                        year: 'numeric', 
+                                        month: 'long', 
+                                        day: 'numeric' 
+                                    })}</p>
+                                    <p><strong>Time:</strong> ${eventTime}</p>
+                                    <p><strong>Amount:</strong> ₹${amount}</p>
+                                </div>
+                                
+                                <div class="otp-section">
+                                    <h4>🔐 Important: OTP Verification</h4>
+                                    <p><strong>On your event day:</strong></p>
+                                    <ul>
+                                        <li>You'll receive an OTP code via email and SMS</li>
+                                        <li>Share this OTP with ${vendorName} to verify the service</li>
+                                        <li>The OTP confirms service completion and releases payment</li>
+                                    </ul>
+                                </div>
+                                
+                                <div style="text-align: center; margin: 30px 0;">
+                                    <a href="${process.env.FRONTEND_URL}/user/bookings" class="btn">View Booking Details</a>
+                                </div>
+                                
+                                <p>We're excited to help make your event unforgettable! If you have any questions, our support team is here to help.</p>
+                                
+                                <p>Best regards,<br>
+                                <strong>GoEventify Team</strong></p>
+                            </div>
+                            
+                            <div class="footer">
+                                <p>&copy; 2024 GoEventify. All rights reserved.</p>
+                                <p>Making your events unforgettable!</p>
+                            </div>
+                        </div>
+                    </body>
+                    </html>
+                `
+            };
+
+            return await this.sendMailWithRetry(mailOptions);
+        } catch (error) {
+            console.error('Error sending user booking approved notification email:', error);
+            throw error;
+        }
+    }
+
 }
 
 export default new EmailService();

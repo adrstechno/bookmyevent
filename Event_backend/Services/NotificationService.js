@@ -477,7 +477,30 @@ class NotificationService {
 
     // ADMIN NOTIFICATIONS
 
-    // 12. Vendor account created -> Notify admin
+    // 12. Admin notification for new booking
+    static async notifyAdminNewBooking(bookingData) {
+        const { booking_id, user_name, vendor_name, vendor_id, event_date, package_name, amount } = bookingData;
+        
+        await NotificationModel.createNotification({
+            user_id: 'admin',
+            title: 'New Booking Created',
+            message: `${user_name} has booked ${vendor_name} for ${package_name} on ${event_date}. Amount: ₹${amount}. Please monitor the booking progress.`,
+            type: this.NOTIFICATION_TYPES.BOOKING_CREATED,
+            related_booking_id: booking_id,
+            metadata: {
+                booking_id,
+                user_name,
+                vendor_name,
+                vendor_id,
+                event_date,
+                package_name,
+                amount,
+                action_required: false
+            }
+        });
+    }
+
+    // 13. Vendor account created -> Notify admin
     static async notifyVendorAccountCreated(vendorData) {
         const { vendor_id, business_name, user_name, email, service_category } = vendorData;
         
