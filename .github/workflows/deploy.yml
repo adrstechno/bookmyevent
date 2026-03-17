@@ -26,7 +26,7 @@ jobs:
     - name: Install Backend Dependencies
       run: |
         cd Event_backend
-        npm ci --only=production
+        npm install --production
 
     - name: Run Backend Tests (Optional)
       run: |
