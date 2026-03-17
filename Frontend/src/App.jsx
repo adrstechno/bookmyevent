@@ -7,6 +7,9 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import RouteDebugger from "./components/RouteDebugger";
 import { useEffect } from "react";
 
+// Import custom styles
+import "./styles/homepage.css";
+
 import ProtectedRoute from "./routes/ProtectedRoute";
 
 // Auth Pages

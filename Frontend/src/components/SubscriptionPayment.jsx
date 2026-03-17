@@ -67,10 +67,10 @@ const SubscriptionPayment = ({ onClose, onSuccess }) => {
         handler: async function (response) {
           try {
             // console.log('💳 Payment successful, verifying...', {
-              order_id: response.razorpay_order_id,
-              payment_id: response.razorpay_payment_id,
-              signature: response.razorpay_signature ? 'present' : 'missing'
-            });
+            //   order_id: response.razorpay_order_id,
+            //   payment_id: response.razorpay_payment_id,
+            //   signature: response.razorpay_signature ? 'present' : 'missing'
+            // });
 
             // Verify payment
             const verifyResponse = await subscriptionService.verifyPayment({

@@ -77,30 +77,57 @@ const Testimonials = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-4 sm:p-8 font-sans">
-      <section className="py-20 w-full max-w-5xl mx-auto">
-        <h2 className="text-4xl md:text-5xl text-center font-bold text-gray-900 mb-20">
-          Hear from trusted clients
-        </h2>
+    <section className="py-24 bg-gradient-to-br from-white via-gray-50 to-white relative overflow-hidden">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-5">
+        <div className="absolute inset-0" style={{
+          backgroundImage: 'linear-gradient(45deg, #3c6e71 25%, transparent 25%), linear-gradient(-45deg, #3c6e71 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f9a826 75%), linear-gradient(-45deg, transparent 75%, #f9a826 75%)',
+          backgroundSize: '60px 60px',
+          backgroundPosition: '0 0, 0 30px, 30px -30px, -30px 0px'
+        }} />
+      </div>
 
-        <div className="relative">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: -30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-20"
+        >
+          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
+            What Our Customers Say
+          </h2>
+          <div className="h-1.5 bg-gradient-to-r from-[#f9a826] to-[#f7b733] w-32 mx-auto rounded-full mb-6" />
+          <p className="text-gray-600 text-lg sm:text-xl max-w-3xl mx-auto leading-relaxed">
+            Hear from trusted clients who made their events unforgettable with us
+          </p>
+        </motion.div>
+
+        <div className="relative max-w-6xl mx-auto">
           {/* Main testimonial card */}
-          <div className="flex items-center justify-center gap-8 md:gap-16">
-            {/* Avatar section */}
-            <div className="hidden md:flex flex-col items-center">
-              <div className="w-20 h-20 rounded-full overflow-hidden shadow-lg mb-3">
+          <div className="flex items-center justify-center gap-8 lg:gap-16">
+            {/* Avatar section - Desktop */}
+            <motion.div 
+              className="hidden lg:flex flex-col items-center"
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              <div className="w-24 h-24 rounded-full overflow-hidden shadow-2xl mb-4 ring-4 ring-white">
                 <img 
                   src={reviews[currentIndex].avatar} 
                   alt={reviews[currentIndex].name}
                   className="w-full h-full object-cover"
                 />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">{reviews[currentIndex].name}</h3>
-              <p className="text-sm text-gray-500">{reviews[currentIndex].role}</p>
-            </div>
+              <h3 className="text-xl font-bold text-gray-900">{reviews[currentIndex].name}</h3>
+              <p className="text-sm text-[#3c6e71] font-semibold uppercase tracking-wide">{reviews[currentIndex].role}</p>
+            </motion.div>
 
             {/* Testimonial text with animation */}
-            <div className="flex-1 max-w-2xl relative overflow-hidden">
+            <div className="flex-1 max-w-3xl relative overflow-hidden">
               <AnimatePresence mode="wait" custom={direction}>
                 <motion.div
                   key={currentIndex}
@@ -113,11 +140,11 @@ const Testimonials = () => {
                     x: { type: "spring", stiffness: 300, damping: 30 },
                     opacity: { duration: 0.2 },
                   }}
-                  className="bg-white p-8 md:p-10 rounded-2xl shadow-lg border border-gray-100"
+                  className="bg-white/80 backdrop-blur-sm p-8 lg:p-12 rounded-3xl shadow-2xl border border-gray-100/50"
                 >
                   {/* Mobile avatar */}
-                  <div className="md:hidden flex items-center gap-4 mb-6">
-                    <div className="w-16 h-16 rounded-full overflow-hidden shadow-md">
+                  <div className="lg:hidden flex items-center gap-4 mb-8">
+                    <div className="w-16 h-16 rounded-full overflow-hidden shadow-lg ring-4 ring-white">
                       <img 
                         src={reviews[currentIndex].avatar} 
                         alt={reviews[currentIndex].name}
@@ -125,46 +152,62 @@ const Testimonials = () => {
                       />
                     </div>
                     <div>
-                      <h3 className="text-base font-semibold text-gray-900">{reviews[currentIndex].name}</h3>
-                      <p className="text-sm text-gray-500">{reviews[currentIndex].role}</p>
+                      <h3 className="text-lg font-bold text-gray-900">{reviews[currentIndex].name}</h3>
+                      <p className="text-sm text-[#3c6e71] font-semibold uppercase tracking-wide">{reviews[currentIndex].role}</p>
                     </div>
                   </div>
 
-                  <p className="text-gray-700 text-lg md:text-xl leading-relaxed">
-                    "{reviews[currentIndex].text}"
+                  {/* Quote Icon */}
+                  <div className="text-[#f9a826] mb-6">
+                    <svg className="w-12 h-12" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/>
+                    </svg>
+                  </div>
+
+                  <p className="text-gray-700 text-lg lg:text-xl leading-relaxed mb-6 italic">
+                    {reviews[currentIndex].text}
                   </p>
+
+                  {/* Rating Stars */}
+                  <div className="flex items-center gap-1">
+                    {[...Array(5)].map((_, i) => (
+                      <svg key={i} className="w-5 h-5 text-[#f9a826] fill-current" viewBox="0 0 24 24">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                      </svg>
+                    ))}
+                  </div>
                 </motion.div>
               </AnimatePresence>
             </div>
           </div>
 
           {/* Navigation controls */}
-          <div className="flex items-center justify-center gap-6 mt-12">
+          <div className="flex items-center justify-center gap-8 mt-12">
             <button
               onClick={handlePrev}
-              className="w-12 h-12 rounded-full border-2 border-gray-300 flex items-center justify-center hover:border-gray-900 hover:bg-gray-50 transition-all duration-200 group"
+              className="w-14 h-14 rounded-full bg-white shadow-lg border-2 border-gray-200 flex items-center justify-center hover:border-[#3c6e71] hover:bg-[#3c6e71] hover:text-white transition-all duration-300 group"
               aria-label="Previous testimonial"
             >
-              <ChevronLeft className="w-6 h-6 text-gray-600 group-hover:text-gray-900" />
+              <ChevronLeft className="w-6 h-6 group-hover:-translate-x-0.5 transition-transform duration-300" />
             </button>
 
-            <div className="flex items-center gap-2 text-gray-600 font-medium">
-              <span className="text-lg">{currentIndex + 1}</span>
-              <span className="text-gray-400">—</span>
-              <span className="text-lg">{reviews.length}</span>
+            <div className="flex items-center gap-3 text-gray-600 font-semibold">
+              <span className="text-2xl text-[#3c6e71]">{currentIndex + 1}</span>
+              <span className="text-gray-400">of</span>
+              <span className="text-2xl text-[#3c6e71]">{reviews.length}</span>
             </div>
 
             <button
               onClick={handleNext}
-              className="w-12 h-12 rounded-full border-2 border-gray-300 flex items-center justify-center hover:border-gray-900 hover:bg-gray-50 transition-all duration-200 group"
+              className="w-14 h-14 rounded-full bg-white shadow-lg border-2 border-gray-200 flex items-center justify-center hover:border-[#3c6e71] hover:bg-[#3c6e71] hover:text-white transition-all duration-300 group"
               aria-label="Next testimonial"
             >
-              <ChevronRight className="w-6 h-6 text-gray-600 group-hover:text-gray-900" />
+              <ChevronRight className="w-6 h-6 group-hover:translate-x-0.5 transition-transform duration-300" />
             </button>
           </div>
 
           {/* Dots indicator */}
-          <div className="flex justify-center gap-2 mt-8">
+          <div className="flex justify-center gap-3 mt-8">
             {reviews.map((_, index) => (
               <button
                 key={index}
@@ -172,18 +215,18 @@ const Testimonials = () => {
                   setDirection(index > currentIndex ? 1 : -1);
                   setCurrentIndex(index);
                 }}
-                className={`h-2 rounded-full transition-all duration-300 ${
+                className={`h-3 rounded-full transition-all duration-300 ${
                   index === currentIndex 
-                    ? "w-8 bg-gray-900" 
-                    : "w-2 bg-gray-300 hover:bg-gray-400"
+                    ? "w-12 bg-[#3c6e71] shadow-lg" 
+                    : "w-3 bg-gray-300 hover:bg-gray-400 hover:w-8"
                 }`}
                 aria-label={`Go to testimonial ${index + 1}`}
               />
             ))}
           </div>
         </div>
-      </section>
-    </div>
+      </div>
+    </section>
   );
 };
 

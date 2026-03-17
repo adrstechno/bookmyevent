@@ -129,35 +129,58 @@ const HomeNavbar = () => {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 py-3">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         {/* ---------------- MAIN BAR ---------------- */}
         <motion.div
-          animate={{ scale: isScrolled ? 0.97 : 1 }}
-          className={`flex items-center justify-between px-6 py-4 rounded-3xl
-            backdrop-blur-xl border border-white/20 shadow-lg
-            ${isScrolled ? "bg-white/50" : "bg-white/30"}`}
+          animate={{ 
+            scale: isScrolled ? 0.98 : 1,
+            y: isScrolled ? 4 : 0
+          }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+          className={`flex items-center justify-between px-6 py-4 rounded-2xl transition-all duration-300
+            backdrop-blur-xl border shadow-lg
+            ${isScrolled 
+              ? "bg-white/95 border-gray-200/50 shadow-xl" 
+              : "bg-white/90 border-white/30 shadow-lg"
+            }`}
         >
           {/* Logo */}
-          <Link to="/">
-            <img src="/logo2.png" className="w-25 h-auto" />
+          <Link to="/" className="flex-shrink-0">
+            <img 
+              src="/logo2.png" 
+              className="h-10 w-auto transition-transform duration-300 hover:scale-105" 
+              alt="GoEventify Logo"
+            />
           </Link>
 
           {/* -------- DESKTOP NAV -------- */}
-          <div className="hidden lg:flex items-center gap-2">
+          <div className="hidden lg:flex items-center space-x-1">
             <NavLink to="/" className={({ isActive }) =>
-              `${navBtnBase} ${isActive ? navBtnActive : navBtnInactive}`
+              `px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                isActive 
+                  ? "bg-[#3c6e71] text-white shadow-md" 
+                  : "text-gray-700 hover:bg-gray-100 hover:text-[#3c6e71]"
+              }`
             }>
               Home
             </NavLink>
 
             <NavLink to="/about" className={({ isActive }) =>
-              `${navBtnBase} ${isActive ? navBtnActive : navBtnInactive}`
+              `px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                isActive 
+                  ? "bg-[#3c6e71] text-white shadow-md" 
+                  : "text-gray-700 hover:bg-gray-100 hover:text-[#3c6e71]"
+              }`
             }>
               About
             </NavLink>
 
             <NavLink to="/contact" className={({ isActive }) =>
-              `${navBtnBase} ${isActive ? navBtnActive : navBtnInactive}`
+              `px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                isActive 
+                  ? "bg-[#3c6e71] text-white shadow-md" 
+                  : "text-gray-700 hover:bg-gray-100 hover:text-[#3c6e71]"
+              }`
             }>
               Contact
             </NavLink>
@@ -166,39 +189,45 @@ const HomeNavbar = () => {
             <div className="relative" ref={categoriesRef}>
               <button
                 onClick={() => setCategoriesOpen(!categoriesOpen)}
-                className={`${navBtnBase} ${navBtnInactive} flex items-center gap-1`}
+                className="px-4 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-[#3c6e71] transition-all duration-200 flex items-center gap-1"
               >
-                Categories <FiChevronDown />
+                Categories 
+                <FiChevronDown className={`transition-transform duration-200 ${categoriesOpen ? 'rotate-180' : ''}`} />
               </button>
 
               <AnimatePresence>
                 {categoriesOpen && (
                   <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    className="absolute left-0 mt-2 w-72 bg-white rounded-xl shadow-xl p-3"
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute left-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 p-2 z-50"
                   >
-                    {categories.map((c) => {
-                      const Icon = c.icon;
-                      return (
-                        <NavLink
-                          key={c.name}
-                          to={c.path}
-                          onClick={() => setCategoriesOpen(false)}
-                          className={({ isActive }) =>
-                            `flex items-center gap-3 p-3 rounded-lg ${
-                              isActive
-                                ? "bg-[#3c6e71]/10 text-[#3c6e71] font-semibold"
-                                : "hover:bg-gray-100"
-                            }`
-                          }
-                        >
-                          <Icon className={`w-5 h-5 ${c.color}`} />
-                          {c.name}
-                        </NavLink>
-                      );
-                    })}
+                    <div className="grid grid-cols-1 gap-1">
+                      {categories.map((c) => {
+                        const Icon = c.icon;
+                        return (
+                          <NavLink
+                            key={c.name}
+                            to={c.path}
+                            onClick={() => setCategoriesOpen(false)}
+                            className={({ isActive }) =>
+                              `flex items-center gap-3 p-3 rounded-xl transition-all duration-200 ${
+                                isActive
+                                  ? "bg-[#3c6e71]/10 text-[#3c6e71] font-semibold"
+                                  : "hover:bg-gray-50 text-gray-700"
+                              }`
+                            }
+                          >
+                            <div className={`p-2 rounded-lg ${c.color} bg-gray-50`}>
+                              <Icon className="w-4 h-4" />
+                            </div>
+                            <span className="text-sm">{c.name}</span>
+                          </NavLink>
+                        );
+                      })}
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -213,38 +242,64 @@ const HomeNavbar = () => {
               <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center gap-2 px-5 py-2 bg-primary rounded-full shadow"
+                  className="flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-[#3c6e71] to-[#284b63] text-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200"
                 >
-                  <FiUser /> {userName}
-                  <span className="border border-black px-2 py-[2px] text-xs rounded uppercase">
-                    {userRole}
-                  </span>
-                  <FiChevronDown />
+                  <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                    <FiUser className="w-4 h-4" />
+                  </div>
+                  <div className="text-left">
+                    <div className="text-sm font-medium">{userName}</div>
+                    <div className="text-xs opacity-80 uppercase">{userRole}</div>
+                  </div>
+                  <FiChevronDown className={`transition-transform duration-200 ${userMenuOpen ? 'rotate-180' : ''}`} />
                 </button>
 
-                {userMenuOpen && (
-                  <div className="absolute right-0 mt-3 w-56 bg-white rounded-xl shadow-xl p-3">
-                    <Link to={getDashboardPath()} className="block p-2 hover:bg-gray-100 rounded-lg">
-                      Dashboard
-                    </Link>
-                    <button
-                      onClick={handleLogout}
-                      className="block w-full text-left p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                <AnimatePresence>
+                  {userMenuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 p-2 z-50"
                     >
-                      Logout
-                    </button>
-                  </div>
-                )}
+                      <Link 
+                        to={getDashboardPath()} 
+                        className="flex items-center gap-3 p-3 text-gray-700 hover:bg-gray-50 rounded-xl transition-all duration-200"
+                      >
+                        <div className="w-8 h-8 bg-[#3c6e71]/10 rounded-lg flex items-center justify-center">
+                          <FiUser className="w-4 h-4 text-[#3c6e71]" />
+                        </div>
+                        <span className="text-sm font-medium">Dashboard</span>
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-3 w-full p-3 text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200"
+                      >
+                        <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center">
+                          <FiLogOut className="w-4 h-4 text-red-600" />
+                        </div>
+                        <span className="text-sm font-medium">Logout</span>
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             ) : (
-              <>
-                <Link to="/login" className={`${navBtnBase} ${navBtnInactive}`}>
+              <div className="flex items-center gap-2">
+                <Link 
+                  to="/login" 
+                  className="px-4 py-2.5 text-sm font-medium text-gray-700 hover:text-[#3c6e71] transition-colors duration-200"
+                >
                   Login
                 </Link>
-                <Link to="/register" className={`${navBtnBase} bg-primary shadow`}>
+                <Link 
+                  to="/register" 
+                  className="px-6 py-2.5 bg-gradient-to-r from-[#3c6e71] to-[#284b63] text-white text-sm font-medium rounded-xl shadow-md hover:shadow-lg transition-all duration-200"
+                >
                   Sign Up
                 </Link>
-              </>
+              </div>
             )}
           </div>
 
@@ -254,9 +309,9 @@ const HomeNavbar = () => {
               setMenuOpen(!menuOpen);
               setCategoriesOpen(false);
             }}
-            className="lg:hidden text-3xl p-2"
+            className="lg:hidden p-2 text-gray-700 hover:bg-gray-100 rounded-xl transition-colors duration-200"
           >
-            {menuOpen ? <FiX /> : <FiMenu />}
+            {menuOpen ? <FiX className="w-6 h-6" /> : <FiMenu className="w-6 h-6" />}
           </button>
         </motion.div>
       </div>
@@ -265,93 +320,113 @@ const HomeNavbar = () => {
       <AnimatePresence>
         {menuOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="lg:hidden mx-4 mt-2 bg-white rounded-2xl shadow-xl"
-            style={{ pointerEvents: "auto" }}
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="lg:hidden mx-4 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden"
           >
-            <div className="p-4 space-y-2">
-              {["/", "/about", "/contact"].map((path) => {
-                const label = path === "/" ? "Home" : path.replace("/", "");
-                return (
-                  <Link
-                    key={path}
-                    to={path}
-                    onClick={() => setMenuOpen(false)}
-                    className="block px-4 py-3 rounded-xl hover:bg-gray-100 transition-colors"
-                  >
-                    {label.charAt(0).toUpperCase() + label.slice(1)}
-                  </Link>
-                );
-              })}
+            <div className="p-4 space-y-1">
+              {[
+                { path: "/", label: "Home" },
+                { path: "/about", label: "About" },
+                { path: "/contact", label: "Contact" }
+              ].map(({ path, label }) => (
+                <Link
+                  key={path}
+                  to={path}
+                  onClick={() => setMenuOpen(false)}
+                  className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-[#3c6e71] rounded-xl transition-all duration-200 font-medium"
+                >
+                  {label}
+                </Link>
+              ))}
 
               {/* Mobile Categories */}
-              <div ref={mobileCategoriesRef} className="bg-gray-50 rounded-xl p-3">
-                <div
-                  className="flex justify-between font-semibold cursor-pointer"
+              <div ref={mobileCategoriesRef} className="bg-gray-50 rounded-xl overflow-hidden">
+                <button
+                  className="flex justify-between items-center w-full px-4 py-3 font-semibold text-gray-700 hover:bg-gray-100 transition-colors duration-200"
                   onClick={() => setCategoriesOpen(!categoriesOpen)}
                 >
-                  Categories <FiChevronDown />
-                </div>
+                  Categories 
+                  <FiChevronDown className={`transition-transform duration-200 ${categoriesOpen ? 'rotate-180' : ''}`} />
+                </button>
 
-                {categoriesOpen && (
-                  <div className="mt-2 space-y-2">
-                    {categories.map((c) => {
-                      const Icon = c.icon;
-                      return (
-                        <button
-                          type="button"
-                          key={c.name}
-                          onClick={() => handleMobileCategoryNavigate(c.path)}
-                          className="flex w-full items-center gap-3 p-2 rounded-lg hover:bg-gray-100 transition-colors text-left"
-                        >
-                          <Icon className={`w-5 h-5 ${c.color}`} />
-                          <span>{c.name}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+                <AnimatePresence>
+                  {categoriesOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="px-2 pb-2 space-y-1">
+                        {categories.map((c) => {
+                          const Icon = c.icon;
+                          return (
+                            <button
+                              type="button"
+                              key={c.name}
+                              onClick={() => handleMobileCategoryNavigate(c.path)}
+                              className="flex w-full items-center gap-3 p-3 rounded-xl hover:bg-white transition-all duration-200 text-left"
+                            >
+                              <div className={`p-2 rounded-lg ${c.color} bg-white`}>
+                                <Icon className="w-4 h-4" />
+                              </div>
+                              <span className="text-sm font-medium text-gray-700">{c.name}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {/* Mobile Auth */}
-              <div className="pt-3 space-y-2">
+              <div className="pt-2 space-y-2 border-t border-gray-100">
                 {isLoggedIn ? (
                   <>
                     <Link
                       to={getDashboardPath()}
                       onClick={() => setMenuOpen(false)}
-                      className="block px-4 py-3 rounded-xl hover:bg-gray-100 transition-colors"
+                      className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl transition-all duration-200"
                     >
-                      Dashboard
+                      <div className="w-8 h-8 bg-[#3c6e71]/10 rounded-lg flex items-center justify-center">
+                        <FiUser className="w-4 h-4 text-[#3c6e71]" />
+                      </div>
+                      <span className="font-medium">Dashboard</span>
                     </Link>
                     <button
                       onClick={() => {
                         handleLogout();
                         setMenuOpen(false);
                       }}
-                      className="block w-full text-left px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                      className="flex items-center gap-3 w-full px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200"
                     >
-                      Logout
+                      <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center">
+                        <FiLogOut className="w-4 h-4 text-red-600" />
+                      </div>
+                      <span className="font-medium">Logout</span>
                     </button>
                   </>
                 ) : (
                   <>
-                    <NavLink
+                    <Link
                       to="/login"
                       onClick={() => setMenuOpen(false)}
-                      className="block px-4 py-3 border border-[#3c6e71] text-[#3c6e71] rounded-xl hover:bg-[#3c6e71] hover:text-white transition-colors"
+                      className="block px-4 py-3 text-center border-2 border-[#3c6e71] text-[#3c6e71] rounded-xl hover:bg-[#3c6e71] hover:text-white transition-all duration-200 font-medium"
                     >
                       Login
-                    </NavLink>
-                    <NavLink
+                    </Link>
+                    <Link
                       to="/register"
                       onClick={() => setMenuOpen(false)}
-                      className="block px-4 py-3 bg-[#3c6e71] text-white rounded-xl shadow hover:bg-[#2f5b60] transition-colors"
+                      className="block px-4 py-3 text-center bg-gradient-to-r from-[#3c6e71] to-[#284b63] text-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 font-medium"
                     >
                       Sign Up
-                    </NavLink>
+                    </Link>
                   </>
                 )}
               </div>

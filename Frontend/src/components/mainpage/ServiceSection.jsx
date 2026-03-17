@@ -172,7 +172,7 @@ const ServicesSection = () => {
   }
 
   return (
-    <section id="services-section" className="py-20 bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
+    <section id="services-section" className="py-24 bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
       {/* Animated Background Pattern */}
       <div className="absolute inset-0 opacity-5 pointer-events-none">
         <motion.div
@@ -192,141 +192,149 @@ const ServicesSection = () => {
         />
       </div>
 
-      <div className="text-center mb-16 relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: -30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-        >
-          <motion.h2
-            className="text-5xl font-bold text-[#284b63] mb-4"
-            initial={{ scale: 0.9 }}
-            whileInView={{ scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-          >
-            Explore Event Categories
-          </motion.h2>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-20 relative z-10">
           <motion.div
-            initial={{ width: 0 }}
-            whileInView={{ width: "100px" }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.3, duration: 0.8 }}
-            className="h-1 bg-[#f9a826] mx-auto mb-4 rounded-full"
-          />
-          <motion.p
-            className="text-gray-600 text-lg max-w-2xl mx-auto"
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.4 }}
-          >
-            Choose your event type and find the best vendors to make it happen.
-          </motion.p>
-        </motion.div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10">
-        {currentServices.map((service, index) => (
-          <motion.div
-            key={service.category_id}
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: -30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{
-              duration: 0.5,
-              delay: index * 0.1
-            }}
-            onClick={() => handleServiceClick(service)}
-            className="cursor-pointer"
+            transition={{ duration: 0.6 }}
           >
-            <TiltedCard
-              imageSrc={service.image}
-              altText={service.title}
-              captionText={service.title}
-              containerHeight="420px"
-              containerWidth="100%"
-              imageHeight="420px"
-              imageWidth="100%"
-              scaleOnHover={1.05}
-              rotateAmplitude={8}
-              showMobileWarning={false}
-              showTooltip={true}
-              displayOverlayContent={true}
-              overlayContent={
-                <div className="w-full h-[420px] flex flex-col justify-between p-4">
-                  <div className="flex flex-col items-center justify-center flex-1 min-h-0">
-                    <div className="bg-black/50 backdrop-blur-md rounded-xl p-4 shadow-2xl border border-white/20 w-full max-w-xs">
-                      <service.icon className="w-12 h-12 text-[#f9a826] drop-shadow-2xl mb-2 mx-auto flex-shrink-0" />
-                      <h3 className="text-lg font-bold text-white drop-shadow-2xl text-center line-clamp-2 min-h-[3.5rem] flex items-center justify-center" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8)' }}>
-                        {service.title}
-                      </h3>
-                    </div>
-                  </div>
-                  <div className="bg-white/95 backdrop-blur-md rounded-xl p-3 shadow-2xl border border-gray-200 flex-shrink-0">
-                    <p className="text-gray-800 text-xs leading-relaxed mb-2 text-center font-medium line-clamp-3">
-                      {service.description}
-                    </p>
-                    <div className="text-center">
-                      <span className="inline-block text-[#284b63] text-sm font-bold hover:text-[#f9a826] transition-colors">
-                        Explore Vendors →
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              }
+            <motion.h2
+              className="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#284b63] mb-6"
+              initial={{ scale: 0.9 }}
+              whileInView={{ scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+            >
+              Explore Our Categories
+            </motion.h2>
+            <motion.div
+              initial={{ width: 0 }}
+              whileInView={{ width: "120px" }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3, duration: 0.8 }}
+              className="h-1.5 bg-gradient-to-r from-[#f9a826] to-[#f7b733] mx-auto mb-6 rounded-full"
             />
+            <motion.p
+              className="text-gray-600 text-lg sm:text-xl max-w-3xl mx-auto leading-relaxed"
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.4 }}
+            >
+              Choose your event type and find the best vendors to make it happen.
+            </motion.p>
           </motion.div>
-        ))}
-      </div>
-
-      {/* Pagination Controls */}
-      {totalPages > 1 && (
-        <div className="max-w-7xl mx-auto px-6 mt-12 flex items-center justify-center gap-4">
-          <button
-            onClick={handlePrevPage}
-            disabled={currentPage === 1}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${currentPage === 1
-              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-              : "bg-[#284b63] text-white hover:bg-[#3c6e71]"
-              }`}
-          >
-            <ChevronLeftIcon className="w-5 h-5" />
-            Previous
-          </button>
-
-          <div className="flex items-center gap-2">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <button
-                key={page}
-                onClick={() => {
-                  setCurrentPage(page);
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
-                className={`w-10 h-10 rounded-lg font-semibold transition-all ${currentPage === page
-                  ? "bg-[#284b63] text-white"
-                  : "bg-white text-gray-700 hover:bg-gray-200"
-                  }`}
-              >
-                {page}
-              </button>
-            ))}
-          </div>
-
-          <button
-            onClick={handleNextPage}
-            disabled={currentPage === totalPages}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${currentPage === totalPages
-              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-              : "bg-[#284b63] text-white hover:bg-[#3c6e71]"
-              }`}
-          >
-            Next
-            <ChevronRightIcon className="w-5 h-5" />
-          </button>
         </div>
-      )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10">
+          {currentServices.map((service, index) => (
+            <motion.div
+              key={service.category_id}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{
+                duration: 0.5,
+                delay: index * 0.1
+              }}
+              onClick={() => handleServiceClick(service)}
+              className="cursor-pointer group"
+            >
+              <TiltedCard
+                imageSrc={service.image}
+                altText={service.title}
+                captionText={service.title}
+                containerHeight="420px"
+                containerWidth="100%"
+                imageHeight="420px"
+                imageWidth="100%"
+                scaleOnHover={1.05}
+                rotateAmplitude={8}
+                showMobileWarning={false}
+                showTooltip={true}
+                displayOverlayContent={true}
+                overlayContent={
+                  <div className="w-full h-[420px] flex flex-col justify-between p-6">
+                    <div className="flex flex-col items-center justify-center flex-1 min-h-0">
+                      <div className="bg-white/95 backdrop-blur-xl rounded-2xl p-6 shadow-2xl border border-white/20 w-full max-w-sm transform group-hover:scale-105 transition-transform duration-300">
+                        <div className="w-16 h-16 bg-gradient-to-br from-[#f9a826] to-[#f7b733] rounded-2xl flex items-center justify-center mb-4 mx-auto shadow-lg">
+                          <service.icon className="w-8 h-8 text-white drop-shadow-lg" />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-800 text-center mb-2 line-clamp-2">
+                          {service.title}
+                        </h3>
+                        <div className="w-12 h-1 bg-gradient-to-r from-[#f9a826] to-[#f7b733] rounded-full mx-auto mb-4" />
+                      </div>
+                    </div>
+                    <div className="bg-white/95 backdrop-blur-xl rounded-2xl p-4 shadow-2xl border border-gray-200 flex-shrink-0">
+                      <p className="text-gray-700 text-sm leading-relaxed mb-4 text-center line-clamp-3">
+                        {service.description}
+                      </p>
+                      <div className="text-center">
+                        <span className="inline-flex items-center gap-2 text-[#284b63] text-sm font-bold hover:text-[#f9a826] transition-colors group-hover:gap-3 duration-300">
+                          Explore Vendors 
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                          </svg>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                }
+              />
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="mt-16 flex items-center justify-center gap-4">
+            <button
+              onClick={handlePrevPage}
+              disabled={currentPage === 1}
+              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${currentPage === 1
+                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                : "bg-[#284b63] text-white hover:bg-[#3c6e71] shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                }`}
+            >
+              <ChevronLeftIcon className="w-5 h-5" />
+              Previous
+            </button>
+
+            <div className="flex items-center gap-2">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => {
+                    setCurrentPage(page);
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className={`w-12 h-12 rounded-xl font-semibold transition-all duration-300 ${currentPage === page
+                    ? "bg-[#284b63] text-white shadow-lg"
+                    : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
+                    }`}
+                >
+                  {page}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages}
+              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${currentPage === totalPages
+                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                : "bg-[#284b63] text-white hover:bg-[#3c6e71] shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                }`}
+            >
+              Next
+              <ChevronRightIcon className="w-5 h-5" />
+            </button>
+          </div>
+        )}
+      </div>
     </section>
   );
 };

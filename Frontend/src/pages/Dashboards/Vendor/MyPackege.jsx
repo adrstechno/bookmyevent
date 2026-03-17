@@ -470,11 +470,11 @@ export default function MyPackage() {
 
     try {
       // console.log("Updating package:", {
-        package_id: form.package_id,
-        package_name: form.package_name,
-        package_desc: form.package_desc,
-        amount: form.amount
-      });
+      //   package_id: form.package_id,
+      //   package_name: form.package_name,
+      //   package_desc: form.package_desc,
+      //   amount: form.amount
+      // });
 
       const response = await axios.post(
         `${VITE_API_BASE_URL}/Vendor/updateVendorPackage`,

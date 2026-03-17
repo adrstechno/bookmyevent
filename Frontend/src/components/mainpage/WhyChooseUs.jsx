@@ -14,41 +14,77 @@ const WhyChooseUs = () => {
   const navigate = useNavigate();
 
   return (
-    <section className="relative py-24 bg-gradient-to-b from-[#f5f9f9] to-[#e6f0f0] text-center overflow-hidden">
-
-      {/* Title */}
-      <h2 className="relative text-4xl md:text-5xl font-bold text-[#284b63] mb-14 z-10">
-        Why <span className="text-[#f9a826]">Eventify</span>
-      </h2>
-
-      {/* Cards */}
-      <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-10 max-w-6xl mx-auto px-6">
-        {points.map((p, i) => (
-          <motion.div
-            key={p.title}
-            className="bg-white/90 shadow-xl rounded-2xl p-6 flex flex-col items-center hover:shadow-2xl border border-gray-100"
-          >
-            <div className="p-4 bg-[#3c6e71]/10 rounded-full text-[#3c6e71]">
-              {p.icon}
-            </div>
-            <h3 className="text-lg font-semibold mt-3">{p.title}</h3>
-          </motion.div>
-        ))}
+    <section className="relative py-24 bg-gradient-to-br from-[#f8fafc] via-[#f1f5f9] to-[#e2e8f0] text-center overflow-hidden">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-5">
+        <div className="absolute inset-0" style={{
+          backgroundImage: 'radial-gradient(circle at 25% 25%, #3c6e71 2px, transparent 2px), radial-gradient(circle at 75% 75%, #f9a826 2px, transparent 2px)',
+          backgroundSize: '60px 60px'
+        }} />
       </div>
 
-      {/* Explore Button */}
-      <motion.button
-        onClick={() => navigate("/why-us")}
-        whileHover={{ scale: 1.08 }}
-        whileTap={{ scale: 0.95 }}
-        className="
-          mt-12 px-10 py-3 bg-[#3c6e71] text-white rounded-full 
-          font-semibold shadow-lg hover:bg-[#355b5b] transition
-          relative z-[60]
-        "
-      >
-        Explore More
-      </motion.button>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        {/* Title */}
+        <motion.div
+          initial={{ opacity: 0, y: -30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="mb-20"
+        >
+          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#284b63] mb-6">
+            Why <span className="text-[#f9a826]">GoEventify</span>
+          </h2>
+          <div className="h-1.5 bg-gradient-to-r from-[#f9a826] to-[#f7b733] w-32 mx-auto rounded-full mb-6" />
+          <p className="text-gray-600 text-lg sm:text-xl max-w-3xl mx-auto leading-relaxed">
+            Discover what makes us the preferred choice for event planning
+          </p>
+        </motion.div>
+
+        {/* Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+          {points.map((p, i) => (
+            <motion.div
+              key={p.title}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: i * 0.1 }}
+              className="group"
+            >
+              <div className="bg-white/80 backdrop-blur-sm shadow-xl rounded-3xl p-8 flex flex-col items-center hover:shadow-2xl border border-gray-100/50 transition-all duration-300 transform hover:-translate-y-2 hover:scale-105">
+                <div className="w-20 h-20 bg-gradient-to-br from-[#3c6e71] to-[#284b63] rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
+                  {p.icon}
+                </div>
+                <h3 className="text-xl font-bold text-gray-800 mb-3 group-hover:text-[#3c6e71] transition-colors duration-300">
+                  {p.title}
+                </h3>
+                <div className="w-12 h-1 bg-gradient-to-r from-[#f9a826] to-[#f7b733] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Explore Button */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+        >
+          <button
+            onClick={() => navigate("/why-us")}
+            className="group px-10 py-4 bg-gradient-to-r from-[#3c6e71] to-[#284b63] text-white text-lg font-semibold rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 hover:scale-105"
+          >
+            <span className="flex items-center gap-3">
+              Explore More
+              <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </span>
+          </button>
+        </motion.div>
+      </div>
     </section>
   );
 };

@@ -48,7 +48,7 @@ class ReviewTokenService {
                           .digest('hex');
         
         // Return first 16 characters for a shorter URL
-        return hash.substring(0, 16);
+        return hash.substring(0, 16);h
     }
 
     // Verify review code (would need to store mapping in database)

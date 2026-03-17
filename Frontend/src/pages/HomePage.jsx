@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from "react";
-import Headers from "../components/mainpage/Headers";
+import { useEffect, useState } from "react";
 import HeroSection from "../components/mainpage/HeroSection";
 import ServicesSection from "../components/mainpage/ServiceSection";
 import VendorsSection from "../components/mainpage/Vendorsection";
@@ -9,11 +8,8 @@ import CTASection from "../components/mainpage/CTASection";
 import Footer from "../components/mainpage/Footer";
 import ShowcaseSection from "../components/mainpage/ShowcaseSection";
 import SocialSidebar from "../components/mainpage/SocialSidebar";
-// import ContactPopup from "../components/mainpage/ContactPopup";
 import HomeNavbar from "../components/mainpage/HomeNavbar";
 import ErrorBoundary from "../components/ErrorBoundary";
-
-/* ✅ ADD THIS */
 import usePWAInstall from "../hooks/usePWAInstall";
 
 const HomePage = () => {
@@ -64,40 +60,48 @@ const HomePage = () => {
 
   return (
     <ErrorBoundary>
-      <div className="bg-[#f8f9fa]">
-        {/* <Headers /> */}
+      <div className="bg-gradient-to-b from-gray-50 to-white min-h-screen">
+        {/* Navigation */}
         <ErrorBoundary>
           <HomeNavbar />
         </ErrorBoundary>
         
+        {/* Hero Section */}
         <ErrorBoundary>
           <HeroSection />
         </ErrorBoundary>
         
+        {/* Services Section */}
         <ErrorBoundary>
           <ServicesSection />
         </ErrorBoundary>
         
+        {/* Vendors Section */}
         <ErrorBoundary>
           <VendorsSection />
         </ErrorBoundary>
         
+        {/* Showcase Section */}
         <ErrorBoundary>
           <ShowcaseSection />
         </ErrorBoundary>
         
+        {/* Testimonials */}
         <ErrorBoundary>
           <Testimonials />
         </ErrorBoundary>
         
+        {/* Why Choose Us */}
         <ErrorBoundary>
           <WhyChooseUs />
         </ErrorBoundary>
         
+        {/* CTA Section */}
         <ErrorBoundary>
           <CTASection />
         </ErrorBoundary>
         
+        {/* Footer */}
         <ErrorBoundary>
           <Footer />
         </ErrorBoundary>
