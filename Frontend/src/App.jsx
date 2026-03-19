@@ -72,6 +72,9 @@ import FashionShows from "./pages/Category/FashionShows";
 import Exhibitions from "./pages/Category/Exhibitions";
 import VendorsByService from "./pages/VendorsByService";
 import VendorDetail from "./pages/VendorDetail";
+import SubServicesPage from "./pages/SubServicesPage";
+import AllSubServicesPage from "./pages/AllSubServicesPage";
+import AllVendorsPage from "./pages/AllVendorsPage";
 
 import ShowcaseSection from "./components/mainpage/ShowcaseSection";
 // import ComingSoon from "./ComingSoon.jsx";
@@ -94,7 +97,8 @@ export default function App() {
         <Route path="/why-us" element={<WhyUsPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
-        <Route path="/services" element={<Home />} />
+        <Route path="/services" element={<AllSubServicesPage />} />
+        <Route path="/vendors" element={<AllVendorsPage />} />
 
         {/* Public Category Routes */}
         <Route path="/category/weddings" element={<Weddings />} />
@@ -103,6 +107,8 @@ export default function App() {
         <Route path="/category/birthday-parties" element={<BirthdayParties />} />
         <Route path="/category/fashion-shows" element={<FashionShows />} />
         <Route path="/category/exhibitions" element={<Exhibitions />} />
+        <Route path="/sub-services/:categoryId" element={<SubServicesPage />} />
+        <Route path="/vendors/:serviceId/:subServiceId" element={<VendorsByService />} />
         <Route path="/vendors/:serviceId" element={<VendorsByService />} />
         <Route path="/vendor/:vendorId" element={<VendorDetail />} />
         

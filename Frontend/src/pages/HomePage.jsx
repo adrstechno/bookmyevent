@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import HeroSection from "../components/mainpage/HeroSection";
 import ServicesSection from "../components/mainpage/ServiceSection";
-import VendorsSection from "../components/mainpage/Vendorsection";
+import SubServicesSection from "../components/mainpage/SubServicesSection";
 import WhyChooseUs from "../components/mainpage/WhyChooseUs";
 import Testimonials from "../components/mainpage/Testimonials";
 import CTASection from "../components/mainpage/CTASection";
@@ -87,9 +87,9 @@ const HomePage = () => {
           <ServicesSection />
         </ErrorBoundary>
         
-        {/* Vendors Section */}
+        {/* Sub-Services Section */}
         <ErrorBoundary>
-          <VendorsSection />
+          <SubServicesSection />
         </ErrorBoundary>
         
         {/* Showcase Section */}

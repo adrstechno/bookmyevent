@@ -88,11 +88,12 @@ const ServicesSection = () => {
   };
 
   const handleServiceClick = (service) => {
-    // Navigate to vendors page with service ID
-    navigate(`/vendors/${service.category_id}`, {
+    // Navigate to sub-services page
+    navigate(`/sub-services/${service.category_id}`, {
       state: {
         serviceName: service.title,
-        serviceDescription: service.description
+        serviceDescription: service.description,
+        serviceImage: service.image
       }
     });
   };
@@ -280,48 +281,38 @@ const ServicesSection = () => {
               onClick={() => handleServiceClick(service)}
               className="cursor-pointer group"
             >
-              <TiltedCard
-                imageSrc={service.image}
-                altText={service.title}
-                captionText={service.title}
-                containerHeight="420px"
-                containerWidth="100%"
-                imageHeight="420px"
-                imageWidth="100%"
-                scaleOnHover={1.05}
-                rotateAmplitude={8}
-                showMobileWarning={false}
-                showTooltip={true}
-                displayOverlayContent={true}
-                overlayContent={
-                  <div className="w-full h-[420px] flex flex-col justify-between p-6">
-                    <div className="flex flex-col items-center justify-center flex-1 min-h-0">
-                      <div className="bg-white/95 backdrop-blur-xl rounded-2xl p-6 shadow-2xl border border-white/20 w-full max-w-sm transform group-hover:scale-105 transition-transform duration-300">
-                        <div className="w-16 h-16 bg-gradient-to-br from-[#f9a826] to-[#f7b733] rounded-2xl flex items-center justify-center mb-4 mx-auto shadow-lg">
-                          <service.icon className="w-8 h-8 text-white drop-shadow-lg" />
-                        </div>
-                        <h3 className="text-xl font-bold text-gray-800 text-center mb-2 line-clamp-2">
-                          {service.title}
-                        </h3>
-                        <div className="w-12 h-1 bg-gradient-to-r from-[#f9a826] to-[#f7b733] rounded-full mx-auto mb-4" />
-                      </div>
-                    </div>
-                    <div className="bg-white/95 backdrop-blur-xl rounded-2xl p-4 shadow-2xl border border-gray-200 flex-shrink-0">
-                      <p className="text-gray-700 text-sm leading-relaxed mb-4 text-center line-clamp-3">
-                        {service.description}
-                      </p>
-                      <div className="text-center">
-                        <span className="inline-flex items-center gap-2 text-[#284b63] text-sm font-bold hover:text-[#f9a826] transition-colors group-hover:gap-3 duration-300">
-                          Explore Vendors 
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                          </svg>
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                }
-              />
+              <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-2 border-gray-100 hover:border-[#f9a826]">
+                {/* Image Section */}
+                <div className="relative h-56 overflow-hidden">
+                  <img
+                    src={service.image}
+                    alt={service.title}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                </div>
+
+                {/* Content Section */}
+                <div className="p-6">
+                  <h3 className="text-2xl font-bold text-gray-800 mb-3 group-hover:text-[#284b63] transition-colors">
+                    {service.title}
+                  </h3>
+                  
+                  <div className="w-16 h-1 bg-gradient-to-r from-[#f9a826] to-[#f7b733] rounded-full mb-4" />
+                  
+                  <p className="text-gray-600 text-sm leading-relaxed mb-6 line-clamp-3">
+                    {service.description}
+                  </p>
+
+                  {/* Explore Button */}
+                  <button className="w-full bg-gradient-to-r from-[#284b63] to-[#3c6e71] text-white py-3 px-6 rounded-xl font-semibold hover:from-[#3c6e71] hover:to-[#284b63] transition-all duration-300 flex items-center justify-center gap-2 group-hover:gap-3 shadow-md hover:shadow-lg">
+                    Explore Services
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
             </motion.div>
           ))}
         </div>

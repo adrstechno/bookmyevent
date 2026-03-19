@@ -22,10 +22,10 @@ import { LoadingSpinner, NoDataFound, ErrorDisplay, CardSkeleton } from "../comp
 import { ERROR_TYPES } from "../utils/errorHandler";
 
 const VendorsByService = () => {
-  const { serviceId } = useParams();
+  const { serviceId, subServiceId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { serviceName, serviceDescription } = location.state || {};
+  const { serviceName, serviceDescription, subServiceName, subServiceDescription } = location.state || {};
 
   const [selectedDate, setSelectedDate] = useState(null);
   const [showCalendar, setShowCalendar] = useState(false);
@@ -51,15 +51,36 @@ const VendorsByService = () => {
 
   useEffect(() => {
     if (filterType === "category" && !selectedDate) {
-      fetchVendorsByCategory();
+      if (subServiceId) {
+        fetchVendorsBySubService();
+      } else {
+        fetchVendorsByCategory();
+      }
     } else if (filterType === "all" && !selectedDate) {
       fetchAllVendors();
     }
-  }, [filterType, serviceId]);
+  }, [filterType, serviceId, subServiceId]);
 
   useEffect(() => {
     setCurrentPage(1);
   }, [vendors]);
+
+  // -------- FETCH VENDORS BY SUB-SERVICE --------
+  const fetchVendorsBySubService = async () => {
+    await fetchVendors(
+      () => fetch(
+        `${VITE_API_BASE_URL}/Vendor/getvendorsBysubserviceId?subservice_id=${subServiceId}`,
+        { method: "GET", credentials: "include" }
+      ).then(res => {
+        if (!res.ok) throw new Error("Failed to fetch vendors");
+        return res.json().then(data => ({ data: data.vendors || [] }));
+      }),
+      {
+        emptyMessage: `No vendors found for this sub-service`,
+        showEmptyToast: false
+      }
+    );
+  };
 
   // -------- FETCH CATEGORY VENDORS --------
   const fetchVendorsByCategory = async () => {
@@ -278,10 +299,15 @@ const VendorsByService = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 text-center text-white">
           <FiUsers className="text-4xl sm:text-5xl lg:text-6xl text-[#f9a826] mx-auto mb-3 sm:mb-4" />
           <h1 className="text-2xl sm:text-3xl lg:text-5xl font-bold leading-tight">
-            {serviceName || "Service Vendors"}
+            {subServiceName || serviceName || "Service Vendors"}
           </h1>
+          {subServiceName && serviceName && (
+            <p className="text-sm sm:text-base text-[#f9a826] mt-2">
+              {serviceName}
+            </p>
+          )}
           <p className="text-base sm:text-lg lg:text-xl mt-2 sm:mt-4 max-w-2xl mx-auto">
-            {serviceDescription || "Find the best vendors for your event"}
+            {subServiceDescription || serviceDescription || "Find the best vendors for your event"}
           </p>
         </div>
       </div>
