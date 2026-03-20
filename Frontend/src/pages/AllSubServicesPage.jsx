@@ -100,7 +100,7 @@ const AllSubServicesPage = () => {
 
       {/* Header Section */}
       <div className="relative bg-gradient-to-r from-[#284b63] via-[#3c6e71] to-[#284b63] py-20 mt-16">
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-[1920px] mx-auto px-6">
           <button
             onClick={() => navigate("/")}
             className="mb-6 flex items-center gap-2 text-white hover:text-[#f9a826] font-semibold transition-colors"
@@ -127,7 +127,7 @@ const AllSubServicesPage = () => {
       </div>
 
       {/* Category Filter */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-[1920px] mx-auto px-6 py-8">
         <div className="flex flex-wrap justify-center gap-3 mb-8">
           <button
             onClick={() => setSelectedCategory("all")}
@@ -179,7 +179,7 @@ const AllSubServicesPage = () => {
 
         {/* Sub-Services Grid */}
         {!isLoading && !isEmpty && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-8">
             {filteredSubServices.map((subService, index) => (
               <motion.div
                 key={`${subService.categoryId}-${subService.subservice_id}`}

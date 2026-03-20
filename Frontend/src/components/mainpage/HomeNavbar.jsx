@@ -137,7 +137,7 @@ const HomeNavbar = () => {
             y: isScrolled ? 4 : 0
           }}
           transition={{ duration: 0.3, ease: "easeOut" }}
-          className={`flex items-center justify-between px-6 py-4 rounded-2xl transition-all duration-300
+          className={`flex items-center justify-between px-6 py-5 rounded-2xl transition-all duration-300
             backdrop-blur-xl border shadow-lg
             ${isScrolled 
               ? "bg-white/95 border-gray-200/50 shadow-xl" 
@@ -148,7 +148,7 @@ const HomeNavbar = () => {
           <Link to="/" className="flex-shrink-0">
             <img 
               src="/logo2.png" 
-              className="h-10 w-auto transition-transform duration-300 hover:scale-105" 
+              className="h-12 w-auto transition-transform duration-300 hover:scale-105" 
               alt="GoEventify Logo"
             />
           </Link>
@@ -156,7 +156,7 @@ const HomeNavbar = () => {
           {/* -------- DESKTOP NAV -------- */}
           <div className="hidden lg:flex items-center space-x-1">
             <NavLink to="/" className={({ isActive }) =>
-              `px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+              `px-5 py-3 rounded-xl text-base font-bold transition-all duration-200 ${
                 isActive 
                   ? "bg-[#3c6e71] text-white shadow-md" 
                   : "text-gray-700 hover:bg-gray-100 hover:text-[#3c6e71]"
@@ -166,7 +166,7 @@ const HomeNavbar = () => {
             </NavLink>
 
             <NavLink to="/about" className={({ isActive }) =>
-              `px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+              `px-5 py-3 rounded-xl text-base font-bold transition-all duration-200 ${
                 isActive 
                   ? "bg-[#3c6e71] text-white shadow-md" 
                   : "text-gray-700 hover:bg-gray-100 hover:text-[#3c6e71]"
@@ -176,7 +176,7 @@ const HomeNavbar = () => {
             </NavLink>
 
             <NavLink to="/contact" className={({ isActive }) =>
-              `px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+              `px-5 py-3 rounded-xl text-base font-bold transition-all duration-200 ${
                 isActive 
                   ? "bg-[#3c6e71] text-white shadow-md" 
                   : "text-gray-700 hover:bg-gray-100 hover:text-[#3c6e71]"
@@ -189,7 +189,7 @@ const HomeNavbar = () => {
             <div className="relative" ref={categoriesRef}>
               <button
                 onClick={() => setCategoriesOpen(!categoriesOpen)}
-                className="px-4 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-[#3c6e71] transition-all duration-200 flex items-center gap-1"
+                className="px-5 py-3 rounded-xl text-base font-bold text-gray-700 hover:bg-gray-100 hover:text-[#3c6e71] transition-all duration-200 flex items-center gap-2"
               >
                 Categories 
                 <FiChevronDown className={`transition-transform duration-200 ${categoriesOpen ? 'rotate-180' : ''}`} />
@@ -289,13 +289,13 @@ const HomeNavbar = () => {
               <div className="flex items-center gap-2">
                 <Link 
                   to="/login" 
-                  className="px-4 py-2.5 text-sm font-medium text-gray-700 hover:text-[#3c6e71] transition-colors duration-200"
+                  className="px-5 py-3 text-base font-bold text-gray-700 hover:text-[#3c6e71] transition-colors duration-200"
                 >
                   Login
                 </Link>
                 <Link 
                   to="/register" 
-                  className="px-6 py-2.5 bg-gradient-to-r from-[#3c6e71] to-[#284b63] text-white text-sm font-medium rounded-xl shadow-md hover:shadow-lg transition-all duration-200"
+                  className="px-6 py-3 bg-gradient-to-r from-[#3c6e71] to-[#284b63] text-white text-base font-bold rounded-xl shadow-md hover:shadow-lg transition-all duration-200"
                 >
                   Sign Up
                 </Link>

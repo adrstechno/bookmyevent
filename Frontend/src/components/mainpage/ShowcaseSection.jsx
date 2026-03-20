@@ -93,7 +93,7 @@ const ShowcaseSection = () => {
   const gallerySettings = getGallerySettings();
 
   return (
-    <section className="relative py-12 sm:py-16 md:py-20 lg:py-28 bg-gradient-to-b from-[#f9fafb] to-[#edf3f3] overflow-hidden">
+    <section className="relative py-16 bg-gradient-to-b from-white via-gray-50/50 to-white overflow-hidden">
       {/* Title Section */}
       <div className="text-center relative z-10 mb-8 sm:mb-12 md:mb-16 px-4">
         <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-[#284b63] mb-3 sm:mb-4 leading-tight">

@@ -1,55 +1,78 @@
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-
-const reviews = [
-  { 
-    name: "Sneha Reddy", 
-    role: "Customer",
-    text: "From start to finish, GoEventify ensured our wedding management was seamless and stress-free. Appreciates their dedication and professionalism, making our big day truly unforgettable",
-    avatar: "https://ui-avatars.com/api/?name=Sneha+Reddy&background=6366f1&color=fff&size=80"
-  },
-  { 
-    name: "Aarav Mehta", 
-    role: "Customer",
-    text: "GoEventify made our wedding unforgettable. Everything was smooth and perfectly managed! The attention to detail was exceptional.",
-    avatar: "https://ui-avatars.com/api/?name=Aarav+Mehta&background=8b5cf6&color=fff&size=80"
-  },
-  { 
-    name: "Priya Sharma", 
-    role: "Vendor",
-    text: "As a vendor, I've gained so many clients. Super easy dashboard and great visibility! The platform has transformed my business.",
-    avatar: "https://ui-avatars.com/api/?name=Priya+Sharma&background=ec4899&color=fff&size=80"
-  },
-  { 
-    name: "Raj Patel", 
-    role: "Customer",
-    text: "Booked our corporate event in minutes. Amazing platform and seamless process! Highly recommend for any business event.",
-    avatar: "https://ui-avatars.com/api/?name=Raj+Patel&background=14b8a6&color=fff&size=80"
-  },
-  { 
-    name: "Simran Kaur", 
-    role: "Customer",
-    text: "Loved how fast everything worked. Our birthday event was beautifully organized! The team went above and beyond.",
-    avatar: "https://ui-avatars.com/api/?name=Simran+Kaur&background=f59e0b&color=fff&size=80"
-  },
-  { 
-    name: "Kabir Verma", 
-    role: "Vendor",
-    text: "Vendor onboarding was simple. Got real bookings from day one! The support team is incredibly helpful.",
-    avatar: "https://ui-avatars.com/api/?name=Kabir+Verma&background=3b82f6&color=fff&size=80"
-  },
-  { 
-    name: "Neha Gupta", 
-    role: "Customer",
-    text: "Brilliant experience. GoEventify truly connects the right vendors with real customers. Will definitely use again!",
-    avatar: "https://ui-avatars.com/api/?name=Neha+Gupta&background=ef4444&color=fff&size=80"
-  },
-];
+import { ChevronLeft, ChevronRight, Star } from "lucide-react";
+import { VITE_API_BASE_URL } from "../../utils/api";
 
 const Testimonials = () => {
+  const [reviews, setReviews] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchReviews();
+  }, []);
+
+  const fetchReviews = async () => {
+    try {
+      const response = await fetch(`${VITE_API_BASE_URL}/reviews/recent?limit=10`, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log("Reviews API response:", data);
+        
+        // Transform API data to match component structure
+        const transformedReviews = data.reviews?.map(review => ({
+          name: review.user_name || "Anonymous User",
+          role: "Customer",
+          text: review.review_text || "Great service!",
+          rating: review.rating || 5,
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(review.user_name || "User")}&background=random&color=fff&size=80`,
+          vendor: review.vendor_name || "",
+          date: new Date(review.created_at).toLocaleDateString()
+        })) || [];
+
+        setReviews(transformedReviews.length > 0 ? transformedReviews : getFallbackReviews());
+      } else {
+        setReviews(getFallbackReviews());
+      }
+    } catch (error) {
+      console.error("Error fetching reviews:", error);
+      setReviews(getFallbackReviews());
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getFallbackReviews = () => [
+    { 
+      name: "Sneha Reddy", 
+      role: "Customer",
+      text: "From start to finish, GoEventify ensured our wedding management was seamless and stress-free. Their dedication and professionalism made our big day truly unforgettable!",
+      rating: 5,
+      avatar: "https://ui-avatars.com/api/?name=Sneha+Reddy&background=6366f1&color=fff&size=80"
+    },
+    { 
+      name: "Aarav Mehta", 
+      role: "Customer",
+      text: "GoEventify made our wedding unforgettable. Everything was smooth and perfectly managed! The attention to detail was exceptional.",
+      rating: 5,
+      avatar: "https://ui-avatars.com/api/?name=Aarav+Mehta&background=8b5cf6&color=fff&size=80"
+    },
+    { 
+      name: "Priya Sharma", 
+      role: "Vendor",
+      text: "As a vendor, I've gained so many clients. Super easy dashboard and great visibility! The platform has transformed my business.",
+      rating: 5,
+      avatar: "https://ui-avatars.com/api/?name=Priya+Sharma&background=ec4899&color=fff&size=80"
+    }
+  ];
 
   const handleNext = () => {
     setDirection(1);
@@ -76,8 +99,24 @@ const Testimonials = () => {
     }),
   };
 
+  if (isLoading) {
+    return (
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-center h-96">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3c6e71]"></div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (reviews.length === 0) {
+    return null;
+  }
+
   return (
-    <section className="py-24 relative overflow-hidden">
+    <section className="py-16 relative overflow-hidden">
       {/* Background Image with Overlay */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-fixed"
@@ -86,15 +125,6 @@ const Testimonials = () => {
         }}
       >
         <div className="absolute inset-0 bg-gradient-to-br from-white/93 via-gray-50/88 to-white/93" />
-      </div>
-
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-8">
-        <div className="absolute inset-0" style={{
-          backgroundImage: 'linear-gradient(45deg, #3c6e71 25%, transparent 25%), linear-gradient(-45deg, #3c6e71 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f9a826 75%), linear-gradient(-45deg, transparent 75%, #f9a826 75%)',
-          backgroundSize: '80px 80px',
-          backgroundPosition: '0 0, 0 40px, 40px -40px, -40px 0px'
-        }} />
       </div>
 
       {/* Animated Elements */}
@@ -117,20 +147,20 @@ const Testimonials = () => {
         />
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: -30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-20"
+          className="text-center mb-16"
         >
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
             What Our Customers Say
           </h2>
           <div className="h-1.5 bg-gradient-to-r from-[#f9a826] to-[#f7b733] w-32 mx-auto rounded-full mb-6" />
           <p className="text-gray-600 text-lg sm:text-xl max-w-3xl mx-auto leading-relaxed">
-            Hear from trusted clients who made their events unforgettable with us
+            Real reviews from real customers who made their events unforgettable with us
           </p>
         </motion.div>
 
@@ -154,6 +184,9 @@ const Testimonials = () => {
               </div>
               <h3 className="text-xl font-bold text-gray-900">{reviews[currentIndex].name}</h3>
               <p className="text-sm text-[#3c6e71] font-semibold uppercase tracking-wide">{reviews[currentIndex].role}</p>
+              {reviews[currentIndex].date && (
+                <p className="text-xs text-gray-500 mt-1">{reviews[currentIndex].date}</p>
+              )}
             </motion.div>
 
             {/* Testimonial text with animation */}
@@ -184,6 +217,9 @@ const Testimonials = () => {
                     <div>
                       <h3 className="text-lg font-bold text-gray-900">{reviews[currentIndex].name}</h3>
                       <p className="text-sm text-[#3c6e71] font-semibold uppercase tracking-wide">{reviews[currentIndex].role}</p>
+                      {reviews[currentIndex].date && (
+                        <p className="text-xs text-gray-500">{reviews[currentIndex].date}</p>
+                      )}
                     </div>
                   </div>
 
@@ -199,13 +235,23 @@ const Testimonials = () => {
                   </p>
 
                   {/* Rating Stars */}
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 mb-4">
                     {[...Array(5)].map((_, i) => (
-                      <svg key={i} className="w-5 h-5 text-[#f9a826] fill-current" viewBox="0 0 24 24">
-                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                      </svg>
+                      <Star 
+                        key={i} 
+                        className={`w-5 h-5 ${i < reviews[currentIndex].rating ? 'text-[#f9a826] fill-current' : 'text-gray-300'}`}
+                      />
                     ))}
+                    <span className="ml-2 text-sm text-gray-600 font-semibold">
+                      {reviews[currentIndex].rating}/5
+                    </span>
                   </div>
+
+                  {reviews[currentIndex].vendor && (
+                    <p className="text-sm text-gray-500">
+                      Vendor: <span className="font-semibold text-[#3c6e71]">{reviews[currentIndex].vendor}</span>
+                    </p>
+                  )}
                 </motion.div>
               </AnimatePresence>
             </div>

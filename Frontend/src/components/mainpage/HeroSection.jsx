@@ -32,7 +32,7 @@ const HeroSection = () => {
   }, [slides.length]);
 
   return (
-    <section className="relative h-screen min-h-[700px] overflow-hidden">
+    <section className="relative h-[70vh] min-h-[600px] overflow-hidden">
       {/* Slides */}
       {slides.map((slide, index) => (
         <div

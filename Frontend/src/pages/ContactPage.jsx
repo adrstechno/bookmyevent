@@ -101,7 +101,7 @@ const ContactPage = () => {
           transition={{ duration: 0.8 }}
           className="absolute inset-0 flex items-center"
         >
-          <div className="max-w-7xl mx-auto px-6">
+          <div className="max-w-[1920px] mx-auto px-6">
             <h1 className="text-5xl md:text-7xl font-bold text-white mb-6">
               Contact <span className="text-[#f9a826]">Us</span>
             </h1>
@@ -113,7 +113,7 @@ const ContactPage = () => {
       </div>
 
       {/* Contact Info Cards */}
-      <div className="max-w-7xl mx-auto px-6 -mt-16 relative z-10 mb-20">
+      <div className="max-w-[1920px] mx-auto px-6 -mt-16 relative z-10 mb-20">
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {contactInfo.map((info, index) => {
             const Icon = info.icon;
@@ -140,7 +140,7 @@ const ContactPage = () => {
       </div>
 
       {/* Contact Form & Map Section */}
-      <div className="max-w-7xl mx-auto px-6 pb-20">
+      <div className="max-w-[1920px] mx-auto px-6 pb-20">
         <div className="grid lg:grid-cols-2 gap-12">
           {/* Contact Form */}
           <motion.div

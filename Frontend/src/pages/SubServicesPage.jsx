@@ -68,7 +68,7 @@ const SubServicesPage = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 py-20">
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-[1920px] mx-auto px-6">
           <div className="h-12 bg-gray-200 rounded w-1/3 mb-8 animate-pulse"></div>
           <CardSkeleton count={6} />
         </div>
@@ -79,7 +79,7 @@ const SubServicesPage = () => {
   if (isError) {
     return (
       <div className="min-h-screen bg-gray-50 py-20">
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-[1920px] mx-auto px-6">
           <ErrorDisplay
             message="Failed to load sub-services"
             description="We couldn't load the sub-services. Please try again."
@@ -93,7 +93,7 @@ const SubServicesPage = () => {
   if (isEmpty) {
     return (
       <div className="min-h-screen bg-gray-50 py-20">
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-[1920px] mx-auto px-6">
           <button
             onClick={handleBackClick}
             className="mb-8 flex items-center gap-2 text-[#284b63] hover:text-[#3c6e71] font-semibold"
@@ -128,7 +128,7 @@ const SubServicesPage = () => {
         }}
       >
         <div className="absolute inset-0 bg-gradient-to-br from-[#284b63]/95 to-[#3c6e71]/95" />
-        <div className="relative max-w-7xl mx-auto px-6">
+        <div className="relative max-w-[1920px] mx-auto px-6">
           <button
             onClick={handleBackClick}
             className="mb-6 flex items-center gap-2 text-white hover:text-[#f9a826] font-semibold transition-colors"
@@ -154,8 +154,8 @@ const SubServicesPage = () => {
       </div>
 
       {/* Sub-Services Grid */}
-      <div className="max-w-7xl mx-auto px-6 py-16">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="max-w-[1920px] mx-auto px-6 py-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-8">
           {subServices.map((subService, index) => (
             <motion.div
               key={subService.sub_service_id}

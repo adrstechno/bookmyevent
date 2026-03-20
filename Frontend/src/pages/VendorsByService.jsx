@@ -296,7 +296,7 @@ const VendorsByService = () => {
 
       {/* HEADER */}
       <div className="relative bg-gradient-to-r from-[#284b63] via-[#3c6e71] to-[#284b63] py-12 sm:py-16 lg:py-20 mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 text-center text-white">
+        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 text-center text-white">
           <FiUsers className="text-4xl sm:text-5xl lg:text-6xl text-[#f9a826] mx-auto mb-3 sm:mb-4" />
           <h1 className="text-2xl sm:text-3xl lg:text-5xl font-bold leading-tight">
             {subServiceName || serviceName || "Service Vendors"}
@@ -369,7 +369,7 @@ const VendorsByService = () => {
       </div>
 
       {/* CONTENT SECTION */}
-      <div className="max-w-7xl mx-auto px-6 py-16 flex-grow">
+      <div className="max-w-[1920px] mx-auto px-6 py-16 flex-grow">
         <AnimatePresence mode="wait">
           {isLoading ? (
             <motion.div
@@ -461,7 +461,7 @@ const VendorsByService = () => {
                 </p>
               </motion.div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6 lg:gap-8">
                 {currentVendors.map((v, i) => renderVendorCard(v, i))}
               </div>
 

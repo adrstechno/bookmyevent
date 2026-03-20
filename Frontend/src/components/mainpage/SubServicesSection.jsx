@@ -103,27 +103,15 @@ const SubServicesSection = () => {
   }
 
   return (
-    <section className="py-24 relative overflow-hidden bg-gray-50">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-5 pointer-events-none">
-        <motion.div
-          animate={{
-            backgroundPosition: ["0% 0%", "100% 100%"],
-          }}
-          transition={{
-            duration: 20,
-            repeat: Infinity,
-            repeatType: "reverse",
-          }}
-          className="absolute inset-0"
-          style={{
-            backgroundImage: 'radial-gradient(circle, #284b63 2px, transparent 2px)',
-            backgroundSize: '60px 60px'
-          }}
-        />
-      </div>
+    <section className="py-16 relative overflow-hidden bg-gray-50">
+      {/* Clean background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-white to-gray-50" />
+      
+      {/* Subtle decorative elements */}
+      <div className="absolute top-10 left-10 w-64 h-64 bg-[#3c6e71]/5 rounded-full blur-3xl" />
+      <div className="absolute bottom-10 right-10 w-64 h-64 bg-[#f9a826]/5 rounded-full blur-3xl" />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Section Header */}
         <div className="text-center mb-16">
           <motion.div
@@ -187,7 +175,7 @@ const SubServicesSection = () => {
 
         {/* Sub-Services Grid */}
         {!isLoading && !isEmpty && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             {subServices.slice(0, 6).map((subService, index) => {
               const subServiceId = subService.subservice_id || subService.id || subService.subservices_id;
               return (
@@ -201,11 +189,11 @@ const SubServicesSection = () => {
                   delay: index * 0.1
                 }}
                 onClick={() => handleSubServiceClick(subService)}
-                className="cursor-pointer group"
+                className="cursor-pointer group h-full"
               >
-                <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-2 border-gray-100 hover:border-[#f9a826]">
+                <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-2 border-gray-100 hover:border-[#f9a826] h-full flex flex-col">
                   {/* Image Section */}
-                  <div className="relative h-56 overflow-hidden bg-gray-200">
+                  <div className="relative h-56 overflow-hidden bg-gray-200 flex-shrink-0">
                     {subService.icon_url ? (
                       <img
                         src={subService.icon_url}
@@ -223,19 +211,19 @@ const SubServicesSection = () => {
                   </div>
 
                   {/* Content Section */}
-                  <div className="p-6">
+                  <div className="p-6 flex flex-col flex-grow">
                     <h3 className="text-2xl font-bold text-gray-800 mb-3 group-hover:text-[#284b63] transition-colors line-clamp-1">
                       {subService.subservice_name}
                     </h3>
                     
                     <div className="w-16 h-1 bg-gradient-to-r from-[#f9a826] to-[#f7b733] rounded-full mb-4" />
                     
-                    <p className="text-gray-600 text-sm leading-relaxed mb-6 line-clamp-2">
+                    <p className="text-gray-600 text-sm leading-relaxed mb-6 line-clamp-2 flex-grow">
                       {subService.description || "Explore vendors offering this service"}
                     </p>
 
                     {/* View Button */}
-                    <button className="w-full bg-gradient-to-r from-[#284b63] to-[#3c6e71] text-white py-3 px-6 rounded-xl font-semibold hover:from-[#3c6e71] hover:to-[#284b63] transition-all duration-300 flex items-center justify-center gap-2 group-hover:gap-3 shadow-md hover:shadow-lg">
+                    <button className="w-full bg-gradient-to-r from-[#284b63] to-[#3c6e71] text-white py-3 px-6 rounded-xl font-semibold hover:from-[#3c6e71] hover:to-[#284b63] transition-all duration-300 flex items-center justify-center gap-2 group-hover:gap-3 shadow-md hover:shadow-lg mt-auto">
                       View Vendors
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />

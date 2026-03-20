@@ -14,54 +14,31 @@ const WhyChooseUs = () => {
   const navigate = useNavigate();
 
   return (
-    <section className="relative py-24 text-center overflow-hidden">
-      {/* Background Image with Overlay */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center bg-fixed"
-        style={{
-          backgroundImage: `url('https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=1920&h=1080&fit=crop&crop=center')`,
-        }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-br from-white/90 via-gray-50/85 to-white/90" />
-      </div>
+    <section className="relative py-16 text-center overflow-hidden">
+      {/* Clean Gradient Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-white to-blue-50/30" />
 
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute inset-0" style={{
-          backgroundImage: 'radial-gradient(circle at 25% 25%, #3c6e71 2px, transparent 2px), radial-gradient(circle at 75% 75%, #f9a826 2px, transparent 2px)',
-          backgroundSize: '80px 80px'
-        }} />
-      </div>
-
-      {/* Floating Geometric Shapes */}
-      <div className="absolute inset-0 pointer-events-none">
+      {/* Subtle Decorative Elements */}
+      <div className="absolute inset-0 pointer-events-none opacity-40">
         <motion.div
           animate={{ 
-            rotate: [0, 360],
-            scale: [1, 1.1, 1]
+            scale: [1, 1.2, 1],
+            opacity: [0.3, 0.5, 0.3]
           }}
-          transition={{ duration: 20, repeat: Infinity }}
-          className="absolute top-20 left-20 w-16 h-16 border-4 border-[#f9a826]/30 rotate-45"
+          transition={{ duration: 8, repeat: Infinity }}
+          className="absolute top-20 right-20 w-64 h-64 bg-gradient-to-br from-[#3c6e71]/20 to-transparent rounded-full blur-3xl"
         />
         <motion.div
           animate={{ 
-            rotate: [360, 0],
-            y: [0, -20, 0]
+            scale: [1, 1.3, 1],
+            opacity: [0.2, 0.4, 0.2]
           }}
-          transition={{ duration: 15, repeat: Infinity }}
-          className="absolute top-32 right-32 w-12 h-12 bg-[#3c6e71]/20 rounded-full"
-        />
-        <motion.div
-          animate={{ 
-            rotate: [0, 180, 360],
-            x: [0, 10, 0]
-          }}
-          transition={{ duration: 12, repeat: Infinity }}
-          className="absolute bottom-40 left-1/3 w-8 h-8 bg-gradient-to-br from-purple-400/30 to-pink-400/30 transform rotate-45"
+          transition={{ duration: 10, repeat: Infinity, delay: 1 }}
+          className="absolute bottom-20 left-20 w-80 h-80 bg-gradient-to-br from-[#f9a826]/15 to-transparent rounded-full blur-3xl"
         />
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Title */}
         <motion.div
           initial={{ opacity: 0, y: -30 }}

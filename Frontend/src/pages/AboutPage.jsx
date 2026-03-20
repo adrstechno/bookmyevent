@@ -87,7 +87,7 @@ const AboutPage = () => {
           transition={{ duration: 0.8 }}
           className="absolute inset-0 flex items-center"
         >
-          <div className="max-w-7xl mx-auto px-6">
+          <div className="max-w-[1920px] mx-auto px-6">
             <h1 className="text-5xl md:text-7xl font-bold text-white mb-6">
               About <span className="text-[#f9a826]">Us</span>
             </h1>
@@ -99,7 +99,7 @@ const AboutPage = () => {
       </div>
 
       {/* Our Story Section */}
-      <div className="max-w-7xl mx-auto px-6 py-20">
+      <div className="max-w-[1920px] mx-auto px-6 py-20">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <motion.div
             initial={{ opacity: 0, x: -50 }}
@@ -196,7 +196,7 @@ const AboutPage = () => {
 
       {/* Event Showcase with Stack Animation */}
       <div className="bg-gradient-to-br from-gray-50 to-gray-100 py-20">
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-[1920px] mx-auto px-6">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <motion.div
               initial={{ opacity: 0, x: -50 }}
@@ -303,7 +303,7 @@ const AboutPage = () => {
       </div>
 
       {/* Our Values */}
-      <div className="max-w-7xl mx-auto px-6 py-20">
+      <div className="max-w-[1920px] mx-auto px-6 py-20">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -403,7 +403,7 @@ const AboutPage = () => {
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="relative z-10 max-w-4xl mx-auto px-6 text-center"
+          className="relative z-10 max-w-[1920px] mx-auto px-6 text-center"
         >
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
             Ready to Create Something Amazing?

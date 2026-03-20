@@ -60,17 +60,12 @@ const HomePage = () => {
 
   return (
     <ErrorBoundary>
-      <div className="relative min-h-screen">
-        {/* Global Background */}
-        <div className="fixed inset-0 -z-10">
-          <div 
-            className="absolute inset-0 bg-cover bg-center bg-fixed opacity-30"
-            style={{
-              backgroundImage: `url('https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=1920&h=1080&fit=crop&crop=center')`,
-            }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-br from-white/95 via-gray-50/90 to-white/95" />
-        </div>
+      <div className="relative min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
+        {/* Subtle Pattern Overlay */}
+        <div className="fixed inset-0 opacity-[0.03] pointer-events-none" style={{
+          backgroundImage: `radial-gradient(circle at 2px 2px, #284b63 1px, transparent 0)`,
+          backgroundSize: '40px 40px'
+        }} />
 
         {/* Navigation */}
         <ErrorBoundary>

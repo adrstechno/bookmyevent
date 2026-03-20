@@ -29,8 +29,6 @@ const defaultIcons = [
 const ServicesSection = () => {
   const navigate = useNavigate();
   const { data: services, isLoading, isError, isEmpty, error, execute } = useApiCall([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const servicesPerPage = 6;
 
   useEffect(() => {
     loadServices();
@@ -98,26 +96,6 @@ const ServicesSection = () => {
     });
   };
 
-  // Pagination logic
-  const indexOfLastService = currentPage * servicesPerPage;
-  const indexOfFirstService = indexOfLastService - servicesPerPage;
-  const currentServices = services?.slice(indexOfFirstService, indexOfLastService) || [];
-  const totalPages = Math.ceil((services?.length || 0) / servicesPerPage);
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  };
-
   // Loading state
   if (isLoading) {
     return (
@@ -173,65 +151,15 @@ const ServicesSection = () => {
   }
 
   return (
-    <section id="services-section" className="py-24 relative overflow-hidden">
-      {/* Background Image with Overlay */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center bg-fixed"
-        style={{
-          backgroundImage: `url('https://images.unsplash.com/photo-1511578314322-379afb476865?w=1920&h=1080&fit=crop&crop=center')`,
-        }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-br from-white/95 via-gray-50/90 to-white/95" />
-      </div>
+    <section id="services-section" className="py-16 relative overflow-hidden bg-white">
+      {/* Clean gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-gray-50/30 to-white" />
+      
+      {/* Subtle decorative circles */}
+      <div className="absolute top-20 right-10 w-72 h-72 bg-[#f9a826]/5 rounded-full blur-3xl" />
+      <div className="absolute bottom-20 left-10 w-72 h-72 bg-[#284b63]/5 rounded-full blur-3xl" />
 
-      {/* Animated Background Pattern */}
-      <div className="absolute inset-0 opacity-10 pointer-events-none">
-        <motion.div
-          animate={{
-            backgroundPosition: ["0% 0%", "100% 100%"],
-          }}
-          transition={{
-            duration: 20,
-            repeat: Infinity,
-            repeatType: "reverse",
-          }}
-          className="absolute inset-0"
-          style={{
-            backgroundImage: 'radial-gradient(circle, #284b63 2px, transparent 2px)',
-            backgroundSize: '60px 60px'
-          }}
-        />
-      </div>
-
-      {/* Floating Elements */}
-      <div className="absolute inset-0 pointer-events-none">
-        <motion.div
-          animate={{ 
-            y: [0, -20, 0],
-            rotate: [0, 5, 0]
-          }}
-          transition={{ duration: 6, repeat: Infinity }}
-          className="absolute top-20 left-10 w-20 h-20 bg-gradient-to-br from-[#f9a826]/20 to-[#f7b733]/20 rounded-full blur-xl"
-        />
-        <motion.div
-          animate={{ 
-            y: [0, 15, 0],
-            rotate: [0, -3, 0]
-          }}
-          transition={{ duration: 8, repeat: Infinity }}
-          className="absolute top-40 right-20 w-32 h-32 bg-gradient-to-br from-[#3c6e71]/20 to-[#284b63]/20 rounded-full blur-xl"
-        />
-        <motion.div
-          animate={{ 
-            y: [0, -10, 0],
-            x: [0, 10, 0]
-          }}
-          transition={{ duration: 7, repeat: Infinity }}
-          className="absolute bottom-20 left-1/4 w-24 h-24 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full blur-xl"
-        />
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-20 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: -30 }}
@@ -267,8 +195,8 @@ const ServicesSection = () => {
           </motion.div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10">
-          {currentServices.map((service, index) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6 relative z-10">
+          {services.map((service, index) => (
             <motion.div
               key={service.category_id}
               initial={{ opacity: 0, y: 30 }}
@@ -279,11 +207,11 @@ const ServicesSection = () => {
                 delay: index * 0.1
               }}
               onClick={() => handleServiceClick(service)}
-              className="cursor-pointer group"
+              className="cursor-pointer group h-full"
             >
-              <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-2 border-gray-100 hover:border-[#f9a826]">
+              <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-2 border-gray-100 hover:border-[#f9a826] h-full flex flex-col">
                 {/* Image Section */}
-                <div className="relative h-56 overflow-hidden">
+                <div className="relative h-56 overflow-hidden flex-shrink-0">
                   <img
                     src={service.image}
                     alt={service.title}
@@ -293,19 +221,19 @@ const ServicesSection = () => {
                 </div>
 
                 {/* Content Section */}
-                <div className="p-6">
+                <div className="p-6 flex flex-col flex-grow">
                   <h3 className="text-2xl font-bold text-gray-800 mb-3 group-hover:text-[#284b63] transition-colors">
                     {service.title}
                   </h3>
                   
                   <div className="w-16 h-1 bg-gradient-to-r from-[#f9a826] to-[#f7b733] rounded-full mb-4" />
                   
-                  <p className="text-gray-600 text-sm leading-relaxed mb-6 line-clamp-3">
+                  <p className="text-gray-600 text-sm leading-relaxed mb-6 line-clamp-3 flex-grow">
                     {service.description}
                   </p>
 
                   {/* Explore Button */}
-                  <button className="w-full bg-gradient-to-r from-[#284b63] to-[#3c6e71] text-white py-3 px-6 rounded-xl font-semibold hover:from-[#3c6e71] hover:to-[#284b63] transition-all duration-300 flex items-center justify-center gap-2 group-hover:gap-3 shadow-md hover:shadow-lg">
+                  <button className="w-full bg-gradient-to-r from-[#284b63] to-[#3c6e71] text-white py-3 px-6 rounded-xl font-semibold hover:from-[#3c6e71] hover:to-[#284b63] transition-all duration-300 flex items-center justify-center gap-2 group-hover:gap-3 shadow-md hover:shadow-lg mt-auto">
                     Explore Services
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
@@ -316,53 +244,6 @@ const ServicesSection = () => {
             </motion.div>
           ))}
         </div>
-
-        {/* Pagination Controls */}
-        {totalPages > 1 && (
-          <div className="mt-16 flex items-center justify-center gap-4">
-            <button
-              onClick={handlePrevPage}
-              disabled={currentPage === 1}
-              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${currentPage === 1
-                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                : "bg-[#284b63] text-white hover:bg-[#3c6e71] shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                }`}
-            >
-              <ChevronLeftIcon className="w-5 h-5" />
-              Previous
-            </button>
-
-            <div className="flex items-center gap-2">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <button
-                  key={page}
-                  onClick={() => {
-                    setCurrentPage(page);
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                  className={`w-12 h-12 rounded-xl font-semibold transition-all duration-300 ${currentPage === page
-                    ? "bg-[#284b63] text-white shadow-lg"
-                    : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
-                    }`}
-                >
-                  {page}
-                </button>
-              ))}
-            </div>
-
-            <button
-              onClick={handleNextPage}
-              disabled={currentPage === totalPages}
-              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${currentPage === totalPages
-                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                : "bg-[#284b63] text-white hover:bg-[#3c6e71] shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                }`}
-            >
-              Next
-              <ChevronRightIcon className="w-5 h-5" />
-            </button>
-          </div>
-        )}
       </div>
     </section>
   );

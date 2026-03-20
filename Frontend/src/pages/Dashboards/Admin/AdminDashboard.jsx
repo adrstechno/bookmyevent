@@ -30,29 +30,13 @@ export default function AdminDashboard() {
     topVendors: []
   });
   const [loading, setLoading] = useState(true);
-  const [debugInfo, setDebugInfo] = useState(null);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
         
-        // console.log('🔍 Fetching admin dashboard data...');
-        // console.log('API Base URL:', import.meta.env.VITE_API_BASE_URL);
-        // console.log('Current user:', user);
-        
-        // Set debug info
-        setDebugInfo({
-          apiUrl: import.meta.env.VITE_API_BASE_URL,
-          user: user,
-          timestamp: new Date().toISOString()
-        });
-        
-        // Test authentication first
-        // console.log('Testing authentication...');
-        
         // Fetch all dashboard data
-        // console.log('Making API calls...');
         const [kpisResponse, activitiesResponse, analyticsResponse] = await Promise.all([
           adminService.getAdminKPIs().catch(err => {
             console.error('KPIs API error:', err);
@@ -68,55 +52,20 @@ export default function AdminDashboard() {
           })
         ]);
 
-        // console.log('📊 Admin KPIs response:', kpisResponse);
-        // console.log('📋 Admin activities response:', activitiesResponse);
-        // console.log('📈 Admin analytics response:', analyticsResponse);
-
-        // Update debug info with API responses
-        setDebugInfo(prev => ({
-          ...prev,
-          apiResponses: {
-            kpis: kpisResponse,
-            activities: activitiesResponse,
-            analytics: analyticsResponse
-          }
-        }));
-
         if (kpisResponse.success) {
-          // console.log('✅ Setting admin KPIs:', kpisResponse.data);
           setKpis(kpisResponse.data);
-        } else {
-          // console.log('❌ Admin KPIs request failed:', kpisResponse);
         }
 
         if (activitiesResponse.success) {
-          // console.log('✅ Setting admin activities:', activitiesResponse.data);
           setActivities(activitiesResponse.data);
-        } else {
-          // console.log('❌ Admin activities request failed:', activitiesResponse);
         }
 
         if (analyticsResponse.success) {
-          // console.log('✅ Setting admin analytics:', analyticsResponse.data);
           setAnalytics(analyticsResponse.data);
-        } else {
-          // console.log('❌ Admin analytics request failed:', analyticsResponse);
         }
 
       } catch (error) {
-        console.error('❌ Error fetching dashboard data:', error);
-        console.error('Error details:', error.response?.data);
-        console.error('Error status:', error.response?.status);
-        console.error('Error headers:', error.response?.headers);
-        
-        setDebugInfo(prev => ({
-          ...prev,
-          error: {
-            message: error.message,
-            status: error.response?.status,
-            data: error.response?.data
-          }
-        }));
+        console.error('Error fetching dashboard data:', error);
       } finally {
         setLoading(false);
       }
@@ -172,32 +121,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      {/* Debug Info (only show in development) */}
-      {import.meta.env.DEV && debugInfo && (
-        <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <h3 className="text-sm font-semibold text-yellow-800 mb-2">🔧 Debug Information</h3>
-          <div className="text-xs text-yellow-700">
-            <p><strong>API URL:</strong> {debugInfo.apiUrl}</p>
-            <p><strong>User Role:</strong> {debugInfo.user?.role}</p>
-            <p><strong>User ID:</strong> {debugInfo.user?.user_id}</p>
-            <p><strong>Timestamp:</strong> {debugInfo.timestamp}</p>
-            {debugInfo.error && (
-              <div className="mt-2 p-2 bg-red-100 rounded">
-                <p><strong>Error:</strong> {debugInfo.error.message}</p>
-                <p><strong>Status:</strong> {debugInfo.error.status}</p>
-              </div>
-            )}
-            {debugInfo.apiResponses && (
-              <div className="mt-2">
-                <p><strong>KPIs Success:</strong> {debugInfo.apiResponses.kpis?.success ? '✅' : '❌'}</p>
-                <p><strong>Activities Success:</strong> {debugInfo.apiResponses.activities?.success ? '✅' : '❌'}</p>
-                <p><strong>Analytics Success:</strong> {debugInfo.apiResponses.analytics?.success ? '✅' : '❌'}</p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-gray-900">
