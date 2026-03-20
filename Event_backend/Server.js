@@ -7,6 +7,7 @@ import helmet from 'helmet';
 import db from './Config/DatabaseCon.js';   
 import UserRouter from './Router/UserRouter.js';
 import ServiceRouter from './Router/ServiceROuter.js';
+import SubserviceRouter from './Router/SubserviceRouter.js';
 import VendorRouter from './Router/VendorRouter.js';
 import BookingRouter from './Router/BookingRouter.js';
 import adminroutes from './Router/adminRoute.js'
@@ -58,6 +59,7 @@ app.use(cors({
 // 🟢 Mount routers
 app.use('/User', UserRouter);
 app.use('/Service', ServiceRouter);
+app.use('/Subservice', SubserviceRouter);
 app.use('/Vendor', VendorRouter);
 app.use('/Booking', BookingRouter);
 app.use('/admin', adminroutes);

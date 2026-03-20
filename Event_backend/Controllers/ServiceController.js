@@ -1,4 +1,5 @@
 import ServiceModel from '../Models/ServiceModel.js';
+import SubserviceModel from '../Models/SubserviceModel.js';
 
 export const insertService = (req, res) => {
     const { category_name, description, is_active } = req.body;
@@ -151,77 +152,117 @@ export const deleteService = (req, res) => {
     });
 }
 
-    // function to create Subservices
-   export const  createSubservice = (req, res) => {
+// ============================================================================
+// SUBSERVICES - Now using normalized structure
+// ============================================================================
+
+/**
+ * Create Subservice (Normalized Structure)
+ * Uses SubserviceModel for normalized subservices_master + service_subservice_map
+ */
+export const createSubservice = async (req, res) => {
     try {
         const { service_category_ids, subservice_name, description, is_active } = req.body;
         const icon_url = req.file ? req.file.path : null;
 
-        // ✅ Validations
-        if (!Array.isArray(service_category_ids) || service_category_ids.length === 0) {
-            return res.status(400).json({ error: 'At least one service_category_id is required' });
+        // Validation
+        if (!service_category_ids || !Array.isArray(service_category_ids) || service_category_ids.length === 0) {
+            return res.status(400).json({ 
+                error: 'service_category_ids is required and must be a non-empty array' 
+            });
         }
 
         if (!subservice_name?.trim()) {
             return res.status(400).json({ error: 'subservice_name is required' });
         }
 
-        if (!description?.trim()) {
-            return res.status(400).json({ error: 'description is required' });
-        }
-
-        if (is_active === undefined || is_active === null) {
-            return res.status(400).json({ error: 'is_active is required' });
-        }
-
         if (!icon_url) {
-            return res.status(400).json({ error: 'subserviceIcon file is required' });
+            return res.status(400).json({ error: 'subservice icon file is required' });
         }
 
-        // ✅ Prepare data for bulk insert
-        const subserviceRows = service_category_ids.map(service_category_id => ([
-            service_category_id,
-            subservice_name,
-            description,
-            icon_url,
-            parseInt(is_active)
-        ]));
+        // Step 1: Create or get subservice from master table
+        const subserviceData = {
+            subservice_name: subservice_name.trim(),
+            description: description || null,
+            icon_url: icon_url,
+            is_active: is_active !== undefined ? is_active : 1
+        };
 
-        // ✅ Call model
-        ServiceModel.createSubservice(subserviceRows, (err, result) => {
-            if (err) {
-                console.error('❌ Error creating subservice:', err);
-                return res.status(500).json({
-                    error: 'Database insertion error',
-                    details: err.message
-                });
-            }
-
-            res.status(201).json({
-                message: 'Subservice created successfully',
-                insertedRows: result.affectedRows,
-                icon_url
+        const subserviceResult = await new Promise((resolve, reject) => {
+            SubserviceModel.createOrGetSubservice(subserviceData, (err, result) => {
+                if (err) reject(err);
+                else resolve(result);
             });
         });
 
-    } catch (error) {
-        console.error('❌ Server Error:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        console.log(`✅ Subservice ${subserviceResult.isNew ? 'created' : 'found'}:`, subserviceResult);
+
+        // Step 2: Create mappings for all selected service categories
+        const mappingPromises = service_category_ids.map(category_id => {
+            return new Promise((resolve, reject) => {
+                SubserviceModel.createServiceSubserviceMapping(
+                    category_id,
+                    subserviceResult.id,
+                    (err, result) => {
+                        if (err) reject(err);
+                        else resolve(result);
+                    }
+                );
+            });
+        });
+
+        await Promise.all(mappingPromises);
+
+        console.log(`✅ Created ${service_category_ids.length} mappings for subservice ID: ${subserviceResult.id}`);
+
+        res.status(201).json({
+            success: true,
+            message: subserviceResult.isNew 
+                ? 'Subservice created and mapped successfully'
+                : 'Existing subservice mapped to new categories',
+            subservice_id: subserviceResult.id,
+            subservice_name: subservice_name,
+            categories_mapped: service_category_ids.length,
+            icon_url: icon_url,
+            isNew: subserviceResult.isNew
+        });
+
+    } catch (err) {
+        console.error('❌ Error creating subservice:', err);
+        
+        // Handle duplicate key error
+        if (err.code === 'ER_DUP_ENTRY') {
+            return res.status(409).json({
+                error: 'Subservice with this name already exists',
+                details: err.message
+            });
+        }
+        
+        res.status(500).json({
+            error: 'Failed to create subservice',
+            details: err.message
+        });
     }
-
-
 }
 
+/**
+ * Get Subservices by Service Category ID
+ * Uses the restored subservices table with service_category_id column
+ */
 export const GetsubservicesByServiceCategoryId = (req, res) => {
     const { service_category_id } = req.params;
+    
     if (!service_category_id) {
         return res.status(400).json({ error: 'service_category_id is required' });
     }
+    
     ServiceModel.getsubservicesByServiceCategoryId(service_category_id, (err, results) => {
         if (err) {
-            console.error('Error fetching subservices:', err);
+            console.error('❌ Error fetching subservices:', err);
             return res.status(500).json({ error: 'Database retrieval error' });
         }
+        
+        console.log(`✅ Found ${results.length} subservices for category ${service_category_id}`);
         res.status(200).json(results);
     });
 }
