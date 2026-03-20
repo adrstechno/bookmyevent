@@ -9,6 +9,7 @@ const VendorSettings = () => {
   const [profile, setProfile] = useState({
     business_name: "",
     service_category_id: "",
+    subservice_id: "",
     description: "",
     years_experience: "",
     contact: "",
@@ -19,6 +20,7 @@ const VendorSettings = () => {
   });
 
   const [categories, setCategories] = useState([]);
+  const [subServices, setSubServices] = useState([]);
   const [errors, setErrors] = useState({});
   const [profileImage, setProfileImage] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -50,6 +52,36 @@ const VendorSettings = () => {
     fetchCategories().catch(console.error);
   }, []);
 
+  // ✅ Fetch sub-services when service category changes
+  useEffect(() => {
+    const fetchSubServices = async () => {
+      if (!profile.service_category_id) {
+        setSubServices([]);
+        setProfile(prev => ({ ...prev, subservice_id: "" }));
+        return;
+      }
+
+      try {
+        const res = await axios.get(
+          `${VITE_API_BASE_URL}/Service/GetSubservicesByServiceCategoryId/${profile.service_category_id}`,
+          { withCredentials: true }
+        );
+        
+        const data = res.data;
+        if (Array.isArray(data)) {
+          const activeSubServices = data.filter(s => s.is_active === 1);
+          setSubServices(activeSubServices);
+        }
+      } catch (err) {
+        console.error("Error fetching sub-services:", err);
+        toast.error("Failed to load sub-services.");
+        setSubServices([]);
+      }
+    };
+
+    fetchSubServices();
+  }, [profile.service_category_id]);
+
   // ✅ Fetch vendor profile or determine if new profile needed
   useEffect(() => {
     const fetchVendorProfile = async () => {
@@ -65,6 +97,7 @@ const VendorSettings = () => {
           setProfile({
             business_name: vendor.business_name || "",
             service_category_id: vendor.service_category_id || "",
+            subservice_id: vendor.subservice_id || "",
             description: vendor.description || "",
             years_experience: vendor.years_experience?.toString() || "",
             contact: vendor.contact || "",
@@ -347,6 +380,47 @@ const VendorSettings = () => {
             {errors.service_category_id && (
               <p className="text-red-500 text-sm mt-1">
                 {errors.service_category_id}
+              </p>
+            )}
+          </div>
+
+          {/* Sub-Services Dropdown */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">
+              Sub-Service
+            </label>
+            <select
+              name="subservice_id"
+              value={profile.subservice_id}
+              onChange={handleChange}
+              disabled={!profile.service_category_id || subServices.length === 0}
+              className={`w-full border ${
+                errors.subservice_id
+                  ? "border-red-500"
+                  : "border-gray-300"
+              } rounded-lg p-3 bg-white focus:outline-none focus:ring-2 focus:ring-[#3c6e71] disabled:bg-gray-100 disabled:cursor-not-allowed`}
+            >
+              <option value="">
+                {!profile.service_category_id 
+                  ? "-- Select Service Category First --" 
+                  : subServices.length === 0 
+                  ? "-- No Sub-Services Available --"
+                  : "-- Select Sub-Service --"}
+              </option>
+              {subServices.map((subService) => (
+                <option key={subService.subservice_id} value={subService.subservice_id}>
+                  {subService.subservice_name}
+                </option>
+              ))}
+            </select>
+            {errors.subservice_id && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.subservice_id}
+              </p>
+            )}
+            {profile.service_category_id && subServices.length === 0 && (
+              <p className="text-gray-500 text-sm mt-1">
+                No sub-services available for this category
               </p>
             )}
           </div>

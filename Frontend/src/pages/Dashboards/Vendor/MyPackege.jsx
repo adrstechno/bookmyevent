@@ -379,26 +379,43 @@ export default function MyPackage() {
   // Fetch Vendor Profile
   const fetchVendorProfile = async () => {
     try {
+      console.log("Fetching vendor profile...");
       const res = await axios.get(`${VITE_API_BASE_URL}/Vendor/getvendorById`, {
         withCredentials: true,
       });
 
+      console.log("Vendor profile response:", res.data);
+
       if (res.data?.vendor?.vendor_id) {
+        console.log("Vendor ID found:", res.data.vendor.vendor_id);
         setVendorId(res.data.vendor.vendor_id);
         return res.data.vendor.vendor_id;
+      } else {
+        console.log("No vendor_id in response");
+        toast.error("Vendor profile not found. Please complete your profile setup.");
       }
     } catch (e) {
       console.error("Error fetching vendor:", e);
-      toast.error("Failed to fetch vendor profile");
+      console.error("Error response:", e.response?.data);
+      
+      if (e.response?.status === 404) {
+        toast.error("Vendor profile not found. Please complete your profile setup first.");
+      } else {
+        toast.error("Failed to fetch vendor profile");
+      }
     }
     return null;
   };
 
   // Get All Packages
   const fetchPackages = async (vendor_id) => {
-    if (!vendor_id) return;
+    if (!vendor_id) {
+      console.log("No vendor_id provided to fetchPackages");
+      return;
+    }
 
     try {
+      console.log("Fetching packages for vendor_id:", vendor_id);
       setLoading(true);
       const res = await axios.get(
         `${VITE_API_BASE_URL}/Vendor/getAllVendorPackages`,
@@ -408,17 +425,22 @@ export default function MyPackage() {
         }
       );
 
+      console.log("Packages API response:", res.data);
+
       const data = res.data?.packages || [];
       setPackages(Array.isArray(data) ? data : []);
-      // console.log(data);
 
-
-      if (data.length === 0) toast('No packages found!', {
-        icon: '❗',
-      });
+      if (data.length === 0) {
+        toast('No packages found! Create your first package.', {
+          icon: '📦',
+        });
+      } else {
+        console.log(`Loaded ${data.length} packages`);
+      }
 
     } catch (e) {
       console.error("Fetch packages error:", e);
+      console.error("Error response:", e.response?.data);
       toast.error(
         e.response?.data?.message || "Failed to load packages"
       );
@@ -553,7 +575,14 @@ export default function MyPackage() {
   useEffect(() => {
     const init = async () => {
       const id = await fetchVendorProfile();
-      if (id) fetchPackages(id);
+      if (id) {
+        fetchPackages(id);
+      } else {
+        // Show message that vendor profile needs to be created first
+        toast.error("Please complete your vendor profile in Settings before creating packages.", {
+          duration: 5000,
+        });
+      }
     };
     init();
   }, []);
@@ -573,7 +602,11 @@ export default function MyPackage() {
 
           <button
             onClick={openCreate}
-            className="bg-white text-[#3c6e71] hover:bg-gray-100 font-semibold px-6 py-3 rounded-lg shadow-lg transition duration-200 flex items-center gap-2 hover:scale-105"
+            disabled={!vendorId}
+            className={`${
+              !vendorId ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 hover:scale-105'
+            } bg-white text-[#3c6e71] font-semibold px-6 py-3 rounded-lg shadow-lg transition duration-200 flex items-center gap-2`}
+            title={!vendorId ? 'Complete your profile first' : 'Create a new package'}
           >
             <AiOutlinePlus className="text-xl" /> Create Package
           </button>
@@ -590,8 +623,22 @@ export default function MyPackage() {
           ) : packages.length === 0 ? (
             <div className="text-center py-20">
               <FiPackage className="mx-auto text-6xl text-gray-300 mb-4" />
-              <p className="text-gray-500 text-lg">No packages found</p>
-              <p className="text-gray-400 text-sm mt-2">Create your first package</p>
+              <p className="text-gray-500 text-lg font-semibold">No packages found</p>
+              {!vendorId ? (
+                <div className="mt-4">
+                  <p className="text-gray-600 text-sm mb-4">
+                    You need to complete your vendor profile first before creating packages.
+                  </p>
+                  <button
+                    onClick={() => window.location.href = '/vendor/settings'}
+                    className="bg-[#3c6e71] hover:bg-[#284b63] text-white font-semibold px-6 py-3 rounded-lg shadow-lg transition duration-200"
+                  >
+                    Go to Settings
+                  </button>
+                </div>
+              ) : (
+                <p className="text-gray-400 text-sm mt-2">Create your first package to get started</p>
+              )}
             </div>
           ) : (
             <div className="overflow-x-auto">

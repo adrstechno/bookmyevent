@@ -58,24 +58,26 @@ class VendorModel {
   }
 
   static findVendorID(decodedUserID, callback) {
+    // decodedUserID is the uuid from JWT token
+    // vendor_profiles.user_id stores the uuid (string)
     const sql = `
       SELECT vp.vendor_id
       FROM vendor_profiles vp
-      LEFT JOIN users u ON (vp.user_id = u.user_id OR vp.user_id = u.uuid)
-      WHERE u.uuid = ? OR vp.user_id = ?
+      WHERE vp.user_id = ?
     `;
-    // Try to match either by users.uuid or by vendor_profiles.user_id directly
-    db.query(sql, [decodedUserID, decodedUserID], callback);
+    db.query(sql, [decodedUserID], callback);
   }
 
   static findVendor(decodedUserID, callback) {
+    // decodedUserID is the uuid from JWT token
+    // vendor_profiles.user_id stores the uuid (string)
+    // We need to match vendor_profiles.user_id directly with the uuid
     const sql = `
       SELECT vp.*
       FROM vendor_profiles vp
-      LEFT JOIN users u ON (vp.user_id = u.user_id OR vp.user_id = u.uuid)
-      WHERE u.uuid = ? OR vp.user_id = ?
+      WHERE vp.user_id = ?
     `;
-    db.query(sql, [decodedUserID, decodedUserID], callback);
+    db.query(sql, [decodedUserID], callback);
   }
 
   static updateVendor(vendor_id, data, callback) {
