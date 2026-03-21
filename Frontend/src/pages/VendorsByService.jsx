@@ -118,9 +118,21 @@ const VendorsByService = () => {
   const fetchFreeVendorsByDate = async (dateObj) => {
     const formattedDate = dateObj.toISOString().split("T")[0];
 
+    // Build query params based on available context
+    let queryParams = `date=${formattedDate}`;
+    
+    // Add subservice_id if available (most specific)
+    if (subServiceId) {
+      queryParams += `&subservice_id=${subServiceId}`;
+    } 
+    // Otherwise add service_id (category level)
+    else if (serviceId) {
+      queryParams += `&service_id=${serviceId}`;
+    }
+
     await fetchVendors(
       () => fetch(
-        `${VITE_API_BASE_URL}/Vendor/getFreeVendorsByDay?date=${formattedDate}&service_id=${serviceId}`
+        `${VITE_API_BASE_URL}/Vendor/getFreeVendorsByDay?${queryParams}`
       ).then(res => {
         if (!res.ok) throw new Error("Failed to fetch available vendors");
         return res.json().then(data => ({ data: data.vendors || [] }));

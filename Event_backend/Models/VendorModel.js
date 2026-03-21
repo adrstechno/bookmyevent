@@ -276,6 +276,18 @@ static findVendorsByDayAndService(day, service_category_id, callback) {
   db.query(sql, [`"${day}"`, service_category_id], callback);
 }
 
+static findVendorsByDayAndSubservice(day, subservice_id, callback) {
+  const sql = `
+    SELECT DISTINCT vs.vendor_id
+    FROM vendor_shifts vs
+    JOIN vendor_profiles vp ON vs.vendor_id = vp.vendor_id
+    WHERE JSON_CONTAINS(vs.days_of_week, ?, "$")
+      AND vp.subservice_id = ?
+  `;
+
+  db.query(sql, [`"${day}"`, subservice_id], callback);
+}
+
   static getTotalSales(vendor_id, callback) {
     const sql = `
       SELECT IFNULL(SUM(vp.amount), 0) AS total_sales

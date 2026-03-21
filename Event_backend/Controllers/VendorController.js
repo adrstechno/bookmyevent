@@ -702,14 +702,10 @@ export const getvendorsByServiceId = (req, res) => {
 
 export const getFreeVendorsByDay = async (req, res) => {
   try {
-    const { date, service_id } = req.query;
+    const { date, service_id, subservice_id } = req.query;
 
     if (!date) {
       return res.status(400).json({ message: "Date query param is required" });
-    }
-
-    if (!service_id) {
-      return res.status(400).json({ message: "service_id query param is required" });
     }
 
     // Full day names
@@ -724,24 +720,46 @@ export const getFreeVendorsByDay = async (req, res) => {
     ];
     const day = dayNames[new Date(date).getDay()];
 
-    // console.log("Fetching free vendors for day:", day, "and service:", service_id);
+    let vendorIds = [];
 
-    // Step 1 — Get vendor IDs who match both
-    const vendorIds = await new Promise((resolve, reject) => {
-      VendorModel.findVendorsByDayAndService(day, service_id, (err, result) => {
-        if (err) return reject(err);
-        resolve(result.map(r => r.vendor_id));
+    // If subservice_id is provided, filter by subservice
+    if (subservice_id) {
+      // Get vendors by subservice and day
+      vendorIds = await new Promise((resolve, reject) => {
+        VendorModel.findVendorsByDayAndSubservice(day, subservice_id, (err, result) => {
+          if (err) return reject(err);
+          resolve(result.map(r => r.vendor_id));
+        });
       });
-    });
+    } 
+    // If only service_id is provided, filter by service category
+    else if (service_id) {
+      // Get vendors by service category and day
+      vendorIds = await new Promise((resolve, reject) => {
+        VendorModel.findVendorsByDayAndService(day, service_id, (err, result) => {
+          if (err) return reject(err);
+          resolve(result.map(r => r.vendor_id));
+        });
+      });
+    }
+    // If neither is provided, get all vendors available on that day
+    else {
+      vendorIds = await new Promise((resolve, reject) => {
+        VendorModel.findVendorsByDay(day, (err, result) => {
+          if (err) return reject(err);
+          resolve(result.map(r => r.vendor_id));
+        });
+      });
+    }
 
     if (!vendorIds || vendorIds.length === 0) {
       return res.status(200).json({
-        message: "No vendors available for this day and service",
+        message: "No vendors available for this day",
         vendors: []
       });
     }
 
-    // Step 2 — Get vendor details
+    // Get vendor details
     const vendors = await new Promise((resolve, reject) => {
       VendorModel.getVendorsByIds(vendorIds, (err, result) => {
         if (err) return reject(err);
