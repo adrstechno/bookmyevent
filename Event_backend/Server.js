@@ -23,9 +23,28 @@ import SubscriptionRouter from './Router/SubscriptionRoute.js';
 import SubscriptionCronJobs from './Utils/subscriptionCronJobs.js';
 
 import TestRouter from './Router/TestRouter.js';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
+// Get the directory name of the current module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-dotenv.config();
+// Load .env file from the same directory as Server.js
+dotenv.config({ path: join(__dirname, '.env') });
+
+// Verify critical environment variables are loaded
+const requiredEnvVars = ['JWT_SECRET', 'PORT', 'Cloudnary_CLOUD_NAME', 'Cloudnary_API_KEY', 'Cloudnary_API_SECRET'];
+const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+
+if (missingVars.length > 0) {
+  console.error('❌ Missing required environment variables:', missingVars.join(', '));
+  console.error('❌ Server cannot start without these variables. Please check your .env file.');
+  process.exit(1);
+}
+
+console.log('✅ Environment variables loaded successfully');
+console.log('✅ Server starting on port:', process.env.PORT);
 
 const app = express();
 
