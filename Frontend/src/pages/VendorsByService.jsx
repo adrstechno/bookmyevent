@@ -158,7 +158,7 @@ const VendorsByService = () => {
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -8 }}
       onClick={() => navigate(`/vendor/${vendor.vendor_id}`)}
-      className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden cursor-pointer group relative"
+      className="h-full flex flex-col bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden cursor-pointer group relative"
     >
       {vendor.is_verified === 1 && (
         <div className="absolute top-3 sm:top-4 right-3 sm:right-4 z-20 bg-green-500 text-white p-1.5 sm:p-2 rounded-full shadow-lg">
@@ -181,7 +181,7 @@ const VendorsByService = () => {
         </div>
       </div>
 
-      <div className="p-4 sm:p-5 lg:p-6">
+      <div className="p-4 sm:p-5 lg:p-6 flex flex-col flex-grow">
         {vendor.years_experience && (
           <div className="flex items-center gap-2 mb-2 sm:mb-3 text-[#f9a826] font-semibold">
             <FiCalendar className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -192,7 +192,7 @@ const VendorsByService = () => {
         )}
 
         {vendor.description && (
-          <p className="text-gray-600 text-xs sm:text-sm mb-3 sm:mb-4 line-clamp-2">
+          <p className="text-gray-600 text-xs sm:text-sm mb-3 sm:mb-4 line-clamp-2 flex-grow">
             {vendor.description}
           </p>
         )}
@@ -213,7 +213,7 @@ const VendorsByService = () => {
           </div>
         )}
 
-        <button className="w-full py-2.5 sm:py-3 bg-gradient-to-r from-[#284b63] to-[#3c6e71] text-white rounded-lg hover:from-[#3c6e71] hover:to-[#284b63] transition-all duration-300 font-semibold shadow-md hover:shadow-lg text-sm sm:text-base">
+        <button className="w-full py-2.5 sm:py-3 bg-gradient-to-r from-[#284b63] to-[#3c6e71] text-white rounded-lg hover:from-[#3c6e71] hover:to-[#284b63] transition-all duration-300 font-semibold shadow-md hover:shadow-lg text-sm sm:text-base mt-auto">
           <span className="hidden sm:inline">View Details & Book</span>
           <span className="sm:hidden">View & Book</span>
         </button>
@@ -324,7 +324,7 @@ const VendorsByService = () => {
             : "bg-white text-[#284b63] hover:bg-gray-100"
             }`}
         >
-          By Category
+          By Service
         </button>
 
         <button

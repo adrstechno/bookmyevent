@@ -65,11 +65,6 @@ const SubServicesSection = () => {
         }
 
         const data = await response.json();
-        console.log("Sub-services API response:", data);
-        if (data.length > 0) {
-          console.log("First sub-service object:", data[0]);
-          console.log("Available keys:", Object.keys(data[0]));
-        }
         return { data: data.filter(s => s.is_active === 1) };
       }, {
         emptyMessage: "No sub-services available for this category",
@@ -81,12 +76,7 @@ const SubServicesSection = () => {
   };
 
   const handleSubServiceClick = (subService) => {
-    console.log("Clicked sub-service:", subService);
-    console.log("Available fields:", Object.keys(subService));
-    
-    // Try different possible ID field names
     const subServiceId = subService.subservice_id || subService.id || subService.subservices_id;
-    console.log("Using sub-service ID:", subServiceId);
     
     const category = categories.find(c => c.category_id === selectedCategory);
     navigate(`/vendors/${selectedCategory}/${subServiceId}`, {

@@ -166,11 +166,11 @@ const SubServicesPage = () => {
                 delay: index * 0.1
               }}
               onClick={() => handleSubServiceClick(subService)}
-              className="cursor-pointer group"
+              className="cursor-pointer group h-full"
             >
-              <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-2 border-gray-100 hover:border-[#f9a826]">
+              <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-2 border-gray-100 hover:border-[#f9a826] h-full flex flex-col">
                 {/* Image Section */}
-                <div className="relative h-56 overflow-hidden bg-gray-200">
+                <div className="relative h-56 overflow-hidden bg-gray-200 flex-shrink-0">
                   {subService.icon_url ? (
                     <img
                       src={subService.icon_url}
@@ -194,19 +194,19 @@ const SubServicesPage = () => {
                 </div>
 
                 {/* Content Section */}
-                <div className="p-6">
-                  <h3 className="text-2xl font-bold text-gray-800 mb-3 group-hover:text-[#284b63] transition-colors">
+                <div className="p-6 flex flex-col flex-grow">
+                  <h3 className="text-2xl font-bold text-gray-800 mb-3 group-hover:text-[#284b63] transition-colors line-clamp-2">
                     {subService.subservice_name}
                   </h3>
                   
                   <div className="w-16 h-1 bg-gradient-to-r from-[#f9a826] to-[#f7b733] rounded-full mb-4" />
                   
-                  <p className="text-gray-600 text-sm leading-relaxed mb-6 line-clamp-3">
+                  <p className="text-gray-600 text-sm leading-relaxed mb-6 line-clamp-3 flex-grow">
                     {subService.description || "Explore vendors offering this service"}
                   </p>
 
                   {/* Explore Button */}
-                  <button className="w-full bg-gradient-to-r from-[#284b63] to-[#3c6e71] text-white py-3 px-6 rounded-xl font-semibold hover:from-[#3c6e71] hover:to-[#284b63] transition-all duration-300 flex items-center justify-center gap-2 group-hover:gap-3 shadow-md hover:shadow-lg">
+                  <button className="w-full bg-gradient-to-r from-[#284b63] to-[#3c6e71] text-white py-3 px-6 rounded-xl font-semibold hover:from-[#3c6e71] hover:to-[#284b63] transition-all duration-300 flex items-center justify-center gap-2 group-hover:gap-3 shadow-md hover:shadow-lg mt-auto">
                     View Vendors
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />

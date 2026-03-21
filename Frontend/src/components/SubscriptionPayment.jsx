@@ -7,13 +7,16 @@ import subscriptionService from "../services/subscriptionService";
 const SubscriptionPayment = ({ onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [orderData, setOrderData] = useState(null);
+  const [couponCode, setCouponCode] = useState("");
+  const [couponApplied, setCouponApplied] = useState(false);
+  const [couponError, setCouponError] = useState("");
 
   const SUBSCRIPTION_DETAILS = {
-    // 🧪 TESTING MODE: ₹1 for demo/testing (change back to 999 for production)
-    amount: 1, // FOR TESTING ONLY
-    // amount: 999, // USE THIS FOR PRODUCTION
+    originalAmount: 999,
+    discountedAmount: 499,
     currency: "INR",
     period: "Annual",
+    validCoupon: "welcome546goeventify",
     features: [
       "Accept unlimited bookings",
       "Manage your calendar and shifts",
@@ -22,6 +25,34 @@ const SubscriptionPayment = ({ onClose, onSuccess }) => {
       "Customer reviews and ratings",
       "24/7 customer support",
     ],
+  };
+
+  const finalAmount = couponApplied 
+    ? SUBSCRIPTION_DETAILS.discountedAmount 
+    : SUBSCRIPTION_DETAILS.originalAmount;
+
+  const applyCoupon = () => {
+    setCouponError("");
+    
+    if (!couponCode.trim()) {
+      setCouponError("Please enter a coupon code");
+      return;
+    }
+
+    if (couponCode.trim().toLowerCase() === SUBSCRIPTION_DETAILS.validCoupon.toLowerCase()) {
+      setCouponApplied(true);
+      toast.success(`🎉 Coupon applied! You saved ₹${SUBSCRIPTION_DETAILS.originalAmount - SUBSCRIPTION_DETAILS.discountedAmount}`);
+    } else {
+      setCouponError("Invalid coupon code");
+      toast.error("Invalid coupon code");
+    }
+  };
+
+  const removeCoupon = () => {
+    setCouponCode("");
+    setCouponApplied(false);
+    setCouponError("");
+    toast.success("Coupon removed");
   };
 
   // Load Razorpay script
@@ -149,16 +180,75 @@ const SubscriptionPayment = ({ onClose, onSuccess }) => {
           {/* Pricing Card */}
           <div className="bg-gradient-to-br from-[#f9a826]/10 to-[#f9a826]/5 border-2 border-[#f9a826] rounded-xl p-6 mb-6">
             <div className="text-center mb-4">
+              {couponApplied && (
+                <div className="text-gray-500 line-through text-2xl mb-2">
+                  ₹{SUBSCRIPTION_DETAILS.originalAmount}
+                </div>
+              )}
               <div className="text-5xl font-bold text-[#284b63]">
-                ₹{SUBSCRIPTION_DETAILS.amount}
+                ₹{finalAmount}
               </div>
               <div className="text-gray-600 mt-2">per year</div>
+              {couponApplied && (
+                <div className="mt-3 inline-block bg-green-100 text-green-700 px-4 py-2 rounded-full text-sm font-semibold">
+                  🎉 You saved ₹{SUBSCRIPTION_DETAILS.originalAmount - SUBSCRIPTION_DETAILS.discountedAmount}!
+                </div>
+              )}
             </div>
 
             <div className="flex items-center justify-center gap-2 text-sm text-gray-600 mb-4">
               <FiClock className="text-[#f9a826]" />
               <span>Valid for 365 days</span>
             </div>
+          </div>
+
+          {/* Coupon Code Section */}
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Have a coupon code?
+            </label>
+            {!couponApplied ? (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={couponCode}
+                  onChange={(e) => {
+                    setCouponCode(e.target.value);
+                    setCouponError("");
+                  }}
+                  placeholder="Enter coupon code"
+                  className={`flex-1 px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#f9a826] ${
+                    couponError ? "border-red-500" : "border-gray-300"
+                  }`}
+                  disabled={loading}
+                />
+                <button
+                  onClick={applyCoupon}
+                  disabled={loading || !couponCode.trim()}
+                  className="px-6 py-3 bg-[#284b63] text-white font-semibold rounded-lg hover:bg-[#3c6e71] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Apply
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between bg-green-50 border-2 border-green-500 rounded-lg px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <FiCheck className="text-green-600 text-xl" />
+                  <span className="font-semibold text-green-700">
+                    {couponCode.toUpperCase()}
+                  </span>
+                </div>
+                <button
+                  onClick={removeCoupon}
+                  className="text-red-600 hover:text-red-700 font-semibold text-sm"
+                >
+                  Remove
+                </button>
+              </div>
+            )}
+            {couponError && (
+              <p className="text-red-500 text-sm mt-2">{couponError}</p>
+            )}
           </div>
 
           {/* Features */}
@@ -207,7 +297,7 @@ const SubscriptionPayment = ({ onClose, onSuccess }) => {
             ) : (
               <>
                 <FiCreditCard className="text-xl" />
-                Pay ₹{SUBSCRIPTION_DETAILS.amount} & Activate
+                Pay ₹{finalAmount} & Activate
               </>
             )}
           </button>

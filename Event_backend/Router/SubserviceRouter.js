@@ -7,6 +7,7 @@ import {
   getSubserviceById,
   updateSubservice,
   deleteServiceSubserviceMapping,
+  addCategoryToSubservice,
   searchSubservices,
   getCategoriesBySubservice
 } from '../Controllers/SubserviceController.js';
@@ -58,11 +59,19 @@ router.put('/:subservice_id', upload.single('icon_url'), updateSubservice);
 
 /**
  * @route   DELETE /api/subservices/mapping
- * @desc    Delete service-subservice mapping
+ * @desc    Remove category from subservice's category_ids array
  * @access  Admin
  * @body    { service_category_id, subservice_id }
  */
 router.delete('/mapping', deleteServiceSubserviceMapping);
+
+/**
+ * @route   POST /api/subservices/add-category
+ * @desc    Add category to subservice's category_ids array
+ * @access  Admin
+ * @body    { service_category_id, subservice_id }
+ */
+router.post('/add-category', addCategoryToSubservice);
 
 /**
  * @route   GET /api/subservices/search

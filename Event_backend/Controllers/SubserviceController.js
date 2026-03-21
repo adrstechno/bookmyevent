@@ -1,11 +1,10 @@
 import SubserviceModel from "../Models/SubserviceModel.js";
 
 /**
- * Create Subservice (Normalized Structure)
+ * Create Subservice (with category_ids JSON array)
  * - Checks if subservice exists in subservices_master
- * - If exists: reuses existing ID
- * - If new: creates new entry
- * - Creates mappings in service_subservice_map for all selected categories
+ * - If exists: merges category_ids
+ * - If new: creates new entry with category_ids array
  */
 export const createSubservice = async (req, res) => {
   try {
@@ -27,12 +26,13 @@ export const createSubservice = async (req, res) => {
       return res.status(400).json({ error: 'subservice icon file is required' });
     }
 
-    // Step 1: Create or get subservice from master table
+    // Create or update subservice with category_ids
     const subserviceData = {
       subservice_name: subservice_name.trim(),
       description: description || null,
       icon_url: icon_url,
-      is_active: is_active !== undefined ? is_active : 1
+      is_active: is_active !== undefined ? is_active : 1,
+      category_ids: service_category_ids
     };
 
     const subserviceResult = await new Promise((resolve, reject) => {
@@ -42,34 +42,16 @@ export const createSubservice = async (req, res) => {
       });
     });
 
-    console.log(`✅ Subservice ${subserviceResult.isNew ? 'created' : 'found'}:`, subserviceResult);
-
-    // Step 2: Create mappings for all selected service categories
-    const mappingPromises = service_category_ids.map(category_id => {
-      return new Promise((resolve, reject) => {
-        SubserviceModel.createServiceSubserviceMapping(
-          category_id,
-          subserviceResult.id,
-          (err, result) => {
-            if (err) reject(err);
-            else resolve(result);
-          }
-        );
-      });
-    });
-
-    await Promise.all(mappingPromises);
-
-    console.log(`✅ Created ${service_category_ids.length} mappings for subservice ID: ${subserviceResult.id}`);
+    console.log(`✅ Subservice ${subserviceResult.isNew ? 'created' : 'updated'}:`, subserviceResult);
 
     res.status(201).json({
       success: true,
       message: subserviceResult.isNew 
-        ? 'Subservice created and mapped successfully'
-        : 'Existing subservice mapped to new categories',
+        ? 'Subservice created successfully'
+        : 'Subservice updated with new categories',
       subservice_id: subserviceResult.id,
       subservice_name: subservice_name,
-      categories_mapped: service_category_ids.length,
+      category_ids: subserviceResult.category_ids,
       icon_url: icon_url,
       isNew: subserviceResult.isNew
     });
@@ -248,7 +230,7 @@ export const updateSubservice = (req, res) => {
 
 /**
  * Delete Service-Subservice Mapping
- * (Removes mapping but keeps subservice in master table)
+ * (Removes category_id from the category_ids JSON array)
  */
 export const deleteServiceSubserviceMapping = (req, res) => {
   try {
@@ -260,31 +242,69 @@ export const deleteServiceSubserviceMapping = (req, res) => {
       });
     }
 
-    SubserviceModel.deleteServiceSubserviceMapping(
-      service_category_id,
+    SubserviceModel.removeCategoryFromSubservice(
       subservice_id,
+      service_category_id,
       (err, result) => {
         if (err) {
-          console.error('❌ Error deleting mapping:', err);
+          console.error('❌ Error removing category:', err);
           return res.status(500).json({ 
-            error: 'Failed to delete mapping',
+            error: 'Failed to remove category',
             details: err.message 
           });
         }
 
-        if (result.affectedRows === 0) {
-          return res.status(404).json({ error: 'Mapping not found' });
-        }
-
         res.status(200).json({
           success: true,
-          message: 'Service-subservice mapping deleted successfully'
+          message: 'Category removed from subservice successfully'
         });
       }
     );
 
   } catch (err) {
     console.error('❌ Error in deleteServiceSubserviceMapping:', err);
+    res.status(500).json({ 
+      error: 'Server error',
+      details: err.message 
+    });
+  }
+};
+
+/**
+ * Add Category to Subservice
+ * Adds a category_id to the subservice's category_ids array
+ */
+export const addCategoryToSubservice = (req, res) => {
+  try {
+    const { service_category_id, subservice_id } = req.body;
+
+    if (!service_category_id || !subservice_id) {
+      return res.status(400).json({ 
+        error: 'service_category_id and subservice_id are required' 
+      });
+    }
+
+    SubserviceModel.addCategoryToSubservice(
+      subservice_id,
+      service_category_id,
+      (err, result) => {
+        if (err) {
+          console.error('❌ Error adding category:', err);
+          return res.status(500).json({ 
+            error: 'Failed to add category',
+            details: err.message 
+          });
+        }
+
+        res.status(200).json({
+          success: true,
+          message: 'Category added to subservice successfully'
+        });
+      }
+    );
+
+  } catch (err) {
+    console.error('❌ Error in addCategoryToSubservice:', err);
     res.status(500).json({ 
       error: 'Server error',
       details: err.message 

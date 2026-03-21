@@ -86,6 +86,7 @@ class VendorModel {
     const allowedFields = [
       "business_name",
       "service_category_id",
+      "subservice_id",
       "description",
       "years_experience",
       "contact",
@@ -327,7 +328,7 @@ static findVendorsByDayAndService(day, service_category_id, callback) {
   }
 
   static getVendorBysubserviceId(subservice_id, callback) {
-    const sql = "select * from vendor_profiles where subservice_id = ?";
+    const sql = "SELECT * FROM vendor_profiles WHERE subservice_id = ?";
     db.query(sql, [subservice_id], callback);
   } 
 

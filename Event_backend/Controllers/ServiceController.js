@@ -195,8 +195,6 @@ export const createSubservice = async (req, res) => {
             });
         });
 
-        console.log(`✅ Subservice ${subserviceResult.isNew ? 'created' : 'found'}:`, subserviceResult);
-
         // Step 2: Create mappings for all selected service categories
         const mappingPromises = service_category_ids.map(category_id => {
             return new Promise((resolve, reject) => {
@@ -213,8 +211,6 @@ export const createSubservice = async (req, res) => {
 
         await Promise.all(mappingPromises);
 
-        console.log(`✅ Created ${service_category_ids.length} mappings for subservice ID: ${subserviceResult.id}`);
-
         res.status(201).json({
             success: true,
             message: subserviceResult.isNew 
@@ -228,7 +224,7 @@ export const createSubservice = async (req, res) => {
         });
 
     } catch (err) {
-        console.error('❌ Error creating subservice:', err);
+        console.error('Error creating subservice:', err);
         
         // Handle duplicate key error
         if (err.code === 'ER_DUP_ENTRY') {
@@ -247,7 +243,7 @@ export const createSubservice = async (req, res) => {
 
 /**
  * Get Subservices by Service Category ID
- * Uses the restored subservices table with service_category_id column
+ * Uses ONLY the new normalized structure (subservices_master with category_ids JSON)
  */
 export const GetsubservicesByServiceCategoryId = (req, res) => {
     const { service_category_id } = req.params;
@@ -256,14 +252,17 @@ export const GetsubservicesByServiceCategoryId = (req, res) => {
         return res.status(400).json({ error: 'service_category_id is required' });
     }
     
-    ServiceModel.getsubservicesByServiceCategoryId(service_category_id, (err, results) => {
+    // Use new normalized structure with subservices_master
+    SubserviceModel.getSubservicesByCategory(service_category_id, (err, results) => {
         if (err) {
-            console.error('❌ Error fetching subservices:', err);
-            return res.status(500).json({ error: 'Database retrieval error' });
+            console.error('Error fetching subservices:', err);
+            return res.status(500).json({ 
+                error: 'Failed to fetch subservices',
+                details: err.message 
+            });
         }
         
-        console.log(`✅ Found ${results.length} subservices for category ${service_category_id}`);
-        res.status(200).json(results);
+        return res.status(200).json(results || []);
     });
 }
 

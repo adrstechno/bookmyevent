@@ -125,7 +125,7 @@ export const AddEventImages = async (req, res) => {
       results,
     });
   } catch (err) {
-    console.error("❌ Error adding event images:", err);
+    console.error("Error adding event images:", err);
     return res.status(500).json({
       message: "Error adding event images",
       error: err.message,
@@ -160,7 +160,6 @@ export const getvendorById = async (req, res) => {
     const token = req.cookies.auth_token;
 
     if (!token) {
-      console.log("❌ No auth token provided");
       return res
         .status(401)
         .json({ message: "Unauthorized: No token provided" });
@@ -168,34 +167,27 @@ export const getvendorById = async (req, res) => {
 
     const decoded = verifyToken(token);
     if (!decoded) {
-      console.log("❌ Invalid token");
       return res.status(401).json({ message: "Unauthorized: Invalid token" });
     }
-
-    console.log("✅ Token decoded, userId (uuid):", decoded.userId);
 
     const vendor = await new Promise((resolve, reject) => {
       VendorModel.findVendor(decoded.userId, (err, result) => {
         if (err) {
-          console.error("❌ Database error fetching vendor:", err);
+          console.error("Database error fetching vendor:", err);
           reject(err);
         } else {
-          console.log("📊 Query result:", result ? `Found ${result.length} vendor(s)` : "No results");
           resolve(result && result.length > 0 ? result[0] : null);
         }
       });
     });
 
     if (!vendor) {
-      console.log("❌ Vendor not found for userId:", decoded.userId);
       return res.status(404).json({ message: "Vendor not found" });
     }
 
-    console.log("✅ Vendor found, vendor_id:", vendor.vendor_id);
-    // Return vendor wrapped in vendor object for consistency
     res.status(200).json({ vendor: vendor });
   } catch (error) {
-    console.error("❌ Error in getvendorById:", error);
+    console.error("Error in getvendorById:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
@@ -550,36 +542,28 @@ export const insertVendorPackage = (req, res) => {
     const token = req.cookies.auth_token;
 
     if (!token) {
-      console.log("❌ insertVendorPackage: No token provided");
       return res.status(401).json({ message: "Unauthorized: No token provided" });
     }
 
     const decoded = verifyToken(token);
     if (!decoded) {
-      console.log("❌ insertVendorPackage: Invalid token");
       return res.status(401).json({ message: "Unauthorized: Invalid token" });
     }
 
     const userId = decoded.userId;
-    console.log("✅ insertVendorPackage: Token decoded, userId (uuid):", userId);
 
     // Find vendor ID and handle insertion in callback
     VendorModel.findVendorID(userId, (err, result) => {
       if (err) {
-        console.error("❌ insertVendorPackage: Database error finding vendor:", err);
+        console.error("Database error finding vendor:", err);
         return res.status(500).json({ message: "Error finding vendor", error: err });
       }
 
-      console.log("📊 insertVendorPackage: Query result:", result);
-
       if (!result || result.length === 0) {
-        console.log("❌ insertVendorPackage: Vendor not found for userId:", userId);
         return res.status(404).json({ message: "Vendor not found. Please complete your vendor profile first." });
       }
 
       const vendor_id = result[0].vendor_id;
-      console.log("✅ insertVendorPackage: Vendor found, vendor_id:", vendor_id);
-
       const package_uuid = uuidv4();
 
       const packageData = {
@@ -590,15 +574,12 @@ export const insertVendorPackage = (req, res) => {
         amount: data.amount,
       };
 
-      console.log("📦 insertVendorPackage: Inserting package:", packageData);
-
       VendorModel.insertVendorPackage(packageData, (err, result) => {
         if (err) {
-          console.error("❌ insertVendorPackage: Error inserting package:", err);
+          console.error("Error inserting package:", err);
           return res.status(500).json({ message: "Error inserting vendor package", error: err });
         }
 
-        console.log("✅ insertVendorPackage: Package inserted successfully, ID:", result.insertId);
         return res.status(200).json({
           message: "Vendor package inserted successfully",
           packageId: result.insertId
@@ -606,7 +587,7 @@ export const insertVendorPackage = (req, res) => {
       });
     });
   } catch (err) {
-    console.error("❌ insertVendorPackage: Unexpected error:", err);
+    console.error("Unexpected error in insertVendorPackage:", err);
     return res.status(500).json({ error: "Server error", details: err.message });
   }
 };
