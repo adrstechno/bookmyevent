@@ -161,8 +161,8 @@ const ServicesByCategory = () => {
                 </p>
               </motion.div>
 
-              {/* Services Grid - Fixed card sizing to prevent shrinking */}
-              <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 sm:gap-6">
+              {/* Services Grid - Optimized for all screen sizes */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 13inch:grid-cols-4 14inch:grid-cols-4 15inch:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
                 {subServices.map((service, index) => (
                   <motion.div
                     key={service.subservice_id}

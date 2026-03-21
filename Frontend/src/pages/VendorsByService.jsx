@@ -464,8 +464,8 @@ const VendorsByService = () => {
                 </p>
               </motion.div>
 
-              {/* Vendor Cards Grid - Fixed sizing to prevent shrinking */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6 lg:gap-8 auto-rows-fr">
+              {/* Vendor Cards Grid - Optimized for all screen sizes */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 13inch:grid-cols-4 14inch:grid-cols-4 15inch:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6 lg:gap-8 auto-rows-fr">
                 {currentVendors.map((v, i) => renderVendorCard(v, i))}
               </div>
 

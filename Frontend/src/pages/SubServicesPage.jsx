@@ -153,9 +153,9 @@ const SubServicesPage = () => {
         </div>
       </div>
 
-      {/* Sub-Services Grid */}
+      {/* Sub-Services Grid - Optimized for all screen sizes */}
       <div className="max-w-[1920px] mx-auto px-6 py-16">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 13inch:grid-cols-4 14inch:grid-cols-4 15inch:grid-cols-4 xl:grid-cols-5 gap-8">
           {subServices.map((subService, index) => (
             <motion.div
               key={subService.sub_service_id}

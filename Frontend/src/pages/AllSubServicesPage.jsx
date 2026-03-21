@@ -177,9 +177,9 @@ const AllSubServicesPage = () => {
           />
         )}
 
-        {/* Sub-Services Grid */}
+        {/* Sub-Services Grid - Optimized for all screen sizes */}
         {!isLoading && !isEmpty && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 13inch:grid-cols-4 14inch:grid-cols-4 15inch:grid-cols-4 xl:grid-cols-5 gap-8">
             {filteredSubServices.map((subService, index) => (
               <motion.div
                 key={`${subService.categoryId}-${subService.subservice_id}`}
