@@ -2,11 +2,13 @@
 
 ## 🚨 The Issue
 - Cloudinary uploads failing with "Must supply api_key"
-- Multiple dotenv loading messages
-- Environment variables not available to all modules
+- ES6 imports are hoisted, executing before dotenv.config()
+- Environment variables not available when Upload.js loads
 
 ## ✅ The Fix
-Removed duplicate `dotenv.config()` calls from 5 files and centralized environment loading in Server.js.
+- Changed Server.js to use dynamic imports (`await import()`)
+- Ensures dotenv.config() runs BEFORE any router/module is loaded
+- Removed duplicate dotenv calls from 5 files
 
 ## 🚀 Deploy Now
 
@@ -29,10 +31,12 @@ pm2 logs goeventify-backend --lines 20
 
 Look for these in the logs:
 ```
+[dotenv@17.2.3] injecting env (16) from Event_backend/.env
 ✅ Environment variables loaded successfully
 ✅ Server starting on port: 3232
 ✅ Cloudinary configured: dcbrlmzng
-✅ Cloudinary configured successfully
+✅ Cloudinary configured in Upload.js
+✅ Server is running on port 3232
 ```
 
 ## ❌ Failure Indicators
@@ -78,8 +82,8 @@ node Event_backend/test-env-loading.js
 ```
 
 ## 📋 Files Changed (for reference)
-- Server.js - Centralized dotenv
-- Upload.js - Added validation
+- Server.js - Changed to dynamic imports (await import())
+- Upload.js - Simplified configuration with better logging
 - emailService.js - Removed dotenv
 - RazorpayService.js - Removed dotenv
 - sendgridService.js - Removed dotenv

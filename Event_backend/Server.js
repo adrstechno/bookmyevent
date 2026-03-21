@@ -1,28 +1,8 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import cookieParser from 'cookie-parser'; // ✅ import cookie-parser
-import cors from 'cors'; // optional but recommended if you’re using frontend
+import cookieParser from 'cookie-parser';
+import cors from 'cors';
 import helmet from 'helmet';
-
-import db from './Config/DatabaseCon.js';   
-import UserRouter from './Router/UserRouter.js';
-import ServiceRouter from './Router/ServiceROuter.js';
-import SubserviceRouter from './Router/SubserviceRouter.js';
-import VendorRouter from './Router/VendorRouter.js';
-import BookingRouter from './Router/BookingRouter.js';
-import adminroutes from './Router/adminRoute.js'
-import notificationroutes  from './Router/NotificationRoute.js'
-import OTPRouter from './Router/OTPRoute.js';
-import EnhancedBookingRouter from './Router/EnhancedBookingRoute.js';
-import EnhancedBookingRouterV2 from './Router/EnhancedBookingRouter.js';
-import ReviewRouter from './Router/ReviewRoute.js';
-import ShiftAvailabilityRouter from './Router/ShiftAvailabilityRoute.js';
-import DashboardRouter from './Router/DashboardRouter.js';
-import ManualReservationRouter from './Router/ManualReservationRoute.js';
-import SubscriptionRouter from './Router/SubscriptionRoute.js';
-import SubscriptionCronJobs from './Utils/subscriptionCronJobs.js';
-
-import TestRouter from './Router/TestRouter.js';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
@@ -30,7 +10,8 @@ import { dirname, join } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Load .env file from the same directory as Server.js
+// ⚠️ CRITICAL: Load .env file FIRST before importing any other modules
+// This ensures environment variables are available when routers/controllers/services are imported
 dotenv.config({ path: join(__dirname, '.env') });
 
 // Verify critical environment variables are loaded
@@ -47,14 +28,33 @@ console.log('✅ Environment variables loaded successfully');
 console.log('✅ Server starting on port:', process.env.PORT);
 console.log('✅ Cloudinary configured:', process.env.Cloudnary_CLOUD_NAME);
 
+// Now import routers dynamically after environment is configured
+const { default: db } = await import('./Config/DatabaseCon.js');
+const { default: UserRouter } = await import('./Router/UserRouter.js');
+const { default: ServiceRouter } = await import('./Router/ServiceROuter.js');
+const { default: SubserviceRouter } = await import('./Router/SubserviceRouter.js');
+const { default: VendorRouter } = await import('./Router/VendorRouter.js');
+const { default: BookingRouter } = await import('./Router/BookingRouter.js');
+const { default: adminroutes } = await import('./Router/adminRoute.js');
+const { default: notificationroutes } = await import('./Router/NotificationRoute.js');
+const { default: OTPRouter } = await import('./Router/OTPRoute.js');
+const { default: EnhancedBookingRouter } = await import('./Router/EnhancedBookingRoute.js');
+const { default: EnhancedBookingRouterV2 } = await import('./Router/EnhancedBookingRouter.js');
+const { default: ReviewRouter } = await import('./Router/ReviewRoute.js');
+const { default: ShiftAvailabilityRouter } = await import('./Router/ShiftAvailabilityRoute.js');
+const { default: DashboardRouter } = await import('./Router/DashboardRouter.js');
+const { default: ManualReservationRouter } = await import('./Router/ManualReservationRoute.js');
+const { default: SubscriptionRouter } = await import('./Router/SubscriptionRoute.js');
+const { default: SubscriptionCronJobs } = await import('./Utils/subscriptionCronJobs.js');
+const { default: TestRouter } = await import('./Router/TestRouter.js');
+
 const app = express();
 
 // 🟢 Middleware
-
 app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser()); // ✅ Enables req.cookies
+app.use(cookieParser());
 
 // CORS configuration for production
 app.use(cors({
@@ -74,10 +74,6 @@ app.use(cors({
   optionsSuccessStatus: 204
 }));
 
-
-
-
-
 // 🟢 Mount routers
 app.use('/User', UserRouter);
 app.use('/Service', ServiceRouter);
@@ -85,19 +81,19 @@ app.use('/Subservice', SubserviceRouter);
 app.use('/Vendor', VendorRouter);
 app.use('/Booking', BookingRouter);
 app.use('/admin', adminroutes);
-app.use('/notification',  notificationroutes);
+app.use('/notification', notificationroutes);
 
 // 🟢 Mount new enhanced routers
 app.use('/otp', OTPRouter);
 app.use('/bookings', EnhancedBookingRouter);
-app.use('/bookings-v2', EnhancedBookingRouterV2); // Enhanced booking with comprehensive notifications
+app.use('/bookings-v2', EnhancedBookingRouterV2);
 app.use('/reviews', ReviewRouter);
 app.use('/shift-availability', ShiftAvailabilityRouter);
 app.use('/dashboard', DashboardRouter);
 app.use('/manual-reservations', ManualReservationRouter);
 app.use('/subscription', SubscriptionRouter);
 
-// 🟢 Test routes (remove in production)
+// 🟢 Test routes
 app.use('/test', TestRouter);
 
 app.get('/', (req, res) => {
@@ -108,7 +104,7 @@ app.get('/', (req, res) => {
 SubscriptionCronJobs.init();
 
 app.listen(process.env.PORT, () => {
-  // console.log(`Server is running on port ${process.env.PORT}`);
+  console.log(`✅ Server is running on port ${process.env.PORT}`);
 });
 
 // Custom error-handling middleware

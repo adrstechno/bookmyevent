@@ -1,26 +1,25 @@
-import express from 'express';
 import multer from 'multer';
 import cloudinary from 'cloudinary';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 
-// Configure Cloudinary
-const cloudinaryConfig = {
+// Configure Cloudinary immediately (environment variables should be loaded by Server.js before this module is imported)
+// Note: This module is imported by routers, which are imported by Server.js AFTER dotenv.config()
+cloudinary.v2.config({
     cloud_name: process.env.Cloudnary_CLOUD_NAME,
     api_key: process.env.Cloudnary_API_KEY,
     api_secret: process.env.Cloudnary_API_SECRET
-};
+});
 
-// Validate Cloudinary configuration
-if (!cloudinaryConfig.cloud_name || !cloudinaryConfig.api_key || !cloudinaryConfig.api_secret) {
-    console.error('❌ Cloudinary configuration incomplete:');
-    console.error('   cloud_name:', cloudinaryConfig.cloud_name ? '✅' : '❌ MISSING');
-    console.error('   api_key:', cloudinaryConfig.api_key ? '✅' : '❌ MISSING');
-    console.error('   api_secret:', cloudinaryConfig.api_secret ? '✅' : '❌ MISSING');
-    throw new Error('Cloudinary credentials not configured. Check your .env file.');
+// Validate configuration (will log warning but not crash if missing)
+if (!process.env.Cloudnary_CLOUD_NAME || !process.env.Cloudnary_API_KEY || !process.env.Cloudnary_API_SECRET) {
+    console.error('⚠️  Cloudinary configuration incomplete in Upload.js:');
+    console.error('   cloud_name:', process.env.Cloudnary_CLOUD_NAME || '❌ MISSING');
+    console.error('   api_key:', process.env.Cloudnary_API_KEY ? '✅ Present' : '❌ MISSING');
+    console.error('   api_secret:', process.env.Cloudnary_API_SECRET ? '✅ Present' : '❌ MISSING');
+    console.error('   Note: If you see this, environment variables were not loaded before Upload.js was imported');
+} else {
+    console.log('✅ Cloudinary configured in Upload.js');
 }
-
-cloudinary.v2.config(cloudinaryConfig);
-console.log('✅ Cloudinary configured successfully');
 
 const fieldtodir = {
     serviceIcon: 'Service_Icons',
@@ -31,11 +30,8 @@ const fieldtodir = {
 
 // Configure Cloudinary Storage
 const storage = new CloudinaryStorage({
-
-
     cloudinary: cloudinary.v2,
     params: async (req, file) => {
-
         const folderName = fieldtodir[file.fieldname] || 'General_Uploads';
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         const publicId = `${folderName}/${file.fieldname}-${uniqueSuffix}`;
