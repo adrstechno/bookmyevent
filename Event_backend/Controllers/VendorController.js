@@ -4,71 +4,83 @@ import { verifyToken } from "../Utils/Verification.js";
 import { v4 as uuidv4 } from "uuid";
 
 export const insertVendor = (req, res) => {
-  // ✅ Check if file exists
-  if (!req.file) {
-    return res
-      .status(400)
-      .json({ message: "No file uploaded. Please upload a profile picture." });
-  }
-
-  const data = req.body;
-  const token = req.cookies.auth_token;
-
-  if (!token) {
-    return res.status(401).json({ message: "Unauthorized: No token provided" });
-  }
-
-  const decoded = verifyToken(token);
-  if (!decoded) {
-    return res.status(401).json({ message: "Unauthorized: Invalid token" });
-  }
-
-  const userId = decoded.userId;
-  // vendorData.user_id = userId;
-
-  // // ✅ Get the Cloudinary URL from req.file
-  const profile_url = req.file.path; // Cloudinary provides this
-  // vendorData.is_verified = 0;
-  // vendorData.is_active = 1;
-
-  const vendorData = {
-    user_id: userId,
-    business_name: data.business_name,
-    service_category_id: data.service_category_id,
-    subservice_id: data.subservice_id,
-    description: data.description,
-    years_experience: data.years_experience,
-    contact: data.contact,
-    address: data.address,
-    city: data.city,
-    state: data.state,
-    is_verified: 0,
-    is_active: 1,
-    profile_url: profile_url,
-    event_profiles_url: data.event_profiles_url,
-  };
-
-  // console.log(vendorData);
-
-  VendorModel.insertVendor(vendorData, (err, result) => {
-    if (err) {
-      console.error('Error inserting vendor:', err);
+  try {
+    console.log('📝 InsertVendor called');
+    console.log('📦 Request body:', req.body);
+    console.log('📎 File uploaded:', req.file ? 'Yes' : 'No');
+    
+    // ✅ Check if file exists
+    if (!req.file) {
+      console.log('❌ No file uploaded');
       return res
-        .status(500)
-        .json({ message: "Error inserting vendor", error: err.message });
+        .status(400)
+        .json({ message: "No file uploaded. Please upload a profile picture." });
     }
-    
-    const vendor_id = result.insertId;
-    
-    // ✅ Return success without creating free subscription
-    // Vendor must subscribe via payment to activate their account
-    return res.status(200).json({
-      message: "Vendor profile created successfully! Please subscribe to start accepting bookings.",
-      vendorId: vendor_id,
-      profileUrl: vendorData.profile_url,
-      requiresSubscription: true
+
+    const data = req.body;
+    const token = req.cookies.auth_token;
+
+    if (!token) {
+      console.log('❌ No auth token');
+      return res.status(401).json({ message: "Unauthorized: No token provided" });
+    }
+
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      console.log('❌ Invalid token');
+      return res.status(401).json({ message: "Unauthorized: Invalid token" });
+    }
+
+    const userId = decoded.userId;
+    console.log('✅ User ID:', userId);
+
+    const profile_url = req.file.path;
+    console.log('✅ Profile URL:', profile_url);
+
+    const vendorData = {
+      user_id: userId,
+      business_name: data.business_name,
+      service_category_id: data.service_category_id,
+      subservice_id: data.subservice_id || null,
+      description: data.description,
+      years_experience: data.years_experience,
+      contact: data.contact,
+      address: data.address,
+      city: data.city,
+      state: data.state,
+      is_verified: 0,
+      is_active: 1,
+      profile_url: profile_url,
+      event_profiles_url: data.event_profiles_url || null,
+    };
+
+    console.log('📊 Vendor data prepared:', vendorData);
+
+    VendorModel.insertVendor(vendorData, (err, result) => {
+      if (err) {
+        console.error('❌ Database error inserting vendor:', err);
+        return res
+          .status(500)
+          .json({ message: "Error inserting vendor", error: err.message, sqlMessage: err.sqlMessage });
+      }
+      
+      const vendor_id = result.insertId;
+      console.log('✅ Vendor created successfully, ID:', vendor_id);
+      
+      return res.status(200).json({
+        message: "Vendor profile created successfully! Please subscribe to start accepting bookings.",
+        vendorId: vendor_id,
+        profileUrl: vendorData.profile_url,
+        requiresSubscription: true
+      });
     });
-  });
+  } catch (error) {
+    console.error('❌ Unexpected error in insertVendor:', error);
+    return res.status(500).json({ 
+      message: "Unexpected server error", 
+      error: error.message 
+    });
+  }
 };
 
 export const getAllVendor = (req, res) => {

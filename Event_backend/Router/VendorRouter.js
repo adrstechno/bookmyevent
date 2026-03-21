@@ -6,7 +6,19 @@ import { authenticateToken } from '../Utils/auth.js';
 const router = express.Router();
 
 // Route to insert a new vendor with profile picture upload
-router.post('/InsertVendor', upload.single('profilePicture'), insertVendor);
+router.post('/InsertVendor', (req, res, next) => {
+  console.log('🔵 InsertVendor route hit');
+  next();
+}, upload.single('profilePicture'), (err, req, res, next) => {
+  if (err) {
+    console.error('❌ Multer error:', err);
+    return res.status(500).json({ 
+      message: 'File upload error', 
+      error: err.message 
+    });
+  }
+  next();
+}, insertVendor);
 router.get('/Getallvendors' , getAllVendor );
 router.post('/AddEventImages' , upload.array('eventImages', 5), AddEventImages)
 router.get('/getvendorById' , getvendorById);

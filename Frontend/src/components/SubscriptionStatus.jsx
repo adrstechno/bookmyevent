@@ -120,7 +120,7 @@ const SubscriptionStatus = () => {
                   className="flex items-center gap-2 bg-[#f9a826] hover:bg-[#f7b733] text-white px-4 py-2 rounded-lg transition-colors"
                 >
                   <FiCreditCard />
-                  Subscribe Now - ₹1/year (Testing)
+                  Subscribe Now - ₹999/year
                 </button>
               </div>
             )}

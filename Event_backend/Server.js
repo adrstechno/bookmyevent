@@ -54,9 +54,6 @@ app.use(cors({
   optionsSuccessStatus: 204
 }));
 
-// Handle preflight requests explicitly
-app.options('*', cors());
-
 
 
 
@@ -96,6 +93,10 @@ app.listen(process.env.PORT, () => {
 
 // Custom error-handling middleware
 app.use((err, req, res, next) => {
-  // console.log(err);
-  res.status(500).json({ message: "Oops! Something went wrong." });
+  console.error('❌ Global error handler caught:', err);
+  console.error('Error stack:', err.stack);
+  res.status(500).json({ 
+    message: "Oops! Something went wrong.",
+    error: process.env.NODE_ENV === 'development' ? err.message : undefined
+  });
 });
