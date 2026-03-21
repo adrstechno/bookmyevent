@@ -33,7 +33,7 @@ const ServicesByCategory = () => {
   const loadSubServices = async () => {
     await fetchSubServices(
       () => fetch(
-        `${VITE_API_BASE_URL}/Subservice/GetSubservicesByCategory?category_id=${categoryId}`,
+        `${VITE_API_BASE_URL}/service/GetSubservicesByServiceCategoryId/${categoryId}`,
         {
           method: "GET",
           credentials: "include",
@@ -43,7 +43,11 @@ const ServicesByCategory = () => {
         }
       ).then(res => {
         if (!res.ok) throw new Error("Failed to fetch sub-services");
-        return res.json().then(data => ({ data: data.subservices || [] }));
+        return res.json().then(data => {
+          // Handle different response structures
+          const services = data.subservices || data.data || data || [];
+          return { data: Array.isArray(services) ? services : [] };
+        });
       }),
       {
         emptyMessage: `No services found in this category`,
@@ -157,7 +161,7 @@ const ServicesByCategory = () => {
                 </p>
               </motion.div>
 
-              {/* Services Grid */}
+              {/* Services Grid - Fixed card sizing to prevent shrinking */}
               <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 sm:gap-6">
                 {subServices.map((service, index) => (
                   <motion.div
@@ -169,41 +173,48 @@ const ServicesByCategory = () => {
                       delay: index * 0.05
                     }}
                     onClick={() => handleServiceClick(service)}
-                    className="cursor-pointer group h-full"
+                    className="cursor-pointer group"
                   >
-                    <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-2 border-gray-100 hover:border-[#f9a826] h-full flex flex-col">
-                      {/* Image Section */}
-                      <div className="relative h-40 sm:h-48 overflow-hidden flex-shrink-0">
+                    <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-2 border-gray-100 hover:border-[#f9a826] flex flex-col h-full min-h-[380px]">
+                      {/* Image Section - Fixed height */}
+                      <div className="relative h-48 overflow-hidden flex-shrink-0">
                         {service.icon_url ? (
                           <img
                             src={service.icon_url}
                             alt={service.subservice_name}
                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              e.target.parentElement.classList.add('bg-gradient-to-br', 'from-[#284b63]', 'to-[#3c6e71]');
+                            }}
                           />
                         ) : (
                           <div className="w-full h-full bg-gradient-to-br from-[#284b63] to-[#3c6e71] flex items-center justify-center">
-                            <FiGrid className="text-4xl sm:text-5xl text-white opacity-50" />
+                            <FiGrid className="text-5xl text-white opacity-50" />
                           </div>
                         )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                        
+                        {/* Service name overlay on image */}
+                        <div className="absolute bottom-0 left-0 right-0 p-4">
+                          <h3 className="text-lg font-bold text-white drop-shadow-lg line-clamp-2">
+                            {service.subservice_name}
+                          </h3>
+                        </div>
                       </div>
 
-                      {/* Content Section */}
-                      <div className="p-4 sm:p-5 flex flex-col flex-grow">
-                        <h3 className="text-base sm:text-lg font-bold text-gray-800 mb-2 group-hover:text-[#284b63] transition-colors line-clamp-2">
-                          {service.subservice_name}
-                        </h3>
-                        
+                      {/* Content Section - Flexible height */}
+                      <div className="p-5 flex flex-col flex-grow">
                         <div className="w-12 h-1 bg-gradient-to-r from-[#f9a826] to-[#f7b733] rounded-full mb-3" />
                         
                         {service.description && (
-                          <p className="text-gray-600 text-xs sm:text-sm leading-relaxed mb-4 line-clamp-2 flex-grow">
+                          <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-3 flex-grow">
                             {service.description}
                           </p>
                         )}
 
-                        {/* View Vendors Button */}
-                        <button className="w-full bg-gradient-to-r from-[#284b63] to-[#3c6e71] text-white py-2 sm:py-2.5 px-4 rounded-xl font-semibold hover:from-[#3c6e71] hover:to-[#284b63] transition-all duration-300 flex items-center justify-center gap-2 group-hover:gap-3 shadow-md hover:shadow-lg mt-auto text-sm">
+                        {/* View Vendors Button - Always at bottom */}
+                        <button className="w-full bg-gradient-to-r from-[#284b63] to-[#3c6e71] text-white py-2.5 px-4 rounded-xl font-semibold hover:from-[#3c6e71] hover:to-[#284b63] transition-all duration-300 flex items-center justify-center gap-2 group-hover:gap-3 shadow-md hover:shadow-lg mt-auto text-sm">
                           View Vendors
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
