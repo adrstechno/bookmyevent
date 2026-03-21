@@ -1,8 +1,7 @@
 import nodemailer from 'nodemailer';
-import dotenv from 'dotenv';
 import ReviewTokenService from '../Utils/reviewToken.js';
 
-dotenv.config();
+// Note: dotenv is configured in Server.js before this module is loaded
 
 class EmailService {
     constructor() {

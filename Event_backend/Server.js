@@ -45,6 +45,7 @@ if (missingVars.length > 0) {
 
 console.log('✅ Environment variables loaded successfully');
 console.log('✅ Server starting on port:', process.env.PORT);
+console.log('✅ Cloudinary configured:', process.env.Cloudnary_CLOUD_NAME);
 
 const app = express();
 

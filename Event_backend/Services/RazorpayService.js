@@ -1,8 +1,7 @@
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
-import dotenv from 'dotenv';
 
-dotenv.config();
+// Note: dotenv is configured in Server.js before this module is loaded
 
 class RazorpayService {
     constructor() {

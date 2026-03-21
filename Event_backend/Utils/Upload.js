@@ -4,11 +4,23 @@ import cloudinary from 'cloudinary';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 
 // Configure Cloudinary
-cloudinary.v2.config({
+const cloudinaryConfig = {
     cloud_name: process.env.Cloudnary_CLOUD_NAME,
     api_key: process.env.Cloudnary_API_KEY,
     api_secret: process.env.Cloudnary_API_SECRET
-});
+};
+
+// Validate Cloudinary configuration
+if (!cloudinaryConfig.cloud_name || !cloudinaryConfig.api_key || !cloudinaryConfig.api_secret) {
+    console.error('❌ Cloudinary configuration incomplete:');
+    console.error('   cloud_name:', cloudinaryConfig.cloud_name ? '✅' : '❌ MISSING');
+    console.error('   api_key:', cloudinaryConfig.api_key ? '✅' : '❌ MISSING');
+    console.error('   api_secret:', cloudinaryConfig.api_secret ? '✅' : '❌ MISSING');
+    throw new Error('Cloudinary credentials not configured. Check your .env file.');
+}
+
+cloudinary.v2.config(cloudinaryConfig);
+console.log('✅ Cloudinary configured successfully');
 
 const fieldtodir = {
     serviceIcon: 'Service_Icons',

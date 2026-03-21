@@ -1,6 +1,7 @@
 import mysql from 'mysql2';
 import { URL } from 'url';
-import 'dotenv/config';
+
+// Note: dotenv is configured in Server.js before this module is loaded
 
 const mysqlUrl = new URL('mysql://7BwYZV8pqsv5d1i.root:JcdhlSC3TEcYfndd@gateway01.ap-southeast-1.prod.aws.tidbcloud.com:4000/Event_Managment?ssl={"rejectUnauthorized":true}');
 

@@ -1,7 +1,6 @@
 import sgMail from '@sendgrid/mail';
-import dotenv from 'dotenv';
 
-dotenv.config();
+// Note: dotenv is configured in Server.js before this module is loaded
 
 class SendGridService {
     constructor() {
