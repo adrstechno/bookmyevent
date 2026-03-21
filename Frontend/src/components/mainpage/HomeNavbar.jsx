@@ -17,13 +17,22 @@ import { checkAndCleanAuth } from "../../utils/tokenValidation";
 
 /* ---------------- DATA ---------------- */
 
-const categories = [
-  { name: "Weddings", path: "/category/weddings", icon: SparklesIcon, color: "text-pink-500" },
-  { name: "Corporate Events", path: "/category/corporate-events", icon: BuildingOfficeIcon, color: "text-blue-500" },
-  { name: "Concerts & Festivals", path: "/category/concerts-festivals", icon: MusicalNoteIcon, color: "text-purple-500" },
-  { name: "Birthday Parties", path: "/category/birthday-parties", icon: CakeIcon, color: "text-yellow-500" },
-  { name: "Fashion Shows", path: "/category/fashion-shows", icon: CameraIcon, color: "text-fuchsia-500" },
-  { name: "Exhibitions", path: "/category/exhibitions", icon: GlobeAltIcon, color: "text-green-500" },
+const defaultIcons = [
+  SparklesIcon,
+  BuildingOfficeIcon,
+  MusicalNoteIcon,
+  CakeIcon,
+  CameraIcon,
+  GlobeAltIcon,
+];
+
+const defaultColors = [
+  "text-pink-500",
+  "text-blue-500",
+  "text-purple-500",
+  "text-yellow-500",
+  "text-fuchsia-500",
+  "text-green-500",
 ];
 
 /* ---------------- STYLES ---------------- */
@@ -44,6 +53,8 @@ const HomeNavbar = () => {
   const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
 
   const categoriesRef = useRef(null);
   const mobileCategoriesRef = useRef(null);
@@ -58,11 +69,55 @@ const HomeNavbar = () => {
   const userRole = user?.role || "";
   const userName = user?.first_name || user?.name || "User";
 
-  const handleMobileCategoryNavigate = (path) => {
-    navigate(path);
+  const handleMobileCategoryNavigate = (categoryId, categoryName) => {
+    navigate(`/services-by-category/${categoryId}`, {
+      state: { categoryName }
+    });
     setMenuOpen(false);
     setCategoriesOpen(false);
   };
+
+  /* ---------- Fetch Categories from API ---------- */
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch(`${VITE_API_BASE_URL}/service/GetAllServices`, {
+          method: "GET",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch categories");
+        }
+
+        const data = await response.json();
+        
+        // Transform API data to match component structure
+        const transformedCategories = data
+          .filter(service => service.is_active === 1)
+          .map((service, index) => ({
+            category_id: service.category_id,
+            name: service.category_name,
+            path: `/services-by-category/${service.category_id}`,
+            icon: defaultIcons[index % defaultIcons.length],
+            color: defaultColors[index % defaultColors.length],
+          }));
+
+        setCategories(transformedCategories);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+        // Set empty array on error
+        setCategories([]);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   /* ---------- Scroll ---------- */
   useEffect(() => {
@@ -204,30 +259,37 @@ const HomeNavbar = () => {
                     transition={{ duration: 0.2 }}
                     className="absolute left-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 p-2 z-50"
                   >
-                    <div className="grid grid-cols-1 gap-1">
-                      {categories.map((c) => {
-                        const Icon = c.icon;
-                        return (
-                          <NavLink
-                            key={c.name}
-                            to={c.path}
-                            onClick={() => setCategoriesOpen(false)}
-                            className={({ isActive }) =>
-                              `flex items-center gap-3 p-3 rounded-xl transition-all duration-200 ${
-                                isActive
-                                  ? "bg-[#3c6e71]/10 text-[#3c6e71] font-semibold"
-                                  : "hover:bg-gray-50 text-gray-700"
-                              }`
-                            }
-                          >
-                            <div className={`p-2 rounded-lg ${c.color} bg-gray-50`}>
-                              <Icon className="w-4 h-4" />
-                            </div>
-                            <span className="text-sm">{c.name}</span>
-                          </NavLink>
-                        );
-                      })}
-                    </div>
+                    {loadingCategories ? (
+                      <div className="p-4 text-center text-gray-500">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3c6e71] mx-auto"></div>
+                        <p className="mt-2 text-sm">Loading categories...</p>
+                      </div>
+                    ) : categories.length === 0 ? (
+                      <div className="p-4 text-center text-gray-500">
+                        <p className="text-sm">No categories available</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-1">
+                        {categories.map((c) => {
+                          const Icon = c.icon;
+                          return (
+                            <button
+                              key={c.category_id}
+                              onClick={() => {
+                                navigate(c.path, { state: { categoryName: c.name } });
+                                setCategoriesOpen(false);
+                              }}
+                              className="flex items-center gap-3 p-3 rounded-xl transition-all duration-200 hover:bg-gray-50 text-gray-700 text-left w-full"
+                            >
+                              <div className={`p-2 rounded-lg ${c.color} bg-gray-50`}>
+                                <Icon className="w-4 h-4" />
+                              </div>
+                              <span className="text-sm">{c.name}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -361,24 +423,35 @@ const HomeNavbar = () => {
                       transition={{ duration: 0.2 }}
                       className="overflow-hidden"
                     >
-                      <div className="px-2 pb-2 space-y-1">
-                        {categories.map((c) => {
-                          const Icon = c.icon;
-                          return (
-                            <button
-                              type="button"
-                              key={c.name}
-                              onClick={() => handleMobileCategoryNavigate(c.path)}
-                              className="flex w-full items-center gap-3 p-3 rounded-xl hover:bg-white transition-all duration-200 text-left"
-                            >
-                              <div className={`p-2 rounded-lg ${c.color} bg-white`}>
-                                <Icon className="w-4 h-4" />
-                              </div>
-                              <span className="text-sm font-medium text-gray-700">{c.name}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
+                      {loadingCategories ? (
+                        <div className="p-4 text-center text-gray-500">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#3c6e71] mx-auto"></div>
+                          <p className="mt-2 text-xs">Loading...</p>
+                        </div>
+                      ) : categories.length === 0 ? (
+                        <div className="p-4 text-center text-gray-500 text-sm">
+                          No categories available
+                        </div>
+                      ) : (
+                        <div className="px-2 pb-2 space-y-1">
+                          {categories.map((c) => {
+                            const Icon = c.icon;
+                            return (
+                              <button
+                                type="button"
+                                key={c.category_id}
+                                onClick={() => handleMobileCategoryNavigate(c.category_id, c.name)}
+                                className="flex w-full items-center gap-3 p-3 rounded-xl hover:bg-white transition-all duration-200 text-left"
+                              >
+                                <div className={`p-2 rounded-lg ${c.color} bg-white`}>
+                                  <Icon className="w-4 h-4" />
+                                </div>
+                                <span className="text-sm font-medium text-gray-700">{c.name}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
                     </motion.div>
                   )}
                 </AnimatePresence>

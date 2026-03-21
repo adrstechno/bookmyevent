@@ -75,6 +75,7 @@ import VendorDetail from "./pages/VendorDetail";
 import SubServicesPage from "./pages/SubServicesPage";
 import AllSubServicesPage from "./pages/AllSubServicesPage";
 import AllVendorsPage from "./pages/AllVendorsPage";
+import ServicesByCategory from "./pages/ServicesByCategory";
 
 import ShowcaseSection from "./components/mainpage/ShowcaseSection";
 // import ComingSoon from "./ComingSoon.jsx";
@@ -101,6 +102,7 @@ export default function App() {
         <Route path="/vendors" element={<AllVendorsPage />} />
 
         {/* Public Category Routes */}
+        <Route path="/services-by-category/:categoryId" element={<ServicesByCategory />} />
         <Route path="/category/weddings" element={<Weddings />} />
         <Route path="/category/corporate-events" element={<CorporateEvents />} />
         <Route path="/category/concerts-festivals" element={<ConcertsFestivals />} />

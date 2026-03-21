@@ -6,6 +6,23 @@ export default {
   ],
   theme: {
     extend: {
+      screens: {
+        'xs': '475px',      // Extra small devices
+        'sm': '640px',      // Small devices (landscape phones)
+        'md': '768px',      // Medium devices (tablets)
+        'lg': '1024px',     // Large devices (desktops)
+        'xl': '1280px',     // Extra large devices (large desktops)
+        '2xl': '1536px',    // 2X large devices
+        '3xl': '1920px',    // 24" monitors
+        '4xl': '2560px',    // 27" monitors
+        // Specific laptop sizes
+        '13inch': '1280px', // 13" laptops
+        '14inch': '1366px', // 14" laptops
+        '15inch': '1440px', // 15" laptops
+        // Tablet specific
+        'tablet': '768px',
+        'tablet-lg': '1024px',
+      },
       colors: {
         primary: {
           50: '#f0f9ff',
