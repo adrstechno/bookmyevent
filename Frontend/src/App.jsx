@@ -6,6 +6,7 @@ import { Toaster } from "react-hot-toast";
 import ErrorBoundary from "./components/ErrorBoundary";
 import RouteDebugger from "./components/RouteDebugger";
 import { useEffect } from "react";
+import usePageTracking from "./hooks/usePageTracking";
 
 // Import custom styles
 import "./styles/homepage.css";
@@ -81,6 +82,9 @@ import ShowcaseSection from "./components/mainpage/ShowcaseSection";
 // import ComingSoon from "./ComingSoon.jsx";
 
 export default function App() {
+  // Enable automatic page view tracking
+  usePageTracking();
+
   return (
     <ErrorBoundary>
       <AuthProvider>
