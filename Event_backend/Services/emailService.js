@@ -1840,6 +1840,184 @@ class EmailService {
         }
     }
 
+    // Send password reset email
+    async sendPasswordResetEmail(emailData) {
+        const { 
+            userEmail, 
+            userName, 
+            resetToken,
+            userType 
+        } = emailData;
+
+        const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${resetToken}`;
+
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: userEmail,
+            subject: `🔐 Password Reset Request - GoEventify`,
+            html: `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                        .header { background: linear-gradient(135deg, #284b63, #3c6e71); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                        .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+                        .reset-box { background: #fff; border: 3px solid #f9a826; padding: 20px; text-align: center; margin: 20px 0; border-radius: 10px; }
+                        .warning { background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0; }
+                        .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
+                        .btn { display: inline-block; background: #f9a826; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; margin: 15px 0; font-weight: bold; font-size: 16px; }
+                        .btn:hover { background: #e67e22; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <h1>🔐 Password Reset Request</h1>
+                            <p>Reset your GoEventify account password</p>
+                        </div>
+                        
+                        <div class="content">
+                            <h2>Hello ${userName}!</h2>
+                            
+                            <p>We received a request to reset the password for your GoEventify account. If you made this request, click the button below to reset your password.</p>
+                            
+                            <div class="reset-box">
+                                <h3 style="color: #f9a826; margin: 0;">🔑 Reset Your Password</h3>
+                                <p style="margin: 10px 0 0 0;">Click the button below to create a new password</p>
+                            </div>
+                            
+                            <div style="text-align: center; margin: 30px 0;">
+                                <a href="${resetLink}" class="btn">
+                                    Reset Password
+                                </a>
+                            </div>
+                            
+                            <div class="warning">
+                                <strong>⚠️ Important Security Information:</strong>
+                                <ul style="margin: 10px 0;">
+                                    <li>This password reset link will expire in <strong>1 hour</strong></li>
+                                    <li>If you didn't request this reset, please ignore this email</li>
+                                    <li>Your password will remain unchanged until you create a new one</li>
+                                    <li>Never share this link with anyone</li>
+                                </ul>
+                            </div>
+                            
+                            <p><strong>Can't click the button?</strong> Copy and paste this link into your browser:</p>
+                            <p style="word-break: break-all; color: #666; font-size: 12px;">${resetLink}</p>
+                            
+                            <p>If you didn't request a password reset, you can safely ignore this email. Your account is secure.</p>
+                            
+                            <p>Best regards,<br>
+                            <strong>GoEventify Security Team</strong></p>
+                        </div>
+                        
+                        <div class="footer">
+                            <p>This is an automated message from GoEventify. Please do not reply to this email.</p>
+                            <p>&copy; ${new Date().getFullYear()} GoEventify. All rights reserved.</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `
+        };
+
+        try {
+            return await this.sendMailWithRetry(mailOptions);
+        } catch (error) {
+            console.error('Error sending password reset email:', error);
+            throw error;
+        }
+    }
+
+    // Send password change confirmation email
+    async sendPasswordChangeConfirmationEmail(emailData) {
+        const { 
+            userEmail, 
+            userName 
+        } = emailData;
+
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: userEmail,
+            subject: `✅ Password Changed Successfully - GoEventify`,
+            html: `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                        .header { background: linear-gradient(135deg, #28a745, #20c997); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                        .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+                        .success-box { background: #d4edda; border: 2px solid #28a745; padding: 20px; text-align: center; margin: 20px 0; border-radius: 10px; }
+                        .warning { background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0; }
+                        .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
+                        .btn { display: inline-block; background: #28a745; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; margin: 15px 0; font-weight: bold; font-size: 16px; }
+                        .btn:hover { background: #218838; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <h1>✅ Password Changed Successfully</h1>
+                            <p>Your password has been updated</p>
+                        </div>
+                        
+                        <div class="content">
+                            <h2>Hello ${userName}!</h2>
+                            
+                            <div class="success-box">
+                                <h3 style="color: #28a745; margin: 0;">🔒 Password Updated</h3>
+                                <p style="margin: 10px 0 0 0;">Your GoEventify account password has been changed successfully!</p>
+                            </div>
+                            
+                            <p>This email confirms that your password was recently changed. You can now use your new password to log in to your account.</p>
+                            
+                            <div style="text-align: center; margin: 30px 0;">
+                                <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/login" class="btn">
+                                    Login to Your Account
+                                </a>
+                            </div>
+                            
+                            <div class="warning">
+                                <strong>⚠️ Didn't make this change?</strong>
+                                <p style="margin: 10px 0 0 0;">If you didn't change your password, please contact our support team immediately at <strong>goeventify@gmail.com</strong> or call <strong>+91 9201976523</strong>. Your account security is our top priority.</p>
+                            </div>
+                            
+                            <p><strong>Security Tips:</strong></p>
+                            <ul>
+                                <li>Never share your password with anyone</li>
+                                <li>Use a strong, unique password for your account</li>
+                                <li>Enable two-factor authentication if available</li>
+                                <li>Log out from shared devices</li>
+                            </ul>
+                            
+                            <p>Thank you for keeping your account secure!</p>
+                            
+                            <p>Best regards,<br>
+                            <strong>GoEventify Security Team</strong></p>
+                        </div>
+                        
+                        <div class="footer">
+                            <p>This is an automated message from GoEventify. Please do not reply to this email.</p>
+                            <p>&copy; ${new Date().getFullYear()} GoEventify. All rights reserved.</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `
+        };
+
+        try {
+            return await this.sendMailWithRetry(mailOptions);
+        } catch (error) {
+            console.error('Error sending password change confirmation email:', error);
+            throw error;
+        }
+    }
+
 }
 
 export default new EmailService();

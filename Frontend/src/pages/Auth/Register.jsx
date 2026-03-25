@@ -267,6 +267,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { VITE_API_BASE_URL } from "../../utils/api";
+import TermsAndConditionsModal from "../../components/TermsAndConditionsModal";
 
 // React Icons
 import {
@@ -295,6 +296,8 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -345,6 +348,11 @@ const Register = () => {
       err.password = "Password is required";
     } else if (formData.password.length < 6) {
       err.password = "Password must be at least 6 characters";
+    }
+
+    if (!acceptedTerms) {
+      err.terms = "You must accept the Terms and Conditions";
+      toast.error("Please accept the Terms and Conditions to continue");
     }
 
     return err;
@@ -566,11 +574,65 @@ const Register = () => {
             )}
           </div>
 
+          {/* Terms and Conditions Checkbox */}
+          <div className="space-y-2">
+            <div className="flex items-start gap-3 bg-gray-50/80 p-4 rounded-lg border border-gray-300">
+              <input
+                type="checkbox"
+                id="terms"
+                checked={acceptedTerms}
+                onChange={(e) => {
+                  setAcceptedTerms(e.target.checked);
+                  if (errors.terms) {
+                    setErrors({ ...errors, terms: "" });
+                  }
+                }}
+                className="mt-1 w-4 h-4 text-[#3c6e71] border-gray-300 rounded focus:ring-[#3c6e71] cursor-pointer"
+              />
+              <label htmlFor="terms" className="text-sm text-gray-700 cursor-pointer">
+                I agree to the{" "}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowTermsModal(true);
+                  }}
+                  className="text-[#284b63] font-semibold hover:underline"
+                >
+                  Terms and Conditions
+                </button>
+                {" "}and{" "}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowTermsModal(true);
+                  }}
+                  className="text-[#284b63] font-semibold hover:underline"
+                >
+                  Privacy Policy
+                </button>
+              </label>
+            </div>
+            {errors.terms && (
+              <p className="text-red-500 text-sm flex items-center gap-1">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                {errors.terms}
+              </p>
+            )}
+          </div>
+
           {/* Submit */}
           <button
             type="submit"
-            disabled={loading}
-            className="w-full py-3 bg-[#3c6e71] text-white rounded-lg font-semibold hover:bg-[#284b63] transition"
+            disabled={loading || !acceptedTerms}
+            className={`w-full py-3 rounded-lg font-semibold transition ${
+              loading || !acceptedTerms
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-[#3c6e71] hover:bg-[#284b63] text-white"
+            }`}
           >
             {loading
               ? "Registering..."
@@ -618,6 +680,12 @@ const Register = () => {
           </p>
         </form>
       </div>
+
+      {/* Terms and Conditions Modal */}
+      <TermsAndConditionsModal
+        isOpen={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+      />
     </div>
   );
 };

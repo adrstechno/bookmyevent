@@ -236,6 +236,16 @@ const Login = () => {
         )}
       </div>
 
+      {/* Forgot Password Link */}
+      <div className="text-right">
+        <span
+          className="text-sm text-[#284b63] cursor-pointer font-semibold hover:underline"
+          onClick={() => navigate("/forgot-password")}
+        >
+          Forgot Password?
+        </span>
+      </div>
+
       {/* Submit */}
       <button
         type="submit"

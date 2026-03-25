@@ -93,7 +93,7 @@ const SubServicesSection = () => {
   }
 
   return (
-    <section className="py-16 relative overflow-hidden bg-gray-50">
+    <section className="py-16 relative overflow-hidden bg-gray-50" aria-labelledby="services-heading">
       {/* Clean background */}
       <div className="absolute inset-0 bg-gradient-to-b from-white to-gray-50" />
       
@@ -110,8 +110,8 @@ const SubServicesSection = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#284b63] mb-6">
-              Popular Services
+            <h2 id="services-heading" className="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#284b63] mb-6">
+              Event Services in Jabalpur
             </h2>
             <motion.div
               initial={{ width: 0 }}
@@ -121,7 +121,7 @@ const SubServicesSection = () => {
               className="h-1.5 bg-gradient-to-r from-[#f9a826] to-[#f7b733] mx-auto mb-6 rounded-full"
             />
             <p className="text-gray-600 text-lg sm:text-xl max-w-3xl mx-auto leading-relaxed">
-              Browse our most popular services and find the perfect vendors for your event
+              Book verified vendors for weddings, birthdays, corporate events & all celebrations in Jabalpur, Madhya Pradesh
             </p>
           </motion.div>
         </div>

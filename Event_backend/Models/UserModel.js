@@ -33,6 +33,30 @@ static async findonebyphone(phone, callback) {
         const sql = 'SELECT * FROM users WHERE uuid = ?';
         db.query(sql, [uuid], callback);
     }
+
+    // Store password reset token
+    static async storePasswordResetToken(userId, token, expiresAt, callback) {
+        const sql = 'INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?)';
+        db.query(sql, [userId, token, expiresAt], callback);
+    }
+
+    // Get password reset token
+    static async getPasswordResetToken(userId, token, callback) {
+        const sql = 'SELECT * FROM password_reset_tokens WHERE user_id = ? AND token = ? AND used_at IS NULL';
+        db.query(sql, [userId, token], callback);
+    }
+
+    // Mark password reset token as used
+    static async markPasswordResetTokenAsUsed(tokenId, callback) {
+        const sql = 'UPDATE password_reset_tokens SET used_at = NOW() WHERE id = ?';
+        db.query(sql, [tokenId], callback);
+    }
+
+    // Clean up expired password reset tokens (optional - for maintenance)
+    static async cleanupExpiredResetTokens(callback) {
+        const sql = 'DELETE FROM password_reset_tokens WHERE expires_at < NOW()';
+        db.query(sql, [], callback);
+    }
 }
 
 

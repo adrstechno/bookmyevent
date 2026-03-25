@@ -11,6 +11,7 @@ import SocialSidebar from "../components/mainpage/SocialSidebar";
 import HomeNavbar from "../components/mainpage/HomeNavbar";
 import ErrorBoundary from "../components/ErrorBoundary";
 import usePWAInstall from "../hooks/usePWAInstall";
+import FAQSection from "../components/mainpage/FAQSection";
 
 const HomePage = () => {
   /* ================= PWA LOGIC (ONLY ADDITION) ================= */
@@ -100,6 +101,11 @@ const HomePage = () => {
         {/* Why Choose Us */}
         <ErrorBoundary>
           <WhyChooseUs />
+        </ErrorBoundary>
+        
+        {/* FAQ Section */}
+        <ErrorBoundary>
+          <FAQSection />
         </ErrorBoundary>
         
         {/* CTA Section */}

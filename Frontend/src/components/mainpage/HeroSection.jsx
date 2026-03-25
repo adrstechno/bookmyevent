@@ -9,18 +9,18 @@ const HeroSection = () => {
   const slides = [
     {
       image: "https://media.istockphoto.com/id/471906412/photo/beautiful-table-setting-for-an-wedding-reception-or-an-event.webp?a=1&b=1&s=612x612&w=0&k=20&c=wrF199YjsZWmbQSqGGiA8LojD7qz602jbfoymHlYiZ4=",
-      title: "Make Your Events Unforgettable",
-      subtitle: "Connect with the best event vendors in your city",
+      title: "Best Event Management in Jabalpur",
+      subtitle: "Wedding Planner, Shadi Planner & All Event Vendors in Jabalpur, MP",
     },
     {
       image: "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=1200&h=600&fit=crop",
-      title: "Professional Event Services",
-      subtitle: "From weddings to corporate events, we've got you covered",
+      title: "Book Verified Event Vendors in Jabalpur",
+      subtitle: "Tent Services, Caterers, Photographers, Mehndi Artists, Pandit Ji & More",
     },
     {
       image: "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=1200&h=600&fit=crop",
-      title: "Book with Confidence",
-      subtitle: "Verified vendors, transparent pricing, hassle-free booking",
+      title: "Complete Event Solutions Near You",
+      subtitle: "Birthday Parties, Corporate Events, Sangeet, Mehndi & All Celebrations",
     },
   ];
 
@@ -32,7 +32,7 @@ const HeroSection = () => {
   }, [slides.length]);
 
   return (
-    <section className="relative h-[70vh] min-h-[600px] overflow-hidden">
+    <section className="relative h-[70vh] min-h-[600px] overflow-hidden" aria-label="Event Management Services in Jabalpur">
       {/* Slides */}
       {slides.map((slide, index) => (
         <div
@@ -44,6 +44,8 @@ const HeroSection = () => {
           <div
             className="absolute inset-0 bg-cover bg-center bg-no-repeat"
             style={{ backgroundImage: `url(${slide.image})` }}
+            role="img"
+            aria-label={slide.title}
           >
             <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/60" />
           </div>

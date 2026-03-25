@@ -1,0 +1,13 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /vendor/dashboard
+Disallow: /user/dashboard
+Disallow: /api/
+
+# Sitemap
+Sitemap: https://goeventify.com/sitemap.xml
+
+# Crawl-delay
+Crawl-delay: 1

@@ -17,6 +17,8 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import Login from "./pages/Auth/Login";
 import Register from "./pages/Auth/Register";
 import ChangePassword from "./components/ChangePassword";
+import ForgotPassword from "./pages/Auth/ForgotPassword";
+import ResetPassword from "./pages/Auth/ResetPassword";
 
 // Public Pages
 import Home from "./pages/HomePage";
@@ -98,6 +100,8 @@ export default function App() {
         {/* <Route path="/coming-soon" element={<ComingSoon />} /> */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/changepassword" element={<ChangePassword />} />
         <Route path="/why-us" element={<WhyUsPage />} />
         <Route path="/about" element={<AboutPage />} />

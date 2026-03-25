@@ -716,3 +716,262 @@ export const validateToken = async (req, res) => {
     });
   }
 };
+
+/* ------------------ FORGOT PASSWORD - REQUEST RESET ------------------ */
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Email is required" 
+      });
+    }
+
+    // Check if user exists
+    const user = await new Promise((resolve, reject) => {
+      UserModel.findonebyemail(email, (err, result) => {
+        if (err) return reject(err);
+        resolve(result && result.length > 0 ? result[0] : null);
+      });
+    });
+
+    // For security, always return success even if user doesn't exist
+    // This prevents email enumeration attacks
+    if (!user) {
+      return res.status(200).json({
+        success: true,
+        message: "If an account exists with this email, you will receive a password reset link shortly."
+      });
+    }
+
+    // Generate password reset token (valid for 1 hour)
+    const resetToken = generateToken(user.uuid, '1h');
+    
+    // Store reset token in database with expiry
+    const expiresAt = new Date(Date.now() + 3600000); // 1 hour from now
+    
+    await new Promise((resolve, reject) => {
+      UserModel.storePasswordResetToken(user.uuid, resetToken, expiresAt, (err, result) => {
+        if (err) reject(err);
+        else resolve(result);
+      });
+    });
+
+    // Send password reset email
+    await EmailService.sendPasswordResetEmail({
+      userEmail: user.email,
+      userName: user.first_name,
+      resetToken,
+      userType: user.user_type
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "If an account exists with this email, you will receive a password reset link shortly."
+    });
+
+  } catch (err) {
+    console.error("Forgot password error:", err);
+    return res.status(500).json({ 
+      success: false, 
+      message: "Server error. Please try again later.", 
+      details: err.message 
+    });
+  }
+};
+
+/* ------------------ RESET PASSWORD - VERIFY TOKEN & UPDATE PASSWORD ------------------ */
+export const resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword, confirmPassword } = req.body;
+
+    // Validate inputs
+    if (!token || !newPassword || !confirmPassword) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "All fields are required" 
+      });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Passwords do not match" 
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Password must be at least 6 characters long" 
+      });
+    }
+
+    // Verify the reset token
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Invalid or expired reset token. Please request a new password reset link." 
+      });
+    }
+
+    // Check if token exists in database and is not expired
+    const tokenData = await new Promise((resolve, reject) => {
+      UserModel.getPasswordResetToken(decoded.uuid, token, (err, result) => {
+        if (err) return reject(err);
+        resolve(result && result.length > 0 ? result[0] : null);
+      });
+    });
+
+    if (!tokenData) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Invalid or expired reset token. Please request a new password reset link." 
+      });
+    }
+
+    // Check if token is expired
+    if (new Date() > new Date(tokenData.expires_at)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Reset token has expired. Please request a new password reset link." 
+      });
+    }
+
+    // Check if token has already been used
+    if (tokenData.used_at) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "This reset link has already been used. Please request a new one if needed." 
+      });
+    }
+
+    // Get user data
+    const user = await new Promise((resolve, reject) => {
+      UserModel.findByUuid(decoded.uuid, (err, result) => {
+        if (err) return reject(err);
+        resolve(result && result.length > 0 ? result[0] : null);
+      });
+    });
+
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "User not found" 
+      });
+    }
+
+    // Hash the new password
+    const hashedPassword = bcrypt.hashSync(newPassword, 10);
+
+    // Update password
+    await new Promise((resolve, reject) => {
+      UserModel.updatepassword(user.email, hashedPassword, (err, result) => {
+        if (err) reject(err);
+        else resolve(result);
+      });
+    });
+
+    // Mark token as used
+    await new Promise((resolve, reject) => {
+      UserModel.markPasswordResetTokenAsUsed(tokenData.id, (err, result) => {
+        if (err) reject(err);
+        else resolve(result);
+      });
+    });
+
+    // Send confirmation email
+    try {
+      await EmailService.sendPasswordChangeConfirmationEmail({
+        userEmail: user.email,
+        userName: user.first_name
+      });
+    } catch (emailErr) {
+      console.error("Error sending password change confirmation email:", emailErr);
+      // Don't fail the request if email fails
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Password has been reset successfully. You can now login with your new password."
+    });
+
+  } catch (err) {
+    console.error("Reset password error:", err);
+    return res.status(500).json({ 
+      success: false, 
+      message: "Server error. Please try again later.", 
+      details: err.message 
+    });
+  }
+};
+
+/* ------------------ VERIFY RESET TOKEN ------------------ */
+export const verifyResetToken = async (req, res) => {
+  try {
+    const { token } = req.query;
+
+    if (!token) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Reset token is required" 
+      });
+    }
+
+    // Verify the token
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Invalid or expired reset token" 
+      });
+    }
+
+    // Check if token exists in database and is not expired
+    const tokenData = await new Promise((resolve, reject) => {
+      UserModel.getPasswordResetToken(decoded.uuid, token, (err, result) => {
+        if (err) return reject(err);
+        resolve(result && result.length > 0 ? result[0] : null);
+      });
+    });
+
+    if (!tokenData) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Invalid reset token" 
+      });
+    }
+
+    // Check if token is expired
+    if (new Date() > new Date(tokenData.expires_at)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Reset token has expired" 
+      });
+    }
+
+    // Check if token has already been used
+    if (tokenData.used_at) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "This reset link has already been used" 
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Token is valid"
+    });
+
+  } catch (err) {
+    console.error("Verify reset token error:", err);
+    return res.status(400).json({ 
+      success: false, 
+      message: "Invalid or expired reset token", 
+      details: err.message 
+    });
+  }
+};
