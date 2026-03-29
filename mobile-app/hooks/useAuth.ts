@@ -1,7 +1,19 @@
 import { useCallback } from 'react';
 
 import { useAppDispatch, useAppSelector } from '@/store';
-import { bootstrapAuth, signIn, signOut } from '@/store/slices/authSlice';
+import {
+	bootstrapAuth,
+	clearAuthError,
+	registerUser,
+	requestPasswordReset,
+	resendVerification,
+	resetPassword,
+	signInWithCredentials,
+	signOut,
+	verifyEmail,
+	verifyResetToken,
+} from '@/store/slices/authSlice';
+import { LoginRequest, RegisterRequest } from '@/types';
 
 export const useAuth = () => {
 	const dispatch = useAppDispatch();
@@ -11,9 +23,51 @@ export const useAuth = () => {
 		await dispatch(bootstrapAuth());
 	}, [dispatch]);
 
-	const loginWithToken = useCallback(
+	const login = useCallback(
+		async (payload: LoginRequest) => {
+			return dispatch(signInWithCredentials(payload)).unwrap();
+		},
+		[dispatch]
+	);
+
+	const register = useCallback(
+		async (payload: RegisterRequest) => {
+			return dispatch(registerUser(payload)).unwrap();
+		},
+		[dispatch]
+	);
+
+	const forgotPassword = useCallback(
+		async (email: string) => {
+			return dispatch(requestPasswordReset(email)).unwrap();
+		},
+		[dispatch]
+	);
+
+	const checkResetToken = useCallback(
 		async (token: string) => {
-			await dispatch(signIn(token));
+			return dispatch(verifyResetToken(token)).unwrap();
+		},
+		[dispatch]
+	);
+
+	const submitPasswordReset = useCallback(
+		async (payload: { token: string; newPassword: string; confirmPassword: string }) => {
+			return dispatch(resetPassword(payload)).unwrap();
+		},
+		[dispatch]
+	);
+
+	const confirmEmail = useCallback(
+		async (token: string) => {
+			return dispatch(verifyEmail(token)).unwrap();
+		},
+		[dispatch]
+	);
+
+	const resendEmailVerification = useCallback(
+		async (email: string) => {
+			return dispatch(resendVerification(email)).unwrap();
 		},
 		[dispatch]
 	);
@@ -22,11 +76,22 @@ export const useAuth = () => {
 		await dispatch(signOut());
 	}, [dispatch]);
 
+	const clearError = useCallback(() => {
+		dispatch(clearAuthError());
+	}, [dispatch]);
+
 	return {
 		...auth,
 		initializeSession,
-		loginWithToken,
+		login,
+		register,
+		forgotPassword,
+		checkResetToken,
+		submitPasswordReset,
+		confirmEmail,
+		resendEmailVerification,
 		logout,
+		clearError,
 	};
 };
 

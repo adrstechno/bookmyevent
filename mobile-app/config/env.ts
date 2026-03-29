@@ -4,7 +4,7 @@ type AppEnv = {
 	enableApiDebugLogs: boolean;
 };
 
-const DEFAULT_API_BASE_URL = 'http://localhost:3000';
+const DEFAULT_API_BASE_URL = 'http://localhost:3232';
 const DEFAULT_API_TIMEOUT_MS = 15000;
 
 const normalizeBaseUrl = (value: string) => value.replace(/\/+$/, '');
@@ -32,7 +32,7 @@ const apiBaseUrl = rawBaseUrl ? normalizeBaseUrl(rawBaseUrl) : DEFAULT_API_BASE_
 
 if (__DEV__ && !rawBaseUrl) {
 	console.warn(
-		'[env] EXPO_PUBLIC_API_BASE_URL is not set. Falling back to http://localhost:3000.'
+		'[env] EXPO_PUBLIC_API_BASE_URL is not set. Falling back to http://localhost:3232.'
 	);
 }
 

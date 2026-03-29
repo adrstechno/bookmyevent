@@ -57,3 +57,5 @@ export const clearSession = async () => {
 	clearApiAuthToken();
 };
 
+export const getInMemoryToken = () => inMemoryToken;
+
