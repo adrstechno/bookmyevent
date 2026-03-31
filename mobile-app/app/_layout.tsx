@@ -1,52 +1,51 @@
-import { Slot, useRouter, useSegments } from 'expo-router';
+import { Stack } from 'expo-router';
 import { useEffect } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Provider } from 'react-redux';
 
-import { useAuth } from '@/hooks/useAuth';
-import { store } from '@/store';
+import { useAppDispatch, useAppSelector, store } from '@/store';
+import { bootstrapAuth } from '@/store/slices/authSlice';
 
-function AuthBootstrap() {
-	const router = useRouter();
-	const segments = useSegments();
-	const { isHydrated, isAuthenticated, initializeSession } = useAuth();
-
-	useEffect(() => {
-		initializeSession();
-	}, [initializeSession]);
+function RootNavigator() {
+	const dispatch = useAppDispatch();
+	const isHydrated = useAppSelector((state) => state.auth.isHydrated);
 
 	useEffect(() => {
-		if (!isHydrated) {
-			return;
-		}
-
-		const isAuthRoute = segments[0] === '(auth)';
-
-		if (isAuthenticated && isAuthRoute) {
-			router.replace('/(tabs)');
-		}
-
-		if (!isAuthenticated && !isAuthRoute) {
-			router.replace('/(auth)/login');
-		}
-	}, [isAuthenticated, isHydrated, router, segments]);
+		dispatch(bootstrapAuth());
+	}, [dispatch]);
 
 	if (!isHydrated) {
 		return (
-			<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-				<ActivityIndicator size="large" />
+			<View style={styles.loaderWrap}>
+				<ActivityIndicator size="large" color="#0F766E" />
 			</View>
 		);
 	}
 
-	return <Slot />;
+	return (
+		<Stack screenOptions={{ headerShown: false }}>
+			<Stack.Screen name="(auth)" options={{ headerShown: false }} />
+			<Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+			<Stack.Screen name="profile-edit" options={{ headerShown: false }} />
+			<Stack.Screen name="support" options={{ headerShown: false }} />
+		</Stack>
+	);
 }
 
 export default function RootLayout() {
 	return (
 		<Provider store={store}>
-			<AuthBootstrap />
+			<RootNavigator />
 		</Provider>
 	);
 }
+
+const styles = StyleSheet.create({
+	loaderWrap: {
+		flex: 1,
+		alignItems: 'center',
+		justifyContent: 'center',
+		backgroundColor: '#F3F7F6',
+	},
+});
 

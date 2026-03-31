@@ -1,59 +1,61 @@
 import * as SecureStore from 'expo-secure-store';
 
-import { clearApiAuthToken, setApiAuthToken } from '@/services/api/client';
+const SESSION_KEY = 'auth.session';
 
-const ACCESS_TOKEN_KEY = 'auth.accessToken';
+export type DummyUserRole = 'user' | 'vendor';
 
-let inMemoryToken: string | null = null;
+export type DummyAuthSession = {
+	token: string;
+	role: DummyUserRole;
+	name: string;
+	email: string;
+};
 
-const setStoredToken = async (token: string) => {
-	inMemoryToken = token;
+let inMemorySession: DummyAuthSession | null = null;
+
+const setStoredSession = async (session: DummyAuthSession) => {
+	inMemorySession = session;
 
 	try {
-		await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, token);
+		await SecureStore.setItemAsync(SESSION_KEY, JSON.stringify(session));
 	} catch {
 		// Web and some simulators may not provide secure storage.
 	}
 };
 
-const getStoredToken = async () => {
+const getStoredSession = async () => {
 	try {
-		const token = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
-		return token ?? inMemoryToken;
+		const session = await SecureStore.getItemAsync(SESSION_KEY);
+
+		if (!session) {
+			return inMemorySession;
+		}
+
+		return JSON.parse(session) as DummyAuthSession;
 	} catch {
-		return inMemoryToken;
+		return inMemorySession;
 	}
 };
 
-const clearStoredToken = async () => {
-	inMemoryToken = null;
+const clearStoredSession = async () => {
+	inMemorySession = null;
 
 	try {
-		await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
+		await SecureStore.deleteItemAsync(SESSION_KEY);
 	} catch {
 		// Ignore storage delete issues to keep logout reliable.
 	}
 };
 
 export const restoreSession = async () => {
-	const token = await getStoredToken();
-
-	if (token) {
-		setApiAuthToken(token);
-	} else {
-		clearApiAuthToken();
-	}
-
-	return token;
+	return await getStoredSession();
 };
 
-export const persistSessionToken = async (token: string) => {
-	await setStoredToken(token);
-	setApiAuthToken(token);
+export const persistSession = async (session: DummyAuthSession) => {
+	await setStoredSession(session);
 };
 
 export const clearSession = async () => {
-	await clearStoredToken();
-	clearApiAuthToken();
+	await clearStoredSession();
 };
 

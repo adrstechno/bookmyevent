@@ -1,7 +1,15 @@
 import { useCallback } from 'react';
 
 import { useAppDispatch, useAppSelector } from '@/store';
-import { bootstrapAuth, signIn, signOut } from '@/store/slices/authSlice';
+import {
+	bootstrapAuth,
+	loginWithCredentials,
+	registerWithCredentials,
+	signIn,
+	signOut,
+} from '@/store/slices/authSlice';
+import type { DummyAuthSession } from '@/services/auth/authService';
+import type { LoginRequest, RegisterRequest } from '@/types/auth';
 
 export const useAuth = () => {
 	const dispatch = useAppDispatch();
@@ -12,8 +20,22 @@ export const useAuth = () => {
 	}, [dispatch]);
 
 	const loginWithToken = useCallback(
-		async (token: string) => {
-			await dispatch(signIn(token));
+		async (session: DummyAuthSession) => {
+			await dispatch(signIn(session));
+		},
+		[dispatch]
+	);
+
+	const login = useCallback(
+		async (credentials: LoginRequest) => {
+			await dispatch(loginWithCredentials(credentials));
+		},
+		[dispatch]
+	);
+
+	const register = useCallback(
+		async (payload: RegisterRequest) => {
+			await dispatch(registerWithCredentials(payload));
 		},
 		[dispatch]
 	);
@@ -25,6 +47,8 @@ export const useAuth = () => {
 	return {
 		...auth,
 		initializeSession,
+		login,
+		register,
 		loginWithToken,
 		logout,
 	};
