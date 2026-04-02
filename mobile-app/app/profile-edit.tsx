@@ -1,0 +1,440 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { Redirect, useRouter, useLocalSearchParams } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, BackHandler, Pressable, ScrollView, StyleSheet, TextInput, View, useWindowDimensions } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { ThemedText } from '@/components/themed-text';
+import { useAppSelector } from '@/store';
+import { useSettingsTheme } from '@/theme/settingsTheme';
+
+type EditProfileForm = {
+	firstName: string;
+	lastName: string;
+	email: string;
+	phone: string;
+};
+
+type ChangePasswordForm = {
+	currentPassword: string;
+	newPassword: string;
+	confirmPassword: string;
+};
+
+export default function ProfileEditScreen() {
+	const router = useRouter();
+	const insets = useSafeAreaInsets();
+	const { isAuthenticated, isHydrated } = useAppSelector((state) => state.auth);
+	const { mode, palette } = useSettingsTheme();
+	const isDark = mode === 'dark';
+	const { height: screenHeight } = useWindowDimensions();
+	const params = useLocalSearchParams<EditProfileForm>();
+	const [form, setForm] = useState<EditProfileForm>({
+		firstName: params.firstName ?? 'Nayan',
+		lastName: params.lastName ?? 'Malviya',
+		email: params.email ?? 'nayan@example.com',
+		phone: params.phone ?? '+91 98765 43210',
+	});
+	const [passwordForm, setPasswordForm] = useState<ChangePasswordForm>({
+		currentPassword: '',
+		newPassword: '',
+		confirmPassword: '',
+	});
+	const [profileMessage, setProfileMessage] = useState('');
+	const [passwordMessage, setPasswordMessage] = useState('');
+	const [isSavingProfile, setIsSavingProfile] = useState(false);
+	const [isChangingPassword, setIsChangingPassword] = useState(false);
+	const headerAnim = useRef(new Animated.Value(0)).current;
+	const cardAnim = useRef(new Animated.Value(0)).current;
+
+	useEffect(() => {
+		Animated.parallel([
+			Animated.timing(headerAnim, {
+				toValue: 1,
+				duration: 280,
+				useNativeDriver: true,
+			}),
+			Animated.timing(cardAnim, {
+				toValue: 1,
+				duration: 420,
+				delay: 90,
+				useNativeDriver: true,
+			}),
+		]).start();
+	}, [cardAnim, headerAnim]);
+
+	useEffect(() => {
+		const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+			router.replace('/(tabs)/profile');
+			return true;
+		});
+
+		return () => subscription.remove();
+	}, [router]);
+
+	const goBack = () => {
+		router.replace('/(tabs)/profile');
+	};
+
+	const isValidEmail = (value: string) => {
+		return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+	};
+
+	const isValidPhone = (value: string) => {
+		const digitsOnly = value.replace(/\D/g, '');
+		return digitsOnly.length === 10;
+	};
+
+	const onSave = () => {
+		void (async () => {
+			const payload = {
+				firstName: form.firstName.trim(),
+				lastName: form.lastName.trim(),
+				email: form.email.trim().toLowerCase(),
+				phone: form.phone.trim(),
+			};
+
+			if (!payload.firstName || !payload.lastName || !payload.email || !payload.phone) {
+				setProfileMessage('Please fill all profile fields.');
+				return;
+			}
+
+			if (!isValidEmail(payload.email)) {
+				setProfileMessage('Please enter a valid email address.');
+				return;
+			}
+
+			if (!isValidPhone(payload.phone)) {
+				setProfileMessage('Please enter a valid 10-digit phone number.');
+				return;
+			}
+
+			setIsSavingProfile(true);
+			setProfileMessage('');
+			try {
+				// Placeholder until profile update API is connected.
+				await new Promise((resolve) => setTimeout(resolve, 700));
+				setProfileMessage('Profile updated successfully.');
+			} catch {
+				setProfileMessage('Unable to update profile. Please try again.');
+			} finally {
+				setIsSavingProfile(false);
+			}
+		})();
+	};
+
+	const onChangePassword = () => {
+		void (async () => {
+			const currentPassword = passwordForm.currentPassword.trim();
+			const newPassword = passwordForm.newPassword.trim();
+			const confirmPassword = passwordForm.confirmPassword.trim();
+
+			if (!currentPassword || !newPassword || !confirmPassword) {
+				setPasswordMessage('Please fill all password fields.');
+				return;
+			}
+
+			if (newPassword.length < 6) {
+				setPasswordMessage('New password must be at least 6 characters.');
+				return;
+			}
+
+			if (newPassword !== confirmPassword) {
+				setPasswordMessage('New password and confirm password must match.');
+				return;
+			}
+
+			setIsChangingPassword(true);
+			setPasswordMessage('');
+			try {
+				// Placeholder until change-password API is connected.
+				await new Promise((resolve) => setTimeout(resolve, 700));
+				setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+				setPasswordMessage('Password changed successfully.');
+			} catch {
+				setPasswordMessage('Unable to change password. Please try again.');
+			} finally {
+				setIsChangingPassword(false);
+			}
+		})();
+	};
+
+	if (isHydrated && !isAuthenticated) {
+		return <Redirect href="/(auth)/login" />;
+	}
+
+	return (
+		<SafeAreaView style={[styles.safeArea, { backgroundColor: palette.screenBg }]} edges={['top', 'bottom']}>
+			<StatusBar style={isDark ? 'light' : 'dark'} />
+			<Animated.View
+				style={[
+					styles.header,
+					{ backgroundColor: palette.surfaceBg, borderBottomColor: palette.border },
+					{
+						opacity: headerAnim,
+						transform: [
+							{
+								translateY: headerAnim.interpolate({
+									inputRange: [0, 1],
+									outputRange: [-14, 0],
+								}),
+							},
+						],
+					},
+				]}
+			>
+				<Pressable style={[styles.backBtn, { backgroundColor: palette.headerBtnBg, borderColor: palette.border }]} onPress={goBack} hitSlop={10}>
+					<Ionicons name="arrow-back" size={20} color={palette.text} />
+				</Pressable>
+				<ThemedText style={[styles.headerTitle, { color: palette.text }]}>Edit Profile</ThemedText>
+				<View style={styles.headerRightPlaceholder} />
+			</Animated.View>
+
+			<ScrollView
+				style={[styles.page, { backgroundColor: palette.screenBg }]}
+				contentContainerStyle={[styles.container, { paddingBottom: insets.bottom + 20 }]}
+				showsVerticalScrollIndicator={false}
+			>
+				<Animated.View
+					style={[
+						styles.card,
+						{ backgroundColor: palette.surfaceBg, borderColor: palette.border, borderTopColor: palette.tint },
+						{ minHeight: Math.max(screenHeight * 0.5, 360) },
+						{
+							opacity: cardAnim,
+							transform: [
+								{
+									translateY: cardAnim.interpolate({
+										inputRange: [0, 1],
+										outputRange: [20, 0],
+									}),
+								},
+							],
+						},
+					]}
+				>
+					<ThemedText style={[styles.cardTitle, { color: palette.text }]}>Profile Information</ThemedText>
+
+					<TextInput
+						style={[styles.input, { backgroundColor: palette.headerBtnBg, borderColor: palette.border, color: palette.text }]}
+						value={form.firstName}
+						onChangeText={(value) => setForm((prev) => ({ ...prev, firstName: value }))}
+						placeholder="First Name"
+						placeholderTextColor={palette.subtext}
+					/>
+					<TextInput
+						style={[styles.input, { backgroundColor: palette.headerBtnBg, borderColor: palette.border, color: palette.text }]}
+						value={form.lastName}
+						onChangeText={(value) => setForm((prev) => ({ ...prev, lastName: value }))}
+						placeholder="Last Name"
+						placeholderTextColor={palette.subtext}
+					/>
+					<TextInput
+						style={[styles.input, { backgroundColor: palette.headerBtnBg, borderColor: palette.border, color: palette.text }]}
+						value={form.email}
+						onChangeText={(value) => setForm((prev) => ({ ...prev, email: value }))}
+						placeholder="Email"
+						placeholderTextColor={palette.subtext}
+						keyboardType="email-address"
+					/>
+					<TextInput
+						style={[styles.input, { backgroundColor: palette.headerBtnBg, borderColor: palette.border, color: palette.text }]}
+						value={form.phone}
+						onChangeText={(value) => setForm((prev) => ({ ...prev, phone: value }))}
+						placeholder="Phone"
+						placeholderTextColor={palette.subtext}
+						keyboardType="phone-pad"
+					/>
+
+					<Pressable style={[styles.saveBtn, { backgroundColor: palette.tint, shadowColor: palette.tint }, isSavingProfile ? styles.saveBtnDisabled : null]} onPress={onSave} disabled={isSavingProfile}>
+						<ThemedText style={styles.saveBtnText}>{isSavingProfile ? 'Saving...' : 'Save Profile'}</ThemedText>
+					</Pressable>
+
+					{profileMessage ? <ThemedText style={[styles.messageText, { color: palette.tint }]}>{profileMessage}</ThemedText> : null}
+				</Animated.View>
+
+				<Animated.View
+					style={[
+						styles.card,
+						{ backgroundColor: palette.surfaceBg, borderColor: palette.border, borderTopColor: palette.tint },
+						{
+							opacity: cardAnim,
+							transform: [
+								{
+									translateY: cardAnim.interpolate({
+										inputRange: [0, 1],
+										outputRange: [20, 0],
+									}),
+								},
+							],
+						},
+					]}
+				>
+					<ThemedText style={[styles.cardTitle, { color: palette.text }]}>Change Password</ThemedText>
+					<ThemedText style={[styles.helperText, { color: palette.subtext }]}>Use your current password and set a new secure password.</ThemedText>
+
+					<TextInput
+						style={[styles.input, { backgroundColor: palette.headerBtnBg, borderColor: palette.border, color: palette.text }]}
+						value={passwordForm.currentPassword}
+						onChangeText={(value) => setPasswordForm((prev) => ({ ...prev, currentPassword: value }))}
+						placeholder="Current Password"
+						placeholderTextColor={palette.subtext}
+						secureTextEntry
+					/>
+					<TextInput
+						style={[styles.input, { backgroundColor: palette.headerBtnBg, borderColor: palette.border, color: palette.text }]}
+						value={passwordForm.newPassword}
+						onChangeText={(value) => setPasswordForm((prev) => ({ ...prev, newPassword: value }))}
+						placeholder="New Password"
+						placeholderTextColor={palette.subtext}
+						secureTextEntry
+					/>
+					<TextInput
+						style={[styles.input, { backgroundColor: palette.headerBtnBg, borderColor: palette.border, color: palette.text }]}
+						value={passwordForm.confirmPassword}
+						onChangeText={(value) => setPasswordForm((prev) => ({ ...prev, confirmPassword: value }))}
+						placeholder="Confirm New Password"
+						placeholderTextColor={palette.subtext}
+						secureTextEntry
+					/>
+
+					<Pressable
+						style={[
+							styles.secondaryBtn,
+							{ backgroundColor: palette.headerBtnBg, borderColor: palette.border },
+							isChangingPassword ? styles.saveBtnDisabled : null,
+						]}
+						onPress={onChangePassword}
+						disabled={isChangingPassword}
+					>
+						<ThemedText style={[styles.secondaryBtnText, { color: palette.text }]}>{isChangingPassword ? 'Updating...' : 'Update Password'}</ThemedText>
+					</Pressable>
+
+					{passwordMessage ? <ThemedText style={[styles.messageText, { color: palette.tint }]}>{passwordMessage}</ThemedText> : null}
+				</Animated.View>
+			</ScrollView>
+		</SafeAreaView>
+	);
+}
+
+const styles = StyleSheet.create({
+	safeArea: {
+		flex: 1,
+		backgroundColor: '#F3F7F6',
+	},
+	header: {
+		height: 56,
+		paddingHorizontal: 16,
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'space-between',
+		backgroundColor: '#FFFFFF',
+		borderBottomWidth: 1,
+		borderBottomColor: '#E2E8F0',
+	},
+	backBtn: {
+		width: 36,
+		height: 36,
+		borderRadius: 18,
+		alignItems: 'center',
+		justifyContent: 'center',
+		backgroundColor: '#F8FAFC',
+		borderWidth: 1,
+		borderColor: '#E2E8F0',
+	},
+	headerTitle: {
+		fontSize: 17,
+		fontWeight: '800',
+		color: '#0F172A',
+	},
+	headerRightPlaceholder: {
+		width: 36,
+		height: 36,
+	},
+	page: {
+		flex: 1,
+	},
+	container: {
+		padding: 16,
+	},
+	card: {
+		backgroundColor: '#FFFFFF',
+		borderRadius: 20,
+		borderTopWidth: 4,
+		borderTopColor: '#3C6E71',
+		borderWidth: 1,
+		borderColor: '#DCE5E8',
+		padding: 18,
+		gap: 12,
+		shadowColor: '#0F172A',
+		shadowOpacity: 0.08,
+		shadowOffset: { width: 0, height: 8 },
+		shadowRadius: 16,
+		elevation: 6,
+		marginBottom: 12,
+	},
+	cardTitle: {
+		fontSize: 18,
+		fontWeight: '800',
+		color: '#1E293B',
+		marginBottom: 8,
+	},
+	input: {
+		borderWidth: 1,
+		borderColor: '#CBD5E1',
+		borderRadius: 12,
+		paddingHorizontal: 12,
+		paddingVertical: 12,
+		fontSize: 15,
+		color: '#1F2937',
+		backgroundColor: '#F8FAFC',
+	},
+	helperText: {
+		fontSize: 12,
+		fontWeight: '600',
+		color: '#64748B',
+		marginTop: -4,
+		marginBottom: 2,
+	},
+	saveBtn: {
+		marginTop: 10,
+		backgroundColor: '#0F766E',
+		paddingVertical: 14,
+		borderRadius: 12,
+		alignItems: 'center',
+		shadowColor: '#0F766E',
+		shadowOpacity: 0.26,
+		shadowOffset: { width: 0, height: 6 },
+		shadowRadius: 10,
+		elevation: 3,
+	},
+	saveBtnDisabled: {
+		opacity: 0.7,
+	},
+	saveBtnText: {
+		fontSize: 16,
+		fontWeight: '800',
+		color: '#FFFFFF',
+	},
+	secondaryBtn: {
+		marginTop: 10,
+		backgroundColor: '#1E293B',
+		borderWidth: 1,
+		borderColor: '#334155',
+		paddingVertical: 14,
+		borderRadius: 12,
+		alignItems: 'center',
+	},
+	secondaryBtnText: {
+		fontSize: 15,
+		fontWeight: '800',
+		color: '#FFFFFF',
+	},
+	messageText: {
+		marginTop: 4,
+		fontSize: 13,
+		fontWeight: '700',
+		color: '#0F766E',
+	},
+});

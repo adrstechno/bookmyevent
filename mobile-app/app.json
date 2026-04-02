@@ -28,6 +28,19 @@
     "plugins": [
       "expo-router",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow GoEventify to access your photos to set profile image.",
+          "cameraPermission": "Allow GoEventify to use your camera to capture profile image."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow GoEventify to use your camera to capture profile image."
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "image": "./assets/images/splash-icon.png",
