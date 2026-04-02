@@ -1,18 +1,40 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useMemo, useState, memo } from 'react';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { useSettingsTheme } from '@/theme/settingsTheme';
 
-const SAMPLE_BOOKINGS = [
+type BookingStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
+
+type BookingItem = {
+	id: string;
+	eventName: string;
+	date: string;
+	venue: string;
+	amount: string;
+	status: BookingStatus;
+};
+
+const STATUS_META: Record<BookingStatus, { label: string; chipLabel: string }> = {
+	pending: { label: 'Pending Vendor Response', chipLabel: 'Pending' },
+	confirmed: { label: 'Confirmed', chipLabel: 'Confirmed' },
+	completed: { label: 'Completed', chipLabel: 'Completed' },
+	cancelled: { label: 'Cancelled', chipLabel: 'Cancelled' },
+};
+
+const SAMPLE_BOOKINGS: BookingItem[] = [
 	{
 		id: 'BK-1001',
 		eventName: 'Wedding Event',
 		date: '12 Apr 2026',
 		venue: 'Silver Oak Lawn, Indore',
 		amount: 'Rs 45,000',
-		status: 'Upcoming',
+		status: 'confirmed',
 	},
 	{
 		id: 'BK-1002',
@@ -20,7 +42,7 @@ const SAMPLE_BOOKINGS = [
 		date: '22 Apr 2026',
 		venue: 'Metro Convention Hall, Bhopal',
 		amount: 'Rs 18,500',
-		status: 'Pending',
+		status: 'pending',
 	},
 	{
 		id: 'BK-1003',
@@ -28,89 +50,171 @@ const SAMPLE_BOOKINGS = [
 		date: '02 Mar 2026',
 		venue: 'Sunrise Banquet, Dewas',
 		amount: 'Rs 12,000',
-		status: 'Completed',
+		status: 'completed',
 	},
 ];
 
-const STATUS_CHIPS = ['All', 'Upcoming', 'Pending', 'Completed'];
+const STATUS_CHIPS: Array<'all' | BookingStatus> = ['all', 'pending', 'confirmed', 'completed', 'cancelled'];
+
+const BookingCard = memo(function BookingCard({
+	booking,
+	palette,
+}: {
+	booking: BookingItem;
+	palette: {
+		surfaceBg: string;
+		border: string;
+		text: string;
+		subtext: string;
+		tint: string;
+	};
+}) {
+	const isPending = booking.status === 'pending';
+	const isCompleted = booking.status === 'completed';
+	const isCancelled = booking.status === 'cancelled';
+
+	return (
+		<ThemedView style={[styles.bookingCard, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
+			<View style={styles.rowTop}>
+				<View style={styles.eventMeta}>
+					<ThemedText type="defaultSemiBold" style={[styles.eventName, { color: palette.text }]}>{booking.eventName}</ThemedText>
+					<ThemedText style={[styles.bookingId, { color: palette.subtext }]}>Booking ID: {booking.id}</ThemedText>
+				</View>
+				<ThemedView
+					style={[
+						styles.statusPill,
+						isPending ? styles.statusPending : null,
+						isCompleted ? styles.statusCompleted : null,
+						isCancelled ? styles.statusCancelled : null,
+					]}
+				>
+					<ThemedText
+						style={[
+							styles.statusText,
+							isPending ? styles.statusTextPending : null,
+							isCompleted ? styles.statusTextCompleted : null,
+							isCancelled ? styles.statusTextCancelled : null,
+						]}
+					>
+						{STATUS_META[booking.status].label}
+					</ThemedText>
+				</ThemedView>
+			</View>
+
+			<View style={styles.detailRow}>
+				<Ionicons name="calendar-outline" size={15} color={palette.subtext} />
+				<ThemedText style={[styles.detailText, { color: palette.subtext }]}>{booking.date}</ThemedText>
+			</View>
+			<View style={styles.detailRow}>
+				<Ionicons name="location-outline" size={15} color={palette.subtext} />
+				<ThemedText style={[styles.detailText, { color: palette.subtext }]}>{booking.venue}</ThemedText>
+			</View>
+			<View style={styles.detailRow}>
+				<Ionicons name="wallet-outline" size={15} color={palette.subtext} />
+				<ThemedText style={[styles.detailText, { color: palette.subtext }]}>{booking.amount}</ThemedText>
+			</View>
+
+			<ThemedView style={[styles.ctaBtn, { backgroundColor: palette.headerBtnBg, borderColor: palette.border }]}>
+				<ThemedText style={styles.ctaText}>View Details</ThemedText>
+			</ThemedView>
+		</ThemedView>
+	);
+});
 
 export default function BookingsTabScreen() {
 	const tabBarHeight = useBottomTabBarHeight();
+	const { mode, palette } = useSettingsTheme();
+	const isDark = mode === 'dark';
+	const [activeStatus, setActiveStatus] = useState<'all' | BookingStatus>('all');
+
+	const filteredBookings = useMemo(() => {
+		if (activeStatus === 'all') {
+			return SAMPLE_BOOKINGS;
+		}
+
+		return SAMPLE_BOOKINGS.filter((booking) => booking.status === activeStatus);
+	}, [activeStatus]);
+
+	const stats = useMemo(() => {
+		const total = SAMPLE_BOOKINGS.length;
+		const upcoming = SAMPLE_BOOKINGS.filter((booking) => booking.status === 'confirmed').length;
+		const pending = SAMPLE_BOOKINGS.filter((booking) => booking.status === 'pending').length;
+
+		return { total, upcoming, pending };
+	}, []);
 
 	return (
-		<ScrollView
-			style={styles.page}
-			showsVerticalScrollIndicator={false}
-			contentContainerStyle={[styles.container, { paddingBottom: tabBarHeight + 16 }]}
-		>
-			<ThemedView style={styles.heroCard}>
-				<ThemedText type="title" style={styles.heroTitle}>My Bookings</ThemedText>
-				<ThemedText style={styles.heroSubtext}>Track your event requests, confirmations, and payment status.</ThemedText>
+		<SafeAreaView style={[styles.safeArea, { backgroundColor: palette.screenBg }]} edges={['top']}>
+			<StatusBar style={isDark ? 'light' : 'dark'} />
+			<View style={[styles.appBar, { backgroundColor: palette.surfaceBg, borderBottomColor: palette.border }]}>
+				<View style={[styles.appBarIconWrap, { backgroundColor: palette.headerBtnBg, borderColor: palette.border }]}>
+					<Ionicons name="calendar-clear-outline" size={18} color={palette.tint} />
+				</View>
+				<View style={styles.appBarTextWrap}>
+					<ThemedText style={[styles.appBarTitle, { color: palette.text }]}>My Bookings</ThemedText>
+					<ThemedText style={[styles.appBarSubtitle, { color: palette.subtext }]}>Manage and track all your event bookings</ThemedText>
+				</View>
+			</View>
 
+			<ScrollView
+				style={[styles.page, { backgroundColor: palette.screenBg }]}
+				showsVerticalScrollIndicator={false}
+				contentContainerStyle={[styles.container, { paddingBottom: tabBarHeight + 16 }]}
+			>
 				<View style={styles.statsRow}>
-					<ThemedView style={styles.statPill}>
-						<ThemedText style={styles.statValue}>03</ThemedText>
-						<ThemedText style={styles.statLabel}>Total</ThemedText>
+					<ThemedView style={[styles.statPill, styles.statTotal, { backgroundColor: palette.surfaceBg, borderColor: palette.tint }]}>
+						<ThemedText style={[styles.statValue, { color: palette.tint }]}>{String(stats.total).padStart(2, '0')}</ThemedText>
+						<ThemedText style={[styles.statLabel, { color: palette.subtext }]}>Total</ThemedText>
 					</ThemedView>
-					<ThemedView style={styles.statPill}>
-						<ThemedText style={styles.statValue}>01</ThemedText>
-						<ThemedText style={styles.statLabel}>Upcoming</ThemedText>
+					<ThemedView style={[styles.statPill, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
+						<ThemedText style={[styles.statValue, { color: palette.tint }]}>{String(stats.upcoming).padStart(2, '0')}</ThemedText>
+						<ThemedText style={[styles.statLabel, { color: palette.subtext }]}>Upcoming</ThemedText>
 					</ThemedView>
-					<ThemedView style={styles.statPill}>
-						<ThemedText style={styles.statValue}>01</ThemedText>
-						<ThemedText style={styles.statLabel}>Pending</ThemedText>
+					<ThemedView style={[styles.statPill, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
+						<ThemedText style={[styles.statValue, { color: palette.tint }]}>{String(stats.pending).padStart(2, '0')}</ThemedText>
+						<ThemedText style={[styles.statLabel, { color: palette.subtext }]}>Pending</ThemedText>
 					</ThemedView>
 				</View>
-			</ThemedView>
 
-			<ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRow}>
-				{STATUS_CHIPS.map((chip, index) => (
-					<ThemedView key={chip} style={[styles.chip, index === 0 ? styles.activeChip : null]}>
-						<ThemedText style={[styles.chipText, index === 0 ? styles.activeChipText : null]}>{chip}</ThemedText>
-					</ThemedView>
+				<ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRow}>
+					{STATUS_CHIPS.map((chip) => {
+						const isActive = activeStatus === chip;
+						const label = chip === 'all' ? 'All' : STATUS_META[chip].chipLabel;
+
+						return (
+							<Pressable key={chip} onPress={() => setActiveStatus(chip)}>
+								<ThemedView
+									style={[
+										styles.chip,
+										{ backgroundColor: palette.surfaceBg, borderColor: palette.border },
+										isActive ? [styles.activeChip, { backgroundColor: palette.tint, borderColor: palette.tint }] : null,
+									]}
+								>
+									<ThemedText style={[styles.chipText, { color: palette.subtext }, isActive ? styles.activeChipText : null]}>{label}</ThemedText>
+								</ThemedView>
+							</Pressable>
+						);
+					})}
+				</ScrollView>
+
+				{filteredBookings.map((booking) => (
+					<BookingCard key={booking.id} booking={booking} palette={palette} />
 				))}
-			</ScrollView>
 
-			{SAMPLE_BOOKINGS.map((booking) => (
-				<ThemedView key={booking.id} style={styles.bookingCard}>
-					<View style={styles.rowTop}>
-						<View style={styles.eventMeta}>
-							<ThemedText type="defaultSemiBold" style={styles.eventName}>{booking.eventName}</ThemedText>
-							<ThemedText style={styles.bookingId}>Booking ID: {booking.id}</ThemedText>
-						</View>
-						<ThemedView style={[styles.statusPill, booking.status === 'Pending' ? styles.statusPending : booking.status === 'Completed' ? styles.statusCompleted : null]}>
-							<ThemedText style={[styles.statusText, booking.status === 'Pending' ? styles.statusTextPending : booking.status === 'Completed' ? styles.statusTextCompleted : null]}>{booking.status}</ThemedText>
-						</ThemedView>
-					</View>
-
-					<View style={styles.detailRow}>
-						<Ionicons name="calendar-outline" size={15} color="#475569" />
-						<ThemedText style={styles.detailText}>{booking.date}</ThemedText>
-					</View>
-					<View style={styles.detailRow}>
-						<Ionicons name="location-outline" size={15} color="#475569" />
-						<ThemedText style={styles.detailText}>{booking.venue}</ThemedText>
-					</View>
-					<View style={styles.detailRow}>
-						<Ionicons name="wallet-outline" size={15} color="#475569" />
-						<ThemedText style={styles.detailText}>{booking.amount}</ThemedText>
-					</View>
-
-					<ThemedView style={styles.ctaBtn}>
-						<ThemedText style={styles.ctaText}>View Details</ThemedText>
-					</ThemedView>
+				<ThemedView style={[styles.helpCard, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
+					<ThemedText style={[styles.helpTitle, { color: palette.text }]}>Need help with a booking?</ThemedText>
+					<ThemedText style={[styles.helpSubtext, { color: palette.subtext }]}>Go to Support from profile quick actions for instant dummy help options.</ThemedText>
 				</ThemedView>
-			))}
-
-			<ThemedView style={styles.helpCard}>
-				<ThemedText style={styles.helpTitle}>Need help with a booking?</ThemedText>
-				<ThemedText style={styles.helpSubtext}>Go to Support from profile quick actions for instant dummy help options.</ThemedText>
-			</ThemedView>
-		</ScrollView>
+			</ScrollView>
+		</SafeAreaView>
 	);
 }
 
 const styles = StyleSheet.create({
+	safeArea: {
+		flex: 1,
+		backgroundColor: '#F4F7F9',
+	},
 	page: {
 		flex: 1,
 		backgroundColor: '#F4F7F9',
@@ -119,24 +223,40 @@ const styles = StyleSheet.create({
 		padding: 16,
 		gap: 12,
 	},
-	heroCard: {
-		borderRadius: 18,
-		padding: 14,
+	appBar: {
+		flexDirection: 'row',
+		alignItems: 'center',
 		gap: 10,
+		paddingHorizontal: 16,
+		paddingTop: 8,
+		paddingBottom: 10,
 		backgroundColor: '#FFFFFF',
-		borderTopWidth: 4,
-		borderTopColor: '#3C6E71',
+		borderBottomWidth: 1,
+		borderBottomColor: '#E2E8F0',
+	},
+	appBarIconWrap: {
+		width: 34,
+		height: 34,
+		borderRadius: 10,
+		alignItems: 'center',
+		justifyContent: 'center',
+		backgroundColor: '#ECFEFF',
 		borderWidth: 1,
-		borderColor: '#DDE7EC',
+		borderColor: '#CCFBF1',
 	},
-	heroTitle: {
-		fontSize: 26,
+	appBarTextWrap: {
+		flex: 1,
+	},
+	appBarTitle: {
+		fontSize: 22,
 		fontWeight: '800',
-		color: '#0F172A',
+		color: '#0B1220',
 	},
-	heroSubtext: {
-		fontSize: 13,
+	appBarSubtitle: {
+		fontSize: 12,
+		fontWeight: '600',
 		color: '#64748B',
+		marginTop: 1,
 	},
 	statsRow: {
 		flexDirection: 'row',
@@ -144,12 +264,16 @@ const styles = StyleSheet.create({
 	},
 	statPill: {
 		flex: 1,
-		borderRadius: 12,
-		paddingVertical: 8,
+		borderRadius: 14,
+		paddingVertical: 10,
 		alignItems: 'center',
-		backgroundColor: '#F8FAFC',
+		backgroundColor: '#FFFFFF',
 		borderWidth: 1,
 		borderColor: '#E2E8F0',
+	},
+	statTotal: {
+		backgroundColor: '#FFFFFF',
+		borderColor: '#9BD2CB',
 	},
 	statValue: {
 		fontSize: 16,
@@ -187,10 +311,15 @@ const styles = StyleSheet.create({
 	bookingCard: {
 		borderWidth: 1,
 		borderColor: '#E2E8F0',
-		borderRadius: 14,
+		borderRadius: 16,
 		padding: 12,
 		gap: 8,
 		backgroundColor: '#FFFFFF',
+		shadowColor: '#0F172A',
+		shadowOpacity: 0.04,
+		shadowOffset: { width: 0, height: 3 },
+		shadowRadius: 8,
+		elevation: 2,
 	},
 	rowTop: {
 		flexDirection: 'row',
@@ -203,6 +332,7 @@ const styles = StyleSheet.create({
 	},
 	eventName: {
 		fontSize: 16,
+		color: '#0F172A',
 	},
 	bookingId: {
 		fontSize: 12,
@@ -230,6 +360,9 @@ const styles = StyleSheet.create({
 	statusCompleted: {
 		backgroundColor: '#DCFCE7',
 	},
+	statusCancelled: {
+		backgroundColor: '#FEE2E2',
+	},
 	statusText: {
 		color: '#1D4ED8',
 		fontWeight: '700',
@@ -240,6 +373,9 @@ const styles = StyleSheet.create({
 	},
 	statusTextCompleted: {
 		color: '#166534',
+	},
+	statusTextCancelled: {
+		color: '#991B1B',
 	},
 	ctaBtn: {
 		marginTop: 2,

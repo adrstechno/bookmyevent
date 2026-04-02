@@ -9,7 +9,7 @@ export const APP_CONFIG = {
 	},
 	features: {
 		enableOfflineBanner: true,
-		enableDarkMode: true,
+		enableDarkMode: false,
 		enablePullToRefresh: true,
 		enableInfiniteScroll: true,
 	},

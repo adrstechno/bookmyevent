@@ -1,35 +1,44 @@
-import { ImageBackground, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useCallback } from 'react';
+import { FlatList, ImageBackground, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import * as Haptics from 'expo-haptics';
+import { useRouter } from 'expo-router';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { useSettingsTheme } from '@/theme/settingsTheme';
 
 const EVENT_CARDS = [
 	{
+		id: 'wedding',
 		title: 'Wedding Event',
 		description: 'Premium decor, catering, lights, and complete ceremony planning support.',
 		image: require('@/assets/images/home/wedding.jpg'),
 	},
 	{
+		id: 'birthday',
 		title: 'Birthday Party Event',
 		description: 'Theme setups, cake table design, entertainers, and custom party plans.',
 		image: require('@/assets/images/home/birthday.jpg'),
 	},
 	{
+		id: 'kitty',
 		title: 'Kitty Party Event',
 		description: 'Stylish venue layouts, games, snacks, and end-to-end event handling.',
 		image: require('@/assets/images/home/kitty.jpg'),
 	},
 	{
+		id: 'bhagwat',
 		title: 'Bhagwat Katha Event',
 		description: 'Spiritual stage setup, sound systems, seating plans, and hospitality teams.',
 		image: require('@/assets/images/home/bhagwat.jpg'),
 	},
 	{
+		id: 'seminar',
 		title: 'Office Seminar & Conference',
 		description: 'Conference halls, AV setup, registration desks, and support staff management.',
 		image: require('@/assets/images/home/seminar.jpg'),
@@ -37,34 +46,67 @@ const EVENT_CARDS = [
 ];
 
 export default function HomeTabScreen() {
+	const router = useRouter();
 	const tabBarHeight = useBottomTabBarHeight();
+	const { mode, palette } = useSettingsTheme();
+	const isDark = mode === 'dark';
+	const screenBg = palette.screenBg;
+	const surfaceBg = palette.surfaceBg;
+	const border = palette.border;
+	const elevated = palette.headerBtnBg;
+
+	const onSoftPress = useCallback(async () => {
+		await Haptics.selectionAsync();
+	}, []);
+
+	const onOpenCategories = useCallback(async () => {
+		await Haptics.selectionAsync();
+		router.push('/(tabs)/categories');
+	}, [router]);
+
+	const onOpenSupport = useCallback(async () => {
+		await Haptics.selectionAsync();
+		router.push('/support');
+	}, [router]);
+
+	const renderEventCard = useCallback(
+		({ item }: { item: (typeof EVENT_CARDS)[number] }) => (
+			<ThemedView style={[styles.cardContainer, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
+				<ImageBackground source={item.image} imageStyle={styles.cardImageStyle} style={styles.cardImage} />
+				<View style={styles.cardContent}>
+					<ThemedText type="defaultSemiBold" style={[styles.cardTitle, { color: palette.text }]}>
+						{item.title}
+					</ThemedText>
+					<View style={styles.orangeLine} />
+					<ThemedText style={[styles.cardDesc, { color: palette.subtext }]}>{item.description}</ThemedText>
+					<Pressable style={({ pressed }) => [styles.cardCtaBtn, { backgroundColor: palette.tint }, pressed ? styles.cardCtaBtnPressed : null]} onPress={onOpenCategories}>
+						<ThemedText style={styles.cardCtaText}>Explore Services</ThemedText>
+					</Pressable>
+				</View>
+			</ThemedView>
+		),
+		[onOpenCategories, palette.border, palette.subtext, palette.surfaceBg, palette.text, palette.tint]
+	);
 
 	return (
-		<SafeAreaView style={styles.safeArea} edges={['top']}>
-			<StatusBar style="dark" />
-			<ScrollView
-				style={styles.page}
-				contentContainerStyle={[styles.container, { paddingBottom: tabBarHeight + 16 }]}
-			>
-				<View style={styles.topBar}>
-					<View style={styles.brandWrap}>
+		<SafeAreaView style={[styles.safeArea, { backgroundColor: screenBg }]} edges={['top']}>
+			<StatusBar style={isDark ? 'light' : 'dark'} />
+			<View style={styles.appBarWrap}>
+				<View style={[styles.appBar, { backgroundColor: surfaceBg, borderColor: border }]}>
+					<View style={styles.appBarBrand}>
 						<Image source={require('@/assets/images/home/logo2.png')} style={styles.logo} contentFit="contain" />
-						<View>
-							<ThemedText style={styles.brandTitle}>GoEventify</ThemedText>
-							<ThemedText style={styles.brandSubtitle}>Event Booking Platform</ThemedText>
-						</View>
 					</View>
 
-					<View style={styles.topBarActions}>
-						<Pressable style={styles.iconBtn}>
-							<Ionicons name="search-outline" size={20} color="#0F172A" />
-						</Pressable>
-						<Pressable style={styles.iconBtn}>
-							<Ionicons name="notifications-outline" size={20} color="#0F172A" />
-						</Pressable>
-					</View>
+					<Pressable style={({ pressed }) => [styles.iconBtn, { backgroundColor: elevated, borderColor: border }, pressed ? styles.iconBtnPressed : null]} onPress={onSoftPress}>
+						<Ionicons name="notifications-outline" size={20} color={palette.text} />
+					</Pressable>
 				</View>
-
+			</View>
+			<ScrollView
+				style={[styles.page, { backgroundColor: screenBg }]}
+				contentContainerStyle={[styles.container, { paddingBottom: tabBarHeight + 16 }]}
+				showsVerticalScrollIndicator={false}
+			>
 			<ImageBackground
 				source={require('@/assets/images/home/hero.jpg')}
 				imageStyle={styles.heroImageStyle}
@@ -79,10 +121,10 @@ export default function HomeTabScreen() {
 						From weddings to corporate shows, plan, organize, and manage everything from one app.
 					</ThemedText>
 					<View style={styles.heroActionRow}>
-						<Pressable style={[styles.actionButton, styles.actionPrimary]}>
+						<Pressable style={({ pressed }) => [styles.actionButton, styles.actionPrimary, { backgroundColor: palette.tint }, pressed ? styles.actionButtonPressed : null]} onPress={onOpenCategories}>
 							<ThemedText style={styles.actionPrimaryText}>Explore Services</ThemedText>
 						</Pressable>
-						<Pressable style={[styles.actionButton, styles.actionSecondary]}>
+						<Pressable style={({ pressed }) => [styles.actionButton, styles.actionSecondary, pressed ? styles.actionButtonPressed : null]} onPress={onOpenSupport}>
 							<ThemedText style={styles.actionSecondaryText}>Contact Team</ThemedText>
 						</Pressable>
 					</View>
@@ -90,45 +132,36 @@ export default function HomeTabScreen() {
 			</ImageBackground>
 
 			<View style={styles.statRow}>
-				<ThemedView style={styles.statCard}>
-					<ThemedText style={styles.statValue}>50+</ThemedText>
-					<ThemedText style={styles.statLabel}>Event Types</ThemedText>
+				<ThemedView style={[styles.statCard, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
+					<ThemedText style={[styles.statValue, { color: palette.tint }]}>50+</ThemedText>
+					<ThemedText style={[styles.statLabel, { color: palette.subtext }]}>Event Types</ThemedText>
 				</ThemedView>
-				<ThemedView style={styles.statCard}>
-					<ThemedText style={styles.statValue}>1000+</ThemedText>
-					<ThemedText style={styles.statLabel}>Vendors</ThemedText>
+				<ThemedView style={[styles.statCard, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
+					<ThemedText style={[styles.statValue, { color: palette.tint }]}>1000+</ThemedText>
+					<ThemedText style={[styles.statLabel, { color: palette.subtext }]}>Vendors</ThemedText>
 				</ThemedView>
-				<ThemedView style={styles.statCard}>
-					<ThemedText style={styles.statValue}>24x7</ThemedText>
-					<ThemedText style={styles.statLabel}>Support</ThemedText>
+				<ThemedView style={[styles.statCard, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
+					<ThemedText style={[styles.statValue, { color: palette.tint }]}>24x7</ThemedText>
+					<ThemedText style={[styles.statLabel, { color: palette.subtext }]}>Support</ThemedText>
 				</ThemedView>
 			</View>
 
-			<ThemedText type="subtitle" style={styles.sectionTitle}>
+			<ThemedText type="subtitle" style={[styles.sectionTitle, { color: palette.text }]}>
 				Popular Categories
 			</ThemedText>
 
-			<ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cardsRow}>
-				{EVENT_CARDS.map((item) => (
-					<ThemedView key={item.title} style={styles.cardContainer}>
-						<ImageBackground
-							source={item.image}
-							imageStyle={styles.cardImageStyle}
-							style={styles.cardImage}
-						/>
-						<View style={styles.cardContent}>
-							<ThemedText type="defaultSemiBold" style={styles.cardTitle}>
-								{item.title}
-							</ThemedText>
-							<View style={styles.orangeLine} />
-							<ThemedText style={styles.cardDesc}>{item.description}</ThemedText>
-							<Pressable style={styles.cardCtaBtn}>
-								<ThemedText style={styles.cardCtaText}>Explore Services</ThemedText>
-							</Pressable>
-						</View>
-					</ThemedView>
-				))}
-			</ScrollView>
+			<FlatList
+				horizontal
+				data={EVENT_CARDS}
+				renderItem={renderEventCard}
+				keyExtractor={(item) => item.id}
+				contentContainerStyle={styles.cardsRow}
+				showsHorizontalScrollIndicator={false}
+				initialNumToRender={3}
+				maxToRenderPerBatch={3}
+				windowSize={5}
+				removeClippedSubviews
+			/>
 			</ScrollView>
 		</SafeAreaView>
 	);
@@ -144,46 +177,31 @@ const styles = StyleSheet.create({
 	},
 	container: {
 		paddingHorizontal: 16,
-		paddingTop: 16,
+		paddingTop: 12,
 		gap: 14,
 	},
-	topBar: {
+	appBarWrap: {
+		paddingHorizontal: 16,
+		paddingTop: 8,
+	},
+	appBar: {
+		height: 56,
 		flexDirection: 'row',
 		justifyContent: 'space-between',
 		alignItems: 'center',
 		paddingHorizontal: 12,
-		paddingVertical: 10,
-		borderRadius: 16,
 		backgroundColor: '#FFFFFF',
 		borderWidth: 1,
 		borderColor: '#E2E8F0',
-		shadowColor: '#0F172A',
-		shadowOpacity: 0.06,
-		shadowRadius: 8,
-		shadowOffset: { width: 0, height: 2 },
-		elevation: 2,
+		borderRadius: 12,
 	},
-	brandWrap: {
+	appBarBrand: {
 		flexDirection: 'row',
 		alignItems: 'center',
-		gap: 10,
 	},
 	logo: {
-		width: 42,
-		height: 42,
-	},
-	brandTitle: {
-		fontSize: 16,
-		fontWeight: '700',
-		color: '#0F172A',
-	},
-	brandSubtitle: {
-		fontSize: 12,
-		color: '#475569',
-	},
-	topBarActions: {
-		flexDirection: 'row',
-		gap: 8,
+		width: 50,
+		height: 50,
 	},
 	iconBtn: {
 		width: 38,
@@ -194,6 +212,9 @@ const styles = StyleSheet.create({
 		backgroundColor: '#F8FAFC',
 		borderWidth: 1,
 		borderColor: '#E2E8F0',
+	},
+	iconBtnPressed: {
+		opacity: 0.7,
 	},
 	sectionTitle: {
 		marginTop: 2,
@@ -248,6 +269,9 @@ const styles = StyleSheet.create({
 		borderRadius: 12,
 		paddingVertical: 10,
 		alignItems: 'center',
+	},
+	actionButtonPressed: {
+		opacity: 0.82,
 	},
 	actionPrimary: {
 		backgroundColor: '#0F766E',
@@ -330,6 +354,9 @@ const styles = StyleSheet.create({
 		borderRadius: 10,
 		alignItems: 'center',
 		backgroundColor: '#0F766E',
+	},
+	cardCtaBtnPressed: {
+		opacity: 0.82,
 	},
 	cardCtaText: {
 		color: '#FFFFFF',

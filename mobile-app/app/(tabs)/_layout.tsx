@@ -17,12 +17,14 @@ export default function TabsLayout() {
 			initialRouteName="home"
 			screenOptions={{
 				headerShown: false,
-				tabBarActiveTintColor: '#0A7EA4',
-				tabBarInactiveTintColor: '#64748B',
+				tabBarActiveTintColor: '#2DD4BF',
+				tabBarInactiveTintColor: '#94A3B8',
 				tabBarStyle: {
 					height: 56 + insets.bottom,
 					paddingBottom: Math.max(insets.bottom, 8),
 					paddingTop: 6,
+					backgroundColor: '#0F172A',
+					borderTopColor: '#1E293B',
 				},
 			}}
 		>
@@ -36,7 +38,7 @@ export default function TabsLayout() {
 			<Tabs.Screen
 				name="categories"
 				options={{
-					title: 'Categories',
+					title: 'Services',
 					tabBarIcon: ({ color, size }) => (
 						<Ionicons name="grid-outline" size={size} color={color} />
 					),

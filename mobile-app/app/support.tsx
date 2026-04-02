@@ -1,13 +1,14 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Redirect, useRouter } from 'expo-router';
 import { useCallback, useEffect } from 'react';
-import { BackHandler, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, BackHandler, Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAppSelector } from '@/store';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { useSettingsTheme } from '@/theme/settingsTheme';
 
 const DUMMY_FAQ = [
 	'How to reschedule a booking?',
@@ -24,17 +25,49 @@ const DUMMY_FAQ = [
 
 const SUPPORT_OPTIONS = [
 	{ key: 'call', label: 'Call Support', value: '+91 98765 00000', icon: 'call-outline' },
-	{ key: 'mail', label: 'Email', value: 'support@bookmyevent.demo', icon: 'mail-outline' },
+	{ key: 'mail', label: 'Email', value: 'support@goeventify.demo', icon: 'mail-outline' },
 ];
 
 export default function SupportScreen() {
 	const router = useRouter();
 	const insets = useSafeAreaInsets();
 	const { isAuthenticated, isHydrated } = useAppSelector((state) => state.auth);
+	const { mode, palette } = useSettingsTheme();
+	const isDark = mode === 'dark';
+	const screenBg = palette.screenBg;
+	const surfaceBg = palette.surfaceBg;
+	const border = palette.border;
+	const elevated = palette.headerBtnBg;
+	const supportEmail = 'support@goeventify.demo';
+	const supportPhone = '+91 98765 00000';
 
 	const goToProfile = useCallback(() => {
 		router.replace('/(tabs)/profile');
 	}, [router]);
+
+	const handleSupportOptionPress = useCallback(async (key: 'call' | 'mail') => {
+		try {
+			if (key === 'call') {
+				const callUrl = `tel:${supportPhone.replace(/\s+/g, '')}`;
+				await Linking.openURL(callUrl);
+				return;
+			}
+
+			const subject = encodeURIComponent('Support Request - GoEventify');
+			const gmailUrl = `googlegmail://co?to=${supportEmail}&subject=${subject}`;
+			const mailtoUrl = `mailto:${supportEmail}?subject=${subject}`;
+
+			const canOpenGmail = await Linking.canOpenURL(gmailUrl);
+			if (canOpenGmail) {
+				await Linking.openURL(gmailUrl);
+				return;
+			}
+
+			await Linking.openURL(mailtoUrl);
+		} catch {
+			Alert.alert('Unable to open', key === 'call' ? 'Calling is not available on this device.' : 'Email app is not available on this device.');
+		}
+	}, [supportEmail, supportPhone]);
 
 	useEffect(() => {
 		const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -50,13 +83,13 @@ export default function SupportScreen() {
 	}
 
 	return (
-		<SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-			<StatusBar style="dark" />
-			<View style={styles.header}>
-				<Pressable style={styles.backBtn} onPress={goToProfile} hitSlop={10}>
-					<Ionicons name="arrow-back" size={20} color="#0F172A" />
+		<SafeAreaView style={[styles.safeArea, { backgroundColor: screenBg }]} edges={['top', 'bottom']}>
+			<StatusBar style={isDark ? 'light' : 'dark'} />
+			<View style={[styles.header, { backgroundColor: surfaceBg, borderBottomColor: border }]}>
+				<Pressable style={[styles.backBtn, { backgroundColor: elevated, borderColor: border }]} onPress={goToProfile} hitSlop={10}>
+					<Ionicons name="arrow-back" size={20} color={palette.text} />
 				</Pressable>
-				<ThemedText style={styles.headerTitle}>Support</ThemedText>
+				<ThemedText style={[styles.headerTitle, { color: palette.text }]}>Support</ThemedText>
 				<View style={styles.headerRightPlaceholder} />
 			</View>
 
@@ -65,39 +98,39 @@ export default function SupportScreen() {
 				contentContainerStyle={[styles.container, { paddingBottom: insets.bottom + 20 }]}
 				showsVerticalScrollIndicator={false}
 			>
-				<ThemedView style={styles.heroCard}>
-					<ThemedText style={styles.heroTitle}>Need Help?</ThemedText>
-					<ThemedText style={styles.heroSubtext}>Our support team is here to help you with bookings and payments.</ThemedText>
-					<Pressable style={styles.primaryBtn}>
+				<ThemedView style={[styles.heroCard, { backgroundColor: surfaceBg, borderColor: border }]}>
+					<ThemedText style={[styles.heroTitle, { color: palette.text }]}>Need Help?</ThemedText>
+					<ThemedText style={[styles.heroSubtext, { color: palette.subtext }]}>Our support team is here to help you with bookings and payments.</ThemedText>
+					<Pressable style={[styles.primaryBtn, { backgroundColor: palette.tint }]}>
 						<ThemedText style={styles.primaryBtnText}>Create New Ticket</ThemedText>
 					</Pressable>
 				</ThemedView>
 
-				<ThemedText style={styles.sectionTitle}>Support Channels</ThemedText>
+				<ThemedText style={[styles.sectionTitle, { color: palette.text }]}>Support Channels</ThemedText>
 				{SUPPORT_OPTIONS.map((item) => (
-					<ThemedView key={item.key} style={styles.optionRow}>
+					<Pressable key={item.key} style={[styles.optionRow, { backgroundColor: surfaceBg, borderColor: border }]} onPress={() => handleSupportOptionPress(item.key as 'call' | 'mail')}>
 						<View style={styles.optionLeft}>
-							<View style={styles.optionIconWrap}>
-								<Ionicons name={item.icon as any} size={18} color="#0F766E" />
+							<View style={[styles.optionIconWrap, { backgroundColor: palette.headerBtnBg }]}>
+								<Ionicons name={item.icon as any} size={18} color={palette.tint} />
 							</View>
 							<View>
-								<ThemedText style={styles.optionLabel}>{item.label}</ThemedText>
-								<ThemedText style={styles.optionValue}>{item.value}</ThemedText>
+								<ThemedText style={[styles.optionLabel, { color: palette.text }]}>{item.label}</ThemedText>
+								<ThemedText style={[styles.optionValue, { color: palette.subtext }]}>{item.value}</ThemedText>
 							</View>
 						</View>
-						<Ionicons name="chevron-forward" size={17} color="#94A3B8" />
-					</ThemedView>
+						<Ionicons name="chevron-forward" size={17} color={palette.subtext} />
+					</Pressable>
 				))}
 
-				<ThemedText style={styles.sectionTitle}>Popular FAQs</ThemedText>
+				<ThemedText style={[styles.sectionTitle, { color: palette.text }]}>Popular FAQs</ThemedText>
 				{DUMMY_FAQ.map((faq) => (
-					<ThemedView key={faq} style={styles.faqRow}>
-						<Ionicons name="help-circle-outline" size={18} color="#0F766E" />
-						<ThemedText style={styles.faqText}>{faq}</ThemedText>
+					<ThemedView key={faq} style={[styles.faqRow, { backgroundColor: surfaceBg, borderColor: border }]}>
+						<Ionicons name="help-circle-outline" size={18} color={palette.tint} />
+						<ThemedText style={[styles.faqText, { color: palette.text }]}>{faq}</ThemedText>
 					</ThemedView>
 				))}
 
-				<ThemedText style={styles.footerNote}>Dummy support page for UI preview mode.</ThemedText>
+				<ThemedText style={[styles.footerNote, { color: palette.subtext }]}>Dummy support page for UI preview mode.</ThemedText>
 			</ScrollView>
 		</SafeAreaView>
 	);

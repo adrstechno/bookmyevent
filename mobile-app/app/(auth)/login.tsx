@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { clearAuthError, loginWithCredentials, registerWithCredentials } from '@/store/slices/authSlice';
+import { useAppTheme } from '@/theme/useAppTheme';
 
 const ROLE_OPTIONS = [
 	{ key: 'user', label: 'User' },
@@ -19,6 +20,11 @@ type RoleType = 'user' | 'vendor';
 export default function LoginScreen() {
 	const dispatch = useAppDispatch();
 	const { isAuthenticated, isHydrated, isLoading, error } = useAppSelector((state) => state.auth);
+	const { palette, resolvedMode } = useAppTheme();
+	const isDark = resolvedMode === 'dark';
+	const screenBg = isDark ? '#0F172A' : '#EEF4F3';
+	const surfaceBg = isDark ? '#111827' : '#FFFFFF';
+	const border = isDark ? '#334155' : '#E2E8F0';
 
 	const [mode, setMode] = useState<AuthMode>('login');
 	const [role, setRole] = useState<RoleType>('user');
@@ -99,16 +105,16 @@ export default function LoginScreen() {
 	};
 
 	return (
-		<SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-			<StatusBar style="dark" />
-			<ScrollView style={styles.page} contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-				<View style={styles.heroCard}>
+		<SafeAreaView style={[styles.safeArea, { backgroundColor: screenBg }]} edges={['top', 'bottom']}>
+			<StatusBar style={isDark ? 'light' : 'dark'} />
+			<ScrollView style={[styles.page, { backgroundColor: screenBg }]} contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+				<View style={[styles.heroCard, { backgroundColor: surfaceBg, borderColor: border }]}>
 					<ThemedText style={styles.brand}>GoEventify</ThemedText>
-					<ThemedText style={styles.title}>Dummy Authentication</ThemedText>
+					<ThemedText style={[styles.title, { color: palette.text }]}>Dummy Authentication</ThemedText>
 					<ThemedText style={styles.subtitle}>{subtitle}</ThemedText>
 				</View>
 
-				<View style={styles.formCard}>
+				<View style={[styles.formCard, { backgroundColor: surfaceBg, borderColor: border }]}>
 					<View style={styles.modeRow}>
 						<Pressable
 							style={[styles.modeBtn, mode === 'login' ? styles.modeBtnActive : null]}
@@ -317,14 +323,14 @@ const styles = StyleSheet.create({
 		paddingVertical: 13,
 		borderRadius: 11,
 		alignItems: 'center',
-		backgroundColor: '#0F766E',
+		backgroundColor: '#3C6E71',
 	},
 	submitBtnDisabled: {
-		opacity: 0.7,
+		opacity: 0.55,
 	},
 	submitBtnText: {
 		color: '#FFFFFF',
 		fontSize: 15,
-		fontWeight: '800',
+		fontWeight: '700',
 	},
 });
