@@ -3,11 +3,11 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "start": "expo start",
+    "start": "node ./scripts/start-no-doctor.js",
     "reset-project": "node ./scripts/reset-project.js",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web",
+    "android": "node ./scripts/start-no-doctor.js --android",
+    "ios": "node ./scripts/start-no-doctor.js --ios",
+    "web": "node ./scripts/start-no-doctor.js --web",
     "lint": "expo lint"
   },
   "dependencies": {
@@ -26,7 +26,7 @@
     "expo-image-picker": "~17.0.10",
     "expo-linking": "~8.0.11",
     "expo-router": "~6.0.23",
-    "expo-secure-store": "^55.0.9",
+    "expo-secure-store": "~15.0.8",
     "expo-splash-screen": "~31.0.13",
     "expo-status-bar": "~3.0.9",
     "expo-symbols": "~1.0.8",

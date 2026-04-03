@@ -2,18 +2,18 @@ import * as SecureStore from 'expo-secure-store';
 
 const SESSION_KEY = 'auth.session';
 
-export type DummyUserRole = 'user' | 'vendor';
+export type UserRole = 'user' | 'vendor' | 'admin';
 
-export type DummyAuthSession = {
+export type AuthSession = {
 	token: string;
-	role: DummyUserRole;
+	role: UserRole;
 	name: string;
 	email: string;
 };
 
-let inMemorySession: DummyAuthSession | null = null;
+let inMemorySession: AuthSession | null = null;
 
-const setStoredSession = async (session: DummyAuthSession) => {
+const setStoredSession = async (session: AuthSession) => {
 	inMemorySession = session;
 
 	try {
@@ -31,7 +31,7 @@ const getStoredSession = async () => {
 			return inMemorySession;
 		}
 
-		return JSON.parse(session) as DummyAuthSession;
+		return JSON.parse(session) as AuthSession;
 	} catch {
 		return inMemorySession;
 	}
@@ -51,7 +51,7 @@ export const restoreSession = async () => {
 	return await getStoredSession();
 };
 
-export const persistSession = async (session: DummyAuthSession) => {
+export const persistSession = async (session: AuthSession) => {
 	await setStoredSession(session);
 };
 

@@ -8,7 +8,7 @@ import {
 	signIn,
 	signOut,
 } from '@/store/slices/authSlice';
-import type { DummyAuthSession } from '@/services/auth/authService';
+import type { AuthSession } from '@/services/auth/authService';
 import type { LoginRequest, RegisterRequest } from '@/types/auth';
 
 export const useAuth = () => {
@@ -20,7 +20,7 @@ export const useAuth = () => {
 	}, [dispatch]);
 
 	const loginWithToken = useCallback(
-		async (session: DummyAuthSession) => {
+		async (session: AuthSession) => {
 			await dispatch(signIn(session));
 		},
 		[dispatch]

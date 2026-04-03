@@ -1,13 +1,16 @@
 import { Redirect, Stack } from 'expo-router';
 
 import { useAppSelector } from '@/store';
-import { getRoleHomeRoute } from '@/utils/authRole';
 
-export default function AuthLayout() {
+export default function AdminLayout() {
 	const { isAuthenticated, isHydrated, role } = useAppSelector((state) => state.auth);
 
-	if (isHydrated && isAuthenticated) {
-		return <Redirect href={getRoleHomeRoute(role)} />;
+	if (isHydrated && !isAuthenticated) {
+		return <Redirect href="/(auth)/login" />;
+	}
+
+	if (isHydrated && isAuthenticated && role !== 'admin') {
+		return <Redirect href="/" />;
 	}
 
 	return <Stack screenOptions={{ headerShown: false }} />;

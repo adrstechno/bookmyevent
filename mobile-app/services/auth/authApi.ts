@@ -29,6 +29,19 @@ const extractToken = (payload: BackendAuthResponse): string => {
 	return token;
 };
 
+const normalizeRole = (roleValue?: string): LoginResponse['role'] => {
+	if (roleValue === 'admin' || roleValue === 'vendor' || roleValue === 'user') {
+		return roleValue;
+	}
+
+	return 'user';
+};
+
+const toNameFromEmail = (email: string) => {
+	const prefix = email.split('@')[0] ?? 'Guest';
+	return prefix.charAt(0).toUpperCase() + prefix.slice(1);
+};
+
 export const login = async (input: LoginRequest): Promise<LoginResponse> => {
 	const response = await apiClient.post<BackendAuthResponse>(API_ENDPOINTS.auth.login, {
 		email: input.email,
@@ -39,9 +52,11 @@ export const login = async (input: LoginRequest): Promise<LoginResponse> => {
 
 	return {
 		token: extractToken(payload),
+		role: normalizeRole(payload.user_type ?? payload.data?.user_type),
+		name: toNameFromEmail(input.email),
+		email: input.email,
 		userId: payload.user_id ?? payload.data?.user_id,
 		uuid: payload.uuid ?? payload.data?.uuid,
-		userType: payload.user_type ?? payload.data?.user_type,
 		message: payload.message,
 	};
 };
@@ -67,4 +82,12 @@ export const register = async (input: RegisterRequest): Promise<RegisterResponse
 		userId: response.data.user_id,
 		uuid: response.data.uuid,
 	};
+};
+
+export const forgotPassword = async (email: string): Promise<string> => {
+	const response = await apiClient.post<{ message?: string }>(API_ENDPOINTS.auth.forgotPassword, {
+		email,
+	});
+
+	return response.data.message ?? 'Reset instructions have been sent if the account exists.';
 };

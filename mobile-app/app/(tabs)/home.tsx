@@ -8,6 +8,8 @@ import { StatusBar } from 'expo-status-bar';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 
+import FadeInView from '@/components/common/FadeInView';
+import AppMenuDrawer from '@/components/layout/AppMenuDrawer';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useSettingsTheme } from '@/theme/settingsTheme';
@@ -53,7 +55,7 @@ export default function HomeTabScreen() {
 	const screenBg = palette.screenBg;
 	const surfaceBg = palette.surfaceBg;
 	const border = palette.border;
-	const elevated = palette.headerBtnBg;
+	const elevated = palette.primaryStrong;
 
 	const onSoftPress = useCallback(async () => {
 		await Haptics.selectionAsync();
@@ -77,28 +79,30 @@ export default function HomeTabScreen() {
 					<ThemedText type="defaultSemiBold" style={[styles.cardTitle, { color: palette.text }]}>
 						{item.title}
 					</ThemedText>
-					<View style={styles.orangeLine} />
+					<View style={[styles.orangeLine, { backgroundColor: palette.accent }]} />
 					<ThemedText style={[styles.cardDesc, { color: palette.subtext }]}>{item.description}</ThemedText>
-					<Pressable style={({ pressed }) => [styles.cardCtaBtn, { backgroundColor: palette.tint }, pressed ? styles.cardCtaBtnPressed : null]} onPress={onOpenCategories}>
-						<ThemedText style={styles.cardCtaText}>Explore Services</ThemedText>
+					<Pressable style={({ pressed }) => [styles.cardCtaBtn, { backgroundColor: palette.accent }, pressed ? styles.cardCtaBtnPressed : null]} onPress={onOpenCategories}>
+						<ThemedText style={[styles.cardCtaText, { color: palette.text }]}>Explore Services</ThemedText>
 					</Pressable>
 				</View>
 			</ThemedView>
 		),
-		[onOpenCategories, palette.border, palette.subtext, palette.surfaceBg, palette.text, palette.tint]
+		[onOpenCategories, palette.accent, palette.border, palette.subtext, palette.surfaceBg, palette.text]
 	);
 
 	return (
 		<SafeAreaView style={[styles.safeArea, { backgroundColor: screenBg }]} edges={['top']}>
 			<StatusBar style={isDark ? 'light' : 'dark'} />
 			<View style={styles.appBarWrap}>
-				<View style={[styles.appBar, { backgroundColor: surfaceBg, borderColor: border }]}>
+				<View style={[styles.appBar, { backgroundColor: palette.primary, borderColor: palette.primaryStrong }]}>
+					<AppMenuDrawer />
+
 					<View style={styles.appBarBrand}>
 						<Image source={require('@/assets/images/home/logo2.png')} style={styles.logo} contentFit="contain" />
 					</View>
 
-					<Pressable style={({ pressed }) => [styles.iconBtn, { backgroundColor: elevated, borderColor: border }, pressed ? styles.iconBtnPressed : null]} onPress={onSoftPress}>
-						<Ionicons name="notifications-outline" size={20} color={palette.text} />
+					<Pressable style={({ pressed }) => [styles.iconBtn, { backgroundColor: elevated, borderColor: palette.primaryStrong }, pressed ? styles.iconBtnPressed : null]} onPress={onSoftPress}>
+						<Ionicons name="notifications-outline" size={20} color={palette.onPrimary} />
 					</Pressable>
 				</View>
 			</View>
@@ -107,61 +111,67 @@ export default function HomeTabScreen() {
 				contentContainerStyle={[styles.container, { paddingBottom: tabBarHeight + 16 }]}
 				showsVerticalScrollIndicator={false}
 			>
-			<ImageBackground
-				source={require('@/assets/images/home/hero.jpg')}
-				imageStyle={styles.heroImageStyle}
-				style={styles.heroWrapper}
-			>
-				<View style={styles.heroOverlay}>
-					<ThemedText style={styles.heroTag}>EVENT MANAGEMENT PLATFORM</ThemedText>
-					<ThemedText type="title" style={styles.heroTitle}>
-						Create Events People Remember
-					</ThemedText>
-					<ThemedText style={styles.heroSubtitle}>
-						From weddings to corporate shows, plan, organize, and manage everything from one app.
-					</ThemedText>
-					<View style={styles.heroActionRow}>
-						<Pressable style={({ pressed }) => [styles.actionButton, styles.actionPrimary, { backgroundColor: palette.tint }, pressed ? styles.actionButtonPressed : null]} onPress={onOpenCategories}>
-							<ThemedText style={styles.actionPrimaryText}>Explore Services</ThemedText>
-						</Pressable>
-						<Pressable style={({ pressed }) => [styles.actionButton, styles.actionSecondary, pressed ? styles.actionButtonPressed : null]} onPress={onOpenSupport}>
-							<ThemedText style={styles.actionSecondaryText}>Contact Team</ThemedText>
-						</Pressable>
+			<FadeInView delay={40} distance={8}>
+				<ImageBackground
+					source={require('@/assets/images/home/hero.jpg')}
+					imageStyle={styles.heroImageStyle}
+					style={styles.heroWrapper}
+				>
+					<View style={[styles.heroOverlay, { backgroundColor: palette.overlay }]}>
+						<ThemedText style={[styles.heroTag, { color: palette.accent }]}>EVENT MANAGEMENT PLATFORM</ThemedText>
+						<ThemedText type="title" style={[styles.heroTitle, { color: palette.onPrimary }]}>
+							Create Events People Remember
+						</ThemedText>
+						<ThemedText style={[styles.heroSubtitle, { color: '#F6F2FF' }]}>
+							From weddings to corporate shows, plan, organize, and manage everything from one app.
+						</ThemedText>
+						<View style={styles.heroActionRow}>
+							<Pressable style={({ pressed }) => [styles.actionButton, styles.actionPrimary, { backgroundColor: palette.accent }, pressed ? styles.actionButtonPressed : null]} onPress={onOpenCategories}>
+								<ThemedText style={[styles.actionPrimaryText, { color: palette.text }]}>Explore Services</ThemedText>
+							</Pressable>
+							<Pressable style={({ pressed }) => [styles.actionButton, styles.actionSecondary, { borderColor: 'rgba(255, 255, 255, 0.55)' }, pressed ? styles.actionButtonPressed : null]} onPress={onOpenSupport}>
+								<ThemedText style={[styles.actionSecondaryText, { color: palette.onPrimary }]}>Contact Team</ThemedText>
+							</Pressable>
+						</View>
 					</View>
-				</View>
-			</ImageBackground>
+				</ImageBackground>
+			</FadeInView>
 
-			<View style={styles.statRow}>
+			<FadeInView delay={90} distance={8} style={styles.statRow}>
 				<ThemedView style={[styles.statCard, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
-					<ThemedText style={[styles.statValue, { color: palette.tint }]}>50+</ThemedText>
+					<ThemedText style={[styles.statValue, { color: palette.primary }]}>50+</ThemedText>
 					<ThemedText style={[styles.statLabel, { color: palette.subtext }]}>Event Types</ThemedText>
 				</ThemedView>
 				<ThemedView style={[styles.statCard, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
-					<ThemedText style={[styles.statValue, { color: palette.tint }]}>1000+</ThemedText>
+					<ThemedText style={[styles.statValue, { color: palette.primary }]}>1000+</ThemedText>
 					<ThemedText style={[styles.statLabel, { color: palette.subtext }]}>Vendors</ThemedText>
 				</ThemedView>
 				<ThemedView style={[styles.statCard, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
-					<ThemedText style={[styles.statValue, { color: palette.tint }]}>24x7</ThemedText>
+					<ThemedText style={[styles.statValue, { color: palette.primary }]}>24x7</ThemedText>
 					<ThemedText style={[styles.statLabel, { color: palette.subtext }]}>Support</ThemedText>
 				</ThemedView>
-			</View>
+			</FadeInView>
 
-			<ThemedText type="subtitle" style={[styles.sectionTitle, { color: palette.text }]}>
-				Popular Categories
-			</ThemedText>
+			<FadeInView delay={130} distance={8}>
+				<ThemedText type="subtitle" style={[styles.sectionTitle, { color: palette.text }]}>
+					Popular Categories
+				</ThemedText>
+			</FadeInView>
 
-			<FlatList
-				horizontal
-				data={EVENT_CARDS}
-				renderItem={renderEventCard}
-				keyExtractor={(item) => item.id}
-				contentContainerStyle={styles.cardsRow}
-				showsHorizontalScrollIndicator={false}
-				initialNumToRender={3}
-				maxToRenderPerBatch={3}
-				windowSize={5}
-				removeClippedSubviews
-			/>
+			<FadeInView delay={170} distance={8}>
+				<FlatList
+					horizontal
+					data={EVENT_CARDS}
+					renderItem={renderEventCard}
+					keyExtractor={(item) => item.id}
+					contentContainerStyle={styles.cardsRow}
+					showsHorizontalScrollIndicator={false}
+					initialNumToRender={3}
+					maxToRenderPerBatch={3}
+					windowSize={5}
+					removeClippedSubviews
+				/>
+			</FadeInView>
 			</ScrollView>
 		</SafeAreaView>
 	);

@@ -1,30 +1,36 @@
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { Redirect } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
+import { useAppToast } from '@/components/common/AppToastProvider';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { clearAuthError, loginWithCredentials, registerWithCredentials } from '@/store/slices/authSlice';
 import { useAppTheme } from '@/theme/useAppTheme';
+import { getRoleHomeRoute } from '@/utils/authRole';
 
 const ROLE_OPTIONS = [
 	{ key: 'user', label: 'User' },
 	{ key: 'vendor', label: 'Vendor' },
+	{ key: 'admin', label: 'Admin' },
 ] as const;
 
 type AuthMode = 'login' | 'register';
-type RoleType = 'user' | 'vendor';
+type RoleType = 'user' | 'vendor' | 'admin';
 
 export default function LoginScreen() {
 	const dispatch = useAppDispatch();
-	const { isAuthenticated, isHydrated, isLoading, error } = useAppSelector((state) => state.auth);
+	const router = useRouter();
+	const { showError, showSuccess } = useAppToast();
+	const { isAuthenticated, isHydrated, isLoading, error, role: authRole } = useAppSelector((state) => state.auth);
 	const { palette, resolvedMode } = useAppTheme();
 	const isDark = resolvedMode === 'dark';
-	const screenBg = isDark ? '#0F172A' : '#EEF4F3';
-	const surfaceBg = isDark ? '#111827' : '#FFFFFF';
-	const border = isDark ? '#334155' : '#E2E8F0';
+	const screenBg = palette.screenBg;
+	const surfaceBg = palette.surfaceBg;
+	const border = palette.border;
+	const softBg = palette.elevatedBg;
 
 	const [mode, setMode] = useState<AuthMode>('login');
 	const [role, setRole] = useState<RoleType>('user');
@@ -36,12 +42,24 @@ export default function LoginScreen() {
 
 	const subtitle = useMemo(() => {
 		return mode === 'login'
-			? 'Login with your dummy account to continue.'
-			: 'Create a dummy account to preview role-based flows.';
+			? 'Sign in to continue your event workflows.'
+			: 'Create your account to start with role-based access.';
 	}, [mode]);
 
+	const demoEmail = useMemo(() => {
+		if (role === 'admin') {
+			return 'admin@test.com';
+		}
+
+		if (role === 'vendor') {
+			return 'vendor@test.com';
+		}
+
+		return 'user@test.com';
+	}, [role]);
+
 	if (isHydrated && isAuthenticated) {
-		return <Redirect href="/(tabs)/home" />;
+		return <Redirect href={getRoleHomeRoute(authRole)} />;
 	}
 
 	const switchMode = (nextMode: AuthMode) => {
@@ -83,62 +101,85 @@ export default function LoginScreen() {
 		}
 
 		if (mode === 'login') {
+			try {
+				await dispatch(
+					loginWithCredentials({
+						email: email.trim(),
+						password: password.trim(),
+						userType: role,
+					})
+				).unwrap();
+				showSuccess('Login successful.');
+			} catch (err) {
+				if (typeof err === 'string') {
+					showError(err);
+				} else {
+					showError('Login failed. Please try again.');
+				}
+			}
+			return;
+		}
+
+		try {
 			await dispatch(
-				loginWithCredentials({
+				registerWithCredentials({
+					firstName: firstName.trim(),
+					lastName: lastName.trim(),
 					email: email.trim(),
 					password: password.trim(),
 					userType: role,
 				})
-			);
-			return;
+			).unwrap();
+			showSuccess('Sign Up successful.');
+		} catch (err) {
+			if (typeof err === 'string') {
+				showError(err);
+			} else {
+				showError('Sign Up failed. Please try again.');
+			}
 		}
-
-		await dispatch(
-			registerWithCredentials({
-				firstName: firstName.trim(),
-				lastName: lastName.trim(),
-				email: email.trim(),
-				password: password.trim(),
-				userType: role,
-			})
-		);
 	};
 
 	return (
 		<SafeAreaView style={[styles.safeArea, { backgroundColor: screenBg }]} edges={['top', 'bottom']}>
 			<StatusBar style={isDark ? 'light' : 'dark'} />
 			<ScrollView style={[styles.page, { backgroundColor: screenBg }]} contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-				<View style={[styles.heroCard, { backgroundColor: surfaceBg, borderColor: border }]}>
-					<ThemedText style={styles.brand}>GoEventify</ThemedText>
-					<ThemedText style={[styles.title, { color: palette.text }]}>Dummy Authentication</ThemedText>
-					<ThemedText style={styles.subtitle}>{subtitle}</ThemedText>
+				<View style={[styles.heroCard, { backgroundColor: surfaceBg, borderColor: border, borderTopColor: palette.primary }]}>
+					<ThemedText style={[styles.brand, { color: palette.primary }]}>GoEventify</ThemedText>
+					<ThemedText style={[styles.title, { color: palette.text }]}>Welcome Back</ThemedText>
+					<ThemedText style={[styles.subtitle, { color: palette.subtext }]}>{subtitle}</ThemedText>
+					<ThemedText style={[styles.demoHint, { color: palette.accent }]}>Demo: {demoEmail} / 123456</ThemedText>
 				</View>
 
 				<View style={[styles.formCard, { backgroundColor: surfaceBg, borderColor: border }]}>
-					<View style={styles.modeRow}>
+					<View style={[styles.modeRow, { backgroundColor: softBg }]}> 
 						<Pressable
-							style={[styles.modeBtn, mode === 'login' ? styles.modeBtnActive : null]}
+							style={[styles.modeBtn, mode === 'login' ? [styles.modeBtnActive, { backgroundColor: surfaceBg }] : null]}
 							onPress={() => switchMode('login')}
 						>
-							<ThemedText style={[styles.modeBtnText, mode === 'login' ? styles.modeBtnTextActive : null]}>Login</ThemedText>
+							<ThemedText style={[styles.modeBtnText, { color: palette.subtext }, mode === 'login' ? [styles.modeBtnTextActive, { color: palette.text }] : null]}>Login</ThemedText>
 						</Pressable>
 						<Pressable
-							style={[styles.modeBtn, mode === 'register' ? styles.modeBtnActive : null]}
+							style={[styles.modeBtn, mode === 'register' ? [styles.modeBtnActive, { backgroundColor: surfaceBg }] : null]}
 							onPress={() => switchMode('register')}
 						>
-							<ThemedText style={[styles.modeBtnText, mode === 'register' ? styles.modeBtnTextActive : null]}>Register</ThemedText>
+							<ThemedText style={[styles.modeBtnText, { color: palette.subtext }, mode === 'register' ? [styles.modeBtnTextActive, { color: palette.text }] : null]}>Register</ThemedText>
 						</Pressable>
 					</View>
 
-					<ThemedText style={styles.label}>Choose Role</ThemedText>
+					<ThemedText style={[styles.label, { color: palette.subtext }]}>Choose Role</ThemedText>
 					<View style={styles.roleRow}>
 						{ROLE_OPTIONS.map((option) => (
 							<Pressable
 								key={option.key}
-								style={[styles.roleBtn, role === option.key ? styles.roleBtnActive : null]}
+								style={[
+									styles.roleBtn,
+									{ backgroundColor: softBg, borderColor: border },
+									role === option.key ? [styles.roleBtnActive, { backgroundColor: palette.pressedBg, borderColor: palette.primary }] : null,
+								]}
 								onPress={() => setRole(option.key)}
 							>
-								<ThemedText style={[styles.roleText, role === option.key ? styles.roleTextActive : null]}>
+								<ThemedText style={[styles.roleText, { color: palette.subtext }, role === option.key ? [styles.roleTextActive, { color: palette.primary }] : null]}>
 									{option.label}
 								</ThemedText>
 							</Pressable>
@@ -148,46 +189,58 @@ export default function LoginScreen() {
 					{mode === 'register' ? (
 						<View style={styles.nameRow}>
 							<TextInput
-								style={[styles.input, styles.halfInput]}
+								style={[styles.input, styles.halfInput, { backgroundColor: surfaceBg, borderColor: border, color: palette.text }]}
 								value={firstName}
 								onChangeText={setFirstName}
 								placeholder="First Name"
-								placeholderTextColor="#94A3B8"
+								placeholderTextColor={palette.muted}
 							/>
 							<TextInput
-								style={[styles.input, styles.halfInput]}
+								style={[styles.input, styles.halfInput, { backgroundColor: surfaceBg, borderColor: border, color: palette.text }]}
 								value={lastName}
 								onChangeText={setLastName}
 								placeholder="Last Name"
-								placeholderTextColor="#94A3B8"
+								placeholderTextColor={palette.muted}
 							/>
 						</View>
 					) : null}
 
 					<TextInput
-						style={styles.input}
+						style={[styles.input, { backgroundColor: surfaceBg, borderColor: border, color: palette.text }]}
 						value={email}
 						onChangeText={setEmail}
 						placeholder="Email"
-						placeholderTextColor="#94A3B8"
+						placeholderTextColor={palette.muted}
 						autoCapitalize="none"
 						keyboardType="email-address"
 					/>
 					<TextInput
-						style={styles.input}
+						style={[styles.input, { backgroundColor: surfaceBg, borderColor: border, color: palette.text }]}
 						value={password}
 						onChangeText={setPassword}
 						placeholder="Password"
-						placeholderTextColor="#94A3B8"
+						placeholderTextColor={palette.muted}
 						secureTextEntry
 					/>
 
-					{localError ? <ThemedText style={styles.errorText}>{localError}</ThemedText> : null}
-					{error ? <ThemedText style={styles.errorText}>{error}</ThemedText> : null}
+					{mode === 'login' ? (
+						<Pressable style={styles.inlineLinkBtn} onPress={() => router.push('/(auth)/forgot-password')}>
+							<ThemedText style={[styles.inlineLinkText, { color: palette.primary }]}>Forgot password?</ThemedText>
+						</Pressable>
+					) : null}
 
-					<Pressable style={[styles.submitBtn, isLoading ? styles.submitBtnDisabled : null]} onPress={onSubmit} disabled={isLoading}>
-						<ThemedText style={styles.submitBtnText}>{isLoading ? 'Please wait...' : mode === 'login' ? 'Login' : 'Create Account'}</ThemedText>
+					{localError ? <ThemedText style={[styles.errorText, { color: palette.danger }]}>{localError}</ThemedText> : null}
+					{error ? <ThemedText style={[styles.errorText, { color: palette.danger }]}>{error}</ThemedText> : null}
+
+					<Pressable style={[styles.submitBtn, { backgroundColor: palette.primary }, isLoading ? styles.submitBtnDisabled : null]} onPress={onSubmit} disabled={isLoading}>
+						<ThemedText style={[styles.submitBtnText, { color: palette.onPrimary }]}>{isLoading ? 'Processing...' : mode === 'login' ? 'Login' : 'Sign Up'}</ThemedText>
 					</Pressable>
+
+					{mode === 'login' ? (
+						<Pressable style={styles.footerSwitchBtn} onPress={() => switchMode('register')}>
+							<ThemedText style={[styles.footerSwitchText, { color: palette.primary }]}>Don&apos;t have an account? Register</ThemedText>
+						</Pressable>
+					) : null}
 				</View>
 
 			</ScrollView>
@@ -233,6 +286,12 @@ const styles = StyleSheet.create({
 	subtitle: {
 		fontSize: 13,
 		color: '#64748B',
+	},
+	demoHint: {
+		marginTop: 4,
+		fontSize: 12,
+		fontWeight: '700',
+		color: '#0F766E',
 	},
 	formCard: {
 		backgroundColor: '#FFFFFF',
@@ -310,6 +369,14 @@ const styles = StyleSheet.create({
 		color: '#1F2937',
 		backgroundColor: '#FFFFFF',
 	},
+	inlineLinkBtn: {
+		alignSelf: 'flex-end',
+	},
+	inlineLinkText: {
+		fontSize: 12,
+		fontWeight: '700',
+		color: '#0F766E',
+	},
 	halfInput: {
 		flex: 1,
 	},
@@ -332,5 +399,14 @@ const styles = StyleSheet.create({
 		color: '#FFFFFF',
 		fontSize: 15,
 		fontWeight: '700',
+	},
+	footerSwitchBtn: {
+		paddingTop: 8,
+		alignItems: 'center',
+	},
+	footerSwitchText: {
+		fontSize: 13,
+		fontWeight: '700',
+		color: '#0F766E',
 	},
 });

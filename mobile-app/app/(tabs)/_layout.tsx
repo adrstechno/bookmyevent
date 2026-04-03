@@ -3,13 +3,20 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAppSelector } from '@/store';
+import { useSettingsTheme } from '@/theme/settingsTheme';
+import { getRoleHomeRoute } from '@/utils/authRole';
 
 export default function TabsLayout() {
 	const insets = useSafeAreaInsets();
-	const { isAuthenticated, isHydrated } = useAppSelector((state) => state.auth);
+	const { palette } = useSettingsTheme();
+	const { isAuthenticated, isHydrated, role } = useAppSelector((state) => state.auth);
 
 	if (isHydrated && !isAuthenticated) {
 		return <Redirect href="/(auth)/login" />;
+	}
+
+	if (isHydrated && isAuthenticated && role && role !== 'user') {
+		return <Redirect href={getRoleHomeRoute(role)} />;
 	}
 
 	return (
@@ -17,14 +24,14 @@ export default function TabsLayout() {
 			initialRouteName="home"
 			screenOptions={{
 				headerShown: false,
-				tabBarActiveTintColor: '#2DD4BF',
-				tabBarInactiveTintColor: '#94A3B8',
+				tabBarActiveTintColor: palette.primary,
+				tabBarInactiveTintColor: palette.muted,
 				tabBarStyle: {
-					height: 56 + insets.bottom,
-					paddingBottom: Math.max(insets.bottom, 8),
+					height: 62 + insets.bottom,
+					paddingBottom: Math.max(insets.bottom, 6),
 					paddingTop: 6,
-					backgroundColor: '#0F172A',
-					borderTopColor: '#1E293B',
+					backgroundColor: palette.surfaceBg,
+					borderTopColor: palette.border,
 				},
 			}}
 		>

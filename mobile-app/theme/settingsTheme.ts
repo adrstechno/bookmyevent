@@ -1,36 +1,13 @@
 import * as SecureStore from 'expo-secure-store';
 import { useCallback, useEffect, useState } from 'react';
 
+import { AppPalettes } from '@/constants/theme';
+
 export type SettingsThemeMode = 'light' | 'dark';
 
 const SETTINGS_THEME_KEY = 'settings.theme.mode';
 
-export const settingsThemePalettes = {
-	light: {
-		screenBg: '#F4F7F9',
-		surfaceBg: '#FFFFFF',
-		border: '#E2E8F0',
-		text: '#0F172A',
-		subtext: '#64748B',
-		pressedBg: '#F1F5F9',
-		headerBtnBg: '#F8FAFC',
-		switchOn: '#2D6A4F',
-		switchOff: '#CBD5E1',
-		tint: '#0F766E',
-	},
-	dark: {
-		screenBg: '#0F172A',
-		surfaceBg: '#111827',
-		border: '#334155',
-		text: '#E2E8F0',
-		subtext: '#94A3B8',
-		pressedBg: '#1E293B',
-		headerBtnBg: '#1F2937',
-		switchOn: '#22C55E',
-		switchOff: '#475569',
-		tint: '#2DD4BF',
-	},
-} as const;
+export const settingsThemePalettes = AppPalettes;
 
 const isSettingsThemeMode = (value: string | null): value is SettingsThemeMode => {
 	return value === 'light' || value === 'dark';

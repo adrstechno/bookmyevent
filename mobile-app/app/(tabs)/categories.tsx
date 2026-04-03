@@ -4,6 +4,8 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, TextInput, View, type ImageSourcePropType } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import FadeInView from '@/components/common/FadeInView';
+import AppMenuDrawer from '@/components/layout/AppMenuDrawer';
 import { ThemedText } from '@/components/themed-text';
 import { API_ENDPOINTS } from '@/services/api/endpoints';
 import apiClient from '@/services/api/client';
@@ -149,7 +151,8 @@ type ServiceCardItemProps = {
 		border: string;
 		text: string;
 		subtext: string;
-		headerBtnBg: string;
+		accent: string;
+		rose: string;
 		tint: string;
 	};
 };
@@ -161,6 +164,9 @@ const ServiceCardItem = memo(function ServiceCardItem({
 	isDark,
 	palette,
 }: ServiceCardItemProps) {
+	const isRomanticCategory = /wedding|engagement|romantic/i.test(card.categoryName);
+	const badgeBg = isRomanticCategory ? palette.rose : palette.accent;
+
 	return (
 		<View style={[styles.serviceCard, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
 			{card.image && !hasImageFailed ? (
@@ -177,8 +183,8 @@ const ServiceCardItem = memo(function ServiceCardItem({
 				</View>
 			)}
 			<View style={styles.imageOverlay} />
-			<View style={styles.categoryBadge}>
-				<ThemedText style={styles.categoryBadgeText} numberOfLines={1}>
+			<View style={[styles.categoryBadge, { backgroundColor: badgeBg }]}>
+				<ThemedText style={[styles.categoryBadgeText, { color: palette.text }]} numberOfLines={1}>
 					{card.categoryName}
 				</ThemedText>
 			</View>
@@ -186,12 +192,12 @@ const ServiceCardItem = memo(function ServiceCardItem({
 				<ThemedText style={[styles.serviceCardTitle, { color: palette.text }]} numberOfLines={1}>
 					{card.title}
 				</ThemedText>
-				<View style={styles.titleUnderline} />
+				<View style={[styles.titleUnderline, { backgroundColor: palette.accent }]} />
 				<ThemedText style={[styles.serviceCardDescription, { color: palette.subtext }]} numberOfLines={2}>
 					{card.description}
 				</ThemedText>
-				<Pressable style={[styles.viewButton, { backgroundColor: palette.tint }]}>
-					<ThemedText style={styles.viewButtonText}>View Vendors -&gt;</ThemedText>
+				<Pressable style={[styles.viewButton, { backgroundColor: palette.accent }]}>
+					<ThemedText style={[styles.viewButtonText, { color: palette.text }]}>View Vendors -&gt;</ThemedText>
 				</Pressable>
 			</View>
 		</View>
@@ -378,9 +384,10 @@ export default function CategoriesTabScreen() {
 		<SafeAreaView style={[styles.safeArea, { backgroundColor: palette.screenBg }]} edges={['top']}>
 			<StatusBar style={isDark ? 'light' : 'dark'} />
 			<View style={[styles.page, { backgroundColor: palette.screenBg }]}>
-				<View style={[styles.appBar, { backgroundColor: palette.screenBg }]}>
-					<ThemedText style={[styles.appBarTitle, { color: palette.text }]}>Services</ThemedText>
-					<View style={[styles.searchWrap, { backgroundColor: palette.headerBtnBg, borderColor: palette.border }]}>
+				<View style={[styles.appBar, { backgroundColor: palette.primary }]}>
+					<AppMenuDrawer />
+					<ThemedText style={[styles.appBarTitle, { color: palette.onPrimary }]}>Services</ThemedText>
+					<View style={[styles.searchWrap, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
 						<Ionicons name="search-outline" size={18} color={palette.subtext} />
 						<TextInput
 							style={[styles.searchInput, { color: palette.text }]}
@@ -429,7 +436,8 @@ export default function CategoriesTabScreen() {
 					</ScrollView>
 				</View>
 
-				<ScrollView style={styles.cardsScroll} contentContainerStyle={styles.cardsContainer} showsVerticalScrollIndicator={false}>
+				<FadeInView delay={80} distance={8} style={styles.cardsScroll}>
+					<ScrollView contentContainerStyle={styles.cardsContainer} showsVerticalScrollIndicator={false}>
 					{isLoading ? (
 						<View style={styles.loadingWrap}>
 							<ActivityIndicator size="large" color={palette.tint} />
@@ -452,7 +460,8 @@ export default function CategoriesTabScreen() {
 							/>
 						))
 					)}
-				</ScrollView>
+					</ScrollView>
+				</FadeInView>
 			</View>
 		</SafeAreaView>
 	);

@@ -9,6 +9,7 @@ import { Alert, Linking, Modal, Pressable, ScrollView, StyleSheet, View } from '
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import AppMenuDrawer from '@/components/layout/AppMenuDrawer';
 import { ThemedText } from '@/components/themed-text';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { signOut } from '@/store/slices/authSlice';
@@ -240,6 +241,7 @@ export default function ProfileTabScreen() {
 		<SafeAreaView style={[styles.safeArea, { backgroundColor: palette.screenBg }]} edges={['top']}>
 			<StatusBar style={isDark ? 'light' : 'dark'} />
 			<View style={[styles.appBar, { backgroundColor: palette.surfaceBg, borderBottomColor: palette.border }]}>
+				<AppMenuDrawer />
 				<ThemedText style={[styles.appBarTitle, { color: palette.text }]}>My Profile</ThemedText>
 				<Pressable style={[styles.appBarAction, { backgroundColor: palette.headerBtnBg, borderColor: palette.border }]} onPress={() => router.push('/settings')}>
 					<Ionicons name="settings-outline" size={19} color={palette.text} />

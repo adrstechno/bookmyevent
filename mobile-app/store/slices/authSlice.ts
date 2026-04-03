@@ -2,8 +2,8 @@ import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import {
 	clearSession,
-	type DummyAuthSession,
-	type DummyUserRole,
+	type AuthSession,
+	type UserRole,
 	persistSession,
 	restoreSession,
 } from '@/services/auth/authService';
@@ -11,7 +11,7 @@ import type { LoginRequest, RegisterRequest } from '@/types/auth';
 
 type AuthState = {
 	token: string | null;
-	role: DummyUserRole | null;
+	role: UserRole | null;
 	name: string | null;
 	email: string | null;
 	isAuthenticated: boolean;
@@ -31,11 +31,44 @@ const initialState: AuthState = {
 	error: null,
 };
 
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const DUMMY_AUTH_ENABLED = true;
+
+const DUMMY_CREDENTIALS: Record<UserRole, { email: string; password: string; name: string }> = {
+	user: {
+		email: 'user@test.com',
+		password: '123456',
+		name: 'Demo User',
+	},
+	vendor: {
+		email: 'vendor@test.com',
+		password: '123456',
+		name: 'Demo Vendor',
+	},
+	admin: {
+		email: 'admin@test.com',
+		password: '123456',
+		name: 'Demo Admin',
+	},
+};
 
 const toNameFromEmail = (email: string) => {
 	const prefix = email.split('@')[0] ?? 'Guest';
 	return prefix.charAt(0).toUpperCase() + prefix.slice(1);
+};
+
+const toErrorMessage = (error: unknown, fallback: string) => {
+	if (error instanceof Error) {
+		return error.message;
+	}
+
+	if (error && typeof error === 'object' && 'message' in error) {
+		const message = (error as { message?: unknown }).message;
+		if (typeof message === 'string' && message.trim().length > 0) {
+			return message;
+		}
+	}
+
+	return fallback;
 };
 
 export const bootstrapAuth = createAsyncThunk('auth/bootstrap', async () => {
@@ -56,17 +89,30 @@ export const loginWithCredentials = createAsyncThunk(
 			const role = credentials.userType;
 
 			if (!email || !password || !role) {
-				return rejectWithValue('Please enter email, password and role.');
+				return rejectWithValue('Please enter email, password, and role.');
 			}
 
-			if (password.length < 4) {
-				return rejectWithValue('Password must be at least 4 characters.');
+			if (DUMMY_AUTH_ENABLED) {
+				const expected = DUMMY_CREDENTIALS[role];
+				if (email !== expected.email || password !== expected.password) {
+					return rejectWithValue(
+						`Use demo credentials for ${role}: ${expected.email} / ${expected.password}`
+					);
+				}
+
+				const session: AuthSession = {
+					token: `dummy-token-${role}`,
+					role,
+					name: expected.name,
+					email: expected.email,
+				};
+
+				await persistSession(session);
+				return session;
 			}
 
-			await delay(450);
-
-			const session: DummyAuthSession = {
-				token: `dummy-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+			const session: AuthSession = {
+				token: 'disabled-in-dummy-mode',
 				role,
 				name: toNameFromEmail(email),
 				email,
@@ -75,7 +121,7 @@ export const loginWithCredentials = createAsyncThunk(
 			await persistSession(session);
 			return session;
 		} catch (error) {
-			const message = error instanceof Error ? error.message : 'Unable to login. Please try again.';
+			const message = toErrorMessage(error, 'Unable to login. Please try again.');
 			return rejectWithValue(message);
 		}
 	}
@@ -89,7 +135,7 @@ export const registerWithCredentials = createAsyncThunk(
 			const password = payload.password?.trim();
 			const firstName = payload.firstName?.trim();
 			const lastName = payload.lastName?.trim();
-			const role = payload.userType;
+			const role = payload.userType || 'user';
 
 			if (!firstName || !lastName || !email || !password || !role) {
 				return rejectWithValue('Please fill all required fields.');
@@ -99,10 +145,20 @@ export const registerWithCredentials = createAsyncThunk(
 				return rejectWithValue('Password must be at least 4 characters.');
 			}
 
-			await delay(550);
+			if (DUMMY_AUTH_ENABLED) {
+				const session: AuthSession = {
+					token: `dummy-token-${role}-${Date.now()}`,
+					role,
+					name: `${firstName} ${lastName}`,
+					email,
+				};
 
-			const session: DummyAuthSession = {
-				token: `dummy-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+				await persistSession(session);
+				return session;
+			}
+
+			const session: AuthSession = {
+				token: 'disabled-in-dummy-mode',
 				role,
 				name: `${firstName} ${lastName}`,
 				email,
@@ -111,7 +167,7 @@ export const registerWithCredentials = createAsyncThunk(
 			await persistSession(session);
 			return session;
 		} catch (error) {
-			const message = error instanceof Error ? error.message : 'Unable to register. Please try again.';
+			const message = toErrorMessage(error, 'Unable to register. Please try again.');
 			return rejectWithValue(message);
 		}
 	}
@@ -121,7 +177,7 @@ const authSlice = createSlice({
 	name: 'auth',
 	initialState,
 	reducers: {
-		setSignedIn(state, action: PayloadAction<DummyAuthSession>) {
+		setSignedIn(state, action: PayloadAction<AuthSession>) {
 			state.token = action.payload.token;
 			state.role = action.payload.role;
 			state.name = action.payload.name;
@@ -209,7 +265,7 @@ const authSlice = createSlice({
 	},
 });
 
-export const signIn = createAsyncThunk('auth/signIn', async (session: DummyAuthSession, { dispatch }) => {
+export const signIn = createAsyncThunk('auth/signIn', async (session: AuthSession, { dispatch }) => {
 	await persistSession(session);
 	dispatch(setSignedIn(session));
 });

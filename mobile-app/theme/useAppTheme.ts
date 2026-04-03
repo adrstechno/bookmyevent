@@ -1,7 +1,7 @@
-import { ThemeColors } from '@/constants/colors';
+import { useSettingsTheme } from '@/theme/settingsTheme';
 
 export type AppResolvedMode = 'light' | 'dark';
-export type AppThemePalette = typeof ThemeColors.light;
+export type AppThemePalette = ReturnType<typeof useSettingsTheme>['palette'];
 export type AppThemeResult = {
 	resolvedMode: AppResolvedMode;
 	palette: AppThemePalette;
@@ -9,12 +9,12 @@ export type AppThemeResult = {
 };
 
 export function useAppTheme(): AppThemeResult {
-	const resolvedMode: AppResolvedMode = 'light';
-	const palette: AppThemePalette = ThemeColors.light;
+	const { mode, palette } = useSettingsTheme();
+	const resolvedMode: AppResolvedMode = mode;
 
 	return {
 		resolvedMode,
 		palette,
-		isDark: false,
+		isDark: resolvedMode === 'dark',
 	};
 }

@@ -1,12 +1,12 @@
 export type LoginRequest = {
 	email: string;
 	password: string;
-	userType: 'user' | 'vendor';
+	userType?: 'user' | 'vendor' | 'admin';
 };
 
 export type LoginResponse = {
 	token: string;
-	role: 'user' | 'vendor';
+	role: 'user' | 'vendor' | 'admin';
 	name: string;
 	email: string;
 };
@@ -16,7 +16,8 @@ export type RegisterRequest = {
 	password: string;
 	firstName?: string;
 	lastName?: string;
-	userType: 'user' | 'vendor';
+	phone?: string;
+	userType?: 'user' | 'vendor' | 'admin';
 };
 
 export type RegisterResponse = {

@@ -5,6 +5,7 @@ import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 
+import AppMenuDrawer from '@/components/layout/AppMenuDrawer';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useSettingsTheme } from '@/theme/settingsTheme';
@@ -147,6 +148,7 @@ export default function BookingsTabScreen() {
 		<SafeAreaView style={[styles.safeArea, { backgroundColor: palette.screenBg }]} edges={['top']}>
 			<StatusBar style={isDark ? 'light' : 'dark'} />
 			<View style={[styles.appBar, { backgroundColor: palette.surfaceBg, borderBottomColor: palette.border }]}>
+				<AppMenuDrawer />
 				<View style={[styles.appBarIconWrap, { backgroundColor: palette.headerBtnBg, borderColor: palette.border }]}>
 					<Ionicons name="calendar-clear-outline" size={18} color={palette.tint} />
 				</View>
