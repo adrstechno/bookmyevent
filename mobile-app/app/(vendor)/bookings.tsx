@@ -1,122 +1,65 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-	Modal,
-	Pressable,
-	ScrollView,
-	StyleSheet,
-	TextInput,
-	View,
-} from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import FadeInView from '@/components/common/FadeInView';
 import PageLoadingState from '@/components/common/PageLoadingState';
 import AppMenuDrawer from '@/components/layout/AppMenuDrawer';
+import BookingCard from '@/components/vendor/BookingCard';
 import { ThemedText } from '@/components/themed-text';
 import { useAppToast } from '@/components/common/AppToastProvider';
 import { useSettingsTheme } from '@/theme/settingsTheme';
+import {
+	type VendorBooking,
+	type FilterKey,
+	FILTER_KEYS,
+	getFilterLabel,
+	isPending,
+	isAwaitingAdmin,
+	isOtpRequired,
+	isCompleted,
+	isCancelled,
+} from '@/utils/bookingHelpers';
 
-type FilterKey = 'all' | 'pending' | 'awaiting-admin' | 'otp-required' | 'completed' | 'cancelled';
-
-type BookingStatus =
-	| 'pending_vendor_response'
-	| 'pending'
-	| 'confirmed'
-	| 'completed'
-	| 'awaiting_review'
-	| 'cancelled_by_vendor'
-	| 'rejected_by_vendor';
-
-type AdminApproval = 'pending' | 'approved' | 'rejected';
-
-interface VendorBooking {
-	bookingId: string;
-	bookingUuid: string;
-	firstName: string;
-	lastName: string;
-	userName: string;
-	eventDate: string;
-	eventTime: string;
-	packageName: string;
-	packageId: string;
-	status: BookingStatus;
-	adminApproval: AdminApproval;
-	otp: string;
-	otpAttemptsRemaining: number;
-	rejectReason?: string;
-}
-
-const filterKeys: FilterKey[] = ['all', 'pending', 'awaiting-admin', 'otp-required', 'completed', 'cancelled'];
+// ─── Mock Data ────────────────────────────────────────────────────────────────
 
 const mockBookings: VendorBooking[] = [
 	{
-		bookingId: '1001',
-		bookingUuid: 'BME-BOOK-1001',
-		firstName: 'Rahul',
-		lastName: 'Sharma',
-		userName: 'rahul_s',
-		eventDate: '2026-04-20',
-		eventTime: '18:00',
-		packageName: 'Wedding Essentials',
-		packageId: '101',
-		status: 'pending_vendor_response',
-		adminApproval: 'pending',
-		otp: '123456',
-		otpAttemptsRemaining: 3,
+		bookingId: '1001', bookingUuid: 'BME-BOOK-1001',
+		firstName: 'Rahul', lastName: 'Sharma', userName: 'rahul_s',
+		email: 'rahul@example.com', phone: '9876543210',
+		eventDate: '2026-04-20', eventTime: '18:00',
+		packageName: 'Wedding Essentials', packageId: '101', amount: '25000',
+		eventAddress: '123 Garden Palace, Indore',
+		specialRequirement: 'Need extra lighting setup',
+		createdAt: '2026-04-10T10:00:00Z',
+		status: 'pending_vendor_response', adminApproval: 'pending',
+		otp: '123456', otpAttemptsRemaining: 3,
 	},
 	{
-		bookingId: '1002',
-		bookingUuid: 'BME-BOOK-1002',
-		firstName: 'Neha',
-		lastName: 'Jain',
-		userName: 'nehaj',
-		eventDate: '2026-04-24',
-		eventTime: '14:00',
-		packageName: 'Corporate Premium',
-		packageId: '202',
-		status: 'confirmed',
-		adminApproval: 'pending',
-		otp: '123456',
-		otpAttemptsRemaining: 3,
+		bookingId: '1002', bookingUuid: 'BME-BOOK-1002',
+		firstName: 'Neha', lastName: 'Jain', userName: 'nehaj',
+		email: 'neha@example.com',
+		eventDate: '2026-04-24', eventTime: '14:00',
+		packageName: 'Corporate Premium', packageId: '202', amount: '15000',
+		eventAddress: '456 Business Hub, Bhopal',
+		createdAt: '2026-04-11T09:00:00Z',
+		status: 'confirmed', adminApproval: 'pending',
+		otp: '123456', otpAttemptsRemaining: 3,
 	},
 	{
-		bookingId: '1003',
-		bookingUuid: 'BME-BOOK-1003',
-		firstName: 'Amit',
-		lastName: 'Verma',
-		userName: 'amitv',
-		eventDate: '2026-04-28',
-		eventTime: '20:00',
-		packageName: 'Birthday Delight',
-		packageId: '303',
-		status: 'confirmed',
-		adminApproval: 'approved',
-		otp: '123456',
-		otpAttemptsRemaining: 3,
+		bookingId: '1003', bookingUuid: 'BME-BOOK-1003',
+		firstName: 'Amit', lastName: 'Verma', userName: 'amitv',
+		eventDate: '2026-04-28', eventTime: '20:00',
+		packageName: 'Birthday Delight', packageId: '303', amount: '8000',
+		eventAddress: '789 Party Lane, Ujjain',
+		createdAt: '2026-04-12T11:00:00Z',
+		status: 'confirmed', adminApproval: 'approved',
+		otp: '123456', otpAttemptsRemaining: 3,
 	},
 ];
 
-const getFilterLabel = (key: FilterKey) => {
-	if (key === 'awaiting-admin') return 'Awaiting Admin';
-	if (key === 'otp-required') return 'OTP Required';
-	return key.charAt(0).toUpperCase() + key.slice(1);
-};
-
-const isPending = (booking: VendorBooking) =>
-	booking.status === 'pending_vendor_response' || booking.status === 'pending';
-
-const isAwaitingAdmin = (booking: VendorBooking) =>
-	booking.status === 'confirmed' && booking.adminApproval === 'pending';
-
-const isOtpRequired = (booking: VendorBooking) =>
-	booking.status === 'confirmed' && booking.adminApproval === 'approved';
-
-const isCompleted = (booking: VendorBooking) =>
-	booking.status === 'completed' || booking.status === 'awaiting_review';
-
-const isCancelled = (booking: VendorBooking) =>
-	booking.status.includes('cancelled') || booking.status.includes('rejected');
+// ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function VendorBookingsScreen() {
 	const { palette } = useSettingsTheme();
@@ -128,351 +71,285 @@ export default function VendorBookingsScreen() {
 	const [bookings, setBookings] = useState<VendorBooking[]>([]);
 	const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
+	// Reject modal
 	const [rejectModalOpen, setRejectModalOpen] = useState(false);
 	const [rejectReason, setRejectReason] = useState('Rejected by vendor');
 	const [rejectBookingId, setRejectBookingId] = useState<string | null>(null);
 
+	// OTP modal
 	const [otpModalOpen, setOtpModalOpen] = useState(false);
 	const [otpCode, setOtpCode] = useState('');
+	const [otpError, setOtpError] = useState('');
 	const [otpBooking, setOtpBooking] = useState<VendorBooking | null>(null);
 	const [otpBusy, setOtpBusy] = useState(false);
 	const [attemptsRemaining, setAttemptsRemaining] = useState(3);
 
 	const loadBookings = useCallback(async (silent = false) => {
-		if (silent) {
-			setIsRefreshing(true);
-		} else {
-			setIsLoading(true);
-		}
-
-		await new Promise((resolve) => setTimeout(resolve, 300));
+		silent ? setIsRefreshing(true) : setIsLoading(true);
+		await new Promise((r) => setTimeout(r, 300));
 		setBookings((prev) => (prev.length > 0 ? prev : mockBookings));
-
 		setIsLoading(false);
 		setIsRefreshing(false);
 	}, []);
 
-	useEffect(() => {
-		void loadBookings();
-	}, [loadBookings]);
+	useEffect(() => { void loadBookings(); }, [loadBookings]);
+
+	const counts = useMemo(() => ({
+		all: bookings.length,
+		pending: bookings.filter(isPending).length,
+		'awaiting-admin': bookings.filter(isAwaitingAdmin).length,
+		'otp-required': bookings.filter(isOtpRequired).length,
+		completed: bookings.filter(isCompleted).length,
+		cancelled: bookings.filter(isCancelled).length,
+	}), [bookings]);
 
 	const filteredBookings = useMemo(() => {
-		if (activeFilter === 'all') {
-			return bookings;
-		}
-
-		return bookings.filter((booking) => {
-			if (activeFilter === 'pending') return isPending(booking);
-			if (activeFilter === 'awaiting-admin') return isAwaitingAdmin(booking);
-			if (activeFilter === 'otp-required') return isOtpRequired(booking);
-			if (activeFilter === 'completed') return isCompleted(booking);
-			if (activeFilter === 'cancelled') return isCancelled(booking);
+		if (activeFilter === 'all') return bookings;
+		return bookings.filter((b) => {
+			if (activeFilter === 'pending') return isPending(b);
+			if (activeFilter === 'awaiting-admin') return isAwaitingAdmin(b);
+			if (activeFilter === 'otp-required') return isOtpRequired(b);
+			if (activeFilter === 'completed') return isCompleted(b);
+			if (activeFilter === 'cancelled') return isCancelled(b);
 			return true;
 		});
 	}, [activeFilter, bookings]);
 
-	const counts = useMemo(
-		() => ({
-			all: bookings.length,
-			pending: bookings.filter(isPending).length,
-			'awaiting-admin': bookings.filter(isAwaitingAdmin).length,
-			'otp-required': bookings.filter(isOtpRequired).length,
-			completed: bookings.filter(isCompleted).length,
-			cancelled: bookings.filter(isCancelled).length,
-		}),
-		[bookings]
-	);
-
-	const runAction = async (
-		bookingId: string,
-		action: (booking: VendorBooking) => VendorBooking,
-		successMessage: string
-	) => {
-		setActionLoadingId(bookingId);
-		await new Promise((resolve) => setTimeout(resolve, 350));
-		setBookings((prev) => prev.map((item) => (item.bookingId === bookingId ? action(item) : item)));
-		showSuccess(successMessage);
+	const runAction = async (id: string, fn: (b: VendorBooking) => VendorBooking, msg: string) => {
+		setActionLoadingId(id);
+		await new Promise((r) => setTimeout(r, 350));
+		setBookings((prev) => prev.map((b) => (b.bookingId === id ? fn(b) : b)));
+		showSuccess(msg);
 		setActionLoadingId(null);
 	};
 
-	const openReject = (bookingId: string) => {
-		setRejectBookingId(bookingId);
+	const openReject = (id: string) => {
+		setRejectBookingId(id);
 		setRejectReason('Rejected by vendor');
 		setRejectModalOpen(true);
 	};
 
 	const submitReject = async () => {
-		if (!rejectBookingId) {
-			return;
-		}
+		if (!rejectBookingId) return;
 		setRejectModalOpen(false);
-		await runAction(
-			rejectBookingId,
-			(booking) => ({
-				...booking,
-				status: 'rejected_by_vendor',
-				rejectReason: rejectReason.trim() || 'Rejected by vendor',
-			}),
-			'Booking rejected.'
-		);
+		await runAction(rejectBookingId,
+			(b) => ({ ...b, status: 'rejected_by_vendor', rejectReason: rejectReason.trim() || 'Rejected by vendor' }),
+			'Booking rejected.');
 	};
 
-	const openOtpModal = async (booking: VendorBooking) => {
+	const openOtpModal = (booking: VendorBooking) => {
 		setOtpBooking(booking);
 		setOtpCode('');
-		setOtpModalOpen(true);
+		setOtpError('');
 		setAttemptsRemaining(booking.otpAttemptsRemaining);
+		setOtpModalOpen(true);
+	};
+
+	const closeOtpModal = () => {
+		setOtpModalOpen(false);
+		setOtpCode('');
+		setOtpError('');
 	};
 
 	const verifyOtp = async () => {
-		if (!otpBooking) {
-			return;
-		}
-
-		if (!/^\d{6}$/.test(otpCode)) {
-			showError('Enter a valid 6-digit OTP.');
-			return;
-		}
+		if (!otpBooking) return;
+		if (!/^\d{6}$/.test(otpCode)) { setOtpError('Please enter a valid 6-digit OTP'); return; }
 
 		setOtpBusy(true);
-		await new Promise((resolve) => setTimeout(resolve, 350));
+		await new Promise((r) => setTimeout(r, 350));
 
-		const booking = bookings.find((item) => item.bookingId === otpBooking.bookingId);
-		if (!booking) {
-			setOtpBusy(false);
-			showError('Booking not found.');
-			return;
-		}
+		const booking = bookings.find((b) => b.bookingId === otpBooking.bookingId);
+		if (!booking) { setOtpBusy(false); showError('Booking not found.'); return; }
 
 		if (booking.otpAttemptsRemaining <= 0) {
 			setOtpBusy(false);
-			showError('Too many failed attempts. Please resend OTP.');
+			setOtpError('Too many failed attempts. OTP is locked for 15 minutes.');
 			return;
 		}
 
 		if (otpCode !== booking.otp) {
-			const remaining = booking.otpAttemptsRemaining - 1;
-			setBookings((prev) =>
-				prev.map((item) =>
-					item.bookingId === booking.bookingId
-						? {
-							...item,
-							otpAttemptsRemaining: Math.max(remaining, 0),
-						}
-						: item
-				)
-			);
-			setAttemptsRemaining(Math.max(remaining, 0));
+			const remaining = Math.max(booking.otpAttemptsRemaining - 1, 0);
+			setBookings((prev) => prev.map((b) => b.bookingId === booking.bookingId ? { ...b, otpAttemptsRemaining: remaining } : b));
+			setAttemptsRemaining(remaining);
+			setOtpError(remaining > 0 ? `Invalid OTP. ${remaining} attempts remaining.` : 'OTP locked. Please resend OTP.');
 			setOtpBusy(false);
-			showError(remaining > 0 ? `Invalid OTP. ${remaining} attempts left.` : 'OTP locked. Please resend OTP.');
 			return;
 		}
 
-		setBookings((prev) =>
-			prev.map((item) =>
-				item.bookingId === booking.bookingId
-					? {
-						...item,
-						status: 'completed',
-						otpAttemptsRemaining: 3,
-					}
-					: item
-			)
-		);
-		showSuccess('OTP verified successfully.');
-		setOtpModalOpen(false);
+		setBookings((prev) => prev.map((b) => b.bookingId === booking.bookingId ? { ...b, status: 'completed', otpAttemptsRemaining: 3 } : b));
+		showSuccess('OTP verified successfully! Booking confirmed.');
+		closeOtpModal();
 		setOtpBusy(false);
 	};
 
 	const resendOtp = async () => {
-		if (!otpBooking) {
-			return;
-		}
+		if (!otpBooking) return;
 		setOtpBusy(true);
-		await new Promise((resolve) => setTimeout(resolve, 350));
-		setBookings((prev) =>
-			prev.map((item) =>
-				item.bookingId === otpBooking.bookingId
-					? {
-						...item,
-						otp: '123456',
-						otpAttemptsRemaining: 3,
-					}
-					: item
-			)
-		);
+		await new Promise((r) => setTimeout(r, 350));
+		setBookings((prev) => prev.map((b) => b.bookingId === otpBooking.bookingId ? { ...b, otp: '123456', otpAttemptsRemaining: 3 } : b));
 		setOtpCode('');
+		setOtpError('');
 		setAttemptsRemaining(3);
 		setOtpBusy(false);
-		showInfo('New OTP sent to customer. Use 123456 for demo.');
+		showInfo('New OTP sent to customer!');
 	};
 
-	if (isLoading) {
-		return <PageLoadingState text="Loading bookings..." />;
-	}
+	if (isLoading) return <PageLoadingState text="Loading bookings..." />;
 
 	return (
-		<SafeAreaView style={[styles.safeArea, { backgroundColor: palette.screenBg }]} edges={['top']}>
-			<View style={styles.container}>
-				<View style={[styles.appBar, { backgroundColor: palette.primary, borderColor: palette.primaryStrong }]}>
-					<AppMenuDrawer />
-					<ThemedText style={[styles.appBarTitle, { color: palette.onPrimary }]}>Vendor Bookings</ThemedText>
-					<Pressable
-						style={[styles.iconBtn, { borderColor: palette.primaryStrong, backgroundColor: palette.primaryStrong }]}
-						onPress={() => void loadBookings(true)}
-					>
-						<Ionicons name={isRefreshing ? 'hourglass-outline' : 'refresh-outline'} size={18} color={palette.onPrimary} />
-					</Pressable>
-				</View>
-
-				<ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
-					{filterKeys.map((key) => {
-						const active = key === activeFilter;
-						return (
-							<Pressable
-								key={key}
-								style={[
-									styles.filterChip,
-									{ borderColor: active ? palette.primary : palette.border, backgroundColor: active ? palette.primary : palette.surfaceBg },
-								]}
-								onPress={() => setActiveFilter(key)}
-							>
-								<ThemedText style={[styles.filterText, { color: active ? palette.onPrimary : palette.text }]}> 
-									{getFilterLabel(key)} ({counts[key]})
-								</ThemedText>
-							</Pressable>
-						);
-					})}
-				</ScrollView>
-
-				<ScrollView contentContainerStyle={styles.listWrap}>
-					{filteredBookings.length === 0 ? (
-						<ThemedText style={[styles.emptyText, { color: palette.subtext }]}>No bookings found for this filter.</ThemedText>
-					) : (
-						filteredBookings.map((booking, index) => {
-							const bookingId = String(booking.bookingId);
-							const canAcceptReject = isPending(booking);
-							const canCancel = isPending(booking) || isAwaitingAdmin(booking);
-							const needsOtp = isOtpRequired(booking);
-
-							return (
-								<FadeInView key={bookingId} delay={index * 25}>
-									<View style={[styles.card, { borderColor: palette.border, backgroundColor: palette.surfaceBg }]}>
-										<ThemedText style={[styles.cardTitle, { color: palette.text }]}>Booking #{String(booking.bookingUuid || booking.bookingId).slice(-8)}</ThemedText>
-										<ThemedText style={[styles.cardMeta, { color: palette.subtext }]}>
-											{booking.firstName || booking.userName || 'Customer'} {booking.lastName || ''} - {booking.eventDate || '-'} {booking.eventTime || ''}
-										</ThemedText>
-										<ThemedText style={[styles.cardMeta, { color: palette.subtext }]}>Package: {booking.packageName || `Package #${booking.packageId || '-'}`}</ThemedText>
-										<ThemedText style={[styles.cardMeta, { color: palette.subtext }]}>Status: {booking.status}{booking.adminApproval ? ` / ${booking.adminApproval}` : ''}</ThemedText>
-
-										<View style={styles.actionRow}>
-											{canAcceptReject ? (
-												<Pressable
-													style={[styles.actionBtn, { backgroundColor: palette.successSoft, borderColor: palette.successBorder }]}
-													onPress={() =>
-														void runAction(
-															bookingId,
-															(item) => ({ ...item, status: 'confirmed', adminApproval: 'pending' }),
-															'Booking accepted. Awaiting admin approval.'
-														)
-													}
-													disabled={actionLoadingId === bookingId}
-												>
-													<ThemedText style={[styles.actionText, { color: palette.success }]}>{actionLoadingId === bookingId ? 'Working...' : 'Accept'}</ThemedText>
-												</Pressable>
-											) : null}
-
-											{canAcceptReject ? (
-												<Pressable
-													style={[styles.actionBtn, { backgroundColor: palette.dangerSoft, borderColor: palette.dangerBorder }]}
-													onPress={() => openReject(bookingId)}
-													disabled={actionLoadingId === bookingId}
-												>
-													<ThemedText style={[styles.actionText, { color: palette.danger }]}>Reject</ThemedText>
-												</Pressable>
-											) : null}
-
-											{needsOtp ? (
-												<Pressable
-													style={[styles.actionBtn, { backgroundColor: palette.pressedBg, borderColor: palette.primary }]}
-													onPress={() => void openOtpModal(booking)}
-												>
-													<ThemedText style={[styles.actionText, { color: palette.primary }]}>Verify OTP</ThemedText>
-												</Pressable>
-											) : null}
-
-											{canCancel ? (
-												<Pressable
-													style={[styles.actionBtn, { backgroundColor: palette.warningSoft, borderColor: palette.warning }]}
-													onPress={() =>
-														void runAction(
-															bookingId,
-															(item) => ({ ...item, status: 'cancelled_by_vendor' }),
-															'Booking cancelled.'
-														)
-													}
-													disabled={actionLoadingId === bookingId}
-												>
-													<ThemedText style={[styles.actionText, { color: palette.warning }]}>Cancel</ThemedText>
-												</Pressable>
-											) : null}
-										</View>
-									</View>
-								</FadeInView>
-							);
-						})
-					)}
-				</ScrollView>
+		<SafeAreaView style={[s.safeArea, { backgroundColor: palette.screenBg }]} edges={['top']}>
+			{/* AppBar */}
+			<View style={[s.appBar, { backgroundColor: palette.primary, borderColor: palette.primaryStrong }]}>
+				<AppMenuDrawer />
+				<ThemedText style={[s.appBarTitle, { color: palette.onPrimary }]}>Booking Requests</ThemedText>
+				<Pressable
+					style={[s.iconBtn, { borderColor: palette.primaryStrong, backgroundColor: palette.primaryStrong }]}
+					onPress={() => void loadBookings(true)}
+				>
+					<Ionicons name={isRefreshing ? 'hourglass-outline' : 'refresh-outline'} size={18} color={palette.onPrimary} />
+				</Pressable>
 			</View>
 
-			<Modal visible={rejectModalOpen} transparent animationType="slide" onRequestClose={() => setRejectModalOpen(false)}>
-				<View style={[styles.modalOverlay, { backgroundColor: palette.overlay }]}>
-					<View style={[styles.modalCard, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}> 
-						<ThemedText style={[styles.modalTitle, { color: palette.text }]}>Reject Booking</ThemedText>
+			{/* Sub-header */}
+			<View style={s.subHeader}>
+				<ThemedText style={[s.subHeaderText, { color: palette.subtext }]}>
+					Manage incoming booking requests from customers
+				</ThemedText>
+			</View>
+
+			{/* Filter chips */}
+			<ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.filterRow}>
+				{FILTER_KEYS.map((key) => {
+					const active = key === activeFilter;
+					return (
+						<Pressable
+							key={key}
+							style={[s.chip, { borderColor: active ? palette.primary : palette.border, backgroundColor: active ? palette.primary : palette.surfaceBg }]}
+							onPress={() => setActiveFilter(key)}
+						>
+							<ThemedText style={[s.chipText, { color: active ? palette.onPrimary : palette.text }]}>
+								{getFilterLabel(key)}
+							</ThemedText>
+							<View style={[s.chipBadge, { backgroundColor: active ? 'rgba(255,255,255,0.25)' : palette.border }]}>
+								<ThemedText style={[s.chipBadgeText, { color: active ? '#fff' : palette.subtext }]}>{counts[key]}</ThemedText>
+							</View>
+						</Pressable>
+					);
+				})}
+			</ScrollView>
+
+			{/* Booking list */}
+			<ScrollView contentContainerStyle={s.list} showsVerticalScrollIndicator={false}>
+				{filteredBookings.length === 0 ? (
+					<View style={[s.emptyBox, { backgroundColor: palette.surfaceBg }]}>
+						<Ionicons name="calendar-outline" size={56} color={palette.border} />
+						<ThemedText style={[s.emptyTitle, { color: palette.text }]}>No Bookings Found</ThemedText>
+						<ThemedText style={[s.emptyBody, { color: palette.subtext }]}>
+							{activeFilter === 'all' ? "You don't have any booking requests yet." : `No ${getFilterLabel(activeFilter).toLowerCase()} bookings.`}
+						</ThemedText>
+					</View>
+				) : (
+					filteredBookings.map((booking) => (
+						<BookingCard
+							key={booking.bookingId}
+							booking={booking}
+							palette={palette}
+							actionLoadingId={actionLoadingId}
+							onAccept={() => void runAction(booking.bookingId, (b) => ({ ...b, status: 'confirmed', adminApproval: 'pending' }), 'Booking accepted! Awaiting admin approval.')}
+							onReject={() => openReject(booking.bookingId)}
+							onCancel={() => void runAction(booking.bookingId, (b) => ({ ...b, status: 'cancelled_by_vendor' }), 'Booking cancelled.')}
+							onVerifyOtp={() => openOtpModal(booking)}
+						/>
+					))
+				)}
+			</ScrollView>
+
+			{/* Reject Modal */}
+			<Modal visible={rejectModalOpen} transparent animationType="fade" onRequestClose={() => setRejectModalOpen(false)}>
+				<View style={s.modalOverlay}>
+					<View style={[s.modalBox, { backgroundColor: palette.surfaceBg }]}>
+						<ThemedText style={[s.modalTitle, { color: palette.text }]}>Reject Booking</ThemedText>
+						<ThemedText style={[s.modalSub, { color: palette.subtext }]}>Please provide a reason for rejection (optional)</ThemedText>
 						<TextInput
-							style={[styles.modalInput, { color: palette.text, borderColor: palette.border, backgroundColor: palette.headerBtnBg }]}
-							placeholder="Reason"
+							style={[s.modalInput, { color: palette.text, borderColor: palette.border, backgroundColor: palette.headerBtnBg }]}
+							placeholder="Reason for rejection"
 							placeholderTextColor={palette.muted}
 							value={rejectReason}
 							onChangeText={setRejectReason}
+							multiline
 						/>
-						<View style={styles.modalActions}>
-							<Pressable style={[styles.modalBtn, { borderColor: palette.border, backgroundColor: palette.headerBtnBg }]} onPress={() => setRejectModalOpen(false)}>
-								<ThemedText style={[styles.modalBtnText, { color: palette.text }]}>Cancel</ThemedText>
+						<View style={s.modalBtns}>
+							<Pressable style={[s.modalBtn, { backgroundColor: palette.headerBtnBg, borderColor: palette.border }]} onPress={() => setRejectModalOpen(false)}>
+								<ThemedText style={[s.modalBtnText, { color: palette.text }]}>Cancel</ThemedText>
 							</Pressable>
-							<Pressable style={[styles.modalBtn, { backgroundColor: palette.danger }]} onPress={() => void submitReject()}>
-								<ThemedText style={[styles.modalBtnText, { color: palette.onPrimary }]}>Reject</ThemedText>
+							<Pressable style={[s.modalBtn, { backgroundColor: '#ef4444' }]} onPress={() => void submitReject()}>
+								<ThemedText style={[s.modalBtnText, { color: '#fff' }]}>Reject</ThemedText>
 							</Pressable>
 						</View>
 					</View>
 				</View>
 			</Modal>
 
-			<Modal visible={otpModalOpen} transparent animationType="slide" onRequestClose={() => setOtpModalOpen(false)}>
-				<View style={[styles.modalOverlay, { backgroundColor: palette.overlay }]}>
-					<View style={[styles.modalCard, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}> 
-						<ThemedText style={[styles.modalTitle, { color: palette.text }]}>Verify Customer OTP</ThemedText>
-						<ThemedText style={[styles.modalHint, { color: palette.subtext }]}>Attempts remaining: {attemptsRemaining}</ThemedText>
+			{/* OTP Modal */}
+			<Modal visible={otpModalOpen} transparent animationType="fade" onRequestClose={closeOtpModal}>
+				<View style={s.modalOverlay}>
+					<View style={[s.modalBox, { backgroundColor: palette.surfaceBg }]}>
+						{/* Icon */}
+						<View style={s.otpIconWrap}>
+							<Ionicons name="shield-checkmark-outline" size={36} color="#7c3aed" />
+						</View>
+						<ThemedText style={[s.modalTitle, { color: palette.text }]}>Verify OTP</ThemedText>
+						<ThemedText style={[s.modalSub, { color: palette.subtext }]}>
+							Enter the 6-digit OTP provided by the customer to confirm booking #{otpBooking?.bookingUuid?.slice(-8)}
+						</ThemedText>
+
+						{/* Customer info */}
+						{otpBooking && (
+							<View style={[s.otpCustomerBox, { backgroundColor: palette.headerBtnBg }]}>
+								<ThemedText style={[s.otpInfoLabel, { color: palette.muted }]}>Customer</ThemedText>
+								<ThemedText style={[s.otpInfoValue, { color: palette.text }]}>
+									{otpBooking.firstName} {otpBooking.lastName}
+								</ThemedText>
+								<ThemedText style={[s.otpInfoLabel, { color: palette.muted }]}>Event Date</ThemedText>
+								<ThemedText style={[s.otpInfoValue, { color: palette.text }]}>
+									{new Date(otpBooking.eventDate).toLocaleDateString('en-IN', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+								</ThemedText>
+							</View>
+						)}
+
+						{/* OTP input */}
 						<TextInput
-							style={[styles.modalInput, { color: palette.text, borderColor: palette.border, backgroundColor: palette.headerBtnBg }]}
+							style={[s.otpInput, { color: palette.text, borderColor: otpError ? '#ef4444' : '#7c3aed', backgroundColor: palette.headerBtnBg }]}
 							placeholder="Enter 6-digit OTP"
 							placeholderTextColor={palette.muted}
 							value={otpCode}
-							onChangeText={setOtpCode}
+							onChangeText={(v) => { setOtpCode(v.replace(/\D/g, '')); setOtpError(''); }}
 							keyboardType="number-pad"
 							maxLength={6}
 						/>
-						<ThemedText style={[styles.modalHint, { color: palette.muted }]}>Demo OTP: 123456</ThemedText>
-						<View style={styles.modalActions}>
-							<Pressable style={[styles.modalBtn, { borderColor: palette.border, backgroundColor: palette.headerBtnBg }]} onPress={() => setOtpModalOpen(false)}>
-								<ThemedText style={[styles.modalBtnText, { color: palette.text }]}>Close</ThemedText>
+						{otpError ? <ThemedText style={s.otpError}>{otpError}</ThemedText> : null}
+						<ThemedText style={[s.attemptsText, { color: attemptsRemaining <= 1 ? '#ef4444' : palette.subtext }]}>
+							Attempts remaining: {attemptsRemaining}
+						</ThemedText>
+
+						{/* Buttons */}
+						<View style={s.modalBtns}>
+							<Pressable style={[s.modalBtn, { backgroundColor: palette.headerBtnBg, borderColor: palette.border }]} onPress={closeOtpModal}>
+								<ThemedText style={[s.modalBtnText, { color: palette.text }]}>Cancel</ThemedText>
 							</Pressable>
-							<Pressable style={[styles.modalBtn, { backgroundColor: palette.primary }]} onPress={() => void verifyOtp()} disabled={otpBusy}>
-								<ThemedText style={[styles.modalBtnText, { color: palette.onPrimary }]}>{otpBusy ? 'Verifying...' : 'Verify OTP'}</ThemedText>
+							<Pressable
+								style={[s.modalBtn, { backgroundColor: '#7c3aed', opacity: (otpBusy || otpCode.length !== 6) ? 0.5 : 1 }]}
+								onPress={() => void verifyOtp()}
+								disabled={otpBusy || otpCode.length !== 6}
+							>
+								<Ionicons name="checkmark" size={16} color="#fff" />
+								<ThemedText style={[s.modalBtnText, { color: '#fff' }]}>{otpBusy ? 'Verifying...' : 'Verify'}</ThemedText>
 							</Pressable>
 						</View>
-						<Pressable style={[styles.resendBtn, { borderColor: palette.border, backgroundColor: palette.headerBtnBg }]} onPress={() => void resendOtp()} disabled={otpBusy}>
-							<ThemedText style={[styles.resendText, { color: palette.primary }]}>{otpBusy ? 'Please wait...' : 'Resend OTP'}</ThemedText>
+
+						{/* Resend */}
+						<Pressable style={s.resendBtn} onPress={() => void resendOtp()} disabled={otpBusy}>
+							<ThemedText style={[s.resendText, { color: '#7c3aed' }]}>{otpBusy ? 'Please wait...' : 'Resend OTP to customer'}</ThemedText>
 						</Pressable>
 					</View>
 				</View>
@@ -481,144 +358,43 @@ export default function VendorBookingsScreen() {
 	);
 }
 
-const styles = StyleSheet.create({
-	safeArea: {
-		flex: 1,
-	},
-	container: {
-		flex: 1,
-		padding: 16,
-		gap: 10,
-	},
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
+const s = StyleSheet.create({
+	safeArea: { flex: 1 },
 	appBar: {
-		height: 56,
-		borderRadius: 14,
-		paddingHorizontal: 12,
-		borderWidth: 1,
-		flexDirection: 'row',
-		alignItems: 'center',
-		justifyContent: 'space-between',
+		height: 56, marginHorizontal: 16, marginTop: 12,
+		borderRadius: 14, paddingHorizontal: 12, borderWidth: 1,
+		flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
 	},
-	appBarTitle: {
-		fontSize: 16,
-		fontWeight: '800',
-	},
-	iconBtn: {
-		width: 36,
-		height: 36,
-		borderRadius: 18,
-		borderWidth: 1,
-		alignItems: 'center',
-		justifyContent: 'center',
-	},
-	filterRow: {
-		gap: 8,
-		paddingVertical: 4,
-		paddingRight: 8,
-	},
-	filterChip: {
-		height: 34,
-		paddingHorizontal: 10,
-		borderRadius: 17,
-		borderWidth: 1,
-		alignItems: 'center',
-		justifyContent: 'center',
-	},
-	filterText: {
-		fontSize: 12,
-		fontWeight: '700',
-	},
-	listWrap: {
-		gap: 10,
-		paddingBottom: 24,
-	},
-	emptyText: {
-		fontSize: 14,
-		textAlign: 'center',
-		marginTop: 30,
-	},
-	card: {
-		borderWidth: 1,
-		borderRadius: 12,
-		padding: 12,
-		gap: 6,
-	},
-	cardTitle: {
-		fontSize: 16,
-		fontWeight: '800',
-	},
-	cardMeta: {
-		fontSize: 13,
-		lineHeight: 18,
-	},
-	actionRow: {
-		flexDirection: 'row',
-		flexWrap: 'wrap',
-		gap: 8,
-		marginTop: 6,
-	},
-	actionBtn: {
-		height: 34,
-		paddingHorizontal: 10,
-		borderRadius: 9,
-		borderWidth: 1,
-		alignItems: 'center',
-		justifyContent: 'center',
-	},
-	actionText: {
-		fontSize: 12,
-		fontWeight: '700',
-	},
-	modalOverlay: {
-		flex: 1,
-		justifyContent: 'center',
-		padding: 16,
-	},
-	modalCard: {
-		borderWidth: 1,
-		borderRadius: 12,
-		padding: 12,
-		gap: 10,
-	},
-	modalTitle: {
-		fontSize: 17,
-		fontWeight: '800',
-	},
-	modalHint: {
-		fontSize: 13,
-	},
-	modalInput: {
-		height: 42,
-		borderWidth: 1,
-		borderRadius: 10,
-		paddingHorizontal: 12,
-		fontSize: 14,
-	},
-	modalActions: {
-		flexDirection: 'row',
-		gap: 8,
-	},
-	modalBtn: {
-		flex: 1,
-		height: 38,
-		borderWidth: 1,
-		borderRadius: 10,
-		alignItems: 'center',
-		justifyContent: 'center',
-	},
-	modalBtnText: {
-		fontSize: 13,
-		fontWeight: '700',
-	},
-	resendBtn: {
-		height: 36,
-		borderRadius: 10,
-		borderWidth: 1,
-		alignItems: 'center',
-		justifyContent: 'center',
-	},
-	resendText: {
-		fontSize: 13,
-		fontWeight: '700',
-	},
+	appBarTitle: { fontSize: 16, fontWeight: '800' },
+	iconBtn: { width: 36, height: 36, borderRadius: 18, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+	subHeader: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 },
+	subHeaderText: { fontSize: 13 },
+	filterRow: { paddingHorizontal: 16, paddingVertical: 8, gap: 8 },
+	chip: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 34, paddingHorizontal: 12, borderRadius: 17, borderWidth: 1 },
+	chipText: { fontSize: 12, fontWeight: '700' },
+	chipBadge: { paddingHorizontal: 6, paddingVertical: 1, borderRadius: 10 },
+	chipBadgeText: { fontSize: 11, fontWeight: '700' },
+	list: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 32, gap: 14 },
+	emptyBox: { borderRadius: 16, padding: 40, alignItems: 'center', gap: 10 },
+	emptyTitle: { fontSize: 20, fontWeight: '800' },
+	emptyBody: { fontSize: 14, textAlign: 'center', lineHeight: 20 },
+	modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', padding: 20 },
+	modalBox: { borderRadius: 18, padding: 20, gap: 12 },
+	modalTitle: { fontSize: 18, fontWeight: '800' },
+	modalSub: { fontSize: 13, lineHeight: 19 },
+	modalInput: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, minHeight: 44 },
+	modalBtns: { flexDirection: 'row', gap: 10 },
+	modalBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 44, borderRadius: 10, borderWidth: 1, borderColor: 'transparent' },
+	modalBtnText: { fontSize: 14, fontWeight: '700' },
+	otpIconWrap: { width: 64, height: 64, borderRadius: 32, backgroundColor: '#ede9fe', alignItems: 'center', justifyContent: 'center', alignSelf: 'center' },
+	otpCustomerBox: { borderRadius: 12, padding: 12, gap: 2 },
+	otpInfoLabel: { fontSize: 11 },
+	otpInfoValue: { fontSize: 14, fontWeight: '700', marginBottom: 6 },
+	otpInput: { height: 54, borderWidth: 2, borderRadius: 12, textAlign: 'center', fontSize: 24, letterSpacing: 8, fontWeight: '800' },
+	otpError: { fontSize: 13, color: '#ef4444' },
+	attemptsText: { fontSize: 13 },
+	resendBtn: { alignItems: 'center', paddingVertical: 6 },
+	resendText: { fontSize: 13, fontWeight: '700' },
 });
