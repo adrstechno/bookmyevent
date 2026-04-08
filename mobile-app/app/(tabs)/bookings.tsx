@@ -68,6 +68,10 @@ const BookingCard = memo(function BookingCard({
 		text: string;
 		subtext: string;
 		tint: string;
+		primary: string;
+		primaryStrong: string;
+		onPrimary: string;
+		shadow: string;
 	};
 }) {
 	const isPending = booking.status === 'pending';
@@ -115,8 +119,13 @@ const BookingCard = memo(function BookingCard({
 				<ThemedText style={[styles.detailText, { color: palette.subtext }]}>{booking.amount}</ThemedText>
 			</View>
 
-			<ThemedView style={[styles.ctaBtn, { backgroundColor: palette.headerBtnBg, borderColor: palette.border }]}>
-				<ThemedText style={styles.ctaText}>View Details</ThemedText>
+			<ThemedView
+				style={[
+					styles.ctaBtn,
+					{ backgroundColor: palette.primary, borderColor: palette.primaryStrong, shadowColor: palette.shadow },
+				]}
+			>
+				<ThemedText style={[styles.ctaText, { color: palette.onPrimary }]}>View Details</ThemedText>
 			</ThemedView>
 		</ThemedView>
 	);
@@ -357,17 +366,21 @@ const styles = StyleSheet.create({
 	},
 	ctaBtn: {
 		marginTop: 2,
-		paddingVertical: 9,
+		paddingVertical: 10,
 		borderRadius: 10,
 		alignItems: 'center',
 		backgroundColor: '#ECFEFF',
 		borderWidth: 1,
 		borderColor: '#CCFBF1',
+		shadowOpacity: 0.18,
+		shadowOffset: { width: 0, height: 5 },
+		shadowRadius: 9,
+		elevation: 3,
 	},
 	ctaText: {
 		fontSize: 13,
 		fontWeight: '700',
-		color: '#0F766E',
+		color: '#FFFFFF',
 	},
 	helpCard: {
 		borderRadius: 12,

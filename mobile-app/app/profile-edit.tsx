@@ -243,7 +243,16 @@ export default function ProfileEditScreen() {
 						keyboardType="phone-pad"
 					/>
 
-					<Pressable style={[styles.saveBtn, { backgroundColor: palette.tint, shadowColor: palette.tint }, isSavingProfile ? styles.saveBtnDisabled : null]} onPress={onSave} disabled={isSavingProfile}>
+					<Pressable
+						style={({ pressed }) => [
+							styles.saveBtn,
+							{ backgroundColor: palette.primary, borderColor: palette.primaryStrong, shadowColor: palette.shadow },
+							isSavingProfile ? styles.saveBtnDisabled : null,
+							pressed ? styles.btnPressed : null,
+						]}
+						onPress={onSave}
+						disabled={isSavingProfile}
+					>
 						<ThemedText style={styles.saveBtnText}>{isSavingProfile ? 'Saving...' : 'Save Profile'}</ThemedText>
 					</Pressable>
 
@@ -296,15 +305,16 @@ export default function ProfileEditScreen() {
 					/>
 
 					<Pressable
-						style={[
+						style={({ pressed }) => [
 							styles.secondaryBtn,
-							{ backgroundColor: palette.headerBtnBg, borderColor: palette.border },
+							{ backgroundColor: palette.elevatedBg, borderColor: palette.primaryStrong, shadowColor: palette.shadow },
 							isChangingPassword ? styles.saveBtnDisabled : null,
+							pressed ? styles.btnPressed : null,
 						]}
 						onPress={onChangePassword}
 						disabled={isChangingPassword}
 					>
-						<ThemedText style={[styles.secondaryBtnText, { color: palette.text }]}>{isChangingPassword ? 'Updating...' : 'Update Password'}</ThemedText>
+						<ThemedText style={[styles.secondaryBtnText, { color: palette.primaryStrong }]}>{isChangingPassword ? 'Updating...' : 'Update Password'}</ThemedText>
 					</Pressable>
 
 					{passwordMessage ? <ThemedText style={[styles.messageText, { color: palette.tint }]}>{passwordMessage}</ThemedText> : null}
@@ -367,17 +377,23 @@ const styles = StyleSheet.create({
 	saveBtn: {
 		marginTop: 10,
 		backgroundColor: '#0F766E',
+		borderWidth: 1,
+		borderColor: '#0F5B56',
 		paddingVertical: 14,
 		borderRadius: 12,
 		alignItems: 'center',
 		shadowColor: '#0F766E',
-		shadowOpacity: 0.26,
+		shadowOpacity: 0.24,
 		shadowOffset: { width: 0, height: 6 },
 		shadowRadius: 10,
-		elevation: 3,
+		elevation: 4,
 	},
 	saveBtnDisabled: {
 		opacity: 0.7,
+	},
+	btnPressed: {
+		opacity: 0.9,
+		transform: [{ scale: 0.98 }],
 	},
 	saveBtnText: {
 		fontSize: 16,
@@ -392,6 +408,10 @@ const styles = StyleSheet.create({
 		paddingVertical: 14,
 		borderRadius: 12,
 		alignItems: 'center',
+		shadowOpacity: 0.16,
+		shadowOffset: { width: 0, height: 5 },
+		shadowRadius: 8,
+		elevation: 3,
 	},
 	secondaryBtnText: {
 		fontSize: 15,

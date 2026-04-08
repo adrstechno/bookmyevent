@@ -96,7 +96,13 @@ export default function SupportScreen() {
 				<ThemedView style={[styles.heroCard, { backgroundColor: surfaceBg, borderColor: border }]}>
 					<ThemedText style={[styles.heroTitle, { color: palette.text }]}>Need Help?</ThemedText>
 					<ThemedText style={[styles.heroSubtext, { color: palette.subtext }]}>Our support team is here to help you with bookings and payments.</ThemedText>
-					<Pressable style={[styles.primaryBtn, { backgroundColor: palette.tint }]}>
+					<Pressable
+						style={({ pressed }) => [
+							styles.primaryBtn,
+							{ backgroundColor: palette.primary, borderColor: palette.primaryStrong, shadowColor: palette.shadow },
+							pressed ? styles.primaryBtnPressed : null,
+						]}
+					>
 						<ThemedText style={styles.primaryBtnText}>Create New Ticket</ThemedText>
 					</Pressable>
 				</ThemedView>
@@ -166,6 +172,15 @@ const styles = StyleSheet.create({
 		paddingVertical: 11,
 		borderRadius: 10,
 		alignItems: 'center',
+		borderWidth: 1,
+		shadowOpacity: 0.2,
+		shadowOffset: { width: 0, height: 6 },
+		shadowRadius: 10,
+		elevation: 4,
+	},
+	primaryBtnPressed: {
+		opacity: 0.9,
+		transform: [{ scale: 0.98 }],
 	},
 	primaryBtnText: {
 		color: '#FFFFFF',

@@ -152,8 +152,11 @@ type ServiceCardItemProps = {
 		text: string;
 		subtext: string;
 		accent: string;
-		rose: string;
 		tint: string;
+		primary: string;
+		primaryStrong: string;
+		onPrimary: string;
+		shadow: string;
 	};
 };
 
@@ -165,7 +168,7 @@ const ServiceCardItem = memo(function ServiceCardItem({
 	palette,
 }: ServiceCardItemProps) {
 	const isRomanticCategory = /wedding|engagement|romantic/i.test(card.categoryName);
-	const badgeBg = isRomanticCategory ? palette.rose : palette.accent;
+	const badgeBg = isRomanticCategory ? palette.primary : palette.primaryStrong;
 
 	return (
 		<View style={[styles.serviceCard, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
@@ -184,7 +187,7 @@ const ServiceCardItem = memo(function ServiceCardItem({
 			)}
 			<View style={styles.imageOverlay} />
 			<View style={[styles.categoryBadge, { backgroundColor: badgeBg }]}>
-				<ThemedText style={[styles.categoryBadgeText, { color: palette.text }]} numberOfLines={1}>
+				<ThemedText style={[styles.categoryBadgeText, { color: palette.onPrimary }]} numberOfLines={1}>
 					{card.categoryName}
 				</ThemedText>
 			</View>
@@ -196,8 +199,21 @@ const ServiceCardItem = memo(function ServiceCardItem({
 				<ThemedText style={[styles.serviceCardDescription, { color: palette.subtext }]} numberOfLines={2}>
 					{card.description}
 				</ThemedText>
-				<Pressable style={[styles.viewButton, { backgroundColor: palette.accent }]}>
-					<ThemedText style={[styles.viewButtonText, { color: palette.text }]}>View Vendors -&gt;</ThemedText>
+				<Pressable
+					style={({ pressed }) => [
+						styles.viewButton,
+						{ backgroundColor: palette.primary, borderColor: palette.primaryStrong, shadowColor: palette.shadow },
+						pressed ? styles.viewButtonPressed : null,
+					]}
+					accessibilityRole="button"
+					accessibilityLabel={`View vendors for ${card.title}`}
+				>
+					<View style={styles.viewButtonContent}>
+						<ThemedText style={[styles.viewButtonText, { color: palette.onPrimary }]}>View Vendors</ThemedText>
+						<View style={[styles.viewButtonIconWrap, { borderColor: 'rgba(255,255,255,0.35)' }]}>
+							<Ionicons name="arrow-forward" size={14} color={palette.onPrimary} />
+						</View>
+					</View>
 				</Pressable>
 			</View>
 		</View>
@@ -436,7 +452,11 @@ export default function CategoriesTabScreen() {
 				</View>
 
 				<FadeInView delay={80} distance={8} style={styles.cardsScroll}>
-					<ScrollView contentContainerStyle={styles.cardsContainer} showsVerticalScrollIndicator={false}>
+					<ScrollView
+						contentContainerStyle={styles.cardsContainer}
+						showsVerticalScrollIndicator={false}
+						decelerationRate="fast"
+					>
 					{isLoading ? (
 						<View style={styles.loadingWrap}>
 							<ActivityIndicator size="large" color={palette.tint} />
@@ -560,11 +580,11 @@ const styles = StyleSheet.create({
 	},
 	serviceCardImage: {
 		width: '100%',
-		height: 280,
+		height: 240,
 	},
 	fallbackImage: {
 		width: '100%',
-		height: 280,
+		height: 240,
 		backgroundColor: '#2F6570',
 		justifyContent: 'center',
 		alignItems: 'center',
@@ -579,59 +599,82 @@ const styles = StyleSheet.create({
 		top: 0,
 		left: 0,
 		right: 0,
-		height: 280,
+		height: 240,
 		backgroundColor: 'rgba(15, 23, 42, 0.28)',
 	},
 	categoryBadge: {
 		position: 'absolute',
-		top: 14,
-		left: 14,
-		maxWidth: '72%',
-		paddingHorizontal: 12,
-		paddingVertical: 7,
+		top: 10,
+		left: 10,
+		maxWidth: '86%',
+		paddingHorizontal: 10,
+		paddingVertical: 5,
 		borderRadius: 999,
 		backgroundColor: '#F9A826',
 	},
 	categoryBadgeText: {
-		fontSize: 14,
+		fontSize: 11,
 		fontWeight: '800',
 		color: '#FFFFFF',
 	},
 	serviceCardFooter: {
 		paddingHorizontal: 16,
-		paddingVertical: 16,
+		paddingVertical: 14,
 	},
 	serviceCardTitle: {
-		fontSize: 22,
+		fontSize: 20,
 		fontWeight: '800',
 		color: '#102A4C',
 	},
 	titleUnderline: {
-		width: 82,
+		width: 74,
 		height: 4,
 		borderRadius: 999,
 		backgroundColor: '#F5B234',
-		marginTop: 10,
+		marginTop: 8,
 	},
 	serviceCardDescription: {
-		marginTop: 12,
+		marginTop: 10,
 		fontSize: 13,
 		lineHeight: 20,
 		fontWeight: '500',
 		color: '#334155',
 	},
 	viewButton: {
-		marginTop: 16,
-		height: 54,
-		borderRadius: 14,
+		marginTop: 14,
+		height: 48,
+		borderRadius: 12,
 		alignItems: 'center',
 		justifyContent: 'center',
 		backgroundColor: '#2F6570',
+		borderWidth: 1,
+		shadowOpacity: 0.2,
+		shadowOffset: { width: 0, height: 6 },
+		shadowRadius: 10,
+		elevation: 4,
+	},
+	viewButtonPressed: {
+		opacity: 0.9,
+		transform: [{ scale: 0.98 }],
+	},
+	viewButtonContent: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 8,
 	},
 	viewButtonText: {
-		fontSize: 17,
-		fontWeight: '800',
+		fontSize: 15,
+		fontWeight: '700',
 		color: '#FFFFFF',
+	},
+	viewButtonIconWrap: {
+		width: 22,
+		height: 22,
+		borderRadius: 11,
+		alignItems: 'center',
+		justifyContent: 'center',
+		backgroundColor: 'rgba(255,255,255,0.2)',
+		borderWidth: 1,
 	},
 	loadingWrap: {
 		alignItems: 'center',

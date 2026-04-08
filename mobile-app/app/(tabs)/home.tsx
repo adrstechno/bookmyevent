@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { FlatList, ImageBackground, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -54,6 +54,20 @@ export default function HomeTabScreen() {
 	const isDark = mode === 'dark';
 	const screenBg = palette.screenBg;
 	const elevated = palette.primaryStrong;
+	const [activeFilter, setActiveFilter] = useState<string>('all');
+	const [savedEvents, setSavedEvents] = useState<Record<string, boolean>>({});
+
+	const filterChips = useMemo(
+		() => [{ id: 'all', label: 'All' }, ...EVENT_CARDS.map((card) => ({ id: card.id, label: card.title.replace(' Event', '') }))],
+		[]
+	);
+
+	const filteredCards = useMemo(
+		() => (activeFilter === 'all' ? EVENT_CARDS : EVENT_CARDS.filter((card) => card.id === activeFilter)),
+		[activeFilter]
+	);
+
+	const savedCount = useMemo(() => Object.values(savedEvents).filter(Boolean).length, [savedEvents]);
 
 	const onSoftPress = useCallback(async () => {
 		await Haptics.selectionAsync();
@@ -69,23 +83,68 @@ export default function HomeTabScreen() {
 		router.push('/support');
 	}, [router]);
 
+	const onSelectFilter = useCallback(async (filterId: string) => {
+		await Haptics.selectionAsync();
+		setActiveFilter(filterId);
+	}, []);
+
+	const onToggleSave = useCallback(async (eventId: string) => {
+		await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+		setSavedEvents((prev) => ({ ...prev, [eventId]: !prev[eventId] }));
+	}, []);
+
 	const renderEventCard = useCallback(
 		({ item }: { item: (typeof EVENT_CARDS)[number] }) => (
 			<ThemedView style={[styles.cardContainer, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
-				<ImageBackground source={item.image} imageStyle={styles.cardImageStyle} style={styles.cardImage} />
+				<ImageBackground source={item.image} imageStyle={styles.cardImageStyle} style={styles.cardImage}>
+					<View style={styles.cardTopActions}>
+						<Pressable
+							style={({ pressed }) => [
+								styles.saveIconBtn,
+								{
+									backgroundColor: savedEvents[item.id] ? palette.primary : 'rgba(0, 0, 0, 0.38)',
+									borderColor: savedEvents[item.id] ? palette.primaryStrong : 'rgba(255,255,255,0.35)',
+								},
+								pressed ? styles.saveIconBtnPressed : null,
+							]}
+							onPress={() => void onToggleSave(item.id)}
+						>
+							<Ionicons name={savedEvents[item.id] ? 'heart' : 'heart-outline'} size={16} color={palette.onPrimary} />
+						</Pressable>
+					</View>
+				</ImageBackground>
 				<View style={styles.cardContent}>
 					<ThemedText type="defaultSemiBold" style={[styles.cardTitle, { color: palette.text }]}>
 						{item.title}
 					</ThemedText>
 					<View style={[styles.orangeLine, { backgroundColor: palette.accent }]} />
 					<ThemedText style={[styles.cardDesc, { color: palette.subtext }]}>{item.description}</ThemedText>
-					<Pressable style={({ pressed }) => [styles.cardCtaBtn, { backgroundColor: palette.accent }, pressed ? styles.cardCtaBtnPressed : null]} onPress={onOpenCategories}>
-						<ThemedText style={[styles.cardCtaText, { color: palette.text }]}>Explore Services</ThemedText>
+					<Pressable
+						style={({ pressed }) => [
+							styles.cardCtaBtn,
+							{ backgroundColor: palette.primary, borderColor: palette.primaryStrong, shadowColor: palette.shadow },
+							pressed ? styles.cardCtaBtnPressed : null,
+						]}
+						onPress={onOpenCategories}
+					>
+						<ThemedText style={[styles.cardCtaText, { color: palette.onPrimary }]}>Explore Services</ThemedText>
 					</Pressable>
 				</View>
 			</ThemedView>
 		),
-		[onOpenCategories, palette.accent, palette.border, palette.subtext, palette.surfaceBg, palette.text]
+		[
+			onOpenCategories,
+			onToggleSave,
+			palette.border,
+			palette.onPrimary,
+			palette.primary,
+			palette.primaryStrong,
+			palette.shadow,
+			palette.subtext,
+			palette.surfaceBg,
+			palette.text,
+			savedEvents,
+		]
 	);
 
 	return (
@@ -126,11 +185,27 @@ export default function HomeTabScreen() {
 							From weddings to corporate shows, plan, organize, and manage everything from one app.
 						</ThemedText>
 						<View style={styles.heroActionRow}>
-							<Pressable style={({ pressed }) => [styles.actionButton, styles.actionPrimary, { backgroundColor: palette.accent }, pressed ? styles.actionButtonPressed : null]} onPress={onOpenCategories}>
-								<ThemedText style={[styles.actionPrimaryText, { color: palette.text }]}>Explore Services</ThemedText>
+							<Pressable
+								style={({ pressed }) => [
+									styles.actionButton,
+									styles.actionPrimary,
+									{ backgroundColor: palette.primary, borderColor: palette.primaryStrong, shadowColor: palette.shadow },
+									pressed ? styles.actionButtonPressed : null,
+								]}
+								onPress={onOpenCategories}
+							>
+								<ThemedText style={[styles.actionPrimaryText, { color: palette.onPrimary }]}>Explore Services</ThemedText>
 							</Pressable>
-							<Pressable style={({ pressed }) => [styles.actionButton, styles.actionSecondary, { borderColor: 'rgba(255, 255, 255, 0.55)' }, pressed ? styles.actionButtonPressed : null]} onPress={onOpenSupport}>
-								<ThemedText style={[styles.actionSecondaryText, { color: palette.onPrimary }]}>Contact Team</ThemedText>
+							<Pressable
+								style={({ pressed }) => [
+									styles.actionButton,
+									styles.actionSecondary,
+									{ backgroundColor: palette.elevatedBg, borderColor: palette.accent, shadowColor: palette.shadow },
+									pressed ? styles.actionButtonPressed : null,
+								]}
+								onPress={onOpenSupport}
+							>
+								<ThemedText style={[styles.actionSecondaryText, { color: palette.primaryStrong }]}>Contact Team</ThemedText>
 							</Pressable>
 						</View>
 					</View>
@@ -153,15 +228,43 @@ export default function HomeTabScreen() {
 			</FadeInView>
 
 			<FadeInView delay={130} distance={8}>
+				<View style={styles.engagementMetaRow}>
+					<View style={[styles.savedPill, { backgroundColor: palette.elevatedBg, borderColor: palette.border }]}>
+						<Ionicons name="sparkles-outline" size={14} color={palette.primary} />
+						<ThemedText style={[styles.savedPillText, { color: palette.primaryStrong }]}>{savedCount} saved ideas</ThemedText>
+					</View>
+				</View>
+				<ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
+					{filterChips.map((chip) => {
+						const active = chip.id === activeFilter;
+						return (
+							<Pressable
+								key={chip.id}
+								style={({ pressed }) => [
+									styles.filterChip,
+									{
+										backgroundColor: active ? palette.primary : palette.surfaceBg,
+										borderColor: active ? palette.primaryStrong : palette.border,
+									},
+									pressed ? styles.filterChipPressed : null,
+								]}
+								onPress={() => void onSelectFilter(chip.id)}
+							>
+								<ThemedText style={[styles.filterChipText, { color: active ? palette.onPrimary : palette.text }]}>{chip.label}</ThemedText>
+							</Pressable>
+						);
+					})}
+				</ScrollView>
+
 				<ThemedText type="subtitle" style={[styles.sectionTitle, { color: palette.text }]}>
-					Popular Categories
+					{activeFilter === 'all' ? 'Popular Categories' : 'Filtered Category'}
 				</ThemedText>
 			</FadeInView>
 
 			<FadeInView delay={170} distance={8}>
 				<FlatList
 					horizontal
-					data={EVENT_CARDS}
+					data={filteredCards}
 					renderItem={renderEventCard}
 					keyExtractor={(item) => item.id}
 					contentContainerStyle={styles.cardsRow}
@@ -169,6 +272,7 @@ export default function HomeTabScreen() {
 					initialNumToRender={3}
 					maxToRenderPerBatch={3}
 					windowSize={5}
+					decelerationRate="fast"
 					removeClippedSubviews
 				/>
 			</FadeInView>
@@ -258,15 +362,25 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 	},
 	actionButtonPressed: {
-		opacity: 0.82,
+		opacity: 0.88,
+		transform: [{ scale: 0.98 }],
 	},
 	actionPrimary: {
 		backgroundColor: '#0F766E',
+		borderWidth: 1,
+		shadowOpacity: 0.2,
+		shadowOffset: { width: 0, height: 6 },
+		shadowRadius: 10,
+		elevation: 4,
 	},
 	actionSecondary: {
 		backgroundColor: 'rgba(255, 255, 255, 0.18)',
 		borderWidth: 1,
 		borderColor: 'rgba(255, 255, 255, 0.4)',
+		shadowOpacity: 0.16,
+		shadowOffset: { width: 0, height: 5 },
+		shadowRadius: 9,
+		elevation: 3,
 	},
 	actionPrimaryText: {
 		color: '#FFFFFF',
@@ -311,6 +425,23 @@ const styles = StyleSheet.create({
 	},
 	cardImage: {
 		height: 150,
+		justifyContent: 'flex-start',
+	},
+	cardTopActions: {
+		padding: 10,
+		alignItems: 'flex-end',
+	},
+	saveIconBtn: {
+		width: 32,
+		height: 32,
+		borderRadius: 16,
+		alignItems: 'center',
+		justifyContent: 'center',
+		borderWidth: 1,
+	},
+	saveIconBtnPressed: {
+		opacity: 0.88,
+		transform: [{ scale: 0.96 }],
 	},
 	cardImageStyle: {
 		resizeMode: 'cover',
@@ -341,14 +472,57 @@ const styles = StyleSheet.create({
 		borderRadius: 10,
 		alignItems: 'center',
 		backgroundColor: '#0F766E',
+		borderWidth: 1,
+		shadowOpacity: 0.18,
+		shadowOffset: { width: 0, height: 5 },
+		shadowRadius: 9,
+		elevation: 3,
 	},
 	cardCtaBtnPressed: {
-		opacity: 0.82,
+		opacity: 0.88,
+		transform: [{ scale: 0.98 }],
 	},
 	cardCtaText: {
 		color: '#FFFFFF',
 		fontWeight: '600',
 		fontSize: 15,
+	},
+	engagementMetaRow: {
+		marginBottom: 8,
+	},
+	savedPill: {
+		alignSelf: 'flex-start',
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 6,
+		paddingHorizontal: 10,
+		paddingVertical: 6,
+		borderRadius: 999,
+		borderWidth: 1,
+	},
+	savedPillText: {
+		fontSize: 12,
+		fontWeight: '700',
+	},
+	filterRow: {
+		gap: 8,
+		paddingRight: 8,
+		paddingBottom: 10,
+	},
+	filterChip: {
+		height: 34,
+		paddingHorizontal: 12,
+		borderRadius: 999,
+		borderWidth: 1,
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
+	filterChipPressed: {
+		opacity: 0.9,
+	},
+	filterChipText: {
+		fontSize: 12,
+		fontWeight: '700',
 	},
 });
 
