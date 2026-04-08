@@ -5,6 +5,7 @@ import { Provider } from 'react-redux';
 
 import { AppToastProvider } from '@/components/common/AppToastProvider';
 import { AppPalettes } from '@/constants/theme';
+import { clearApiAuthToken, setApiAuthToken } from '@/services/api/client';
 import { useAppDispatch, useAppSelector, store } from '@/store';
 import { bootstrapAuth } from '@/store/slices/authSlice';
 import { useSettingsTheme } from '@/theme/settingsTheme';
@@ -71,12 +72,12 @@ function RootNavigator() {
 	}, [dispatch]);
 
 	useEffect(() => {
-		if (!token) {
+		if (token) {
+			setApiAuthToken(token);
 			return;
 		}
 
-		const authHeaders = { Authorization: `Bearer ${token}` };
-		void authHeaders;
+		clearApiAuthToken();
 	}, [token]);
 
 	if (!isHydrated) {

@@ -14,11 +14,10 @@ import { getRoleHomeRoute } from '@/utils/authRole';
 const ROLE_OPTIONS = [
 	{ key: 'user', label: 'User' },
 	{ key: 'vendor', label: 'Vendor' },
-	{ key: 'admin', label: 'Admin' },
 ] as const;
 
 type AuthMode = 'login' | 'register';
-type RoleType = 'user' | 'vendor' | 'admin';
+type RoleType = 'user' | 'vendor';
 
 export default function LoginScreen() {
 	const dispatch = useAppDispatch();
@@ -27,36 +26,21 @@ export default function LoginScreen() {
 	const { isAuthenticated, isHydrated, isLoading, error, role: authRole } = useAppSelector((state) => state.auth);
 	const { palette, resolvedMode } = useAppTheme();
 	const isDark = resolvedMode === 'dark';
-	const screenBg = palette.screenBg;
-	const surfaceBg = palette.surfaceBg;
-	const border = palette.border;
-	const softBg = palette.elevatedBg;
 
 	const [mode, setMode] = useState<AuthMode>('login');
 	const [role, setRole] = useState<RoleType>('user');
 	const [firstName, setFirstName] = useState('');
 	const [lastName, setLastName] = useState('');
 	const [email, setEmail] = useState('');
+	const [phone, setPhone] = useState('');
 	const [password, setPassword] = useState('');
 	const [localError, setLocalError] = useState('');
 
 	const subtitle = useMemo(() => {
 		return mode === 'login'
-			? 'Sign in to continue your event workflows.'
-			: 'Create your account to start with role-based access.';
+			? 'Sign in with your account and continue where you left off.'
+			: 'Create your account to start booking services with GoEventify.';
 	}, [mode]);
-
-	const demoEmail = useMemo(() => {
-		if (role === 'admin') {
-			return 'admin@test.com';
-		}
-
-		if (role === 'vendor') {
-			return 'vendor@test.com';
-		}
-
-		return 'user@test.com';
-	}, [role]);
 
 	if (isHydrated && isAuthenticated) {
 		return <Redirect href={getRoleHomeRoute(authRole)} />;
@@ -65,15 +49,15 @@ export default function LoginScreen() {
 	const switchMode = (nextMode: AuthMode) => {
 		setMode(nextMode);
 		setLocalError('');
+		setFirstName('');
+		setLastName('');
+		setPhone('');
+		setEmail('');
+		setPassword('');
 		dispatch(clearAuthError());
 	};
 
 	const validate = () => {
-		if (mode === 'register' && (!firstName.trim() || !lastName.trim())) {
-			setLocalError('First name and last name are required.');
-			return false;
-		}
-
 		if (!email.trim()) {
 			setLocalError('Email is required.');
 			return false;
@@ -87,6 +71,13 @@ export default function LoginScreen() {
 		if (password.trim().length < 4) {
 			setLocalError('Password must be at least 4 characters.');
 			return false;
+		}
+
+		if (mode === 'register') {
+			if (!phone.trim()) {
+				setLocalError('Phone number is required.');
+				return false;
+			}
 		}
 
 		return true;
@@ -104,145 +95,278 @@ export default function LoginScreen() {
 			try {
 				await dispatch(
 					loginWithCredentials({
-						email: email.trim(),
+						email: email.trim().toLowerCase(),
 						password: password.trim(),
-						userType: role,
 					})
 				).unwrap();
-				showSuccess('Login successful.');
+				showSuccess('Login successful!');
 			} catch (err) {
-				if (typeof err === 'string') {
-					showError(err);
-				} else {
-					showError('Login failed. Please try again.');
-				}
+				const message = typeof err === 'string' ? err : 'Login failed. Please try again.';
+				showError(message);
 			}
 			return;
 		}
 
+		// Register mode
 		try {
-			await dispatch(
+			const registerResult = await dispatch(
 				registerWithCredentials({
 					firstName: firstName.trim(),
 					lastName: lastName.trim(),
-					email: email.trim(),
+					email: email.trim().toLowerCase(),
 					password: password.trim(),
+					phone: phone.trim(),
 					userType: role,
 				})
 			).unwrap();
-			showSuccess('Sign Up successful.');
+			showSuccess(registerResult.message ?? 'Registration successful. Please sign in.');
+			setMode('login');
+			setPassword('');
+			setLocalError('');
 		} catch (err) {
-			if (typeof err === 'string') {
-				showError(err);
-			} else {
-				showError('Sign Up failed. Please try again.');
-			}
+			const message = typeof err === 'string' ? err : 'Registration failed. Please try again.';
+			showError(message);
 		}
 	};
 
 	return (
-		<SafeAreaView style={[styles.safeArea, { backgroundColor: screenBg }]} edges={['top', 'bottom']}>
+		<SafeAreaView style={[styles.safeArea, { backgroundColor: palette.screenBg }]} edges={['top', 'bottom']}>
 			<StatusBar style={isDark ? 'light' : 'dark'} />
-			<ScrollView style={[styles.page, { backgroundColor: screenBg }]} contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-				<View style={[styles.heroCard, { backgroundColor: surfaceBg, borderColor: border, borderTopColor: palette.primary }]}>
-					<ThemedText style={[styles.brand, { color: palette.primary }]}>GoEventify</ThemedText>
-					<ThemedText style={[styles.title, { color: palette.text }]}>Welcome Back</ThemedText>
+			<ScrollView
+				style={[styles.page, { backgroundColor: palette.screenBg }]}
+				contentContainerStyle={styles.container}
+				showsVerticalScrollIndicator={false}
+			>
+				{/* Header Section */}
+				<View style={styles.headerSection}>
+					<View style={styles.logoPill}>
+						<ThemedText style={[styles.logoPillText, { color: palette.primary }]}>GOEVENTIFY</ThemedText>
+					</View>
+					<ThemedText style={[styles.brand, { color: palette.text }]}>GoEventify</ThemedText>
+					<ThemedText style={[styles.title, { color: palette.text }]}>
+						{mode === 'login' ? 'Welcome Back' : 'Join Us'}
+					</ThemedText>
 					<ThemedText style={[styles.subtitle, { color: palette.subtext }]}>{subtitle}</ThemedText>
-					<ThemedText style={[styles.demoHint, { color: palette.accent }]}>Demo: {demoEmail} / 123456</ThemedText>
 				</View>
 
-				<View style={[styles.formCard, { backgroundColor: surfaceBg, borderColor: border }]}>
-					<View style={[styles.modeRow, { backgroundColor: softBg }]}> 
-						<Pressable
-							style={[styles.modeBtn, mode === 'login' ? [styles.modeBtnActive, { backgroundColor: surfaceBg }] : null]}
-							onPress={() => switchMode('login')}
+				{/* Auth Mode Tabs */}
+				<View style={[styles.modeTabs, { backgroundColor: palette.elevatedBg }]}>
+					<Pressable
+						style={[
+							styles.modeTab,
+							mode === 'login' && [styles.modeTabActive, { backgroundColor: palette.primary }],
+						]}
+						onPress={() => switchMode('login')}
+					>
+						<ThemedText
+							style={[
+								styles.modeTabText,
+								mode === 'login'
+									? { color: palette.onPrimary, fontWeight: '700' }
+									: { color: palette.subtext },
+							]}
 						>
-							<ThemedText style={[styles.modeBtnText, { color: palette.subtext }, mode === 'login' ? [styles.modeBtnTextActive, { color: palette.text }] : null]}>Login</ThemedText>
-						</Pressable>
-						<Pressable
-							style={[styles.modeBtn, mode === 'register' ? [styles.modeBtnActive, { backgroundColor: surfaceBg }] : null]}
-							onPress={() => switchMode('register')}
+							Login
+						</ThemedText>
+					</Pressable>
+					<Pressable
+						style={[
+							styles.modeTab,
+							mode === 'register' && [styles.modeTabActive, { backgroundColor: palette.primary }],
+						]}
+						onPress={() => switchMode('register')}
+					>
+						<ThemedText
+							style={[
+								styles.modeTabText,
+								mode === 'register'
+									? { color: palette.onPrimary, fontWeight: '700' }
+									: { color: palette.subtext },
+							]}
 						>
-							<ThemedText style={[styles.modeBtnText, { color: palette.subtext }, mode === 'register' ? [styles.modeBtnTextActive, { color: palette.text }] : null]}>Register</ThemedText>
-						</Pressable>
-					</View>
+							Register
+						</ThemedText>
+					</Pressable>
+				</View>
 
-					<ThemedText style={[styles.label, { color: palette.subtext }]}>Choose Role</ThemedText>
-					<View style={styles.roleRow}>
-						{ROLE_OPTIONS.map((option) => (
-							<Pressable
-								key={option.key}
-								style={[
-									styles.roleBtn,
-									{ backgroundColor: softBg, borderColor: border },
-									role === option.key ? [styles.roleBtnActive, { backgroundColor: palette.pressedBg, borderColor: palette.primary }] : null,
-								]}
-								onPress={() => setRole(option.key)}
-							>
-								<ThemedText style={[styles.roleText, { color: palette.subtext }, role === option.key ? [styles.roleTextActive, { color: palette.primary }] : null]}>
-									{option.label}
-								</ThemedText>
-							</Pressable>
-						))}
-					</View>
-
-					{mode === 'register' ? (
+				{/* Form Fields */}
+				<View style={[styles.section, styles.formPanel, { borderColor: palette.border, backgroundColor: palette.surfaceBg }]}>
+					{mode === 'register' && (
+						<>
+							<ThemedText style={[styles.label, { color: palette.text }]}>Select Role</ThemedText>
+							<View style={styles.roleGrid}>
+								{ROLE_OPTIONS.map((option) => (
+									<Pressable
+										key={option.key}
+										style={[
+											styles.roleButton,
+											{
+												backgroundColor: palette.elevatedBg,
+												borderColor: role === option.key ? palette.primary : palette.border,
+											},
+											role === option.key && { borderWidth: 2 },
+										]}
+										onPress={() => setRole(option.key)}
+									>
+										<ThemedText
+											style={[
+												styles.roleButtonText,
+												{ color: role === option.key ? palette.primary : palette.subtext },
+											]}
+										>
+											{option.label}
+										</ThemedText>
+									</Pressable>
+								))}
+							</View>
+						</>
+					)}
+					{/* Name Fields (Register only) */}
+					{mode === 'register' && (
 						<View style={styles.nameRow}>
 							<TextInput
-								style={[styles.input, styles.halfInput, { backgroundColor: surfaceBg, borderColor: border, color: palette.text }]}
+								style={[
+									styles.inputHalf,
+									{
+										backgroundColor: palette.elevatedBg,
+										borderColor: palette.border,
+										color: palette.text,
+									},
+								]}
 								value={firstName}
 								onChangeText={setFirstName}
-								placeholder="First Name"
+								placeholder="First Name (optional)"
 								placeholderTextColor={palette.muted}
 							/>
 							<TextInput
-								style={[styles.input, styles.halfInput, { backgroundColor: surfaceBg, borderColor: border, color: palette.text }]}
+								style={[
+									styles.inputHalf,
+									{
+										backgroundColor: palette.elevatedBg,
+										borderColor: palette.border,
+										color: palette.text,
+									},
+								]}
 								value={lastName}
 								onChangeText={setLastName}
-								placeholder="Last Name"
+								placeholder="Last Name (optional)"
 								placeholderTextColor={palette.muted}
 							/>
 						</View>
-					) : null}
+					)}
 
+					{/* Email Input */}
 					<TextInput
-						style={[styles.input, { backgroundColor: surfaceBg, borderColor: border, color: palette.text }]}
+						style={[
+							styles.input,
+							{
+								backgroundColor: palette.elevatedBg,
+								borderColor: palette.border,
+								color: palette.text,
+							},
+						]}
 						value={email}
 						onChangeText={setEmail}
 						placeholder="Email"
 						placeholderTextColor={palette.muted}
 						autoCapitalize="none"
 						keyboardType="email-address"
+						editable={!isLoading}
 					/>
+
+					{/* Phone Input (Register only) */}
+					{mode === 'register' && (
+						<TextInput
+							style={[
+								styles.input,
+								{
+									backgroundColor: palette.elevatedBg,
+									borderColor: palette.border,
+									color: palette.text,
+								},
+							]}
+							value={phone}
+							onChangeText={setPhone}
+							placeholder="Phone Number"
+							placeholderTextColor={palette.muted}
+							keyboardType="phone-pad"
+							editable={!isLoading}
+						/>
+					)}
+
+					{/* Password Input */}
 					<TextInput
-						style={[styles.input, { backgroundColor: surfaceBg, borderColor: border, color: palette.text }]}
+						style={[
+							styles.input,
+							{
+								backgroundColor: palette.elevatedBg,
+								borderColor: palette.border,
+								color: palette.text,
+							},
+						]}
 						value={password}
 						onChangeText={setPassword}
 						placeholder="Password"
 						placeholderTextColor={palette.muted}
 						secureTextEntry
+						editable={!isLoading}
 					/>
 
-					{mode === 'login' ? (
-						<Pressable style={styles.inlineLinkBtn} onPress={() => router.push('/(auth)/forgot-password')}>
-							<ThemedText style={[styles.inlineLinkText, { color: palette.primary }]}>Forgot password?</ThemedText>
+					{/* Forgot Password Link (Login only) */}
+					{mode === 'login' && (
+						<Pressable
+							style={styles.forgotPasswordBtn}
+							onPress={() => router.push('/(auth)/forgot-password')}
+							disabled={isLoading}
+						>
+							<ThemedText style={[styles.forgotPasswordText, { color: palette.primary }]}>
+								Forgot password?
+							</ThemedText>
 						</Pressable>
-					) : null}
+					)}
 
-					{localError ? <ThemedText style={[styles.errorText, { color: palette.danger }]}>{localError}</ThemedText> : null}
-					{error ? <ThemedText style={[styles.errorText, { color: palette.danger }]}>{error}</ThemedText> : null}
+					{/* Error Messages */}
+					{localError && (
+						<ThemedText style={[styles.errorMessage, { color: palette.danger }]}>{localError}</ThemedText>
+					)}
+					{error && <ThemedText style={[styles.errorMessage, { color: palette.danger }]}>{error}</ThemedText>}
 
-					<Pressable style={[styles.submitBtn, { backgroundColor: palette.primary }, isLoading ? styles.submitBtnDisabled : null]} onPress={onSubmit} disabled={isLoading}>
-						<ThemedText style={[styles.submitBtnText, { color: palette.onPrimary }]}>{isLoading ? 'Processing...' : mode === 'login' ? 'Login' : 'Sign Up'}</ThemedText>
+					{/* Submit Button */}
+					<Pressable
+						style={[
+							styles.submitButton,
+							{ backgroundColor: palette.primary },
+							isLoading && styles.submitButtonDisabled,
+						]}
+						onPress={onSubmit}
+						disabled={isLoading}
+					>
+						<ThemedText style={[styles.submitButtonText, { color: palette.onPrimary }]}>
+							{isLoading ? '...' : mode === 'login' ? 'Login' : 'Create Account'}
+						</ThemedText>
 					</Pressable>
 
+					{/* Mode Switch Footer */}
 					{mode === 'login' ? (
-						<Pressable style={styles.footerSwitchBtn} onPress={() => switchMode('register')}>
-							<ThemedText style={[styles.footerSwitchText, { color: palette.primary }]}>Don&apos;t have an account? Register</ThemedText>
-						</Pressable>
-					) : null}
+						<View style={styles.footerRow}>
+							<ThemedText style={[styles.footerText, { color: palette.subtext }]}>
+								Don&apos;t have an account?{' '}
+							</ThemedText>
+							<Pressable onPress={() => switchMode('register')} disabled={isLoading}>
+								<ThemedText style={[styles.footerLink, { color: palette.primary }]}>Register</ThemedText>
+							</Pressable>
+						</View>
+					) : (
+						<View style={styles.footerRow}>
+							<ThemedText style={[styles.footerText, { color: palette.subtext }]}>
+								Already have an account?{' '}
+							</ThemedText>
+							<Pressable onPress={() => switchMode('login')} disabled={isLoading}>
+								<ThemedText style={[styles.footerLink, { color: palette.primary }]}>Login</ThemedText>
+							</Pressable>
+						</View>
+					)}
 				</View>
-
 			</ScrollView>
 		</SafeAreaView>
 	);
@@ -251,162 +375,152 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
 	safeArea: {
 		flex: 1,
-		backgroundColor: '#EEF4F3',
 	},
 	page: {
 		flex: 1,
 	},
 	container: {
-		padding: 16,
-		gap: 12,
-		paddingBottom: 28,
+		padding: 20,
+		gap: 20,
+		paddingBottom: 36,
 	},
-	heroCard: {
-		backgroundColor: '#FFFFFF',
-		borderRadius: 20,
-		padding: 16,
-		gap: 4,
-		borderTopWidth: 4,
-		borderTopColor: '#3C6E71',
-		borderWidth: 1,
-		borderColor: '#DCE5E8',
+	headerSection: {
+		gap: 6,
+		marginBottom: 4,
+	},
+	logoPill: {
+		alignSelf: 'flex-start',
+		borderRadius: 999,
+		paddingHorizontal: 10,
+		paddingVertical: 4,
+		backgroundColor: '#FDE7EF',
+	},
+	logoPillText: {
+		fontSize: 11,
+		letterSpacing: 1,
+		fontWeight: '800',
 	},
 	brand: {
-		fontSize: 12,
-		fontWeight: '700',
-		color: '#0F766E',
-		letterSpacing: 0.4,
+		fontSize: 20,
+		fontWeight: '900',
+		letterSpacing: 0.2,
 	},
 	title: {
-		fontSize: 24,
-		lineHeight: 28,
+		fontSize: 30,
 		fontWeight: '800',
-		color: '#0F172A',
+		lineHeight: 34,
 	},
 	subtitle: {
-		fontSize: 13,
-		color: '#64748B',
+		fontSize: 14,
+		lineHeight: 21,
 	},
-	demoHint: {
-		marginTop: 4,
-		fontSize: 12,
-		fontWeight: '700',
-		color: '#0F766E',
-	},
-	formCard: {
-		backgroundColor: '#FFFFFF',
-		borderRadius: 18,
-		padding: 14,
-		gap: 10,
-		borderWidth: 1,
-		borderColor: '#E2E8F0',
-	},
-	modeRow: {
-		flexDirection: 'row',
-		backgroundColor: '#F1F5F9',
-		borderRadius: 12,
-		padding: 4,
-		gap: 4,
-	},
-	modeBtn: {
-		flex: 1,
-		paddingVertical: 9,
-		borderRadius: 9,
-		alignItems: 'center',
-	},
-	modeBtnActive: {
-		backgroundColor: '#FFFFFF',
-	},
-	modeBtnText: {
-		fontSize: 13,
-		fontWeight: '700',
-		color: '#64748B',
-	},
-	modeBtnTextActive: {
-		color: '#0F172A',
-	},
-	label: {
-		fontSize: 13,
-		fontWeight: '700',
-		color: '#475569',
-	},
-	roleRow: {
+	modeTabs: {
 		flexDirection: 'row',
 		gap: 8,
+		padding: 4,
+		borderRadius: 12,
 	},
-	roleBtn: {
+	modeTab: {
 		flex: 1,
-		paddingVertical: 10,
+		paddingVertical: 12,
+		paddingHorizontal: 16,
 		borderRadius: 10,
 		alignItems: 'center',
-		backgroundColor: '#F8FAFC',
+		justifyContent: 'center',
+	},
+	modeTabActive: {},
+	modeTabText: {
+		fontSize: 14,
+		fontWeight: '600',
+	},
+	section: {
+		gap: 14,
+	},
+	formPanel: {
 		borderWidth: 1,
-		borderColor: '#D0DCE3',
+		borderRadius: 16,
+		padding: 14,
 	},
-	roleBtnActive: {
-		backgroundColor: '#ECFEFF',
-		borderColor: '#0F766E',
+	label: {
+		fontSize: 14,
+		fontWeight: '600',
 	},
-	roleText: {
+	roleGrid: {
+		flexDirection: 'row',
+		gap: 12,
+	},
+	roleButton: {
+		flex: 1,
+		paddingVertical: 12,
+		paddingHorizontal: 12,
+		borderRadius: 10,
+		alignItems: 'center',
+		borderWidth: 1,
+	},
+	roleButtonText: {
 		fontSize: 13,
-		fontWeight: '700',
-		color: '#475569',
-	},
-	roleTextActive: {
-		color: '#0F766E',
+		fontWeight: '600',
+		textAlign: 'center',
 	},
 	nameRow: {
 		flexDirection: 'row',
-		gap: 8,
+		gap: 12,
+	},
+	inputHalf: {
+		flex: 1,
+		borderWidth: 1,
+		borderRadius: 10,
+		paddingHorizontal: 14,
+		paddingVertical: 13,
+		minHeight: 48,
+		fontSize: 15,
 	},
 	input: {
 		borderWidth: 1,
-		borderColor: '#CBD5E1',
-		borderRadius: 11,
-		paddingHorizontal: 12,
-		paddingVertical: 11,
+		borderRadius: 10,
+		paddingHorizontal: 14,
+		paddingVertical: 13,
+		minHeight: 48,
 		fontSize: 15,
-		color: '#1F2937',
-		backgroundColor: '#FFFFFF',
 	},
-	inlineLinkBtn: {
+	forgotPasswordBtn: {
 		alignSelf: 'flex-end',
 	},
-	inlineLinkText: {
+	forgotPasswordText: {
+		fontSize: 13,
+		fontWeight: '600',
+	},
+	errorMessage: {
 		fontSize: 12,
-		fontWeight: '700',
-		color: '#0F766E',
+		fontWeight: '500',
+		paddingHorizontal: 12,
+		paddingVertical: 10,
+		borderRadius: 6,
 	},
-	halfInput: {
-		flex: 1,
-	},
-	errorText: {
-		fontSize: 12,
-		fontWeight: '700',
-		color: '#DC2626',
-	},
-	submitBtn: {
-		marginTop: 4,
-		paddingVertical: 13,
-		borderRadius: 11,
+	submitButton: {
+		paddingVertical: 14,
+		borderRadius: 10,
 		alignItems: 'center',
-		backgroundColor: '#3C6E71',
+		marginVertical: 8,
 	},
-	submitBtnDisabled: {
-		opacity: 0.55,
+	submitButtonDisabled: {
+		opacity: 0.6,
 	},
-	submitBtnText: {
-		color: '#FFFFFF',
+	submitButtonText: {
 		fontSize: 15,
 		fontWeight: '700',
 	},
-	footerSwitchBtn: {
-		paddingTop: 8,
+	footerRow: {
+		flexDirection: 'row',
 		alignItems: 'center',
+		justifyContent: 'center',
+		marginTop: 8,
 	},
-	footerSwitchText: {
+	footerText: {
+		fontSize: 13,
+	},
+	footerLink: {
 		fontSize: 13,
 		fontWeight: '700',
-		color: '#0F766E',
 	},
 });

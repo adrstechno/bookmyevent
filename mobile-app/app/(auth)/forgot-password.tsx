@@ -52,8 +52,12 @@ export default function ForgotPasswordScreen() {
 		<SafeAreaView style={[styles.safeArea, { backgroundColor: palette.screenBg }]} edges={['top', 'bottom']}>
 			<StatusBar style={isDark ? 'light' : 'dark'} />
 			<ScrollView contentContainerStyle={styles.container}>
+				<View style={styles.logoPill}>
+					<ThemedText style={[styles.logoPillText, { color: palette.primary }]}>GOEVENTIFY</ThemedText>
+				</View>
+				<ThemedText style={[styles.brand, { color: palette.text }]}>GoEventify</ThemedText>
 				<ThemedText style={[styles.title, { color: palette.text }]}>Forgot Password</ThemedText>
-				<ThemedText style={[styles.subtitle, { color: palette.subtext }]}>Enter your account email to receive reset instructions.</ThemedText>
+				<ThemedText style={[styles.subtitle, { color: palette.subtext }]}>Enter your account email to receive password reset instructions.</ThemedText>
 
 				<View style={[styles.card, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
 					<TextInput
@@ -66,7 +70,7 @@ export default function ForgotPasswordScreen() {
 						onChangeText={setEmail}
 					/>
 
-					{error ? <ThemedText style={styles.errorText}>{error}</ThemedText> : null}
+					{error ? <ThemedText style={[styles.errorText, { color: palette.danger }]}>{error}</ThemedText> : null}
 					{message ? <ThemedText style={[styles.messageText, { color: '#0F766E' }]}>{message}</ThemedText> : null}
 
 					<Pressable style={[styles.primaryBtn, { backgroundColor: palette.tint }]} onPress={onSubmit} disabled={loading}>
@@ -87,25 +91,44 @@ const styles = StyleSheet.create({
 		flex: 1,
 	},
 	container: {
-		padding: 16,
-		gap: 10,
+		padding: 20,
+		gap: 12,
+		paddingBottom: 36,
+	},
+	logoPill: {
+		alignSelf: 'flex-start',
+		borderRadius: 999,
+		paddingHorizontal: 10,
+		paddingVertical: 4,
+		backgroundColor: '#FDE7EF',
+	},
+	logoPillText: {
+		fontSize: 11,
+		letterSpacing: 1,
+		fontWeight: '800',
+	},
+	brand: {
+		fontSize: 20,
+		fontWeight: '900',
+		letterSpacing: 0.2,
 	},
 	title: {
-		fontSize: 25,
+		fontSize: 30,
 		fontWeight: '800',
+		lineHeight: 34,
 	},
 	subtitle: {
 		fontSize: 14,
-		lineHeight: 20,
+		lineHeight: 21,
 	},
 	card: {
 		borderWidth: 1,
-		borderRadius: 14,
+		borderRadius: 16,
 		padding: 14,
-		gap: 10,
+		gap: 12,
 	},
 	input: {
-		height: 46,
+		height: 48,
 		borderWidth: 1,
 		borderRadius: 11,
 		paddingHorizontal: 12,
@@ -133,7 +156,6 @@ const styles = StyleSheet.create({
 	errorText: {
 		fontSize: 12,
 		fontWeight: '700',
-		color: '#B91C1C',
 	},
 	messageText: {
 		fontSize: 12,

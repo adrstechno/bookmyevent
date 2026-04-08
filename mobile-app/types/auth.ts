@@ -1,7 +1,6 @@
 export type LoginRequest = {
 	email: string;
 	password: string;
-	userType?: 'user' | 'vendor' | 'admin';
 };
 
 export type LoginResponse = {
@@ -9,6 +8,9 @@ export type LoginResponse = {
 	role: 'user' | 'vendor' | 'admin';
 	name: string;
 	email: string;
+	userId?: number | string;
+	uuid?: string;
+	message?: string;
 };
 
 export type RegisterRequest = {

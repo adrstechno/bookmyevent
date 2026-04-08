@@ -1,3 +1,4 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { Redirect, useRouter } from 'expo-router';
 import { useCallback, useEffect } from 'react';
 import { BackHandler, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -9,11 +10,11 @@ import { ThemedText } from '@/components/themed-text';
 import { useAppSelector } from '@/store';
 import { useSettingsTheme, type SettingsThemeMode } from '@/theme/settingsTheme';
 
-const THEME_OPTIONS: Array<{
+const THEME_OPTIONS: {
 	key: SettingsThemeMode;
 	label: string;
 	description: string;
-}> = [
+}[] = [
 	{ key: 'light', label: 'Light', description: 'Use a bright interface for daytime usage.' },
 	{ key: 'dark', label: 'Dark', description: 'Use a low-glare interface for night usage.' },
 ];

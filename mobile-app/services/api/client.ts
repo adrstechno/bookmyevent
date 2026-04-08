@@ -2,7 +2,7 @@ import axios, { AxiosError, AxiosRequestConfig, InternalAxiosRequestConfig } fro
 
 import { APP_CONFIG } from '@/constants/config';
 
-type ApiError = {
+export type ApiError = {
 	status: number;
 	message: string;
 	code?: string;

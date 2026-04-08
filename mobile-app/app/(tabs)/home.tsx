@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
 import { FlatList, ImageBackground, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { Image } from 'expo-image';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -135,6 +134,7 @@ export default function HomeTabScreen() {
 		[
 			onOpenCategories,
 			onToggleSave,
+			palette.accent,
 			palette.border,
 			palette.onPrimary,
 			palette.primary,

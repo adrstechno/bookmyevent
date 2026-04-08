@@ -8,7 +8,7 @@ import FadeInView from '@/components/common/FadeInView';
 import { TabsTopBar } from '@/components/layout/TabsTopBar';
 import { ThemedText } from '@/components/themed-text';
 import { API_ENDPOINTS } from '@/services/api/endpoints';
-import apiClient from '@/services/api/client';
+import api from '@/services/api/client';
 import { useSettingsTheme } from '@/theme/settingsTheme';
 
 type CategoryChip = {
@@ -264,7 +264,7 @@ export default function CategoriesTabScreen() {
 			}
 
 			try {
-				const categoryResponse = await apiClient.get(API_ENDPOINTS.service.all);
+				const categoryResponse = await api.get(API_ENDPOINTS.service.all);
 				const categoryRows = toRows(categoryResponse.data);
 
 				const activeCategories = categoryRows
@@ -288,7 +288,7 @@ export default function CategoriesTabScreen() {
 				}
 
 				const serviceResponses = await Promise.all(
-					activeCategories.map((category) => apiClient.get(API_ENDPOINTS.service.subservicesByCategory(category.id)))
+					activeCategories.map((category) => api.get(API_ENDPOINTS.service.subservicesByCategory(category.id)))
 				);
 
 				const cards = serviceResponses.flatMap((response, index) => {
@@ -340,7 +340,7 @@ export default function CategoriesTabScreen() {
 				if (isMounted) {
 					setAllCards(mergedCards);
 				}
-			} catch (error) {
+			} catch {
 				if (isMounted) {
 					setLoadError('Unable to sync services from server, showing saved services.');
 					setAllCards(CANONICAL_SERVICE_CARDS);

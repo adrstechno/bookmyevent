@@ -18,7 +18,7 @@ const PREFERENCE_ITEMS = [
 	{ key: 'terms', label: 'Terms and Conditions', value: 'View' },
 ];
 
-const THEME_OPTIONS: Array<{ key: SettingsThemeMode; label: string }> = [
+const THEME_OPTIONS: { key: SettingsThemeMode; label: string }[] = [
 	{ key: 'light', label: 'Light' },
 	{ key: 'dark', label: 'Dark' },
 ];
@@ -28,7 +28,7 @@ export default function SettingsScreen() {
 	const insets = useSafeAreaInsets();
 	const { isAuthenticated, isHydrated } = useAppSelector((state) => state.auth);
 	const { mode, palette, setMode } = useSettingsTheme();
-    const isDark = mode === 'dark';
+	const isDark = mode === 'dark';
 
 	const [pushNotifications, setPushNotifications] = useState(true);
 	const [emailNotifications, setEmailNotifications] = useState(true);

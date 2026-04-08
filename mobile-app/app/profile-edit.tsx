@@ -1,6 +1,6 @@
 import { Redirect, useRouter, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, BackHandler, Pressable, ScrollView, StyleSheet, TextInput, View, useWindowDimensions } from 'react-native';
+import { Animated, BackHandler, Pressable, ScrollView, StyleSheet, TextInput, useWindowDimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -328,6 +328,9 @@ const styles = StyleSheet.create({
 	safeArea: {
 		flex: 1,
 		backgroundColor: '#F3F7F6',
+	},
+	header: {
+		borderBottomWidth: 1,
 	},
 	page: {
 		flex: 1,

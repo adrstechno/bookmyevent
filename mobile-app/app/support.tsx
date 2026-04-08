@@ -38,7 +38,6 @@ export default function SupportScreen() {
 	const screenBg = palette.screenBg;
 	const surfaceBg = palette.surfaceBg;
 	const border = palette.border;
-	const elevated = palette.headerBtnBg;
 	const supportEmail = 'support@goeventify.demo';
 	const supportPhone = '+91 98765 00000';
 

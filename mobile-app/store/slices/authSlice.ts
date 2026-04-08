@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+import * as authApi from '@/services/auth/authApi';
 import {
 	clearSession,
 	type AuthSession,
@@ -29,26 +30,6 @@ const initialState: AuthState = {
 	isHydrated: false,
 	isLoading: false,
 	error: null,
-};
-
-const DUMMY_AUTH_ENABLED = true;
-
-const DUMMY_CREDENTIALS: Record<UserRole, { email: string; password: string; name: string }> = {
-	user: {
-		email: 'user@test.com',
-		password: '123456',
-		name: 'Demo User',
-	},
-	vendor: {
-		email: 'vendor@test.com',
-		password: '123456',
-		name: 'Demo Vendor',
-	},
-	admin: {
-		email: 'admin@test.com',
-		password: '123456',
-		name: 'Demo Admin',
-	},
 };
 
 const toNameFromEmail = (email: string) => {
@@ -86,42 +67,28 @@ export const loginWithCredentials = createAsyncThunk(
 		try {
 			const email = credentials.email?.trim().toLowerCase();
 			const password = credentials.password?.trim();
-			const role = credentials.userType;
 
-			if (!email || !password || !role) {
-				return rejectWithValue('Please enter email, password, and role.');
+			if (!email || !password) {
+				return rejectWithValue('Email and password are required.');
 			}
 
-			if (DUMMY_AUTH_ENABLED) {
-				const expected = DUMMY_CREDENTIALS[role];
-				if (email !== expected.email || password !== expected.password) {
-					return rejectWithValue(
-						`Use demo credentials for ${role}: ${expected.email} / ${expected.password}`
-					);
-				}
-
-				const session: AuthSession = {
-					token: `dummy-token-${role}`,
-					role,
-					name: expected.name,
-					email: expected.email,
-				};
-
-				await persistSession(session);
-				return session;
-			}
+			// Call real backend login API
+			const loginResponse = await authApi.login({
+				email,
+				password,
+			});
 
 			const session: AuthSession = {
-				token: 'disabled-in-dummy-mode',
-				role,
-				name: toNameFromEmail(email),
-				email,
+				token: loginResponse.token,
+				role: loginResponse.role,
+				name: loginResponse.name,
+				email: loginResponse.email,
 			};
 
 			await persistSession(session);
 			return session;
 		} catch (error) {
-			const message = toErrorMessage(error, 'Unable to login. Please try again.');
+			const message = toErrorMessage(error, 'Login failed. Please verify your credentials.');
 			return rejectWithValue(message);
 		}
 	}
@@ -135,39 +102,41 @@ export const registerWithCredentials = createAsyncThunk(
 			const password = payload.password?.trim();
 			const firstName = payload.firstName?.trim();
 			const lastName = payload.lastName?.trim();
+			const phone = payload.phone?.trim();
 			const role = payload.userType || 'user';
 
-			if (!firstName || !lastName || !email || !password || !role) {
-				return rejectWithValue('Please fill all required fields.');
+			if (!email || !password || !phone) {
+				return rejectWithValue('Email, password, and phone are required.');
 			}
 
 			if (password.length < 4) {
 				return rejectWithValue('Password must be at least 4 characters.');
 			}
 
-			if (DUMMY_AUTH_ENABLED) {
-				const session: AuthSession = {
-					token: `dummy-token-${role}-${Date.now()}`,
-					role,
-					name: `${firstName} ${lastName}`,
-					email,
-				};
+			const fallbackName = toNameFromEmail(email ?? 'guest@example.com');
+			const normalizedFirstName = firstName || fallbackName;
+			const normalizedLastName = lastName || '';
 
-				await persistSession(session);
-				return session;
-			}
-
-			const session: AuthSession = {
-				token: 'disabled-in-dummy-mode',
-				role,
-				name: `${firstName} ${lastName}`,
+			// Call real backend register API
+			const registerResponse = await authApi.register({
+				firstName: normalizedFirstName,
+				lastName: normalizedLastName,
 				email,
-			};
+				password,
+				phone,
+				userType: role,
+			});
 
-			await persistSession(session);
-			return session;
+			// Do not auto-login after registration; backend may require email verification first.
+			return {
+				token: null,
+				role,
+				name: `${normalizedFirstName} ${normalizedLastName}`.trim(),
+				email,
+				message: registerResponse.message,
+			};
 		} catch (error) {
-			const message = toErrorMessage(error, 'Unable to register. Please try again.');
+			const message = toErrorMessage(error, 'Registration failed. Please try again.');
 			return rejectWithValue(message);
 		}
 	}
@@ -218,11 +187,11 @@ const authSlice = createSlice({
 				state.error = null;
 			})
 			.addCase(registerWithCredentials.fulfilled, (state, action) => {
-				state.token = action.payload.token;
-				state.role = action.payload.role;
-				state.name = action.payload.name;
+				state.token = null;
+				state.role = null;
+				state.name = null;
 				state.email = action.payload.email;
-				state.isAuthenticated = true;
+				state.isAuthenticated = false;
 				state.isHydrated = true;
 				state.isLoading = false;
 				state.error = null;

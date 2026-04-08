@@ -1,25 +1,19 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useMemo, useState, memo } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState, memo } from 'react';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 
+import PageLoadingState from '@/components/common/PageLoadingState';
+import { useAppToast } from '@/components/common/AppToastProvider';
 import { TabsTopBar } from '@/components/layout/TabsTopBar';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { fetchUserBookings } from '@/services/booking/bookingService';
+import { useAppSelector } from '@/store';
 import { useSettingsTheme } from '@/theme/settingsTheme';
-
-type BookingStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
-
-type BookingItem = {
-	id: string;
-	eventName: string;
-	date: string;
-	venue: string;
-	amount: string;
-	status: BookingStatus;
-};
+import type { BookingItem, BookingStatus } from '@/types/booking';
 
 const STATUS_META: Record<BookingStatus, { label: string; chipLabel: string }> = {
 	pending: { label: 'Pending Vendor Response', chipLabel: 'Pending' },
@@ -28,7 +22,7 @@ const STATUS_META: Record<BookingStatus, { label: string; chipLabel: string }> =
 	cancelled: { label: 'Cancelled', chipLabel: 'Cancelled' },
 };
 
-const SAMPLE_BOOKINGS: BookingItem[] = [
+const FALLBACK_BOOKINGS: BookingItem[] = [
 	{
 		id: 'BK-1001',
 		eventName: 'Wedding Event',
@@ -55,7 +49,7 @@ const SAMPLE_BOOKINGS: BookingItem[] = [
 	},
 ];
 
-const STATUS_CHIPS: Array<'all' | BookingStatus> = ['all', 'pending', 'confirmed', 'completed', 'cancelled'];
+const STATUS_CHIPS: ('all' | BookingStatus)[] = ['all', 'pending', 'confirmed', 'completed', 'cancelled'];
 
 const BookingCard = memo(function BookingCard({
 	booking,
@@ -135,23 +129,91 @@ export default function BookingsTabScreen() {
 	const tabBarHeight = useBottomTabBarHeight();
 	const { mode, palette } = useSettingsTheme();
 	const isDark = mode === 'dark';
+	const { token } = useAppSelector((state) => state.auth);
+	const { showError, showInfo } = useAppToast();
+	const hasShownDevInfoRef = useRef(false);
+	const isDummyToken = typeof token === 'string' && token.startsWith('dummy-token-');
+	const [bookings, setBookings] = useState<BookingItem[]>([]);
+	const [isLoading, setIsLoading] = useState(true);
+	const [isRefreshing, setIsRefreshing] = useState(false);
+	const [loadError, setLoadError] = useState<string | null>(null);
 	const [activeStatus, setActiveStatus] = useState<'all' | BookingStatus>('all');
+
+	const loadBookings = useCallback(
+		async (isManualRefresh = false) => {
+			if (isManualRefresh) {
+				setIsRefreshing(true);
+			} else {
+				setIsLoading(true);
+			}
+
+			if (isDummyToken) {
+				setBookings(FALLBACK_BOOKINGS);
+				setLoadError(null);
+
+				if (!hasShownDevInfoRef.current) {
+					showInfo('Demo login active. Showing sample bookings until backend auth token is available.');
+					hasShownDevInfoRef.current = true;
+				}
+
+				if (isManualRefresh) {
+					setIsRefreshing(false);
+				} else {
+					setIsLoading(false);
+				}
+
+				return;
+			}
+
+			const response = await fetchUserBookings();
+
+			if (response.success) {
+				setBookings(response.data);
+				setLoadError(null);
+			} else {
+				setLoadError(response.error.message);
+				showError(response.error.message);
+				setBookings((prev) => (prev.length > 0 ? prev : FALLBACK_BOOKINGS));
+			}
+
+			if (isManualRefresh) {
+				setIsRefreshing(false);
+			} else {
+				setIsLoading(false);
+			}
+		},
+		[isDummyToken, showError, showInfo]
+	);
+
+	useEffect(() => {
+		void loadBookings();
+	}, [loadBookings]);
 
 	const filteredBookings = useMemo(() => {
 		if (activeStatus === 'all') {
-			return SAMPLE_BOOKINGS;
+			return bookings;
 		}
 
-		return SAMPLE_BOOKINGS.filter((booking) => booking.status === activeStatus);
-	}, [activeStatus]);
+		return bookings.filter((booking) => booking.status === activeStatus);
+	}, [activeStatus, bookings]);
 
 	const stats = useMemo(() => {
-		const total = SAMPLE_BOOKINGS.length;
-		const upcoming = SAMPLE_BOOKINGS.filter((booking) => booking.status === 'confirmed').length;
-		const pending = SAMPLE_BOOKINGS.filter((booking) => booking.status === 'pending').length;
+		const total = bookings.length;
+		const upcoming = bookings.filter((booking) => booking.status === 'confirmed').length;
+		const pending = bookings.filter((booking) => booking.status === 'pending').length;
 
 		return { total, upcoming, pending };
-	}, []);
+	}, [bookings]);
+
+	if (isLoading) {
+		return (
+			<SafeAreaView style={[styles.safeArea, { backgroundColor: palette.screenBg }]} edges={['top']}>
+				<StatusBar style={isDark ? 'light' : 'dark'} />
+				<TabsTopBar title="Bookings" />
+				<PageLoadingState text="Loading your bookings..." />
+			</SafeAreaView>
+		);
+	}
 
 	return (
 		<SafeAreaView style={[styles.safeArea, { backgroundColor: palette.screenBg }]} edges={['top']}>
@@ -162,6 +224,15 @@ export default function BookingsTabScreen() {
 				style={[styles.page, { backgroundColor: palette.screenBg }]}
 				showsVerticalScrollIndicator={false}
 				contentContainerStyle={[styles.container, { paddingBottom: tabBarHeight + 16 }]}
+				refreshControl={
+					<RefreshControl
+						refreshing={isRefreshing}
+						onRefresh={() => {
+							void loadBookings(true);
+						}}
+						tintColor={palette.primary}
+					/>
+				}
 			>
 				<View style={[styles.introCard, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
 					<ThemedText style={[styles.introTitle, { color: palette.text }]}>My Bookings</ThemedText>
@@ -204,9 +275,39 @@ export default function BookingsTabScreen() {
 					})}
 				</ScrollView>
 
-				{filteredBookings.map((booking) => (
-					<BookingCard key={booking.id} booking={booking} palette={palette} />
-				))}
+				{loadError ? (
+					<ThemedView style={[styles.feedbackCard, { backgroundColor: palette.surfaceBg, borderColor: palette.dangerBorder }]}>
+						<ThemedText style={[styles.feedbackTitle, { color: palette.text }]}>Could not refresh bookings</ThemedText>
+						<ThemedText style={[styles.feedbackSubtext, { color: palette.subtext }]}>
+							{loadError}
+						</ThemedText>
+						<Pressable
+							onPress={() => {
+								void loadBookings(true);
+							}}
+							style={({ pressed }) => [
+								styles.retryBtn,
+								{ backgroundColor: palette.primary, borderColor: palette.primaryStrong },
+								pressed ? styles.retryBtnPressed : null,
+							]}
+						>
+							<ThemedText style={[styles.retryBtnText, { color: palette.onPrimary }]}>Retry</ThemedText>
+						</Pressable>
+					</ThemedView>
+				) : null}
+
+				{filteredBookings.length === 0 ? (
+					<ThemedView style={[styles.feedbackCard, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
+						<ThemedText style={[styles.feedbackTitle, { color: palette.text }]}>No bookings yet</ThemedText>
+						<ThemedText style={[styles.feedbackSubtext, { color: palette.subtext }]}>
+							Once you confirm an event, it will appear here.
+						</ThemedText>
+					</ThemedView>
+				) : (
+					filteredBookings.map((booking) => (
+						<BookingCard key={booking.id} booking={booking} palette={palette} />
+					))
+				)}
 
 				<ThemedView style={[styles.helpCard, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
 					<ThemedText style={[styles.helpTitle, { color: palette.text }]}>Need help with a booking?</ThemedText>
@@ -398,5 +499,34 @@ const styles = StyleSheet.create({
 	helpSubtext: {
 		fontSize: 12,
 		color: '#64748B',
+	},
+	feedbackCard: {
+		borderRadius: 12,
+		padding: 12,
+		borderWidth: 1,
+		gap: 6,
+	},
+	feedbackTitle: {
+		fontSize: 14,
+		fontWeight: '800',
+	},
+	feedbackSubtext: {
+		fontSize: 12,
+		lineHeight: 18,
+	},
+	retryBtn: {
+		marginTop: 4,
+		alignSelf: 'flex-start',
+		paddingHorizontal: 12,
+		paddingVertical: 8,
+		borderRadius: 8,
+		borderWidth: 1,
+	},
+	retryBtnPressed: {
+		opacity: 0.86,
+	},
+	retryBtnText: {
+		fontSize: 12,
+		fontWeight: '700',
 	},
 });
