@@ -5,6 +5,7 @@ import { BackHandler, Pressable, ScrollView, StyleSheet, View } from 'react-nati
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AppTopBar } from '@/components/layout/AppTopBar';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useAppSelector } from '@/store';
@@ -25,7 +26,6 @@ export default function AboutUsScreen() {
 	const screenBg = palette.screenBg;
 	const surfaceBg = palette.surfaceBg;
 	const border = palette.border;
-	const elevated = palette.headerBtnBg;
 
 	const goToProfile = useCallback(() => {
 		router.replace('/(tabs)/profile');
@@ -47,13 +47,7 @@ export default function AboutUsScreen() {
 	return (
 		<SafeAreaView style={[styles.safeArea, { backgroundColor: screenBg }]} edges={['top', 'bottom']}>
 			<StatusBar style={isDark ? 'light' : 'dark'} />
-			<View style={[styles.header, { backgroundColor: surfaceBg, borderBottomColor: border }]}>
-				<Pressable style={[styles.backBtn, { backgroundColor: elevated, borderColor: border }]} onPress={goToProfile} hitSlop={10}>
-					<Ionicons name="arrow-back" size={20} color={palette.text} />
-				</Pressable>
-				<ThemedText style={[styles.headerTitle, { color: palette.text }]}>About Us</ThemedText>
-				<View style={styles.headerRightPlaceholder} />
-			</View>
+			<AppTopBar title="About Us" onBackPress={goToProfile} />
 
 			<ScrollView
 				style={styles.page}
@@ -91,35 +85,6 @@ const styles = StyleSheet.create({
 	safeArea: {
 		flex: 1,
 		backgroundColor: '#F4F7F9',
-	},
-	header: {
-		height: 56,
-		paddingHorizontal: 16,
-		flexDirection: 'row',
-		alignItems: 'center',
-		justifyContent: 'space-between',
-		backgroundColor: '#FFFFFF',
-		borderBottomWidth: 1,
-		borderBottomColor: '#E2E8F0',
-	},
-	backBtn: {
-		width: 36,
-		height: 36,
-		borderRadius: 18,
-		alignItems: 'center',
-		justifyContent: 'center',
-		backgroundColor: '#F8FAFC',
-		borderWidth: 1,
-		borderColor: '#E2E8F0',
-	},
-	headerTitle: {
-		fontSize: 18,
-		fontWeight: '800',
-		color: '#0F172A',
-	},
-	headerRightPlaceholder: {
-		width: 36,
-		height: 36,
 	},
 	page: {
 		flex: 1,

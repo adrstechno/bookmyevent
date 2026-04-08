@@ -5,7 +5,7 @@ import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 
-import AppMenuDrawer from '@/components/layout/AppMenuDrawer';
+import { TabsTopBar } from '@/components/layout/TabsTopBar';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useSettingsTheme } from '@/theme/settingsTheme';
@@ -147,22 +147,18 @@ export default function BookingsTabScreen() {
 	return (
 		<SafeAreaView style={[styles.safeArea, { backgroundColor: palette.screenBg }]} edges={['top']}>
 			<StatusBar style={isDark ? 'light' : 'dark'} />
-			<View style={[styles.appBar, { backgroundColor: palette.surfaceBg, borderBottomColor: palette.border }]}>
-				<AppMenuDrawer />
-				<View style={[styles.appBarIconWrap, { backgroundColor: palette.headerBtnBg, borderColor: palette.border }]}>
-					<Ionicons name="calendar-clear-outline" size={18} color={palette.tint} />
-				</View>
-				<View style={styles.appBarTextWrap}>
-					<ThemedText style={[styles.appBarTitle, { color: palette.text }]}>My Bookings</ThemedText>
-					<ThemedText style={[styles.appBarSubtitle, { color: palette.subtext }]}>Manage and track all your event bookings</ThemedText>
-				</View>
-			</View>
+			<TabsTopBar title="Bookings" />
 
 			<ScrollView
 				style={[styles.page, { backgroundColor: palette.screenBg }]}
 				showsVerticalScrollIndicator={false}
 				contentContainerStyle={[styles.container, { paddingBottom: tabBarHeight + 16 }]}
 			>
+				<View style={[styles.introCard, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
+					<ThemedText style={[styles.introTitle, { color: palette.text }]}>My Bookings</ThemedText>
+					<ThemedText style={[styles.introSubtitle, { color: palette.subtext }]}>Manage and track all your event bookings</ThemedText>
+				</View>
+
 				<View style={styles.statsRow}>
 					<ThemedView style={[styles.statPill, styles.statTotal, { backgroundColor: palette.surfaceBg, borderColor: palette.tint }]}>
 						<ThemedText style={[styles.statValue, { color: palette.tint }]}>{String(stats.total).padStart(2, '0')}</ThemedText>
@@ -225,40 +221,20 @@ const styles = StyleSheet.create({
 		padding: 16,
 		gap: 12,
 	},
-	appBar: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		gap: 10,
-		paddingHorizontal: 16,
-		paddingTop: 8,
-		paddingBottom: 10,
-		backgroundColor: '#FFFFFF',
-		borderBottomWidth: 1,
-		borderBottomColor: '#E2E8F0',
-	},
-	appBarIconWrap: {
-		width: 34,
-		height: 34,
-		borderRadius: 10,
-		alignItems: 'center',
-		justifyContent: 'center',
-		backgroundColor: '#ECFEFF',
+	introCard: {
 		borderWidth: 1,
-		borderColor: '#CCFBF1',
+		borderRadius: 14,
+		paddingHorizontal: 12,
+		paddingVertical: 10,
 	},
-	appBarTextWrap: {
-		flex: 1,
-	},
-	appBarTitle: {
-		fontSize: 22,
+	introTitle: {
+		fontSize: 18,
 		fontWeight: '800',
-		color: '#0B1220',
 	},
-	appBarSubtitle: {
+	introSubtitle: {
+		marginTop: 2,
 		fontSize: 12,
 		fontWeight: '600',
-		color: '#64748B',
-		marginTop: 1,
 	},
 	statsRow: {
 		flexDirection: 'row',

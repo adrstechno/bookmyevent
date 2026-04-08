@@ -1,10 +1,10 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { Redirect, useRouter, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, BackHandler, Pressable, ScrollView, StyleSheet, TextInput, View, useWindowDimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AppTopBar } from '@/components/layout/AppTopBar';
 import { ThemedText } from '@/components/themed-text';
 import { useAppSelector } from '@/store';
 import { useSettingsTheme } from '@/theme/settingsTheme';
@@ -184,11 +184,7 @@ export default function ProfileEditScreen() {
 					},
 				]}
 			>
-				<Pressable style={[styles.backBtn, { backgroundColor: palette.headerBtnBg, borderColor: palette.border }]} onPress={goBack} hitSlop={10}>
-					<Ionicons name="arrow-back" size={20} color={palette.text} />
-				</Pressable>
-				<ThemedText style={[styles.headerTitle, { color: palette.text }]}>Edit Profile</ThemedText>
-				<View style={styles.headerRightPlaceholder} />
+				<AppTopBar title="Edit Profile" onBackPress={goBack} />
 			</Animated.View>
 
 			<ScrollView
@@ -322,35 +318,6 @@ const styles = StyleSheet.create({
 	safeArea: {
 		flex: 1,
 		backgroundColor: '#F3F7F6',
-	},
-	header: {
-		height: 56,
-		paddingHorizontal: 16,
-		flexDirection: 'row',
-		alignItems: 'center',
-		justifyContent: 'space-between',
-		backgroundColor: '#FFFFFF',
-		borderBottomWidth: 1,
-		borderBottomColor: '#E2E8F0',
-	},
-	backBtn: {
-		width: 36,
-		height: 36,
-		borderRadius: 18,
-		alignItems: 'center',
-		justifyContent: 'center',
-		backgroundColor: '#F8FAFC',
-		borderWidth: 1,
-		borderColor: '#E2E8F0',
-	},
-	headerTitle: {
-		fontSize: 17,
-		fontWeight: '800',
-		color: '#0F172A',
-	},
-	headerRightPlaceholder: {
-		width: 36,
-		height: 36,
 	},
 	page: {
 		flex: 1,

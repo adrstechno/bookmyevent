@@ -5,7 +5,7 @@ import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, TextInput,
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import FadeInView from '@/components/common/FadeInView';
-import AppMenuDrawer from '@/components/layout/AppMenuDrawer';
+import { TabsTopBar } from '@/components/layout/TabsTopBar';
 import { ThemedText } from '@/components/themed-text';
 import { API_ENDPOINTS } from '@/services/api/endpoints';
 import apiClient from '@/services/api/client';
@@ -384,9 +384,8 @@ export default function CategoriesTabScreen() {
 		<SafeAreaView style={[styles.safeArea, { backgroundColor: palette.screenBg }]} edges={['top']}>
 			<StatusBar style={isDark ? 'light' : 'dark'} />
 			<View style={[styles.page, { backgroundColor: palette.screenBg }]}>
+				<TabsTopBar title="Services" />
 				<View style={[styles.appBar, { backgroundColor: palette.primary }]}>
-					<AppMenuDrawer />
-					<ThemedText style={[styles.appBarTitle, { color: palette.onPrimary }]}>Services</ThemedText>
 					<View style={[styles.searchWrap, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
 						<Ionicons name="search-outline" size={18} color={palette.subtext} />
 						<TextInput
@@ -478,15 +477,10 @@ const styles = StyleSheet.create({
 	},
 	appBar: {
 		paddingHorizontal: 16,
-		paddingTop: 10,
+		paddingTop: 12,
 		paddingBottom: 4,
 		gap: 10,
 		backgroundColor: '#F4F7F9',
-	},
-	appBarTitle: {
-		fontSize: 22,
-		fontWeight: '800',
-		color: '#0F172A',
 	},
 	searchWrap: {
 		flexDirection: 'row',

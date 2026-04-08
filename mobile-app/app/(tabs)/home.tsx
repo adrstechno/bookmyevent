@@ -9,7 +9,7 @@ import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 
 import FadeInView from '@/components/common/FadeInView';
-import AppMenuDrawer from '@/components/layout/AppMenuDrawer';
+import { TabsTopBar } from '@/components/layout/TabsTopBar';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useSettingsTheme } from '@/theme/settingsTheme';
@@ -53,8 +53,6 @@ export default function HomeTabScreen() {
 	const { mode, palette } = useSettingsTheme();
 	const isDark = mode === 'dark';
 	const screenBg = palette.screenBg;
-	const surfaceBg = palette.surfaceBg;
-	const border = palette.border;
 	const elevated = palette.primaryStrong;
 
 	const onSoftPress = useCallback(async () => {
@@ -93,19 +91,21 @@ export default function HomeTabScreen() {
 	return (
 		<SafeAreaView style={[styles.safeArea, { backgroundColor: screenBg }]} edges={['top']}>
 			<StatusBar style={isDark ? 'light' : 'dark'} />
-			<View style={styles.appBarWrap}>
-				<View style={[styles.appBar, { backgroundColor: palette.primary, borderColor: palette.primaryStrong }]}>
-					<AppMenuDrawer />
-
-					<View style={styles.appBarBrand}>
-						<Image source={require('@/assets/images/home/logo2.png')} style={styles.logo} contentFit="contain" />
-					</View>
-
-					<Pressable style={({ pressed }) => [styles.iconBtn, { backgroundColor: elevated, borderColor: palette.primaryStrong }, pressed ? styles.iconBtnPressed : null]} onPress={onSoftPress}>
+			<TabsTopBar
+				title="Home"
+				rightContent={(
+					<Pressable
+						style={({ pressed }) => [
+							styles.iconBtn,
+							{ backgroundColor: elevated, borderColor: palette.primaryStrong },
+							pressed ? styles.iconBtnPressed : null,
+						]}
+						onPress={onSoftPress}
+					>
 						<Ionicons name="notifications-outline" size={20} color={palette.onPrimary} />
 					</Pressable>
-				</View>
-			</View>
+				)}
+			/>
 			<ScrollView
 				style={[styles.page, { backgroundColor: screenBg }]}
 				contentContainerStyle={[styles.container, { paddingBottom: tabBarHeight + 16 }]}
@@ -189,29 +189,6 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 16,
 		paddingTop: 12,
 		gap: 14,
-	},
-	appBarWrap: {
-		paddingHorizontal: 16,
-		paddingTop: 8,
-	},
-	appBar: {
-		height: 56,
-		flexDirection: 'row',
-		justifyContent: 'space-between',
-		alignItems: 'center',
-		paddingHorizontal: 12,
-		backgroundColor: '#FFFFFF',
-		borderWidth: 1,
-		borderColor: '#E2E8F0',
-		borderRadius: 12,
-	},
-	appBarBrand: {
-		flexDirection: 'row',
-		alignItems: 'center',
-	},
-	logo: {
-		width: 50,
-		height: 50,
 	},
 	iconBtn: {
 		width: 38,
