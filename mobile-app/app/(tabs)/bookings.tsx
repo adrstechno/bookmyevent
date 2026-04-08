@@ -68,6 +68,7 @@ const BookingCard = memo(function BookingCard({
 		text: string;
 		subtext: string;
 		tint: string;
+		elevatedBg: string;
 	};
 }) {
 	const isPending = booking.status === 'pending';
@@ -115,7 +116,7 @@ const BookingCard = memo(function BookingCard({
 				<ThemedText style={[styles.detailText, { color: palette.subtext }]}>{booking.amount}</ThemedText>
 			</View>
 
-			<ThemedView style={[styles.ctaBtn, { backgroundColor: palette.headerBtnBg, borderColor: palette.border }]}>
+			<ThemedView style={[styles.ctaBtn, { backgroundColor: palette.elevatedBg, borderColor: palette.border }]}>
 				<ThemedText style={styles.ctaText}>View Details</ThemedText>
 			</ThemedView>
 		</ThemedView>
@@ -149,7 +150,7 @@ export default function BookingsTabScreen() {
 			<StatusBar style={isDark ? 'light' : 'dark'} />
 			<View style={[styles.appBar, { backgroundColor: palette.surfaceBg, borderBottomColor: palette.border }]}>
 				<AppMenuDrawer />
-				<View style={[styles.appBarIconWrap, { backgroundColor: palette.headerBtnBg, borderColor: palette.border }]}>
+			<View style={[styles.appBarIconWrap, { backgroundColor: palette.elevatedBg, borderColor: palette.border }]}>
 					<Ionicons name="calendar-clear-outline" size={18} color={palette.tint} />
 				</View>
 				<View style={styles.appBarTextWrap}>

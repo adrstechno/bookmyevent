@@ -15,21 +15,87 @@ import PageLoadingState from '@/components/common/PageLoadingState';
 import AppMenuDrawer from '@/components/layout/AppMenuDrawer';
 import { ThemedText } from '@/components/themed-text';
 import { useAppToast } from '@/components/common/AppToastProvider';
-import {
-	acceptVendorBooking,
-	cancelVendorBooking,
-	fetchOtpAttempts,
-	fetchVendorBookings,
-	rejectVendorBooking,
-	resendVendorOtp,
-	verifyVendorOtp,
-} from '@/services/vendor/vendorService';
 import { useSettingsTheme } from '@/theme/settingsTheme';
-import type { VendorBooking } from '@/types/vendor';
 
 type FilterKey = 'all' | 'pending' | 'awaiting-admin' | 'otp-required' | 'completed' | 'cancelled';
 
+type BookingStatus =
+	| 'pending_vendor_response'
+	| 'pending'
+	| 'confirmed'
+	| 'completed'
+	| 'awaiting_review'
+	| 'cancelled_by_vendor'
+	| 'rejected_by_vendor';
+
+type AdminApproval = 'pending' | 'approved' | 'rejected';
+
+interface VendorBooking {
+	bookingId: string;
+	bookingUuid: string;
+	firstName: string;
+	lastName: string;
+	userName: string;
+	eventDate: string;
+	eventTime: string;
+	packageName: string;
+	packageId: string;
+	status: BookingStatus;
+	adminApproval: AdminApproval;
+	otp: string;
+	otpAttemptsRemaining: number;
+	rejectReason?: string;
+}
+
 const filterKeys: FilterKey[] = ['all', 'pending', 'awaiting-admin', 'otp-required', 'completed', 'cancelled'];
+
+const mockBookings: VendorBooking[] = [
+	{
+		bookingId: '1001',
+		bookingUuid: 'BME-BOOK-1001',
+		firstName: 'Rahul',
+		lastName: 'Sharma',
+		userName: 'rahul_s',
+		eventDate: '2026-04-20',
+		eventTime: '18:00',
+		packageName: 'Wedding Essentials',
+		packageId: '101',
+		status: 'pending_vendor_response',
+		adminApproval: 'pending',
+		otp: '123456',
+		otpAttemptsRemaining: 3,
+	},
+	{
+		bookingId: '1002',
+		bookingUuid: 'BME-BOOK-1002',
+		firstName: 'Neha',
+		lastName: 'Jain',
+		userName: 'nehaj',
+		eventDate: '2026-04-24',
+		eventTime: '14:00',
+		packageName: 'Corporate Premium',
+		packageId: '202',
+		status: 'confirmed',
+		adminApproval: 'pending',
+		otp: '123456',
+		otpAttemptsRemaining: 3,
+	},
+	{
+		bookingId: '1003',
+		bookingUuid: 'BME-BOOK-1003',
+		firstName: 'Amit',
+		lastName: 'Verma',
+		userName: 'amitv',
+		eventDate: '2026-04-28',
+		eventTime: '20:00',
+		packageName: 'Birthday Delight',
+		packageId: '303',
+		status: 'confirmed',
+		adminApproval: 'approved',
+		otp: '123456',
+		otpAttemptsRemaining: 3,
+	},
+];
 
 const getFilterLabel = (key: FilterKey) => {
 	if (key === 'awaiting-admin') return 'Awaiting Admin';
@@ -72,30 +138,19 @@ export default function VendorBookingsScreen() {
 	const [otpBusy, setOtpBusy] = useState(false);
 	const [attemptsRemaining, setAttemptsRemaining] = useState(3);
 
-	const loadBookings = useCallback(
-		async (silent = false) => {
-			if (silent) {
-				setIsRefreshing(true);
-			} else {
-				setIsLoading(true);
-			}
+	const loadBookings = useCallback(async (silent = false) => {
+		if (silent) {
+			setIsRefreshing(true);
+		} else {
+			setIsLoading(true);
+		}
 
-			try {
-				const nextBookings = await fetchVendorBookings();
-				setBookings(nextBookings);
-			} catch (error) {
-				const message =
-					typeof error === 'object' && error && 'message' in error
-						? String((error as { message?: string }).message)
-						: 'Failed to load bookings.';
-				showError(message);
-			} finally {
-				setIsLoading(false);
-				setIsRefreshing(false);
-			}
-		},
-		[showError]
-	);
+		await new Promise((resolve) => setTimeout(resolve, 300));
+		setBookings((prev) => (prev.length > 0 ? prev : mockBookings));
+
+		setIsLoading(false);
+		setIsRefreshing(false);
+	}, []);
 
 	useEffect(() => {
 		void loadBookings();
@@ -116,30 +171,28 @@ export default function VendorBookingsScreen() {
 		});
 	}, [activeFilter, bookings]);
 
-	const counts = useMemo(() => ({
-		all: bookings.length,
-		pending: bookings.filter(isPending).length,
-		'awaiting-admin': bookings.filter(isAwaitingAdmin).length,
-		'otp-required': bookings.filter(isOtpRequired).length,
-		completed: bookings.filter(isCompleted).length,
-		cancelled: bookings.filter(isCancelled).length,
-	}), [bookings]);
+	const counts = useMemo(
+		() => ({
+			all: bookings.length,
+			pending: bookings.filter(isPending).length,
+			'awaiting-admin': bookings.filter(isAwaitingAdmin).length,
+			'otp-required': bookings.filter(isOtpRequired).length,
+			completed: bookings.filter(isCompleted).length,
+			cancelled: bookings.filter(isCancelled).length,
+		}),
+		[bookings]
+	);
 
-	const runAction = async (bookingId: string, action: () => Promise<void>, successMessage: string) => {
+	const runAction = async (
+		bookingId: string,
+		action: (booking: VendorBooking) => VendorBooking,
+		successMessage: string
+	) => {
 		setActionLoadingId(bookingId);
-		try {
-			await action();
-			showSuccess(successMessage);
-			await loadBookings(true);
-		} catch (error) {
-			const message =
-				typeof error === 'object' && error && 'message' in error
-					? String((error as { message?: string }).message)
-					: 'Action failed.';
-			showError(message);
-		} finally {
-			setActionLoadingId(null);
-		}
+		await new Promise((resolve) => setTimeout(resolve, 350));
+		setBookings((prev) => prev.map((item) => (item.bookingId === bookingId ? action(item) : item)));
+		showSuccess(successMessage);
+		setActionLoadingId(null);
 	};
 
 	const openReject = (bookingId: string) => {
@@ -155,7 +208,11 @@ export default function VendorBookingsScreen() {
 		setRejectModalOpen(false);
 		await runAction(
 			rejectBookingId,
-			() => rejectVendorBooking(rejectBookingId, rejectReason.trim() || 'Rejected by vendor'),
+			(booking) => ({
+				...booking,
+				status: 'rejected_by_vendor',
+				rejectReason: rejectReason.trim() || 'Rejected by vendor',
+			}),
 			'Booking rejected.'
 		);
 	};
@@ -164,13 +221,7 @@ export default function VendorBookingsScreen() {
 		setOtpBooking(booking);
 		setOtpCode('');
 		setOtpModalOpen(true);
-		setAttemptsRemaining(3);
-		try {
-			const status = await fetchOtpAttempts(booking.bookingId);
-			setAttemptsRemaining(status.attemptsRemaining);
-		} catch {
-			// Keep default attempts when endpoint is unavailable.
-		}
+		setAttemptsRemaining(booking.otpAttemptsRemaining);
 	};
 
 	const verifyOtp = async () => {
@@ -184,20 +235,53 @@ export default function VendorBookingsScreen() {
 		}
 
 		setOtpBusy(true);
-		try {
-			await verifyVendorOtp(otpBooking.bookingId, otpCode);
-			showSuccess('OTP verified successfully.');
-			setOtpModalOpen(false);
-			await loadBookings(true);
-		} catch (error) {
-			const message =
-				typeof error === 'object' && error && 'message' in error
-					? String((error as { message?: string }).message)
-					: 'OTP verification failed.';
-			showError(message);
-		} finally {
+		await new Promise((resolve) => setTimeout(resolve, 350));
+
+		const booking = bookings.find((item) => item.bookingId === otpBooking.bookingId);
+		if (!booking) {
 			setOtpBusy(false);
+			showError('Booking not found.');
+			return;
 		}
+
+		if (booking.otpAttemptsRemaining <= 0) {
+			setOtpBusy(false);
+			showError('Too many failed attempts. Please resend OTP.');
+			return;
+		}
+
+		if (otpCode !== booking.otp) {
+			const remaining = booking.otpAttemptsRemaining - 1;
+			setBookings((prev) =>
+				prev.map((item) =>
+					item.bookingId === booking.bookingId
+						? {
+							...item,
+							otpAttemptsRemaining: Math.max(remaining, 0),
+						}
+						: item
+				)
+			);
+			setAttemptsRemaining(Math.max(remaining, 0));
+			setOtpBusy(false);
+			showError(remaining > 0 ? `Invalid OTP. ${remaining} attempts left.` : 'OTP locked. Please resend OTP.');
+			return;
+		}
+
+		setBookings((prev) =>
+			prev.map((item) =>
+				item.bookingId === booking.bookingId
+					? {
+						...item,
+						status: 'completed',
+						otpAttemptsRemaining: 3,
+					}
+					: item
+			)
+		);
+		showSuccess('OTP verified successfully.');
+		setOtpModalOpen(false);
+		setOtpBusy(false);
 	};
 
 	const resendOtp = async () => {
@@ -205,20 +289,22 @@ export default function VendorBookingsScreen() {
 			return;
 		}
 		setOtpBusy(true);
-		try {
-			await resendVendorOtp(otpBooking.bookingId);
-			showInfo('New OTP sent to customer.');
-			setOtpCode('');
-			setAttemptsRemaining(3);
-		} catch (error) {
-			const message =
-				typeof error === 'object' && error && 'message' in error
-					? String((error as { message?: string }).message)
-					: 'Failed to resend OTP.';
-			showError(message);
-		} finally {
-			setOtpBusy(false);
-		}
+		await new Promise((resolve) => setTimeout(resolve, 350));
+		setBookings((prev) =>
+			prev.map((item) =>
+				item.bookingId === otpBooking.bookingId
+					? {
+						...item,
+						otp: '123456',
+						otpAttemptsRemaining: 3,
+					}
+					: item
+			)
+		);
+		setOtpCode('');
+		setAttemptsRemaining(3);
+		setOtpBusy(false);
+		showInfo('New OTP sent to customer. Use 123456 for demo.');
 	};
 
 	if (isLoading) {
@@ -283,7 +369,13 @@ export default function VendorBookingsScreen() {
 											{canAcceptReject ? (
 												<Pressable
 													style={[styles.actionBtn, { backgroundColor: palette.successSoft, borderColor: palette.successBorder }]}
-													onPress={() => void runAction(bookingId, () => acceptVendorBooking(bookingId), 'Booking accepted. Awaiting admin approval.')}
+													onPress={() =>
+														void runAction(
+															bookingId,
+															(item) => ({ ...item, status: 'confirmed', adminApproval: 'pending' }),
+															'Booking accepted. Awaiting admin approval.'
+														)
+													}
 													disabled={actionLoadingId === bookingId}
 												>
 													<ThemedText style={[styles.actionText, { color: palette.success }]}>{actionLoadingId === bookingId ? 'Working...' : 'Accept'}</ThemedText>
@@ -312,7 +404,13 @@ export default function VendorBookingsScreen() {
 											{canCancel ? (
 												<Pressable
 													style={[styles.actionBtn, { backgroundColor: palette.warningSoft, borderColor: palette.warning }]}
-													onPress={() => void runAction(bookingId, () => cancelVendorBooking(bookingId), 'Booking cancelled.')}
+													onPress={() =>
+														void runAction(
+															bookingId,
+															(item) => ({ ...item, status: 'cancelled_by_vendor' }),
+															'Booking cancelled.'
+														)
+													}
 													disabled={actionLoadingId === bookingId}
 												>
 													<ThemedText style={[styles.actionText, { color: palette.warning }]}>Cancel</ThemedText>
@@ -364,6 +462,7 @@ export default function VendorBookingsScreen() {
 							keyboardType="number-pad"
 							maxLength={6}
 						/>
+						<ThemedText style={[styles.modalHint, { color: palette.muted }]}>Demo OTP: 123456</ThemedText>
 						<View style={styles.modalActions}>
 							<Pressable style={[styles.modalBtn, { borderColor: palette.border, backgroundColor: palette.headerBtnBg }]} onPress={() => setOtpModalOpen(false)}>
 								<ThemedText style={[styles.modalBtnText, { color: palette.text }]}>Close</ThemedText>

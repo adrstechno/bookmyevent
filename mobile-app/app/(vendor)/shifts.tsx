@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
+	ActivityIndicator,
 	Modal,
 	Pressable,
 	ScrollView,
@@ -10,21 +11,27 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import FadeInView from '@/components/common/FadeInView';
-import PageLoadingState from '@/components/common/PageLoadingState';
 import AppMenuDrawer from '@/components/layout/AppMenuDrawer';
+import FadeInView from '@/components/common/FadeInView';
 import { ThemedText } from '@/components/themed-text';
 import { useAppToast } from '@/components/common/AppToastProvider';
-import {
-	createVendorShift,
-	deleteVendorShift,
-	fetchVendorShifts,
-	updateVendorShift,
-} from '@/services/vendor/vendorService';
 import { useSettingsTheme } from '@/theme/settingsTheme';
-import type { VendorShift } from '@/types/vendor';
+
+interface VendorShift {
+	shiftId: string;
+	shiftName: string;
+	startTime: string;
+	endTime: string;
+	daysOfWeek: string[];
+}
 
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+const MOCK_SHIFTS: VendorShift[] = [
+	{ shiftId: '1', shiftName: 'Morning Setup', startTime: '09:00', endTime: '12:00', daysOfWeek: ['Monday', 'Wednesday', 'Friday'] },
+	{ shiftId: '2', shiftName: 'Evening Service', startTime: '14:00', endTime: '18:00', daysOfWeek: ['Tuesday', 'Thursday', 'Saturday'] },
+	{ shiftId: '3', shiftName: 'Full Day Support', startTime: '10:00', endTime: '20:00', daysOfWeek: ['Sunday'] },
+];
 
 const defaultForm = {
 	shiftId: '',
@@ -61,25 +68,16 @@ export default function VendorShiftsScreen() {
 	const [shifts, setShifts] = useState<VendorShift[]>([]);
 	const [form, setForm] = useState(defaultForm);
 
-	const loadShifts = useCallback(async () => {
-		setIsLoading(true);
-		try {
-			const data = await fetchVendorShifts();
-			setShifts(data);
-		} catch (error) {
-			const message =
-				typeof error === 'object' && error && 'message' in error
-					? String((error as { message?: string }).message)
-					: 'Failed to load vendor shifts.';
-			showError(message);
-		} finally {
-			setIsLoading(false);
-		}
-	}, [showError]);
-
 	useEffect(() => {
-		void loadShifts();
-	}, [loadShifts]);
+		const timer = setTimeout(() => {
+			setShifts(MOCK_SHIFTS);
+			setIsLoading(false);
+		}, 350);
+
+		return () => clearTimeout(timer);
+	}, []);
+
+	const styles = useMemo(() => createStyles(palette), [palette]);
 
 	const filteredShifts = useMemo(() => {
 		const query = search.trim().toLowerCase();
@@ -87,10 +85,7 @@ export default function VendorShiftsScreen() {
 			if (!query) {
 				return true;
 			}
-			return (
-				item.shiftName.toLowerCase().includes(query) ||
-				item.daysOfWeek.join(' ').toLowerCase().includes(query)
-			);
+			return item.shiftName.toLowerCase().includes(query) || item.daysOfWeek.join(' ').toLowerCase().includes(query);
 		});
 
 		return result.sort((a, b) => {
@@ -108,7 +103,7 @@ export default function VendorShiftsScreen() {
 
 	const openEdit = (shift: VendorShift) => {
 		setForm({
-			shiftId: String(shift.shiftId),
+			shiftId: shift.shiftId,
 			shiftName: shift.shiftName,
 			startTime: shift.startTime,
 			endTime: shift.endTime,
@@ -121,9 +116,7 @@ export default function VendorShiftsScreen() {
 	const toggleDay = (day: string) => {
 		setForm((prev) => ({
 			...prev,
-			daysOfWeek: prev.daysOfWeek.includes(day)
-				? prev.daysOfWeek.filter((item) => item !== day)
-				: [...prev.daysOfWeek, day],
+			daysOfWeek: prev.daysOfWeek.includes(day) ? prev.daysOfWeek.filter((item) => item !== day) : [...prev.daysOfWeek, day],
 		}));
 	};
 
@@ -144,7 +137,7 @@ export default function VendorShiftsScreen() {
 		}
 
 		const duplicate = shifts.find((item) => {
-			if (isEdit && String(item.shiftId) === form.shiftId) {
+			if (isEdit && item.shiftId === form.shiftId) {
 				return false;
 			}
 
@@ -163,57 +156,65 @@ export default function VendorShiftsScreen() {
 
 		setIsSaving(true);
 		try {
+			await new Promise((resolve) => setTimeout(resolve, 500));
+
 			if (isEdit) {
-				await updateVendorShift({
-					shiftId: form.shiftId,
-					shiftName: form.shiftName.trim(),
-					startTime: form.startTime,
-					endTime: form.endTime,
-					daysOfWeek: form.daysOfWeek,
-				});
+				setShifts((prev) =>
+					prev.map((item) =>
+						item.shiftId === form.shiftId
+							? {
+								...item,
+								shiftName: form.shiftName.trim(),
+								startTime: form.startTime,
+								endTime: form.endTime,
+								daysOfWeek: form.daysOfWeek,
+							}
+							: item,
+					),
+				);
 				showSuccess('Shift updated successfully.');
 			} else {
-				await createVendorShift({
-					shiftName: form.shiftName.trim(),
-					startTime: form.startTime,
-					endTime: form.endTime,
-					daysOfWeek: form.daysOfWeek,
-				});
+				const nextId = String(Math.max(...shifts.map((item) => Number(item.shiftId)), 0) + 1);
+				setShifts((prev) => [
+					{
+						shiftId: nextId,
+						shiftName: form.shiftName.trim(),
+						startTime: form.startTime,
+						endTime: form.endTime,
+						daysOfWeek: form.daysOfWeek,
+					},
+					...prev,
+				]);
 				showSuccess('Shift created successfully.');
 			}
 
 			setIsModalOpen(false);
-			await loadShifts();
-		} catch (error) {
-			const message =
-				typeof error === 'object' && error && 'message' in error
-					? String((error as { message?: string }).message)
-					: 'Failed to save shift.';
-			showError(message);
+			setForm(defaultForm);
+		} catch {
+			showError('Failed to save shift.');
 		} finally {
 			setIsSaving(false);
 		}
 	};
 
-	const removeShift = async (shiftId: string) => {
+	const removeShift = (shiftId: string) => {
 		setIsDeletingId(shiftId);
-		try {
-			await deleteVendorShift(shiftId);
-			showSuccess('Shift deleted.');
-			await loadShifts();
-		} catch (error) {
-			const message =
-				typeof error === 'object' && error && 'message' in error
-					? String((error as { message?: string }).message)
-					: 'Failed to delete shift.';
-			showError(message);
-		} finally {
+		setTimeout(() => {
+			setShifts((prev) => prev.filter((item) => item.shiftId !== shiftId));
 			setIsDeletingId(null);
-		}
+			showSuccess('Shift deleted.');
+		}, 350);
 	};
 
 	if (isLoading) {
-		return <PageLoadingState text="Loading vendor shifts..." />;
+		return (
+			<SafeAreaView style={[styles.safeArea, { backgroundColor: palette.screenBg }]} edges={['top']}>
+				<View style={styles.loadingState}>
+					<ActivityIndicator size="large" color={palette.primary} />
+					<ThemedText style={[styles.loadingText, { color: palette.muted }]}>Loading vendor shifts...</ThemedText>
+				</View>
+			</SafeAreaView>
+		);
 	}
 
 	return (
@@ -244,7 +245,7 @@ export default function VendorShiftsScreen() {
 					</Pressable>
 				</View>
 
-				<ScrollView contentContainerStyle={styles.listWrap}>
+				<ScrollView contentContainerStyle={styles.listWrap} showsVerticalScrollIndicator={false}>
 					{filteredShifts.length === 0 ? (
 						<ThemedText style={[styles.emptyText, { color: palette.subtext }]}>No vendor shifts found.</ThemedText>
 					) : (
@@ -264,7 +265,7 @@ export default function VendorShiftsScreen() {
 										</Pressable>
 										<Pressable
 											style={[styles.actionBtn, { borderColor: palette.dangerBorder, backgroundColor: palette.dangerSoft }]}
-											onPress={() => void removeShift(String(shift.shiftId))}
+											onPress={() => removeShift(String(shift.shiftId))}
 											disabled={isDeletingId === String(shift.shiftId)}
 										>
 											<Ionicons name="trash-outline" size={16} color={palette.danger} />
@@ -342,184 +343,196 @@ export default function VendorShiftsScreen() {
 	);
 }
 
-const styles = StyleSheet.create({
-	safeArea: {
-		flex: 1,
-	},
-	container: {
-		flex: 1,
-		padding: 16,
-		gap: 10,
-	},
-	appBar: {
-		height: 56,
-		borderRadius: 14,
-		paddingHorizontal: 12,
-		borderWidth: 1,
-		flexDirection: 'row',
-		alignItems: 'center',
-		justifyContent: 'space-between',
-	},
-	appBarTitle: {
-		fontSize: 16,
-		fontWeight: '800',
-	},
-	iconBtn: {
-		width: 36,
-		height: 36,
-		borderRadius: 18,
-		borderWidth: 1,
-		alignItems: 'center',
-		justifyContent: 'center',
-	},
-	toolbar: {
-		borderRadius: 12,
-		borderWidth: 1,
-		padding: 10,
-		gap: 10,
-	},
-	searchWrap: {
-		height: 40,
-		borderRadius: 10,
-		paddingHorizontal: 10,
-		borderWidth: 1,
-		flexDirection: 'row',
-		alignItems: 'center',
-		gap: 8,
-	},
-	searchInput: {
-		flex: 1,
-		fontSize: 14,
-	},
-	addBtn: {
-		height: 42,
-		borderRadius: 10,
-		alignItems: 'center',
-		justifyContent: 'center',
-		flexDirection: 'row',
-		gap: 6,
-	},
-	addBtnText: {
-		fontSize: 14,
-		fontWeight: '700',
-	},
-	listWrap: {
-		gap: 10,
-		paddingBottom: 24,
-	},
-	emptyText: {
-		fontSize: 14,
-		textAlign: 'center',
-		marginTop: 28,
-	},
-	shiftCard: {
-		borderRadius: 12,
-		borderWidth: 1,
-		padding: 12,
-		gap: 8,
-	},
-	shiftTop: {
-		flexDirection: 'row',
-		justifyContent: 'space-between',
-		alignItems: 'center',
-		gap: 8,
-	},
-	shiftTitle: {
-		fontSize: 16,
-		fontWeight: '800',
-		flex: 1,
-	},
-	shiftTime: {
-		fontSize: 13,
-		fontWeight: '700',
-	},
-	shiftDays: {
-		fontSize: 13,
-		lineHeight: 19,
-	},
-	actionsRow: {
-		flexDirection: 'row',
-		gap: 8,
-	},
-	actionBtn: {
-		flex: 1,
-		height: 38,
-		borderRadius: 10,
-		borderWidth: 1,
-		alignItems: 'center',
-		justifyContent: 'center',
-		flexDirection: 'row',
-		gap: 6,
-	},
-	actionBtnText: {
-		fontSize: 13,
-		fontWeight: '700',
-	},
-	modalOverlay: {
-		flex: 1,
-		justifyContent: 'center',
-		padding: 16,
-	},
-	modalCard: {
-		borderRadius: 14,
-		borderWidth: 1,
-		padding: 14,
-		gap: 10,
-	},
-	modalTitle: {
-		fontSize: 18,
-		fontWeight: '800',
-	},
-	input: {
-		height: 42,
-		borderRadius: 10,
-		borderWidth: 1,
-		paddingHorizontal: 12,
-		fontSize: 14,
-	},
-	timeRow: {
-		flexDirection: 'row',
-		gap: 8,
-	},
-	halfInput: {
-		flex: 1,
-	},
-	weekdayLabel: {
-		fontSize: 13,
-		fontWeight: '700',
-	},
-	daysWrap: {
-		flexDirection: 'row',
-		flexWrap: 'wrap',
-		gap: 8,
-	},
-	dayChip: {
-		height: 34,
-		paddingHorizontal: 10,
-		borderRadius: 17,
-		borderWidth: 1,
-		alignItems: 'center',
-		justifyContent: 'center',
-	},
-	dayChipText: {
-		fontSize: 12,
-		fontWeight: '700',
-	},
-	modalActions: {
-		flexDirection: 'row',
-		gap: 8,
-		marginTop: 4,
-	},
-	modalBtn: {
-		flex: 1,
-		height: 40,
-		borderRadius: 10,
-		borderWidth: 1,
-		alignItems: 'center',
-		justifyContent: 'center',
-	},
-	modalBtnText: {
-		fontSize: 14,
-		fontWeight: '700',
-	},
-});
+function createStyles(palette: ReturnType<typeof useSettingsTheme>['palette']) {
+	return StyleSheet.create({
+		safeArea: {
+			flex: 1,
+		},
+		loadingState: {
+			flex: 1,
+			alignItems: 'center',
+			justifyContent: 'center',
+			gap: 10,
+		},
+		loadingText: {
+			fontSize: 14,
+			fontWeight: '600',
+		},
+		container: {
+			flex: 1,
+			padding: 16,
+			gap: 10,
+		},
+		appBar: {
+			height: 56,
+			borderRadius: 14,
+			paddingHorizontal: 12,
+			borderWidth: 1,
+			flexDirection: 'row',
+			alignItems: 'center',
+			justifyContent: 'space-between',
+		},
+		appBarTitle: {
+			fontSize: 16,
+			fontWeight: '800',
+		},
+		iconBtn: {
+			width: 36,
+			height: 36,
+			borderRadius: 18,
+			borderWidth: 1,
+			alignItems: 'center',
+			justifyContent: 'center',
+		},
+		toolbar: {
+			borderRadius: 12,
+			borderWidth: 1,
+			padding: 10,
+			gap: 10,
+		},
+		searchWrap: {
+			height: 40,
+			borderRadius: 10,
+			paddingHorizontal: 10,
+			borderWidth: 1,
+			flexDirection: 'row',
+			alignItems: 'center',
+			gap: 8,
+		},
+		searchInput: {
+			flex: 1,
+			fontSize: 14,
+		},
+		addBtn: {
+			height: 42,
+			borderRadius: 10,
+			alignItems: 'center',
+			justifyContent: 'center',
+			flexDirection: 'row',
+			gap: 6,
+		},
+		addBtnText: {
+			fontSize: 14,
+			fontWeight: '700',
+		},
+		listWrap: {
+			gap: 10,
+			paddingBottom: 24,
+		},
+		emptyText: {
+			fontSize: 14,
+			textAlign: 'center',
+			marginTop: 28,
+		},
+		shiftCard: {
+			borderRadius: 12,
+			borderWidth: 1,
+			padding: 12,
+			gap: 8,
+		},
+		shiftTop: {
+			flexDirection: 'row',
+			justifyContent: 'space-between',
+			alignItems: 'center',
+			gap: 8,
+		},
+		shiftTitle: {
+			fontSize: 16,
+			fontWeight: '800',
+			flex: 1,
+		},
+		shiftTime: {
+			fontSize: 13,
+			fontWeight: '700',
+		},
+		shiftDays: {
+			fontSize: 13,
+			lineHeight: 19,
+		},
+		actionsRow: {
+			flexDirection: 'row',
+			gap: 8,
+		},
+		actionBtn: {
+			flex: 1,
+			height: 38,
+			borderRadius: 10,
+			borderWidth: 1,
+			alignItems: 'center',
+			justifyContent: 'center',
+			flexDirection: 'row',
+			gap: 6,
+		},
+		actionBtnText: {
+			fontSize: 13,
+			fontWeight: '700',
+		},
+		modalOverlay: {
+			flex: 1,
+			justifyContent: 'center',
+			padding: 16,
+		},
+		modalCard: {
+			borderRadius: 14,
+			borderWidth: 1,
+			padding: 14,
+			gap: 10,
+		},
+		modalTitle: {
+			fontSize: 18,
+			fontWeight: '800',
+		},
+		input: {
+			height: 42,
+			borderRadius: 10,
+			borderWidth: 1,
+			paddingHorizontal: 12,
+			fontSize: 14,
+		},
+		timeRow: {
+			flexDirection: 'row',
+			gap: 8,
+		},
+		halfInput: {
+			flex: 1,
+		},
+		weekdayLabel: {
+			fontSize: 13,
+			fontWeight: '700',
+		},
+		daysWrap: {
+			flexDirection: 'row',
+			flexWrap: 'wrap',
+			gap: 8,
+		},
+		dayChip: {
+			height: 34,
+			paddingHorizontal: 10,
+			borderRadius: 17,
+			borderWidth: 1,
+			alignItems: 'center',
+			justifyContent: 'center',
+		},
+		dayChipText: {
+			fontSize: 12,
+			fontWeight: '700',
+		},
+		modalActions: {
+			flexDirection: 'row',
+			gap: 8,
+			marginTop: 4,
+		},
+		modalBtn: {
+			flex: 1,
+			height: 40,
+			borderRadius: 10,
+			borderWidth: 1,
+			alignItems: 'center',
+			justifyContent: 'center',
+		},
+		modalBtnText: {
+			fontSize: 14,
+			fontWeight: '700',
+		},
+	});
+}
