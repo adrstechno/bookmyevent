@@ -86,3 +86,11 @@ export const forgotPassword = async (email: string): Promise<string> => {
 	});
 	return response.data.message ?? 'Reset instructions have been sent if the account exists.';
 };
+
+export const resendVerificationEmail = async (email: string): Promise<string> => {
+	const response = await apiClient.post<{ message?: string }>(API_ENDPOINTS.auth.resendVerification, {
+		email,
+	});
+
+	return response.data.message ?? 'Verification email sent. Please check your inbox.';
+};

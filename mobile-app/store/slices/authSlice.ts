@@ -21,6 +21,12 @@ type AuthState = {
 	error: string | null;
 };
 
+export type LoginErrorPayload = {
+	message: string;
+	requiresVerification?: boolean;
+	email?: string;
+};
+
 const initialState: AuthState = {
 	token: null,
 	role: null,
@@ -50,6 +56,31 @@ const toErrorMessage = (error: unknown, fallback: string) => {
 	}
 
 	return fallback;
+};
+
+const toLoginErrorPayload = (error: unknown, fallback: string): LoginErrorPayload => {
+	const message = toErrorMessage(error, fallback);
+
+	if (error && typeof error === 'object' && 'details' in error) {
+		const details = (error as { details?: unknown }).details;
+		if (details && typeof details === 'object') {
+			const requiresVerification = Boolean(
+				(details as { requiresVerification?: unknown }).requiresVerification
+			);
+			const email =
+				typeof (details as { email?: unknown }).email === 'string'
+					? (details as { email: string }).email
+					: undefined;
+
+			return {
+				message,
+				requiresVerification,
+				email,
+			};
+		}
+	}
+
+	return { message };
 };
 
 export const bootstrapAuth = createAsyncThunk('auth/bootstrap', async () => {
@@ -88,8 +119,9 @@ export const loginWithCredentials = createAsyncThunk(
 			await persistSession(session);
 			return session;
 		} catch (error) {
-			const message = toErrorMessage(error, 'Login failed. Please verify your credentials.');
-			return rejectWithValue(message);
+			return rejectWithValue(
+				toLoginErrorPayload(error, 'Login failed. Please verify your credentials.')
+			);
 		}
 	}
 );
@@ -180,7 +212,9 @@ const authSlice = createSlice({
 				state.error =
 					typeof action.payload === 'string'
 						? action.payload
-						: 'Login failed. Please verify your credentials.';
+						: typeof action.payload === 'object' && action.payload && 'message' in action.payload
+							? String((action.payload as { message?: unknown }).message ?? 'Login failed. Please verify your credentials.')
+							: 'Login failed. Please verify your credentials.';
 			})
 			.addCase(registerWithCredentials.pending, (state) => {
 				state.isLoading = true;

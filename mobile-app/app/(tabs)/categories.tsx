@@ -1,4 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, TextInput, View, type ImageSourcePropType } from 'react-native';
@@ -145,6 +146,7 @@ type ServiceCardItemProps = {
 	card: ServiceCard;
 	hasImageFailed: boolean;
 	onImageError: (cardId: string) => void;
+	onViewVendors: (card: ServiceCard) => void;
 	isDark: boolean;
 	palette: {
 		surfaceBg: string;
@@ -164,6 +166,7 @@ const ServiceCardItem = memo(function ServiceCardItem({
 	card,
 	hasImageFailed,
 	onImageError,
+	onViewVendors,
 	isDark,
 	palette,
 }: ServiceCardItemProps) {
@@ -205,6 +208,7 @@ const ServiceCardItem = memo(function ServiceCardItem({
 						{ backgroundColor: palette.primary, borderColor: palette.primaryStrong, shadowColor: palette.shadow },
 						pressed ? styles.viewButtonPressed : null,
 					]}
+					onPress={() => onViewVendors(card)}
 					accessibilityRole="button"
 					accessibilityLabel={`View vendors for ${card.title}`}
 				>
@@ -221,6 +225,7 @@ const ServiceCardItem = memo(function ServiceCardItem({
 });
 
 export default function CategoriesTabScreen() {
+	const router = useRouter();
 	const { mode, palette } = useSettingsTheme();
 	const isDark = mode === 'dark';
 	const [activeService, setActiveService] = useState<string>('all');
@@ -253,6 +258,21 @@ export default function CategoriesTabScreen() {
 			return { ...prev, [cardId]: true };
 		});
 	}, []);
+
+	const handleViewVendors = useCallback(
+		(card: ServiceCard) => {
+			const isNumericSubservice = /^\d+$/.test(card.id);
+			router.push({
+				pathname: '/vendors',
+				params: {
+					serviceId: card.categoryId,
+					subserviceId: isNumericSubservice ? card.id : '',
+					serviceName: card.title,
+				},
+			});
+		},
+		[router]
+	);
 
 	useEffect(() => {
 		let isMounted = true;
@@ -474,6 +494,7 @@ export default function CategoriesTabScreen() {
 								card={card}
 								hasImageFailed={Boolean(failedImageIds[card.id])}
 								onImageError={handleImageError}
+								onViewVendors={handleViewVendors}
 								isDark={isDark}
 								palette={palette}
 							/>

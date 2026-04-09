@@ -95,6 +95,7 @@ function RootNavigator() {
 			<Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 			<Stack.Screen name="(vendor)" options={{ headerShown: false }} />
 			<Stack.Screen name="(admin)" options={{ headerShown: false }} />
+			<Stack.Screen name="notifications" options={{ headerShown: false }} />
 			<Stack.Screen name="app-error" options={{ headerShown: false }} />
 			<Stack.Screen name="about-us" options={{ headerShown: false }} />
 			<Stack.Screen name="profile-edit" options={{ headerShown: false }} />

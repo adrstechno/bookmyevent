@@ -1,5 +1,5 @@
-import { useCallback, useMemo, useState } from 'react';
-import { FlatList, ImageBackground, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { FlatList, ImageBackground, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,7 +11,32 @@ import FadeInView from '@/components/common/FadeInView';
 import { TabsTopBar } from '@/components/layout/TabsTopBar';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { notificationService } from '@/services/notification/notificationService';
 import { useSettingsTheme } from '@/theme/settingsTheme';
+
+const HERO_SLIDES = [
+	{
+		id: 'wedding-hero',
+		tag: 'EVENT PLANNING',
+		title: 'Moments that stay.',
+		subtitle: 'Plan faster. Book smarter.',
+		image: require('@/assets/images/home/wedding.jpg'),
+	},
+	{
+		id: 'birthday-hero',
+		tag: 'PARTY READY',
+		title: 'Host better.',
+		subtitle: 'Everything you need in one place.',
+		image: require('@/assets/images/home/birthday.jpg'),
+	},
+	{
+		id: 'seminar-hero',
+		tag: 'CORPORATE EVENTS',
+		title: 'Plan with confidence.',
+		subtitle: 'Smooth events, zero chaos.',
+		image: require('@/assets/images/home/seminar.jpg'),
+	},
+] as const;
 
 const EVENT_CARDS = [
 	{
@@ -49,12 +74,18 @@ const EVENT_CARDS = [
 export default function HomeTabScreen() {
 	const router = useRouter();
 	const tabBarHeight = useBottomTabBarHeight();
+	const heroCarouselRef = useRef<FlatList<(typeof HERO_SLIDES)[number]>>(null);
+	const heroAutoplayLockRef = useRef(false);
+	const { width: windowWidth } = useWindowDimensions();
 	const { mode, palette } = useSettingsTheme();
 	const isDark = mode === 'dark';
 	const screenBg = palette.screenBg;
 	const elevated = palette.primaryStrong;
 	const [activeFilter, setActiveFilter] = useState<string>('all');
 	const [savedEvents, setSavedEvents] = useState<Record<string, boolean>>({});
+	const [activeHeroSlide, setActiveHeroSlide] = useState(0);
+	const [unreadCount, setUnreadCount] = useState(0);
+	const heroWidth = windowWidth - 32;
 
 	const filterChips = useMemo(
 		() => [{ id: 'all', label: 'All' }, ...EVENT_CARDS.map((card) => ({ id: card.id, label: card.title.replace(' Event', '') }))],
@@ -68,18 +99,24 @@ export default function HomeTabScreen() {
 
 	const savedCount = useMemo(() => Object.values(savedEvents).filter(Boolean).length, [savedEvents]);
 
-	const onSoftPress = useCallback(async () => {
-		await Haptics.selectionAsync();
+	const fetchUnreadCount = useCallback(async () => {
+		const result = await notificationService.getUnreadCount();
+		if (result.success) {
+			setUnreadCount(result.data);
+			return;
+		}
+
+		setUnreadCount(0);
 	}, []);
+
+	const onOpenNotifications = useCallback(async () => {
+		await Haptics.selectionAsync();
+		router.push('/notifications');
+	}, [router]);
 
 	const onOpenCategories = useCallback(async () => {
 		await Haptics.selectionAsync();
 		router.push('/(tabs)/categories');
-	}, [router]);
-
-	const onOpenSupport = useCallback(async () => {
-		await Haptics.selectionAsync();
-		router.push('/support');
 	}, [router]);
 
 	const onSelectFilter = useCallback(async (filterId: string) => {
@@ -91,6 +128,35 @@ export default function HomeTabScreen() {
 		await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 		setSavedEvents((prev) => ({ ...prev, [eventId]: !prev[eventId] }));
 	}, []);
+
+	useEffect(() => {
+		void fetchUnreadCount();
+		const interval = setInterval(() => {
+			void fetchUnreadCount();
+		}, 30000);
+
+		return () => clearInterval(interval);
+	}, [fetchUnreadCount]);
+
+	useEffect(() => {
+		if (HERO_SLIDES.length <= 1) {
+			return;
+		}
+
+		const interval = setInterval(() => {
+			if (heroAutoplayLockRef.current) {
+				return;
+			}
+
+			setActiveHeroSlide((currentIndex) => {
+				const nextIndex = (currentIndex + 1) % HERO_SLIDES.length;
+				heroCarouselRef.current?.scrollToIndex({ index: nextIndex, animated: true });
+				return nextIndex;
+			});
+		}, 4200);
+
+		return () => clearInterval(interval);
+	}, [heroWidth]);
 
 	const renderEventCard = useCallback(
 		({ item }: { item: (typeof EVENT_CARDS)[number] }) => (
@@ -153,16 +219,25 @@ export default function HomeTabScreen() {
 			<TabsTopBar
 				title="Home"
 				rightContent={(
-					<Pressable
-						style={({ pressed }) => [
-							styles.iconBtn,
-							{ backgroundColor: elevated, borderColor: palette.primaryStrong },
-							pressed ? styles.iconBtnPressed : null,
-						]}
-						onPress={onSoftPress}
-					>
-						<Ionicons name="notifications-outline" size={20} color={palette.onPrimary} />
-					</Pressable>
+					<View style={styles.notificationWrap}>
+						<Pressable
+							style={({ pressed }) => [
+								styles.iconBtn,
+								{ backgroundColor: elevated, borderColor: palette.primaryStrong },
+								pressed ? styles.iconBtnPressed : null,
+							]}
+							onPress={onOpenNotifications}
+						>
+							<Ionicons name="notifications-outline" size={20} color={palette.onPrimary} />
+						</Pressable>
+						{unreadCount > 0 && (
+							<View style={[styles.notificationBadge, { backgroundColor: palette.accent }]}>
+								<ThemedText style={[styles.notificationBadgeText, { color: palette.onPrimary }]}>
+									{unreadCount > 9 ? '9+' : unreadCount}
+								</ThemedText>
+							</View>
+						)}
+					</View>
 				)}
 			/>
 			<ScrollView
@@ -171,45 +246,61 @@ export default function HomeTabScreen() {
 				showsVerticalScrollIndicator={false}
 			>
 			<FadeInView delay={40} distance={8}>
-				<ImageBackground
-					source={require('@/assets/images/home/hero.jpg')}
-					imageStyle={styles.heroImageStyle}
-					style={styles.heroWrapper}
-				>
-					<View style={[styles.heroOverlay, { backgroundColor: palette.overlay }]}>
-						<ThemedText style={[styles.heroTag, { color: palette.accent }]}>EVENT MANAGEMENT PLATFORM</ThemedText>
-						<ThemedText type="title" style={[styles.heroTitle, { color: palette.onPrimary }]}>
-							Create Events People Remember
-						</ThemedText>
-						<ThemedText style={[styles.heroSubtitle, { color: '#F6F2FF' }]}>
-							From weddings to corporate shows, plan, organize, and manage everything from one app.
-						</ThemedText>
-						<View style={styles.heroActionRow}>
-							<Pressable
-								style={({ pressed }) => [
-									styles.actionButton,
-									styles.actionPrimary,
-									{ backgroundColor: palette.primary, borderColor: palette.primaryStrong, shadowColor: palette.shadow },
-									pressed ? styles.actionButtonPressed : null,
-								]}
-								onPress={onOpenCategories}
-							>
-								<ThemedText style={[styles.actionPrimaryText, { color: palette.onPrimary }]}>Explore Services</ThemedText>
-							</Pressable>
-							<Pressable
-								style={({ pressed }) => [
-									styles.actionButton,
-									styles.actionSecondary,
-									{ backgroundColor: palette.elevatedBg, borderColor: palette.accent, shadowColor: palette.shadow },
-									pressed ? styles.actionButtonPressed : null,
-								]}
-								onPress={onOpenSupport}
-							>
-								<ThemedText style={[styles.actionSecondaryText, { color: palette.primaryStrong }]}>Contact Team</ThemedText>
-							</Pressable>
-						</View>
+				<View style={[styles.heroShell, { width: heroWidth }]}>
+					<FlatList
+						ref={heroCarouselRef}
+						horizontal
+						pagingEnabled
+						showsHorizontalScrollIndicator={false}
+						data={HERO_SLIDES}
+						keyExtractor={(item) => item.id}
+						getItemLayout={(_, index) => ({ length: heroWidth, offset: heroWidth * index, index })}
+						decelerationRate="fast"
+						snapToInterval={heroWidth}
+						snapToAlignment="start"
+						bounces={false}
+						showsVerticalScrollIndicator={false}
+						onScrollBeginDrag={() => {
+							heroAutoplayLockRef.current = true;
+						}}
+						onMomentumScrollEnd={(event) => {
+							const nextIndex = Math.round(event.nativeEvent.contentOffset.x / heroWidth);
+							setActiveHeroSlide(nextIndex);
+							heroAutoplayLockRef.current = false;
+						}}
+						renderItem={({ item }) => (
+							<ImageBackground source={item.image} imageStyle={styles.heroImageStyle} style={[styles.heroWrapper, { width: heroWidth }]}>
+								<View style={[styles.heroOverlay, { backgroundColor: palette.overlay }]}>
+									<ThemedText style={[styles.heroTag, { color: palette.accent }]}>{item.tag}</ThemedText>
+									<ThemedText type="title" style={[styles.heroTitle, { color: palette.onPrimary }]}>
+										{item.title}
+									</ThemedText>
+									<ThemedText style={[styles.heroSubtitle, { color: '#F6F2FF' }]} numberOfLines={1}>
+										{item.subtitle}
+									</ThemedText>
+									<Pressable
+										style={({ pressed }) => [
+											styles.actionButton,
+											styles.actionPrimary,
+											styles.heroActionSingle,
+											{ backgroundColor: palette.primary, borderColor: palette.primaryStrong, shadowColor: palette.shadow },
+											pressed ? styles.actionButtonPressed : null,
+										]}
+										onPress={onOpenCategories}
+									>
+										<ThemedText style={[styles.actionPrimaryText, { color: palette.onPrimary }]}>Explore Services</ThemedText>
+									</Pressable>
+								</View>
+							</ImageBackground>
+						)}
+					/>
+					<View style={styles.heroDotsRow}>
+						{HERO_SLIDES.map((item, index) => {
+							const active = index === activeHeroSlide;
+							return <View key={item.id} style={[styles.heroDot, { backgroundColor: active ? palette.accent : palette.border, opacity: active ? 1 : 0.45 }]} />;
+						})}
 					</View>
-				</ImageBackground>
+				</View>
 			</FadeInView>
 
 			<FadeInView delay={90} distance={8} style={styles.statRow}>
@@ -307,6 +398,28 @@ const styles = StyleSheet.create({
 	iconBtnPressed: {
 		opacity: 0.7,
 	},
+	notificationWrap: {
+		position: 'relative',
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
+	notificationBadge: {
+		position: 'absolute',
+		top: -4,
+		right: -4,
+		minWidth: 20,
+		height: 20,
+		borderRadius: 10,
+		paddingHorizontal: 5,
+		alignItems: 'center',
+		justifyContent: 'center',
+		borderWidth: 1,
+		borderColor: '#FFFFFF',
+	},
+	notificationBadgeText: {
+		fontSize: 10,
+		fontWeight: '800',
+	},
 	sectionTitle: {
 		marginTop: 2,
 		fontSize: 22,
@@ -319,12 +432,16 @@ const styles = StyleSheet.create({
 	},
 	heroTag: {
 		fontSize: 11,
-		fontWeight: '600',
-		letterSpacing: 0.4,
+		fontWeight: '700',
+		letterSpacing: 0.8,
 		color: '#E2E8F0',
 	},
+	heroShell: {
+		borderRadius: 20,
+		overflow: 'hidden',
+	},
 	heroWrapper: {
-		height: 260,
+		height: 270,
 		borderRadius: 20,
 		overflow: 'hidden',
 	},
@@ -341,22 +458,20 @@ const styles = StyleSheet.create({
 	heroSubtitle: {
 		marginTop: 6,
 		color: '#E2E8F0',
-		fontSize: 14,
-		lineHeight: 20,
+		fontSize: 12,
+		lineHeight: 16,
 	},
 	heroTitle: {
-		fontSize: 30,
-		lineHeight: 34,
+		fontSize: 24,
+		lineHeight: 28,
 		color: '#FFFFFF',
 		marginTop: 4,
 	},
-	heroActionRow: {
-		flexDirection: 'row',
-		gap: 8,
+	heroActionSingle: {
 		marginTop: 12,
+		alignSelf: 'stretch',
 	},
 	actionButton: {
-		flex: 1,
 		borderRadius: 12,
 		paddingVertical: 10,
 		alignItems: 'center',
@@ -370,21 +485,21 @@ const styles = StyleSheet.create({
 		borderWidth: 1,
 		boxShadow: '0px 6px 10px rgba(15, 23, 42, 0.2)',
 	},
-	actionSecondary: {
-		backgroundColor: 'rgba(255, 255, 255, 0.18)',
-		borderWidth: 1,
-		borderColor: 'rgba(255, 255, 255, 0.4)',
-		boxShadow: '0px 5px 9px rgba(15, 23, 42, 0.16)',
-	},
 	actionPrimaryText: {
 		color: '#FFFFFF',
 		fontWeight: '700',
 		fontSize: 13,
 	},
-	actionSecondaryText: {
-		color: '#FFFFFF',
-		fontWeight: '700',
-		fontSize: 13,
+	heroDotsRow: {
+		flexDirection: 'row',
+		justifyContent: 'center',
+		gap: 8,
+		marginTop: 10,
+	},
+	heroDot: {
+		width: 8,
+		height: 8,
+		borderRadius: 999,
 	},
 	statRow: {
 		flexDirection: 'row',

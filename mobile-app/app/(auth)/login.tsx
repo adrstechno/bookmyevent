@@ -1,13 +1,19 @@
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Redirect, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { useAppToast } from '@/components/common/AppToastProvider';
+import { resendVerificationEmail } from '@/services/auth/authApi';
 import { useAppDispatch, useAppSelector } from '@/store';
-import { clearAuthError, loginWithCredentials, registerWithCredentials } from '@/store/slices/authSlice';
+import {
+	clearAuthError,
+	loginWithCredentials,
+	registerWithCredentials,
+	type LoginErrorPayload,
+} from '@/store/slices/authSlice';
 import { useAppTheme } from '@/theme/useAppTheme';
 import { getRoleHomeRoute } from '@/utils/authRole';
 
@@ -83,6 +89,19 @@ export default function LoginScreen() {
 		return true;
 	};
 
+	const handleResendVerification = async (targetEmail: string) => {
+		try {
+			const resendMessage = await resendVerificationEmail(targetEmail.trim().toLowerCase());
+			showSuccess(resendMessage || 'Verification email sent. Please check your inbox.');
+		} catch (resendError) {
+			const message =
+				resendError && typeof resendError === 'object' && 'message' in resendError
+					? String((resendError as { message?: unknown }).message ?? '')
+					: '';
+			showError(message || 'Failed to resend verification email. Please try again.');
+		}
+	};
+
 	const onSubmit = async () => {
 		setLocalError('');
 		dispatch(clearAuthError());
@@ -101,8 +120,29 @@ export default function LoginScreen() {
 				).unwrap();
 				showSuccess('Login successful!');
 			} catch (err) {
-				const message = typeof err === 'string' ? err : 'Login failed. Please try again.';
+				const loginError =
+					typeof err === 'string'
+						? ({ message: err } as LoginErrorPayload)
+						: (err as LoginErrorPayload);
+				const message = loginError?.message || 'Login failed. Please try again.';
 				showError(message);
+
+				if (loginError?.requiresVerification) {
+					const targetEmail = loginError.email || email.trim().toLowerCase();
+					Alert.alert(
+						'Email Verification Required',
+						'Would you like to resend the verification email?',
+						[
+							{ text: 'Cancel', style: 'cancel' },
+							{
+								text: 'Resend',
+								onPress: () => {
+									void handleResendVerification(targetEmail);
+								},
+							},
+						]
+					);
+				}
 			}
 			return;
 		}
