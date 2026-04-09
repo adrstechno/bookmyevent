@@ -349,20 +349,16 @@ export default function LoginScreen() {
 					{/* Mode Switch Footer */}
 					{mode === 'login' ? (
 						<View style={styles.footerRow}>
-							<ThemedText style={[styles.footerText, { color: palette.subtext }]}>
-								Don&apos;t have an account?{' '}
-							</ThemedText>
+							<ThemedText style={[styles.footerText, { color: palette.subtext }]}>Don&apos;t have an account?</ThemedText>
 							<Pressable onPress={() => switchMode('register')} disabled={isLoading}>
-								<ThemedText style={[styles.footerLink, { color: palette.primary }]}>Register</ThemedText>
+								<ThemedText style={[styles.footerLink, styles.footerLinkSpacing, { color: palette.primary }]}>Register</ThemedText>
 							</Pressable>
 						</View>
 					) : (
 						<View style={styles.footerRow}>
-							<ThemedText style={[styles.footerText, { color: palette.subtext }]}>
-								Already have an account?{' '}
-							</ThemedText>
+							<ThemedText style={[styles.footerText, { color: palette.subtext }]}>Already have an account?</ThemedText>
 							<Pressable onPress={() => switchMode('login')} disabled={isLoading}>
-								<ThemedText style={[styles.footerLink, { color: palette.primary }]}>Login</ThemedText>
+								<ThemedText style={[styles.footerLink, styles.footerLinkSpacing, { color: palette.primary }]}>Login</ThemedText>
 							</Pressable>
 						</View>
 					)}
@@ -522,5 +518,8 @@ const styles = StyleSheet.create({
 	footerLink: {
 		fontSize: 13,
 		fontWeight: '700',
+	},
+	footerLinkSpacing: {
+		marginLeft: 4,
 	},
 });

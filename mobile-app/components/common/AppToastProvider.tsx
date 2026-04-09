@@ -48,19 +48,24 @@ export function AppToastProvider({ children }: { children: ReactNode }) {
 	return (
 		<ToastContext.Provider value={value}>
 			{children}
-			<View pointerEvents="none" style={styles.wrap}>
+			<View style={[styles.wrap, styles.noPointerEvents]}>
 				{toasts.map((toast, index) => (
 					<FadeInView key={toast.id} delay={index * 40} distance={4}>
 						<View
-						key={toast.id}
-						style={[
-							styles.toast,
-							{ borderColor: palette.border, backgroundColor: palette.elevatedBg },
-							toast.type === 'success' ? { backgroundColor: palette.successSoft, borderColor: palette.successBorder } : null,
-							toast.type === 'error' ? { backgroundColor: palette.dangerSoft, borderColor: palette.dangerBorder } : null,
-							toast.type === 'info' ? { backgroundColor: palette.infoSoft, borderColor: palette.infoBorder } : null,
-						]}
-					>
+							style={[
+								styles.toast,
+								{ borderColor: palette.border, backgroundColor: palette.elevatedBg },
+								toast.type === 'success'
+									? { backgroundColor: palette.successSoft, borderColor: palette.successBorder }
+									: null,
+								toast.type === 'error'
+									? { backgroundColor: palette.dangerSoft, borderColor: palette.dangerBorder }
+									: null,
+								toast.type === 'info'
+									? { backgroundColor: palette.infoSoft, borderColor: palette.infoBorder }
+									: null,
+							]}
+						>
 							<ThemedText style={[styles.toastText, { color: palette.text }]}>{toast.message}</ThemedText>
 						</View>
 					</FadeInView>
@@ -87,6 +92,9 @@ const styles = StyleSheet.create({
 		right: 12,
 		gap: 8,
 		zIndex: 9999,
+	},
+	noPointerEvents: {
+		pointerEvents: 'none',
 	},
 	toast: {
 		paddingVertical: 10,

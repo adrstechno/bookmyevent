@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Animated, type ViewStyle } from 'react-native';
+import { Animated, Platform, type ViewStyle } from 'react-native';
 
 type FadeInViewProps = {
 	duration?: number;
@@ -18,6 +18,7 @@ export default function FadeInView({
 }: FadeInViewProps) {
 	const opacity = useRef(new Animated.Value(0)).current;
 	const translateY = useRef(new Animated.Value(distance)).current;
+	const useNativeDriver = Platform.OS !== 'web';
 
 	useEffect(() => {
 		Animated.parallel([
@@ -25,16 +26,16 @@ export default function FadeInView({
 				toValue: 1,
 				duration,
 				delay,
-				useNativeDriver: true,
+				useNativeDriver,
 			}),
 			Animated.timing(translateY, {
 				toValue: 0,
 				duration,
 				delay,
-				useNativeDriver: true,
+				useNativeDriver,
 			}),
 		]).start();
-	}, [delay, distance, duration, opacity, translateY]);
+	}, [delay, distance, duration, opacity, translateY, useNativeDriver]);
 
 	return (
 		<Animated.View style={[style, { opacity, transform: [{ translateY }] }]}>

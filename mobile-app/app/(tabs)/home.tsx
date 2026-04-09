@@ -368,19 +368,13 @@ const styles = StyleSheet.create({
 	actionPrimary: {
 		backgroundColor: '#0F766E',
 		borderWidth: 1,
-		shadowOpacity: 0.2,
-		shadowOffset: { width: 0, height: 6 },
-		shadowRadius: 10,
-		elevation: 4,
+		boxShadow: '0px 6px 10px rgba(15, 23, 42, 0.2)',
 	},
 	actionSecondary: {
 		backgroundColor: 'rgba(255, 255, 255, 0.18)',
 		borderWidth: 1,
 		borderColor: 'rgba(255, 255, 255, 0.4)',
-		shadowOpacity: 0.16,
-		shadowOffset: { width: 0, height: 5 },
-		shadowRadius: 9,
-		elevation: 3,
+		boxShadow: '0px 5px 9px rgba(15, 23, 42, 0.16)',
 	},
 	actionPrimaryText: {
 		color: '#FFFFFF',
@@ -473,10 +467,7 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		backgroundColor: '#0F766E',
 		borderWidth: 1,
-		shadowOpacity: 0.18,
-		shadowOffset: { width: 0, height: 5 },
-		shadowRadius: 9,
-		elevation: 3,
+		boxShadow: '0px 5px 9px rgba(15, 23, 42, 0.18)',
 	},
 	cardCtaBtnPressed: {
 		opacity: 0.88,

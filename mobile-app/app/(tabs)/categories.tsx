@@ -538,11 +538,7 @@ const styles = StyleSheet.create({
 	serviceChipActive: {
 		backgroundColor: '#2F6570',
 		borderColor: '#2F6570',
-		shadowColor: '#0F172A',
-		shadowOpacity: 0.12,
-		shadowOffset: { width: 0, height: 4 },
-		shadowRadius: 10,
-		elevation: 3,
+		boxShadow: '0px 4px 10px rgba(15, 23, 42, 0.12)',
 	},
 	serviceChipPressed: {
 		opacity: 0.88,
@@ -572,11 +568,7 @@ const styles = StyleSheet.create({
 		backgroundColor: '#FFFFFF',
 		borderWidth: 1,
 		borderColor: '#E2E8F0',
-		shadowColor: '#0F172A',
-		shadowOpacity: 0.08,
-		shadowOffset: { width: 0, height: 6 },
-		shadowRadius: 14,
-		elevation: 4,
+		boxShadow: '0px 6px 14px rgba(15, 23, 42, 0.08)',
 	},
 	serviceCardImage: {
 		width: '100%',
@@ -648,10 +640,7 @@ const styles = StyleSheet.create({
 		justifyContent: 'center',
 		backgroundColor: '#2F6570',
 		borderWidth: 1,
-		shadowOpacity: 0.2,
-		shadowOffset: { width: 0, height: 6 },
-		shadowRadius: 10,
-		elevation: 4,
+		boxShadow: '0px 6px 10px rgba(15, 23, 42, 0.2)',
 	},
 	viewButtonPressed: {
 		opacity: 0.9,
