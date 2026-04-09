@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppTopBar } from '@/components/layout/AppTopBar';
+import { changePassword, validateToken } from '@/services/auth/authApi';
 import { ThemedText } from '@/components/themed-text';
 import { useAppSelector } from '@/store';
 import { useSettingsTheme } from '@/theme/settingsTheme';
@@ -26,15 +27,17 @@ export default function ProfileEditScreen() {
 	const router = useRouter();
 	const insets = useSafeAreaInsets();
 	const { isAuthenticated, isHydrated } = useAppSelector((state) => state.auth);
+	const authName = useAppSelector((state) => state.auth.name);
+	const authEmail = useAppSelector((state) => state.auth.email);
 	const { mode, palette } = useSettingsTheme();
 	const isDark = mode === 'dark';
 	const { height: screenHeight } = useWindowDimensions();
 	const params = useLocalSearchParams<EditProfileForm>();
 	const [form, setForm] = useState<EditProfileForm>({
-		firstName: params.firstName ?? 'Nayan',
-		lastName: params.lastName ?? 'Malviya',
-		email: params.email ?? 'nayan@example.com',
-		phone: params.phone ?? '+91 98765 43210',
+		firstName: params.firstName ?? (authName || 'Guest').split(' ')[0] ?? 'Guest',
+		lastName: params.lastName ?? (authName || '').split(' ').slice(1).join(' '),
+		email: params.email ?? authEmail ?? 'guest@example.com',
+		phone: params.phone ?? '',
 	});
 	const [passwordForm, setPasswordForm] = useState<ChangePasswordForm>({
 		currentPassword: '',
@@ -64,6 +67,24 @@ export default function ProfileEditScreen() {
 			}),
 		]).start();
 	}, [cardAnim, headerAnim]);
+
+	useEffect(() => {
+		const hydrateForm = async () => {
+			try {
+				const user = await validateToken();
+				setForm((prev) => ({
+					...prev,
+					firstName: user.firstName || prev.firstName,
+					lastName: user.lastName || prev.lastName,
+					email: user.email || prev.email,
+				}));
+			} catch {
+				// Keep current values when profile endpoint is unavailable.
+			}
+		};
+
+		void hydrateForm();
+	}, []);
 
 	useEffect(() => {
 		const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -113,16 +134,8 @@ export default function ProfileEditScreen() {
 
 			setIsSavingProfile(true);
 			setProfileMessage('');
-			try {
-				// Placeholder until profile update API is connected.
-				await new Promise((resolve) => setTimeout(resolve, 700));
-				setProfileMessage('Profile updated successfully.');
-				setIsEditMode(false);
-			} catch {
-				setProfileMessage('Unable to update profile. Please try again.');
-			} finally {
-				setIsSavingProfile(false);
-			}
+			setProfileMessage('Profile update API is not available yet. This form is validated and ready for backend wiring.');
+			setIsSavingProfile(false);
 		})();
 	};
 
@@ -150,10 +163,13 @@ export default function ProfileEditScreen() {
 			setIsChangingPassword(true);
 			setPasswordMessage('');
 			try {
-				// Placeholder until change-password API is connected.
-				await new Promise((resolve) => setTimeout(resolve, 700));
+				const message = await changePassword({
+					email: form.email.trim().toLowerCase(),
+					oldPassword: currentPassword,
+					newPassword,
+				});
 				setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-				setPasswordMessage('Password changed successfully.');
+				setPasswordMessage(message || 'Password changed successfully.');
 			} catch {
 				setPasswordMessage('Unable to change password. Please try again.');
 			} finally {

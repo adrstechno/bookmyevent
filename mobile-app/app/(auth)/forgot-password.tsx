@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
@@ -52,6 +52,7 @@ export default function ForgotPasswordScreen() {
 		<SafeAreaView style={[styles.safeArea, { backgroundColor: palette.screenBg }]} edges={['top', 'bottom']}>
 			<StatusBar style={isDark ? 'light' : 'dark'} />
 			<ScrollView contentContainerStyle={styles.container}>
+				<Image source={require('@/assets/images/home/logo2.png')} style={styles.brandLogo} resizeMode="contain" />
 				<View style={styles.logoPill}>
 					<ThemedText style={[styles.logoPillText, { color: palette.primary }]}>GOEVENTIFY</ThemedText>
 				</View>
@@ -94,6 +95,11 @@ const styles = StyleSheet.create({
 		padding: 20,
 		gap: 12,
 		paddingBottom: 36,
+	},
+	brandLogo: {
+		width: 170,
+		height: 64,
+		alignSelf: 'flex-start',
 	},
 	logoPill: {
 		alignSelf: 'flex-start',

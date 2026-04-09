@@ -11,6 +11,7 @@ import FadeInView from '@/components/common/FadeInView';
 import { TabsTopBar } from '@/components/layout/TabsTopBar';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { favoritesService } from '@/services/favorites/favoritesService';
 import { notificationService } from '@/services/notification/notificationService';
 import { useSettingsTheme } from '@/theme/settingsTheme';
 
@@ -126,8 +127,32 @@ export default function HomeTabScreen() {
 
 	const onToggleSave = useCallback(async (eventId: string) => {
 		await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-		setSavedEvents((prev) => ({ ...prev, [eventId]: !prev[eventId] }));
+
+		const event = EVENT_CARDS.find((item) => item.id === eventId);
+		if (!event) {
+			return;
+		}
+
+		const nextIsFavorite = !savedEvents[eventId];
+		setSavedEvents((prev) => ({ ...prev, [eventId]: nextIsFavorite }));
+		await favoritesService.setFavorite(
+			{ id: event.id, title: event.title, description: event.description },
+			nextIsFavorite
+		);
+	}, [savedEvents]);
+
+	const hydrateSavedEvents = useCallback(async () => {
+		const favorites = await favoritesService.getAll();
+		const next: Record<string, boolean> = {};
+		for (const item of favorites) {
+			next[item.id] = true;
+		}
+		setSavedEvents(next);
 	}, []);
+
+	useEffect(() => {
+		void hydrateSavedEvents();
+	}, [hydrateSavedEvents]);
 
 	useEffect(() => {
 		void fetchUnreadCount();

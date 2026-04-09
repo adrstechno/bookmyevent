@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Redirect, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -179,6 +179,7 @@ export default function LoginScreen() {
 			>
 				{/* Header Section */}
 				<View style={styles.headerSection}>
+					<Image source={require('@/assets/images/home/logo2.png')} style={styles.brandLogo} resizeMode="contain" />
 					<View style={styles.logoPill}>
 						<ThemedText style={[styles.logoPillText, { color: palette.primary }]}>GOEVENTIFY</ThemedText>
 					</View>
@@ -423,6 +424,11 @@ const styles = StyleSheet.create({
 	headerSection: {
 		gap: 6,
 		marginBottom: 4,
+	},
+	brandLogo: {
+		width: 170,
+		height: 64,
+		alignSelf: 'flex-start',
 	},
 	logoPill: {
 		alignSelf: 'flex-start',

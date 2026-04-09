@@ -22,6 +22,19 @@ type BackendRegisterResponse = {
 	first_name?: string;
 };
 
+type BackendValidateTokenResponse = {
+	success?: boolean;
+	message?: string;
+	user?: {
+		uuid?: string;
+		email?: string;
+		first_name?: string;
+		last_name?: string;
+		user_type?: string;
+		is_verified?: boolean;
+	};
+};
+
 const extractToken = (payload: BackendLoginResponse): string => {
 	const token = payload.token;
 	if (!token) {
@@ -93,4 +106,45 @@ export const resendVerificationEmail = async (email: string): Promise<string> =>
 	});
 
 	return response.data.message ?? 'Verification email sent. Please check your inbox.';
+};
+
+export type AuthenticatedUserProfile = {
+	uuid: string | null;
+	email: string;
+	firstName: string;
+	lastName: string;
+	role: LoginResponse['role'];
+	isVerified: boolean;
+};
+
+export const validateToken = async (): Promise<AuthenticatedUserProfile> => {
+	const response = await apiClient.post<BackendValidateTokenResponse>(API_ENDPOINTS.auth.validateToken);
+	const user = response.data.user;
+
+	if (!user?.email) {
+		throw new Error(response.data.message ?? 'Unable to fetch user profile.');
+	}
+
+	return {
+		uuid: user.uuid ?? null,
+		email: user.email,
+		firstName: user.first_name ?? toNameFromEmail(user.email),
+		lastName: user.last_name ?? '',
+		role: normalizeRole(user.user_type),
+		isVerified: Boolean(user.is_verified),
+	};
+};
+
+export const changePassword = async (payload: {
+	email: string;
+	oldPassword: string;
+	newPassword: string;
+}): Promise<string> => {
+	const response = await apiClient.post<{ message?: string }>(API_ENDPOINTS.auth.changePassword, {
+		email: payload.email,
+		oldPassword: payload.oldPassword,
+		newPassword: payload.newPassword,
+	});
+
+	return response.data.message ?? 'Password changed successfully.';
 };
