@@ -9,6 +9,7 @@ import {
 	restoreSession,
 } from '@/services/auth/authService';
 import type { LoginRequest, RegisterRequest } from '@/types/auth';
+import { isTokenExpired } from '@/utils/jwt';
 
 type AuthState = {
 	token: string | null;
@@ -85,10 +86,20 @@ const toLoginErrorPayload = (error: unknown, fallback: string): LoginErrorPayloa
 
 export const bootstrapAuth = createAsyncThunk('auth/bootstrap', async () => {
 	const session = await restoreSession();
+
+	if (session?.token && isTokenExpired(session.token)) {
+		await clearSession();
+		return null;
+	}
+
 	return session;
 });
 
 export const signOut = createAsyncThunk('auth/signOut', async () => {
+	await clearSession();
+});
+
+export const handleSessionExpired = createAsyncThunk('auth/handleSessionExpired', async () => {
 	await clearSession();
 });
 
@@ -190,6 +201,14 @@ const authSlice = createSlice({
 		clearAuthError(state) {
 			state.error = null;
 		},
+		sessionExpired(state) {
+			state.token = null;
+			state.role = null;
+			state.name = null;
+			state.email = null;
+			state.isAuthenticated = false;
+			state.error = 'Session expired. Please log in again.';
+		},
 	},
 	extraReducers: (builder) => {
 		builder
@@ -264,6 +283,16 @@ const authSlice = createSlice({
 				state.isHydrated = true;
 				state.isLoading = false;
 				state.error = null;
+			})
+			.addCase(handleSessionExpired.fulfilled, (state) => {
+				state.token = null;
+				state.role = null;
+				state.name = null;
+				state.email = null;
+				state.isAuthenticated = false;
+				state.isHydrated = true;
+				state.isLoading = false;
+				state.error = 'Session expired. Please log in again.';
 			});
 	},
 });
@@ -273,6 +302,6 @@ export const signIn = createAsyncThunk('auth/signIn', async (session: AuthSessio
 	dispatch(setSignedIn(session));
 });
 
-export const { setSignedIn, clearAuthError } = authSlice.actions;
+export const { setSignedIn, clearAuthError, sessionExpired } = authSlice.actions;
 export default authSlice.reducer;
 

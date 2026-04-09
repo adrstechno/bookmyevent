@@ -1,12 +1,12 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { ActivityIndicator, Image, ScrollView, StyleSheet, View } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import FadeInView from '@/components/common/FadeInView';
-import { TabsTopBar } from '@/components/layout/TabsTopBar';
+import { StackHeader } from '@/components/layout/StackHeader';
 import { ThemedText } from '@/components/themed-text';
 import { fetchVendorById, fetchVendorPackages } from '@/services/catalog/catalogService';
 import type { VendorPackage, VendorSummary } from '@/types/catalog';
@@ -50,7 +50,6 @@ function DetailRow({ label, value }: { label: string; value?: string | number })
 }
 
 export default function VendorDetailScreen() {
-	const router = useRouter();
 	const params = useLocalSearchParams<{ vendorId?: string }>();
 	const { palette, mode } = useSettingsTheme();
 	const vendorId = params.vendorId;
@@ -112,11 +111,8 @@ export default function VendorDetailScreen() {
 		<SafeAreaView style={[styles.safeArea, { backgroundColor: palette.screenBg }]} edges={['top']}>
 			<StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
 			<View style={[styles.page, { backgroundColor: palette.screenBg }]}>
-				<TabsTopBar title="Vendor Detail" />
+				<StackHeader title={heading} />
 				<View style={[styles.appBar, { backgroundColor: palette.primary }]}>
-					<ThemedText style={[styles.title, { color: palette.onPrimary }]} numberOfLines={1}>
-						{heading}
-					</ThemedText>
 					<ThemedText style={[styles.subtitle, { color: palette.onPrimary }]} numberOfLines={2}>
 						Explore profile, contact details, and available packages.
 					</ThemedText>
@@ -132,9 +128,6 @@ export default function VendorDetailScreen() {
 						<View style={[styles.stateCard, { borderColor: palette.border, backgroundColor: palette.surfaceBg }]}>
 							<ThemedText style={[styles.stateTitle, { color: palette.text }]}>Vendor detail unavailable</ThemedText>
 							<ThemedText style={[styles.stateText, { color: palette.subtext }]}>{error}</ThemedText>
-							<Pressable style={[styles.backButton, { backgroundColor: palette.primary }]} onPress={() => router.back()}>
-								<ThemedText style={[styles.backButtonText, { color: palette.onPrimary }]}>Go Back</ThemedText>
-							</Pressable>
 						</View>
 					) : vendor ? (
 						<ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -196,13 +189,9 @@ const styles = StyleSheet.create({
 	},
 	appBar: {
 		paddingHorizontal: 18,
-		paddingTop: 14,
-		paddingBottom: 18,
+		paddingTop: 8,
+		paddingBottom: 12,
 		gap: 8,
-	},
-	title: {
-		fontSize: 24,
-		fontWeight: '800',
 	},
 	subtitle: {
 		fontSize: 13,
@@ -353,15 +342,5 @@ const styles = StyleSheet.create({
 		padding: 16,
 		borderRadius: 14,
 		borderWidth: 1,
-	},
-	backButton: {
-		alignSelf: 'flex-start',
-		paddingHorizontal: 14,
-		paddingVertical: 10,
-		borderRadius: 12,
-	},
-	backButtonText: {
-		fontSize: 13,
-		fontWeight: '800',
 	},
 });

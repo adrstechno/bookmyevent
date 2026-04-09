@@ -1,6 +1,6 @@
 import { Redirect, useRouter, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, BackHandler, Pressable, ScrollView, StyleSheet, TextInput, useWindowDimensions } from 'react-native';
+import { Animated, BackHandler, Pressable, ScrollView, StyleSheet, TextInput, View, useWindowDimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -45,6 +45,7 @@ export default function ProfileEditScreen() {
 	const [passwordMessage, setPasswordMessage] = useState('');
 	const [isSavingProfile, setIsSavingProfile] = useState(false);
 	const [isChangingPassword, setIsChangingPassword] = useState(false);
+	const [isEditMode, setIsEditMode] = useState(false);
 	const headerAnim = useRef(new Animated.Value(0)).current;
 	const cardAnim = useRef(new Animated.Value(0)).current;
 
@@ -116,6 +117,7 @@ export default function ProfileEditScreen() {
 				// Placeholder until profile update API is connected.
 				await new Promise((resolve) => setTimeout(resolve, 700));
 				setProfileMessage('Profile updated successfully.');
+				setIsEditMode(false);
 			} catch {
 				setProfileMessage('Unable to update profile. Please try again.');
 			} finally {
@@ -184,7 +186,7 @@ export default function ProfileEditScreen() {
 					},
 				]}
 			>
-				<AppTopBar title="Edit Profile" onBackPress={goBack} />
+				<AppTopBar title={isEditMode ? 'Edit Profile' : 'Profile Details'} onBackPress={goBack} />
 			</Animated.View>
 
 			<ScrollView
@@ -212,70 +214,118 @@ export default function ProfileEditScreen() {
 				>
 					<ThemedText style={[styles.cardTitle, { color: palette.text }]}>Profile Information</ThemedText>
 
-					<TextInput
-						style={[styles.input, { backgroundColor: palette.headerBtnBg, borderColor: palette.border, color: palette.text }]}
-						value={form.firstName}
-						onChangeText={(value) => setForm((prev) => ({ ...prev, firstName: value }))}
-						placeholder="First Name"
-						placeholderTextColor={palette.subtext}
-					/>
-					<TextInput
-						style={[styles.input, { backgroundColor: palette.headerBtnBg, borderColor: palette.border, color: palette.text }]}
-						value={form.lastName}
-						onChangeText={(value) => setForm((prev) => ({ ...prev, lastName: value }))}
-						placeholder="Last Name"
-						placeholderTextColor={palette.subtext}
-					/>
-					<TextInput
-						style={[styles.input, { backgroundColor: palette.headerBtnBg, borderColor: palette.border, color: palette.text }]}
-						value={form.email}
-						onChangeText={(value) => setForm((prev) => ({ ...prev, email: value }))}
-						placeholder="Email"
-						placeholderTextColor={palette.subtext}
-						keyboardType="email-address"
-					/>
-					<TextInput
-						style={[styles.input, { backgroundColor: palette.headerBtnBg, borderColor: palette.border, color: palette.text }]}
-						value={form.phone}
-						onChangeText={(value) => setForm((prev) => ({ ...prev, phone: value }))}
-						placeholder="Phone"
-						placeholderTextColor={palette.subtext}
-						keyboardType="phone-pad"
-					/>
+					{isEditMode ? (
+						<>
+							<TextInput
+								style={[styles.input, { backgroundColor: palette.headerBtnBg, borderColor: palette.border, color: palette.text }]}
+								value={form.firstName}
+								onChangeText={(value) => setForm((prev) => ({ ...prev, firstName: value }))}
+								placeholder="First Name"
+								placeholderTextColor={palette.subtext}
+							/>
+							<TextInput
+								style={[styles.input, { backgroundColor: palette.headerBtnBg, borderColor: palette.border, color: palette.text }]}
+								value={form.lastName}
+								onChangeText={(value) => setForm((prev) => ({ ...prev, lastName: value }))}
+								placeholder="Last Name"
+								placeholderTextColor={palette.subtext}
+							/>
+							<TextInput
+								style={[styles.input, { backgroundColor: palette.headerBtnBg, borderColor: palette.border, color: palette.text }]}
+								value={form.email}
+								onChangeText={(value) => setForm((prev) => ({ ...prev, email: value }))}
+								placeholder="Email"
+								placeholderTextColor={palette.subtext}
+								keyboardType="email-address"
+							/>
+							<TextInput
+								style={[styles.input, { backgroundColor: palette.headerBtnBg, borderColor: palette.border, color: palette.text }]}
+								value={form.phone}
+								onChangeText={(value) => setForm((prev) => ({ ...prev, phone: value }))}
+								placeholder="Phone"
+								placeholderTextColor={palette.subtext}
+								keyboardType="phone-pad"
+							/>
 
-					<Pressable
-						style={({ pressed }) => [
-							styles.saveBtn,
-							{ backgroundColor: palette.primary, borderColor: palette.primaryStrong, shadowColor: palette.shadow },
-							isSavingProfile ? styles.saveBtnDisabled : null,
-							pressed ? styles.btnPressed : null,
-						]}
-						onPress={onSave}
-						disabled={isSavingProfile}
-					>
-						<ThemedText style={styles.saveBtnText}>{isSavingProfile ? 'Saving...' : 'Save Profile'}</ThemedText>
-					</Pressable>
+							<Pressable
+								style={({ pressed }) => [
+									styles.saveBtn,
+									{ backgroundColor: palette.primary, borderColor: palette.primaryStrong, shadowColor: palette.shadow },
+									isSavingProfile ? styles.saveBtnDisabled : null,
+									pressed ? styles.btnPressed : null,
+								]}
+								onPress={onSave}
+								disabled={isSavingProfile}
+							>
+								<ThemedText style={styles.saveBtnText}>{isSavingProfile ? 'Saving...' : 'Save Profile'}</ThemedText>
+							</Pressable>
+
+							<Pressable
+								style={({ pressed }) => [
+									styles.secondaryBtn,
+									{ backgroundColor: palette.elevatedBg, borderColor: palette.primaryStrong, shadowColor: palette.shadow },
+									pressed ? styles.btnPressed : null,
+								]}
+								onPress={() => {
+									setIsEditMode(false);
+									setProfileMessage('');
+								}}
+							>
+								<ThemedText style={[styles.secondaryBtnText, { color: palette.primaryStrong }]}>Cancel</ThemedText>
+							</Pressable>
+						</>
+					) : (
+						<>
+							<View style={[styles.detailRow, { borderBottomColor: palette.border }]}> 
+								<ThemedText style={[styles.detailLabel, { color: palette.subtext }]}>First Name</ThemedText>
+								<ThemedText style={[styles.detailValue, { color: palette.text }]}>{form.firstName}</ThemedText>
+							</View>
+							<View style={[styles.detailRow, { borderBottomColor: palette.border }]}> 
+								<ThemedText style={[styles.detailLabel, { color: palette.subtext }]}>Last Name</ThemedText>
+								<ThemedText style={[styles.detailValue, { color: palette.text }]}>{form.lastName}</ThemedText>
+							</View>
+							<View style={[styles.detailRow, { borderBottomColor: palette.border }]}> 
+								<ThemedText style={[styles.detailLabel, { color: palette.subtext }]}>Email</ThemedText>
+								<ThemedText style={[styles.detailValue, { color: palette.text }]}>{form.email}</ThemedText>
+							</View>
+							<View style={[styles.detailRow, { borderBottomColor: palette.border }]}> 
+								<ThemedText style={[styles.detailLabel, { color: palette.subtext }]}>Phone</ThemedText>
+								<ThemedText style={[styles.detailValue, { color: palette.text }]}>{form.phone}</ThemedText>
+							</View>
+							<Pressable
+								style={({ pressed }) => [
+									styles.saveBtn,
+									{ backgroundColor: palette.primary, borderColor: palette.primaryStrong, shadowColor: palette.shadow },
+									pressed ? styles.btnPressed : null,
+								]}
+								onPress={() => setIsEditMode(true)}
+							>
+								<ThemedText style={styles.saveBtnText}>Edit Profile</ThemedText>
+							</Pressable>
+						</>
+					)}
 
 					{profileMessage ? <ThemedText style={[styles.messageText, { color: palette.tint }]}>{profileMessage}</ThemedText> : null}
 				</Animated.View>
 
-				<Animated.View
-					style={[
-						styles.card,
-						{ backgroundColor: palette.surfaceBg, borderColor: palette.border, borderTopColor: palette.tint },
-						{
-							opacity: cardAnim,
-							transform: [
-								{
-									translateY: cardAnim.interpolate({
-										inputRange: [0, 1],
-										outputRange: [20, 0],
-									}),
-								},
-							],
-						},
-					]}
-				>
+				{isEditMode ? (
+					<Animated.View
+						style={[
+							styles.card,
+							{ backgroundColor: palette.surfaceBg, borderColor: palette.border, borderTopColor: palette.tint },
+							{
+								opacity: cardAnim,
+								transform: [
+									{
+										translateY: cardAnim.interpolate({
+											inputRange: [0, 1],
+											outputRange: [20, 0],
+										}),
+									},
+								],
+							},
+						]}
+					>
 					<ThemedText style={[styles.cardTitle, { color: palette.text }]}>Change Password</ThemedText>
 					<ThemedText style={[styles.helperText, { color: palette.subtext }]}>Use your current password and set a new secure password.</ThemedText>
 
@@ -318,7 +368,8 @@ export default function ProfileEditScreen() {
 					</Pressable>
 
 					{passwordMessage ? <ThemedText style={[styles.messageText, { color: palette.tint }]}>{passwordMessage}</ThemedText> : null}
-				</Animated.View>
+					</Animated.View>
+				) : null}
 			</ScrollView>
 		</SafeAreaView>
 	);
@@ -359,6 +410,20 @@ const styles = StyleSheet.create({
 		fontWeight: '800',
 		color: '#1E293B',
 		marginBottom: 8,
+	},
+	detailRow: {
+		gap: 4,
+		paddingBottom: 12,
+		marginBottom: 2,
+		borderBottomWidth: 1,
+	},
+	detailLabel: {
+		fontSize: 12,
+		fontWeight: '700',
+	},
+	detailValue: {
+		fontSize: 15,
+		fontWeight: '700',
 	},
 	input: {
 		borderWidth: 1,

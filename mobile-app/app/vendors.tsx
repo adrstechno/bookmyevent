@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import FadeInView from '@/components/common/FadeInView';
-import { TabsTopBar } from '@/components/layout/TabsTopBar';
+import { StackHeader } from '@/components/layout/StackHeader';
 import { ThemedText } from '@/components/themed-text';
 import {
 	fetchServiceCategories,
@@ -142,11 +142,8 @@ export default function VendorsScreen() {
 		<SafeAreaView style={[styles.safeArea, { backgroundColor: palette.screenBg }]} edges={['top']}>
 			<StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
 			<View style={[styles.page, { backgroundColor: palette.screenBg }]}>
-				<TabsTopBar title="Vendors" />
+				<StackHeader title={heading} />
 				<View style={[styles.appBar, { backgroundColor: palette.primary }]}>
-					<ThemedText style={[styles.title, { color: palette.onPrimary }]} numberOfLines={1}>
-						{heading}
-					</ThemedText>
 					<ThemedText style={[styles.subtitle, { color: palette.onPrimary }]} numberOfLines={2}>
 						{subtitle}
 					</ThemedText>
@@ -200,13 +197,9 @@ const styles = StyleSheet.create({
 	},
 	appBar: {
 		paddingHorizontal: 18,
-		paddingTop: 14,
-		paddingBottom: 18,
+		paddingTop: 8,
+		paddingBottom: 12,
 		gap: 8,
-	},
-	title: {
-		fontSize: 24,
-		fontWeight: '800',
 	},
 	subtitle: {
 		fontSize: 13,

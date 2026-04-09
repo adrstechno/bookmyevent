@@ -234,8 +234,10 @@ export default function CategoriesTabScreen() {
 	const [isLoading, setIsLoading] = useState(true);
 	const [loadError, setLoadError] = useState('');
 	const [allCards, setAllCards] = useState<ServiceCard[]>(CANONICAL_SERVICE_CARDS);
+	const [apiCategories, setApiCategories] = useState<CategoryChip[]>(CATEGORY_CHIPS); // Dynamic categories from API, fallback to hardcoded
 
-	const categories = CATEGORY_CHIPS;
+	// Use API-fetched categories, or fall back to hardcoded ones
+	const categories = apiCategories;
 
 	const handleSearchChange = useCallback((value: string) => {
 		setSearchValue(value);
@@ -284,86 +286,136 @@ export default function CategoriesTabScreen() {
 			}
 
 			try {
+				// ==================== PHASE 1: Fetch & Validate Categories ====================
+				console.log('[Categories] Fetching service categories from API...');
 				const categoryResponse = await api.get(API_ENDPOINTS.service.all);
-				const categoryRows = toRows(categoryResponse.data);
+				console.log('[Categories] Service categories response:', categoryResponse.data);
 
+				const categoryRows = toRows(categoryResponse.data);
+				console.log('[Categories] Parsed category rows:', categoryRows.length, 'items');
+
+				// Extract active categories with validation
 				const activeCategories = categoryRows
-					.filter((row) => Number(row.is_active ?? 1) === 1)
-					.map((row) => {
-						const categoryId = String(row.category_id ?? row.service_id ?? row.id ?? '');
+					.filter((row) => {
+						const isActive = Number(row.is_active ?? 1) === 1;
+						if (!isActive) {
+							console.log('[Categories] Skipping inactive category:', row.category_name ?? row.name);
+						}
+						return isActive;
+					})
+					.map((row, idx) => {
+						// Validate required category ID field
+						const categoryId = String(row.category_id ?? row.service_id ?? row.id ?? '').trim();
+						if (!categoryId) {
+							console.warn(`[Categories] Row ${idx} missing category ID (category_id, service_id, id all missing/empty)`);
+							return null;
+						}
+
+						const categoryName = String(row.category_name ?? row.name ?? 'Service');
+						const image = typeof row.icon_url === 'string' && row.icon_url.trim() ? row.icon_url : undefined;
+
+						console.log(`[Categories] Active category: id=${categoryId}, name=${categoryName}, hasImage=${Boolean(image)}`);
+
 						return {
 							id: categoryId,
-							name: String(row.category_name ?? row.name ?? 'Service'),
-							image: typeof row.icon_url === 'string' ? row.icon_url : undefined,
+							name: categoryName,
+							image,
 						};
 					})
-					.filter((item) => item.id.length > 0);
+					.filter((item) => item !== null) as ({ id: string; name: string; image?: string })[];
 
+				console.log('[Categories] Total active categories:', activeCategories.length);
+
+				// Phase 3: Fallback to hardcoded if no API results
 				if (activeCategories.length === 0) {
+					console.warn('[Categories] No active categories from API. Using fallback hardcoded services.');
 					if (isMounted) {
 						setLoadError('No active categories available right now. Showing saved services.');
 						setAllCards(CANONICAL_SERVICE_CARDS);
+						// Keep hardcoded category chips if API returns no categories
+						setApiCategories(CATEGORY_CHIPS);
 					}
 					return;
 				}
 
+				// Update category chips with API data (dynamic)
+				const dynamicCategories: CategoryChip[] = activeCategories.map((cat) => ({
+					id: cat.id,
+					name: cat.name,
+					image: cat.image,
+				}));
+
+				if (isMounted) {
+					// Update chips with API categories instead of using hardcoded ones
+					console.log('[Categories] Updating category chips from API:', dynamicCategories.length, 'categories');
+					setApiCategories(dynamicCategories);
+				}
+
+				// ==================== PHASE 2: Fetch & Validate Subservices ====================
+				console.log('[Categories] Fetching subservices for', activeCategories.length, 'categories...');
 				const serviceResponses = await Promise.all(
-					activeCategories.map((category) => api.get(API_ENDPOINTS.service.subservicesByCategory(category.id)))
+					activeCategories.map((category) => {
+						console.log(`[Categories] Fetching subservices for category: ${category.name} (${category.id})`);
+						return api.get(API_ENDPOINTS.service.subservicesByCategory(category.id));
+					})
 				);
 
-				const cards = serviceResponses.flatMap((response, index) => {
+				// Transform API subservices to ServiceCard format
+				const apiCards = serviceResponses.flatMap((response, index) => {
 					const currentCategory = activeCategories[index];
-					return toRows(response.data)
-						.filter((row) => Number(row.is_active ?? 1) === 1)
-						.map((row, rowIndex) => ({
-							id: String(row.subservice_id ?? row.id ?? `${currentCategory.id}-${rowIndex}`),
-							title: String(row.subservice_name ?? row.name ?? 'Service'),
-							description: String(row.description ?? 'Explore vendors offering this service'),
-							image: typeof row.icon_url === 'string' ? row.icon_url : currentCategory.image,
-							categoryId: currentCategory.id,
-							categoryName: currentCategory.name,
-						}));
+					const subserviceRows = toRows(response.data);
+
+					console.log(
+						`[Categories] Category "${currentCategory.name}" (${currentCategory.id}): ${subserviceRows.length} subservices returned`
+					);
+
+					return subserviceRows
+						.filter((row) => {
+							const isActive = Number(row.is_active ?? 1) === 1;
+							if (!isActive) {
+								console.log(`[Categories] → Skipping inactive subservice: ${row.subservice_name ?? row.name}`);
+							}
+							return isActive;
+						})
+						.map((row, rowIndex) => {
+							// Validate required subservice ID field
+							const subserviceId = String(row.subservice_id ?? row.id ?? `${currentCategory.id}-${rowIndex}`).trim();
+
+							const card: ServiceCard = {
+								id: subserviceId,
+								title: String(row.subservice_name ?? row.name ?? 'Service'),
+								description: String(row.description ?? 'Explore vendors offering this service'),
+								image: typeof row.icon_url === 'string' && row.icon_url.trim() ? row.icon_url : currentCategory.image,
+								categoryId: currentCategory.id,
+								categoryName: currentCategory.name,
+							};
+
+							console.log(
+								`[Categories] → Subservice: id=${card.id}, title=${card.title}, categoryId=${card.categoryId}, hasImage=${Boolean(card.image)}`
+							);
+
+							return card;
+						});
 				});
 
-				const imageLookup = new Map<string, string>();
-				const imageByTitleLookup = new Map<string, string>();
-				for (const card of cards) {
-					if (card.image) {
-						const lookupKey = `${normalizeText(card.categoryName)}::${normalizeText(card.title)}`;
-						imageLookup.set(lookupKey, card.image);
-						const titleKey = normalizeText(card.title);
-						if (!imageByTitleLookup.has(titleKey)) {
-							imageByTitleLookup.set(titleKey, card.image);
-						}
-					}
-				}
-
-				const categoryImageLookup = new Map<string, string>();
-				for (const category of activeCategories) {
-					if (category.image) {
-						categoryImageLookup.set(normalizeText(category.name), category.image);
-					}
-				}
-
-				const mergedCards = CANONICAL_SERVICE_CARDS.map((card) => {
-					const lookupKey = `${normalizeText(card.categoryName)}::${normalizeText(card.title)}`;
-					const matchedImage = imageLookup.get(lookupKey);
-					const matchedByTitle = imageByTitleLookup.get(normalizeText(card.title));
-					const categoryImage = categoryImageLookup.get(normalizeText(card.categoryName));
-
-					return {
-						...card,
-						image: matchedImage ?? matchedByTitle ?? card.image ?? categoryImage,
-					};
-				});
+				console.log('[Categories] Total subservices loaded from API:', apiCards.length);
 
 				if (isMounted) {
-					setAllCards(mergedCards);
+					// Use API cards directly as the primary source (Phase 3: API-first approach)
+					console.log('[Categories] Setting all cards from API response');
+					setAllCards(apiCards);
 				}
-			} catch {
+			} catch (error) {
+				// Error occurred during API fetch; fall back to hardcoded services
+				const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+				console.error('[Categories] Error loading services from API:', errorMessage, error);
+
 				if (isMounted) {
 					setLoadError('Unable to sync services from server, showing saved services.');
+					console.warn('[Categories] Using fallback hardcoded services due to API error');
 					setAllCards(CANONICAL_SERVICE_CARDS);
+					// Fallback to hardcoded category chips when API fails
+					setApiCategories(CATEGORY_CHIPS);
 				}
 			} finally {
 				if (isMounted) {
@@ -488,9 +540,9 @@ export default function CategoriesTabScreen() {
 							<ThemedText style={[styles.emptyStateText, { color: palette.subtext }]}>{loadError || 'Try another service type or different search text.'}</ThemedText>
 						</View>
 					) : (
-						visibleCards.map((card) => (
+						visibleCards.map((card, index) => (
 							<ServiceCardItem
-								key={card.id}
+								key={`${card.categoryId}-${card.id}-${index}`}
 								card={card}
 								hasImageFailed={Boolean(failedImageIds[card.id])}
 								onImageError={handleImageError}

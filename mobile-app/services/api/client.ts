@@ -11,13 +11,27 @@ export type ApiError = {
 };
 
 let bearerToken: string | null = null;
+let tokenInvalidNotified = false;
+
+// Callback for when token is invalid/expired (401/403)
+let onTokenInvalid: (() => void) | null = null;
 
 export const setApiAuthToken = (token: string | null) => {
 	bearerToken = token;
+	tokenInvalidNotified = false;
 };
 
 export const clearApiAuthToken = () => {
 	bearerToken = null;
+	tokenInvalidNotified = false;
+};
+
+/**
+ * Register a callback to be called when the API detects an invalid/expired token (401/403).
+ * Use this to trigger logout and redirect to login page.
+ */
+export const setOnTokenInvalidCallback = (callback: (() => void) | null) => {
+	onTokenInvalid = callback;
 };
 
 const onRequest = (config: InternalAxiosRequestConfig) => {
@@ -88,7 +102,19 @@ apiClient.interceptors.response.use(
 
 		return response;
 	},
-	(error: AxiosError) => Promise.reject(normalizeApiError(error))
+	(error: AxiosError) => {
+		const status = error.response?.status ?? 0;
+
+		// Token is invalid or expired (401) or forbidden (403)
+		// Trigger logout and redirect to login
+		if ((status === 401 || status === 403) && onTokenInvalid && !tokenInvalidNotified) {
+			tokenInvalidNotified = true;
+			console.warn('[api] Token invalid/expired (status', status, '). Logging out.');
+			onTokenInvalid();
+		}
+
+		return Promise.reject(normalizeApiError(error));
+	}
 );
 
 export const createRequestConfig = (config: AxiosRequestConfig = {}): AxiosRequestConfig => ({
