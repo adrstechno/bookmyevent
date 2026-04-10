@@ -13,11 +13,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import AppMenuDrawer from '@/components/layout/AppMenuDrawer';
 import FadeInView from '@/components/common/FadeInView';
 import { useAppToast } from '@/components/common/AppToastProvider';
 import { ThemedText } from '@/components/themed-text';
 import { useSettingsTheme } from '@/theme/settingsTheme';
+import VendorAppBar from '@/components/vendor/VendorAppBar';
 
 interface GalleryImageItem {
 	id: string;
@@ -117,13 +117,7 @@ export default function VendorGalleryScreen() {
 
 	return (
 		<SafeAreaView style={{ flex: 1, backgroundColor: palette.screenBg }}>
-			<View style={styles.headerContainer}>
-				<AppMenuDrawer />
-				<View style={styles.headerCopy}>
-					<ThemedText style={styles.headerTitle}>Event Gallery</ThemedText>
-					<ThemedText style={styles.headerSubtitle}>Showcase your event highlights</ThemedText>
-				</View>
-			</View>
+			<VendorAppBar title="Event Gallery" />
 
 			<ScrollView style={styles.screen} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 				<FadeInView>

@@ -14,10 +14,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 
 import FadeInView from '@/components/common/FadeInView';
-import AppMenuDrawer from '@/components/layout/AppMenuDrawer';
 import { ThemedText } from '@/components/themed-text';
 import { useAppToast } from '@/components/common/AppToastProvider';
 import { useSettingsTheme } from '@/theme/settingsTheme';
+import VendorAppBar from '@/components/vendor/VendorAppBar';
 
 interface ServiceCategory {
 	id: number | string;
@@ -278,10 +278,7 @@ export default function VendorSettingsScreen() {
 
 	return (
 		<SafeAreaView style={{ flex: 1, backgroundColor: palette.screenBg }}>
-			<View style={styles.headerContainer}>
-				<AppMenuDrawer />
-				<ThemedText style={styles.headerText}>Vendor Settings</ThemedText>
-			</View>
+			<VendorAppBar title="Vendor Settings" />
 			<ScrollView 
 				style={styles.container}
 				contentContainerStyle={{ paddingBottom: 40 }}

@@ -13,10 +13,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import AppMenuDrawer from '@/components/layout/AppMenuDrawer';
 import { ThemedText } from '@/components/themed-text';
 import { useAppToast } from '@/components/common/AppToastProvider';
 import { useSettingsTheme } from '@/theme/settingsTheme';
+import VendorAppBar from '@/components/vendor/VendorAppBar';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -300,16 +300,11 @@ export default function VendorReservationsScreen() {
 			)}
 
 			{/* AppBar */}
-			<View style={[s.appBar, { backgroundColor: palette.primary, borderColor: palette.primaryStrong }]}>
-				<AppMenuDrawer />
-				<ThemedText style={[s.appBarTitle, { color: palette.onPrimary }]}>Shift Reservations</ThemedText>
-				<Pressable
-					style={[s.iconBtn, { borderColor: palette.primaryStrong, backgroundColor: palette.primaryStrong }]}
-					onPress={() => void loadReservations(true)}
-				>
-					<Ionicons name={isRefreshing ? 'hourglass-outline' : 'refresh-outline'} size={18} color={palette.onPrimary} />
-				</Pressable>
-			</View>
+			<VendorAppBar
+				title="Shift Reservations"
+				actionIcon={isRefreshing ? 'hourglass-outline' : 'refresh-outline'}
+				onAction={() => void loadReservations(true)}
+			/>
 
 			{/* Sub-header */}
 			<View style={s.subHeader}>
@@ -535,14 +530,6 @@ const s = StyleSheet.create({
 	safeArea: { flex: 1 },
 	center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10 },
 	loadingText: { fontSize: 14, fontWeight: '600' },
-
-	appBar: {
-		height: 56, marginHorizontal: 16, marginTop: 12,
-		borderRadius: 14, paddingHorizontal: 12, borderWidth: 1,
-		flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-	},
-	appBarTitle: { fontSize: 16, fontWeight: '800' },
-	iconBtn: { width: 36, height: 36, borderRadius: 18, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
 
 	subHeader: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 },
 	subHeaderText: { fontSize: 13 },

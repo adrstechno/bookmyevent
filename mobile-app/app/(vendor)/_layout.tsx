@@ -13,5 +13,17 @@ export default function VendorLayout() {
 		return <Redirect href="/" />;
 	}
 
-	return <Stack screenOptions={{ headerShown: false }} />;
+	return (
+		<Stack screenOptions={{ headerShown: false }}>
+			<Stack.Screen name="dashboard" />
+			<Stack.Screen name="shifts" />
+			<Stack.Screen name="bookings" />
+			<Stack.Screen name="reservations" />
+			<Stack.Screen name="events" />
+			<Stack.Screen name="gallery" />
+			<Stack.Screen name="packages" />
+			<Stack.Screen name="settings" />
+			<Stack.Screen name="profile-setup" />
+		</Stack>
+	);
 }

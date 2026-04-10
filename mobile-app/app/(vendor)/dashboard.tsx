@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import FadeInView from '@/components/common/FadeInView';
 import PageLoadingState from '@/components/common/PageLoadingState';
-import AppMenuDrawer from '@/components/layout/AppMenuDrawer';
+import VendorAppBar from '@/components/vendor/VendorAppBar';
 import { ThemedText } from '@/components/themed-text';
 import { useAppToast } from '@/components/common/AppToastProvider';
 import {
@@ -45,7 +45,8 @@ export default function VendorDashboardScreen() {
 	const { palette } = useSettingsTheme();
 	const { showError } = useAppToast();
 	const router = useRouter();
-	const { name, email } = useAppSelector((state) => state.auth);
+	const name = useAppSelector((state: { auth: { name: string | null } }) => state.auth.name);
+	const email = useAppSelector((state: { auth: { email: string | null } }) => state.auth.email);
 
 	const [isLoading, setIsLoading] = useState(true);
 	const [profileIncomplete, setProfileIncomplete] = useState(false);
@@ -98,8 +99,8 @@ export default function VendorDashboardScreen() {
 	if (profileIncomplete) {
 		return (
 			<SafeAreaView style={[styles.safeArea, { backgroundColor: palette.screenBg }]} edges={['top']}>
+				<VendorAppBar title="Vendor Dashboard" actionIcon="refresh-outline" onAction={() => void loadDashboard()} />
 				<ScrollView contentContainerStyle={styles.container}>
-					<AppBar title="Vendor Dashboard" palette={palette} onRefresh={() => void loadDashboard()} />
 
 					<View style={styles.headerCopy}>
 						<ThemedText style={[styles.pageTitle, { color: palette.text }]}>Vendor Dashboard</ThemedText>
@@ -144,8 +145,8 @@ export default function VendorDashboardScreen() {
 	// Normal dashboard
 	return (
 		<SafeAreaView style={[styles.safeArea, { backgroundColor: palette.screenBg }]} edges={['top']}>
+			<VendorAppBar title="Vendor Dashboard" actionIcon="refresh-outline" onAction={() => void loadDashboard()} />
 			<ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-				<AppBar title="Vendor Dashboard" palette={palette} onRefresh={() => void loadDashboard()} />
 
 				{/* Header */}
 				<View style={styles.headerCopy}>
@@ -233,21 +234,6 @@ export default function VendorDashboardScreen() {
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
-
-function AppBar({ title, palette, onRefresh }: { title: string; palette: any; onRefresh: () => void }) {
-	return (
-		<View style={[styles.appBar, { backgroundColor: palette.primary, borderColor: palette.primaryStrong }]}>
-			<AppMenuDrawer />
-			<ThemedText style={[styles.appBarTitle, { color: palette.onPrimary }]}>{title}</ThemedText>
-			<Pressable
-				style={[styles.iconBtn, { borderColor: palette.primaryStrong, backgroundColor: palette.primaryStrong }]}
-				onPress={onRefresh}
-			>
-				<Ionicons name="refresh-outline" size={18} color={palette.onPrimary} />
-			</Pressable>
-		</View>
-	);
-}
 
 function SubscriptionCard({
 	subscription,
@@ -394,7 +380,7 @@ const SUBSCRIPTION_DETAILS = {
 function SubscriptionPaymentModal({
 	visible,
 	onClose,
-	onSuccess,
+	onSuccess: _onSuccess,
 	palette,
 }: {
 	visible: boolean;
@@ -720,27 +706,7 @@ const modalStyles = StyleSheet.create({
 
 const styles = StyleSheet.create({
 	safeArea: { flex: 1 },
-	container: { padding: 16, paddingBottom: 32, gap: 12 },
-
-	// AppBar
-	appBar: {
-		height: 56,
-		borderRadius: 14,
-		paddingHorizontal: 12,
-		borderWidth: 1,
-		flexDirection: 'row',
-		alignItems: 'center',
-		justifyContent: 'space-between',
-	},
-	appBarTitle: { fontSize: 16, fontWeight: '800' },
-	iconBtn: {
-		width: 36,
-		height: 36,
-		borderRadius: 18,
-		alignItems: 'center',
-		justifyContent: 'center',
-		borderWidth: 1,
-	},
+	container: { padding: 16, paddingTop: 12, paddingBottom: 32, gap: 12 },
 
 	// Header copy
 	headerCopy: { gap: 4, paddingTop: 4 },

@@ -13,11 +13,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import AppMenuDrawer from '@/components/layout/AppMenuDrawer';
 import FadeInView from '@/components/common/FadeInView';
 import { useAppToast } from '@/components/common/AppToastProvider';
 import { ThemedText } from '@/components/themed-text';
 import { useSettingsTheme } from '@/theme/settingsTheme';
+import VendorAppBar from '@/components/vendor/VendorAppBar';
 
 interface PackageItem {
 	package_id: number;
@@ -280,17 +280,15 @@ export default function VendorPackagesScreen() {
 
 	return (
 		<SafeAreaView style={{ flex: 1, backgroundColor: palette.screenBg }}>
-			<View style={styles.headerContainer}>
-				<AppMenuDrawer />
-				<View style={styles.headerCopy}>
-					<ThemedText style={styles.headerTitle}>My Packages</ThemedText>
-					<ThemedText style={styles.headerSubtitle}>Manage your service packages</ThemedText>
-				</View>
-				<Pressable style={({ pressed }) => [styles.createButton, { opacity: pressed ? 0.9 : 1 }]} onPress={openCreate}>
-					<Ionicons name="add" size={18} color="#fff" />
-					<ThemedText style={styles.createButtonText}>Create</ThemedText>
-				</Pressable>
-			</View>
+			<VendorAppBar
+				title="My Packages"
+				actionElement={
+					<Pressable style={({ pressed }) => [styles.createButton, { opacity: pressed ? 0.9 : 1 }]} onPress={openCreate}>
+						<Ionicons name="add" size={18} color="#fff" />
+						<ThemedText style={styles.createButtonText}>Create</ThemedText>
+					</Pressable>
+				}
+			/>
 
 			<ScrollView style={styles.screen} contentContainerStyle={styles.screenContent} showsVerticalScrollIndicator={false}>
 				<FadeInView>

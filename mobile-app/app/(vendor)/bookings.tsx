@@ -4,8 +4,8 @@ import { Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import PageLoadingState from '@/components/common/PageLoadingState';
-import AppMenuDrawer from '@/components/layout/AppMenuDrawer';
 import BookingCard from '@/components/vendor/BookingCard';
+import VendorAppBar from '@/components/vendor/VendorAppBar';
 import { ThemedText } from '@/components/themed-text';
 import { useAppToast } from '@/components/common/AppToastProvider';
 import { useSettingsTheme } from '@/theme/settingsTheme';
@@ -199,16 +199,11 @@ export default function VendorBookingsScreen() {
 	return (
 		<SafeAreaView style={[s.safeArea, { backgroundColor: palette.screenBg }]} edges={['top']}>
 			{/* AppBar */}
-			<View style={[s.appBar, { backgroundColor: palette.primary, borderColor: palette.primaryStrong }]}>
-				<AppMenuDrawer />
-				<ThemedText style={[s.appBarTitle, { color: palette.onPrimary }]}>Booking Requests</ThemedText>
-				<Pressable
-					style={[s.iconBtn, { borderColor: palette.primaryStrong, backgroundColor: palette.primaryStrong }]}
-					onPress={() => void loadBookings(true)}
-				>
-					<Ionicons name={isRefreshing ? 'hourglass-outline' : 'refresh-outline'} size={18} color={palette.onPrimary} />
-				</Pressable>
-			</View>
+			<VendorAppBar
+				title="Booking Requests"
+				actionIcon={isRefreshing ? 'hourglass-outline' : 'refresh-outline'}
+				onAction={() => void loadBookings(true)}
+			/>
 
 			{/* Sub-header */}
 			<View style={s.subHeader}>
@@ -362,20 +357,13 @@ export default function VendorBookingsScreen() {
 
 const s = StyleSheet.create({
 	safeArea: { flex: 1 },
-	appBar: {
-		height: 56, marginHorizontal: 16, marginTop: 12,
-		borderRadius: 14, paddingHorizontal: 12, borderWidth: 1,
-		flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-	},
-	appBarTitle: { fontSize: 16, fontWeight: '800' },
-	iconBtn: { width: 36, height: 36, borderRadius: 18, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
 	subHeader: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 },
 	subHeaderText: { fontSize: 13 },
 	filterRow: { paddingHorizontal: 16, paddingVertical: 8, gap: 8 },
 	chip: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 34, paddingHorizontal: 12, borderRadius: 17, borderWidth: 1 },
 	chipText: { fontSize: 12, fontWeight: '700' },
-	chipBadge: { paddingHorizontal: 6, paddingVertical: 1, borderRadius: 10 },
-	chipBadgeText: { fontSize: 11, fontWeight: '700' },
+	chipBadge: { minWidth: 20, height: 20, paddingHorizontal: 6, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+	chipBadgeText: { fontSize: 11, fontWeight: '700', lineHeight: 14 },
 	list: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 32, gap: 14 },
 	emptyBox: { borderRadius: 16, padding: 40, alignItems: 'center', gap: 10 },
 	emptyTitle: { fontSize: 20, fontWeight: '800' },

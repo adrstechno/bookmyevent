@@ -13,10 +13,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import AppMenuDrawer from '@/components/layout/AppMenuDrawer';
 import { ThemedText } from '@/components/themed-text';
 import { useAppToast } from '@/components/common/AppToastProvider';
 import { useSettingsTheme } from '@/theme/settingsTheme';
+import VendorAppBar from '@/components/vendor/VendorAppBar';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -166,16 +166,11 @@ export default function VendorShiftsScreen() {
 				/>
 			)}
 			{/* AppBar */}
-			<View style={[st.appBar, { backgroundColor: palette.primary, borderColor: palette.primaryStrong }]}>
-				<AppMenuDrawer />
-				<ThemedText style={[st.appBarTitle, { color: palette.onPrimary }]}>Vendor Shifts</ThemedText>
-				<Pressable
-					style={[st.iconBtn, { borderColor: palette.primaryStrong, backgroundColor: palette.primaryStrong }]}
-					onPress={() => setSortAsc((p) => !p)}
-				>
-					<Ionicons name={sortAsc ? 'arrow-up-outline' : 'arrow-down-outline'} size={18} color={palette.onPrimary} />
-				</Pressable>
-			</View>
+			<VendorAppBar
+				title="Vendor Shifts"
+				actionIcon={sortAsc ? 'arrow-up-outline' : 'arrow-down-outline'}
+				onAction={() => setSortAsc((p) => !p)}
+			/>
 
 			{/* Toolbar */}
 			<View style={st.toolbar}>
@@ -422,14 +417,6 @@ const st = StyleSheet.create({
 	safeArea: { flex: 1 },
 	center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10 },
 	loadingText: { fontSize: 14, fontWeight: '600' },
-
-	appBar: {
-		height: 56, marginHorizontal: 16, marginTop: 12,
-		borderRadius: 14, paddingHorizontal: 12, borderWidth: 1,
-		flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-	},
-	appBarTitle: { fontSize: 16, fontWeight: '800' },
-	iconBtn: { width: 36, height: 36, borderRadius: 18, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
 
 	toolbar: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingTop: 12 },
 	searchWrap: {

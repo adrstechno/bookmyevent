@@ -10,9 +10,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import AppMenuDrawer from '@/components/layout/AppMenuDrawer';
 import { ThemedText } from '@/components/themed-text';
 import { useSettingsTheme } from '@/theme/settingsTheme';
+import VendorAppBar from '@/components/vendor/VendorAppBar';
 
 type EventStatus = 'Active' | 'Completed' | 'Cancelled';
 
@@ -59,13 +59,7 @@ export default function VendorEventsScreen() {
 
 	return (
 		<SafeAreaView style={{ flex: 1, backgroundColor: palette.screenBg }}>
-			<View style={styles.headerContainer}>
-				<AppMenuDrawer />
-				<View style={styles.headerCopy}>
-					<ThemedText style={styles.headerTitle}>My Events</ThemedText>
-					<ThemedText style={styles.headerSubtitle}>Manage all your organized events</ThemedText>
-				</View>
-			</View>
+			<VendorAppBar title="My Events" />
 
 			<ScrollView style={styles.screen} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 				<View style={styles.pageHeader}>
