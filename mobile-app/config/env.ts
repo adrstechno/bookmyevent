@@ -1,44 +1,56 @@
-type AppEnv = {
-	apiBaseUrl: string;
-	apiTimeoutMs: number;
-	enableApiDebugLogs: boolean;
-};
+/**
+ * env.ts — Centralized API URL config
+ *
+ * Priority order:
+ *  1. EXPO_PUBLIC_API_BASE_URL from .env  (manual override)
+ *  2. Auto-detect from Expo dev server host (works on all platforms automatically)
+ *  3. Fallback: localhost:3232
+ *
+ * Why auto-detect?
+ *  - iOS Simulator: localhost works fine
+ *  - Android Emulator: needs 10.0.2.2 (not localhost)
+ *  - Physical Device: needs machine's LAN IP (e.g. 192.168.1.65)
+ *  Expo's dev server host IS the machine's IP — so we reuse it.
+ */
+import Constants from 'expo-constants';
 
-const DEFAULT_API_BASE_URL = 'http://localhost:3000';
-const DEFAULT_API_TIMEOUT_MS = 15000;
+const PORT = 3232;
 
-const normalizeBaseUrl = (value: string) => value.replace(/\/+$/, '');
+const getApiBaseUrl = (): string => {
+	// 1. Manual override from .env
+	const manual = process.env.EXPO_PUBLIC_API_BASE_URL?.trim();
+	if (manual) return manual.replace(/\/+$/, '');
 
-const parseTimeout = (value?: string): number => {
-	if (!value) {
-		return DEFAULT_API_TIMEOUT_MS;
+	// 2. Auto-detect: grab Expo dev server host and replace its port with 3232
+	try {
+		// expoConfig.hostUri looks like "192.168.1.65:8081" or "localhost:8081"
+		const hostUri =
+			Constants.expoConfig?.hostUri ??
+			(Constants as unknown as { manifest?: { debuggerHost?: string } }).manifest?.debuggerHost;
+
+		if (hostUri) {
+			const host = hostUri.split(':')[0]; // strip the Expo port
+			if (host && host !== 'null') {
+				return `http://${host}:${PORT}`;
+			}
+		}
+	} catch {
+		// ignore — fall through to default
 	}
 
-	const parsed = Number(value);
-	return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_API_TIMEOUT_MS;
+	// 3. Fallback
+	return `http://localhost:${PORT}`;
 };
 
-const parseBoolean = (value?: string): boolean => {
-	if (!value) {
-		return false;
-	}
-
-	const normalized = value.toLowerCase();
-	return normalized === '1' || normalized === 'true' || normalized === 'yes';
+export const ENV = {
+	apiBaseUrl: getApiBaseUrl(),
+	apiTimeoutMs: (() => {
+		const v = process.env.EXPO_PUBLIC_API_TIMEOUT_MS;
+		const n = Number(v);
+		return Number.isFinite(n) && n > 0 ? n : 15000;
+	})(),
+	enableApiDebugLogs: (() => {
+		const v = process.env.EXPO_PUBLIC_API_DEBUG?.toLowerCase();
+		return v === '1' || v === 'true' || v === 'yes';
+	})(),
 };
-
-const rawBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL?.trim();
-const apiBaseUrl = rawBaseUrl ? normalizeBaseUrl(rawBaseUrl) : DEFAULT_API_BASE_URL;
-
-if (__DEV__ && !rawBaseUrl) {
-	console.warn(
-		'[env] EXPO_PUBLIC_API_BASE_URL is not set. Falling back to http://localhost:3000.'
-	);
-}
-
-export const ENV: AppEnv = {
-	apiBaseUrl,
-	apiTimeoutMs: parseTimeout(process.env.EXPO_PUBLIC_API_TIMEOUT_MS),
-	enableApiDebugLogs: parseBoolean(process.env.EXPO_PUBLIC_API_DEBUG),
-};
-

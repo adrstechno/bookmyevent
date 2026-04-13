@@ -5,8 +5,13 @@ import type {
 	VendorActivity,
 	VendorBooking,
 	VendorKpis,
+	VendorPackage,
+	VendorPackageInput,
 	VendorProfile,
+	VendorProfileInput,
+	VendorServiceCategory,
 	VendorShift,
+	VendorSubService,
 } from '@/types/vendor';
 
 const toRows = (payload: unknown): Record<string, unknown>[] => {
@@ -100,14 +105,101 @@ export const fetchVendorProfile = async (): Promise<VendorProfile | null> => {
 		vendorId: toText(vendorId),
 		businessName: toText(record.business_name),
 		serviceCategoryId: toText(record.service_category_id),
+		subserviceId: toText(record.subservice_id),
 		description: toText(record.description),
 		yearsExperience: toNumber(record.years_experience, 0),
 		contact: toText(record.contact),
 		address: toText(record.address),
 		city: toText(record.city),
 		state: toText(record.state),
-		profileImageUrl: toText(record.profile_image_url || record.profile_picture),
+		profileImageUrl: toText(record.profile_url || record.profile_image_url || record.profile_picture),
+		eventProfilesUrl: toText(record.event_profiles_url),
 	};
+};
+
+export const fetchVendorServiceCategories = async (): Promise<VendorServiceCategory[]> => {
+	const response = await apiClient.get(API_ENDPOINTS.service.all);
+	const rows = toRows(response.data);
+
+	return rows
+		.map((row) => ({
+			id: row.category_id ?? row.service_category_id ?? row.id ?? '',
+			name: toText(row.category_name ?? row.service_name ?? row.name),
+		}))
+		.filter((row) => row.id && row.name);
+};
+
+export const fetchVendorSubServices = async (
+	serviceCategoryId: number | string
+): Promise<VendorSubService[]> => {
+	const response = await apiClient.get(API_ENDPOINTS.service.subservicesByCategory(serviceCategoryId));
+	const rows = toRows(response.data);
+
+	return rows
+		.map((row) => ({
+			subserviceId: row.subservice_id ?? row.id ?? '',
+			subserviceName: toText(row.subservice_name ?? row.name),
+			isActive: Boolean(row.is_active ?? true),
+		}))
+		.filter((row) => row.subserviceId && row.subserviceName && row.isActive);
+};
+
+const buildVendorProfileFormData = (input: VendorProfileInput) => {
+	const formData = new FormData();
+
+	formData.append('business_name', input.businessName.trim());
+	formData.append('service_category_id', input.serviceCategoryId);
+	if (input.subserviceId) {
+		formData.append('subservice_id', input.subserviceId);
+	}
+	formData.append('description', input.description.trim());
+	formData.append('years_experience', input.yearsExperience.trim());
+	formData.append('contact', input.contact.trim());
+	formData.append('address', input.address.trim());
+	formData.append('city', input.city.trim());
+	formData.append('state', input.state.trim());
+	formData.append('event_profiles_url', input.eventProfilesUrl.trim());
+
+	if (input.profileImageUri) {
+		const fileName = input.profileImageUri.split('/').pop() ?? 'vendor-profile.jpg';
+		const normalized = fileName.toLowerCase();
+		const type = normalized.endsWith('.png') ? 'image/png' : 'image/jpeg';
+		formData.append('profilePicture', {
+			uri: input.profileImageUri,
+			name: fileName,
+			type,
+		} as never);
+	}
+
+	return formData;
+};
+
+export const saveVendorProfile = async (
+	input: VendorProfileInput,
+	options?: { isNewProfile?: boolean }
+) => {
+	const endpoint = options?.isNewProfile ? API_ENDPOINTS.vendor.createProfile : API_ENDPOINTS.vendor.updateProfile;
+	const formData = buildVendorProfileFormData(input);
+	const response = await apiClient.post(endpoint, formData, {
+		headers: {
+			'Content-Type': 'multipart/form-data',
+		},
+	});
+
+	return toObject(response.data);
+};
+
+export const changeVendorPassword = async (payload: {
+	email: string;
+	oldPassword: string;
+	newPassword: string;
+}) => {
+	const response = await apiClient.post(API_ENDPOINTS.auth.changePassword, {
+		email: payload.email.trim().toLowerCase(),
+		oldPassword: payload.oldPassword,
+		newPassword: payload.newPassword,
+	});
+	return toObject(response.data);
 };
 
 export const fetchVendorKpis = async (): Promise<VendorKpis> => {
@@ -219,6 +311,53 @@ export const fetchVendorBookings = async (): Promise<VendorBooking[]> => {
 	}));
 };
 
+export const fetchVendorPackages = async (vendorId: number | string): Promise<VendorPackage[]> => {
+	const response = await apiClient.get(API_ENDPOINTS.vendor.packages, {
+		params: { vendor_id: vendorId },
+	});
+	const payload = toObject(response.data);
+	const rows = toRows(payload.packages ?? payload.data ?? payload);
+
+	return rows.map((row) => ({
+		packageId: toText(row.package_id ?? row.id),
+		packageName: toText(row.package_name),
+		packageDesc: toText(row.package_desc),
+		amount: toNumber(row.amount),
+	}));
+};
+
+export const createVendorPackage = async (input: VendorPackageInput) => {
+	const response = await apiClient.post(API_ENDPOINTS.vendor.createPackage, {
+		package_name: input.packageName.trim(),
+		package_desc: input.packageDesc.trim(),
+		amount: input.amount,
+	});
+
+	return toObject(response.data);
+};
+
+export const updateVendorPackage = async (
+	packageId: number | string,
+	input: VendorPackageInput
+) => {
+	const response = await apiClient.post(API_ENDPOINTS.vendor.updatePackage, {
+		package_id: packageId,
+		package_name: input.packageName.trim(),
+		package_desc: input.packageDesc.trim(),
+		amount: input.amount,
+	});
+
+	return toObject(response.data);
+};
+
+export const deleteVendorPackage = async (packageId: number | string) => {
+	const response = await apiClient.get(API_ENDPOINTS.vendor.deletePackage, {
+		params: { package_id: packageId },
+	});
+
+	return toObject(response.data);
+};
+
 export const acceptVendorBooking = async (bookingId: number | string) => {
 	await apiClient.put(API_ENDPOINTS.booking.accept(bookingId));
 };
@@ -258,4 +397,42 @@ export const fetchOtpAttempts = async (bookingId: number | string): Promise<OtpA
 		attemptsRemaining: toNumber(data.attempts_remaining ?? data.attemptsRemaining, 3),
 		isLocked: Boolean(data.is_locked ?? data.isLocked),
 	};
+};
+
+// ─── Gallery ─────────────────────────────────────────────────────────────────
+
+export type VendorEventImage = {
+	imageId: number | string;
+	imageUrl: string;
+};
+
+export const fetchVendorEventImages = async (): Promise<VendorEventImage[]> => {
+	// No vendor_id needed — backend derives it from auth token
+	const response = await apiClient.get(API_ENDPOINTS.vendor.eventImages);
+	const payload = toObject(response.data);
+	const rows = toRows(payload.eventImages ?? payload.data ?? payload);
+
+	return rows.map((row) => ({
+		imageId: row.image_id ?? row.id ?? '',
+		imageUrl: toText(row.imageUrl ?? row.event_profiles_url ?? row.url),
+	})).filter((img) => img.imageUrl);
+};
+
+export const uploadVendorEventImages = async (imageUris: string[]): Promise<void> => {
+	const formData = new FormData();
+
+	imageUris.forEach((uri) => {
+		const fileName = uri.split('/').pop() ?? 'event-image.jpg';
+		const normalized = fileName.toLowerCase();
+		const type = normalized.endsWith('.png') ? 'image/png' : 'image/jpeg';
+		formData.append('eventImages', {
+			uri,
+			name: fileName,
+			type,
+		} as never);
+	});
+
+	await apiClient.post(API_ENDPOINTS.vendor.uploadEventImages, formData, {
+		headers: { 'Content-Type': 'multipart/form-data' },
+	});
 };

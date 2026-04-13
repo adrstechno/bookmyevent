@@ -13,6 +13,32 @@ export type AuthSession = {
 
 let inMemorySession: AuthSession | null = null;
 
+const decodeJwtPayload = (token: string) => {
+	try {
+		const payloadPart = token.split('.')[1];
+		if (!payloadPart) return null;
+
+		const normalized = payloadPart.replace(/-/g, '+').replace(/_/g, '/');
+		const padding = normalized.length % 4 === 0 ? '' : '='.repeat(4 - (normalized.length % 4));
+		const base64 = `${normalized}${padding}`;
+
+		if (typeof atob === 'function') {
+			return JSON.parse(atob(base64)) as { exp?: number };
+		}
+	} catch {
+		return null;
+	}
+};
+
+export const isAuthTokenExpired = (token: string | null | undefined) => {
+	if (!token) return true;
+
+	const payload = decodeJwtPayload(token);
+	if (!payload?.exp) return false;
+
+	return payload.exp * 1000 <= Date.now();
+};
+
 const setStoredSession = async (session: AuthSession) => {
 	inMemorySession = session;
 
@@ -48,7 +74,17 @@ const clearStoredSession = async () => {
 };
 
 export const restoreSession = async () => {
-	return await getStoredSession();
+	const session = await getStoredSession();
+	if (!session?.token) {
+		return session;
+	}
+
+	if (isAuthTokenExpired(session.token)) {
+		await clearStoredSession();
+		return null;
+	}
+
+	return session;
 };
 
 export const persistSession = async (session: AuthSession) => {
@@ -58,4 +94,3 @@ export const persistSession = async (session: AuthSession) => {
 export const clearSession = async () => {
 	await clearStoredSession();
 };
-
