@@ -3,8 +3,8 @@ import { Alert, Image, Pressable, ScrollView, StyleSheet, TextInput, View } from
 import { StatusBar } from 'expo-status-bar';
 import { Redirect, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Feather } from '@expo/vector-icons';
 
-import { ThemedText } from '@/components/themed-text';
 import { useAppToast } from '@/components/common/AppToastProvider';
 import { resendVerificationEmail } from '@/services/auth/authApi';
 import { useAppDispatch, useAppSelector } from '@/store';
@@ -33,10 +33,6 @@ export default function LoginScreen() {
 	const { palette, resolvedMode } = useAppTheme();
 	const isDark = resolvedMode === 'dark';
 
-	const [mode, setMode] = useState<AuthMode>('login');
-	const [role, setRole] = useState<RoleType>('user');
-	const [firstName, setFirstName] = useState('');
-	const [lastName, setLastName] = useState('');
 	const [email, setEmail] = useState('');
 	const [phone, setPhone] = useState('');
 	const [password, setPassword] = useState('');
@@ -65,18 +61,14 @@ export default function LoginScreen() {
 
 	const validate = () => {
 		if (!email.trim()) {
-			setLocalError('Email is required.');
-			return false;
+			err.email = 'Email is required';
+		} else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+			err.email = 'Enter a valid email';
 		}
-
 		if (!password.trim()) {
-			setLocalError('Password is required.');
-			return false;
-		}
-
-		if (password.trim().length < 4) {
-			setLocalError('Password must be at least 4 characters.');
-			return false;
+			err.password = 'Password is required';
+		} else if (password.trim().length < 6) {
+			err.password = 'Password must be at least 6 characters';
 		}
 
 		if (mode === 'register') {
@@ -103,7 +95,6 @@ export default function LoginScreen() {
 	};
 
 	const onSubmit = async () => {
-		setLocalError('');
 		dispatch(clearAuthError());
 
 		if (!validate()) {
@@ -279,6 +270,12 @@ export default function LoginScreen() {
 								placeholder="First Name (optional)"
 								placeholderTextColor={palette.muted}
 							/>
+						</View>
+						{errors.email ? <Text style={[s.errText, { color: c.danger }]}>{errors.email}</Text> : null}
+
+						{/* Password */}
+						<View style={[s.inputRow, { borderColor: errors.password ? c.danger : c.border, backgroundColor: c.surfaceBg }]}>
+							<Feather name="lock" size={18} color={c.subtext} style={s.icon} />
 							<TextInput
 								style={[
 									styles.inputHalf,
@@ -293,6 +290,9 @@ export default function LoginScreen() {
 								placeholder="Last Name (optional)"
 								placeholderTextColor={palette.muted}
 							/>
+							<Pressable onPress={() => setShowPassword((v) => !v)} hitSlop={10} style={s.eyeBtn}>
+								<Feather name={showPassword ? 'eye-off' : 'eye'} size={18} color={c.subtext} />
+							</Pressable>
 						</View>
 					)}
 

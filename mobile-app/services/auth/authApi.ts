@@ -1,3 +1,8 @@
+/**
+ * authApi.ts
+ * Real API calls to the backend at localhost:3232
+ * Endpoints: /User/Login, /User/InsertUser, /User/forgot-password
+ */
 import apiClient from '@/services/api/client';
 import { API_ENDPOINTS } from '@/services/api/endpoints';
 import type { LoginRequest, LoginResponse, RegisterRequest, RegisterResponse } from '@/types/auth';
@@ -50,10 +55,12 @@ const normalizeRole = (roleValue?: string): LoginResponse['role'] => {
 	return 'user';
 };
 
-const toNameFromEmail = (email: string) => {
-	const prefix = email.split('@')[0] ?? 'Guest';
-	return prefix.charAt(0).toUpperCase() + prefix.slice(1);
+type BackendForgotPasswordResponse = {
+	success: boolean;
+	message: string;
 };
+
+// ─── Login ───────────────────────────────────────────────────
 
 export const login = async (input: LoginRequest): Promise<LoginResponse> => {
 	const response = await apiClient.post<BackendLoginResponse>(API_ENDPOINTS.auth.login, {
@@ -75,6 +82,8 @@ export const login = async (input: LoginRequest): Promise<LoginResponse> => {
 	};
 };
 
+// ─── Register ────────────────────────────────────────────────
+
 export const register = async (input: RegisterRequest): Promise<RegisterResponse> => {
 	const response = await apiClient.post<BackendRegisterResponse>(API_ENDPOINTS.auth.register, {
 		first_name: input.firstName,
@@ -92,6 +101,8 @@ export const register = async (input: RegisterRequest): Promise<RegisterResponse
 		uuid: response.data.uuid,
 	};
 };
+
+// ─── Forgot Password ─────────────────────────────────────────
 
 export const forgotPassword = async (email: string): Promise<string> => {
 	const response = await apiClient.post<{ message?: string }>(API_ENDPOINTS.auth.forgotPassword, {

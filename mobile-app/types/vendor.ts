@@ -17,6 +17,7 @@ export type VendorProfile = {
 	vendorId: number | string;
 	businessName?: string;
 	serviceCategoryId?: number | string;
+	subserviceId?: number | string;
 	description?: string;
 	yearsExperience?: number;
 	contact?: string;
@@ -24,6 +25,32 @@ export type VendorProfile = {
 	city?: string;
 	state?: string;
 	profileImageUrl?: string;
+	eventProfilesUrl?: string;
+};
+
+export type VendorServiceCategory = {
+	id: number | string;
+	name: string;
+};
+
+export type VendorSubService = {
+	subserviceId: number | string;
+	subserviceName: string;
+	isActive: boolean;
+};
+
+export type VendorProfileInput = {
+	businessName: string;
+	serviceCategoryId: string;
+	subserviceId?: string;
+	description: string;
+	yearsExperience: string;
+	contact: string;
+	address: string;
+	city: string;
+	state: string;
+	eventProfilesUrl: string;
+	profileImageUri?: string | null;
 };
 
 export type VendorShift = {
@@ -57,4 +84,17 @@ export type VendorBooking = {
 export type OtpAttemptStatus = {
 	attemptsRemaining: number;
 	isLocked: boolean;
+};
+
+export type VendorPackage = {
+	packageId: number | string;
+	packageName: string;
+	packageDesc: string;
+	amount: number;
+};
+
+export type VendorPackageInput = {
+	packageName: string;
+	packageDesc: string;
+	amount: number;
 };

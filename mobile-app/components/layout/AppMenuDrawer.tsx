@@ -1,8 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useRouter } from 'expo-router';
+import { useRouter, usePathname } from 'expo-router';
 import type { Href } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { signOut } from '@/store/slices/authSlice';
@@ -18,8 +18,6 @@ type MenuItem = {
 const userMenu: MenuItem[] = [
 	{ label: 'Dashboard', href: '/(tabs)/home', icon: 'home-outline' },
 	{ label: 'My Bookings', href: '/(tabs)/bookings', icon: 'ticket-outline' },
-
-	// Kept as approved mobile extras.
 	{ label: 'Services', href: '/(tabs)/categories', icon: 'grid-outline' },
 	{ label: 'Profile', href: '/(tabs)/profile', icon: 'person-outline' },
 	{ label: 'Settings', href: '/settings', icon: 'settings-outline' },
@@ -33,7 +31,7 @@ const vendorMenu: MenuItem[] = [
 	{ label: 'Manual Reservations', href: '/(vendor)/reservations', icon: 'lock-closed-outline' },
 	{ label: 'Events', href: '/(vendor)/events', icon: 'list-outline' },
 	{ label: 'Gallery', href: '/(vendor)/gallery', icon: 'images-outline' },
-	{ label: 'Package', href: '/(vendor)/packages', icon: 'cube-outline' },
+	{ label: 'Packages', href: '/(vendor)/packages', icon: 'cube-outline' },
 	{ label: 'Settings', href: '/(vendor)/settings', icon: 'settings-outline' },
 ];
 
@@ -41,31 +39,24 @@ const adminMenu: MenuItem[] = [
 	{ label: 'Dashboard', href: '/(admin)/dashboard', icon: 'speedometer-outline' },
 	{ label: 'Users', href: '/(admin)/users', icon: 'people-outline' },
 	{ label: 'Services', href: '/(admin)/services', icon: 'grid-outline' },
-	{ label: 'Main Services', href: '/(admin)/services', icon: 'layers-outline' },
+	{ label: 'Main Services', href: '/(admin)/main-services', icon: 'layers-outline' },
 	{ label: 'Bookings', href: '/(admin)/bookings', icon: 'calendar-outline' },
 	{ label: 'Manual Reservations', href: '/(admin)/reservations', icon: 'lock-closed-outline' },
-
-	// Kept as approved mobile extras.
 	{ label: 'Subscriptions', href: '/(admin)/subscriptions', icon: 'card-outline' },
 	{ label: 'Analytics', href: '/(admin)/analytics', icon: 'bar-chart-outline' },
 ];
 
-export default function AppMenuDrawer() {
+export default function AppMenuDrawer({ variant = 'default' }: { variant?: 'default' | 'onPrimary' }) {
 	const [visible, setVisible] = useState(false);
 	const router = useRouter();
+	const pathname = usePathname();
 	const dispatch = useAppDispatch();
 	const { role, email, isLoading } = useAppSelector((state) => state.auth);
 	const { palette } = useSettingsTheme();
 
 	const items = useMemo(() => {
-		if (role === 'admin') {
-			return adminMenu;
-		}
-
-		if (role === 'vendor') {
-			return vendorMenu;
-		}
-
+		if (role === 'admin') return adminMenu;
+		if (role === 'vendor') return vendorMenu;
 		return userMenu;
 	}, [role]);
 
@@ -81,53 +72,92 @@ export default function AppMenuDrawer() {
 		router.back();
 	};
 
-	const onLogout = async () => {
+	const onLogout = () => {
 		onClose();
-		await dispatch(signOut());
-		router.replace('/(auth)/login');
+		void dispatch(signOut()).then(() => {
+			router.replace('/(auth)/login');
+		});
 	};
 
 	return (
 		<>
 			<Pressable
-				style={[styles.menuButton, { backgroundColor: palette.headerBtnBg, borderColor: palette.border }]}
+				style={[
+					styles.menuButton,
+					variant === 'onPrimary'
+						? { backgroundColor: 'transparent', borderColor: 'transparent' }
+						: { backgroundColor: palette.elevatedBg, borderColor: palette.border },
+				]}
 				onPress={() => setVisible(true)}
 			>
-				<Ionicons name="menu" size={18} color={palette.text} />
+				<Ionicons
+					name="menu"
+					size={20}
+					color={variant === 'onPrimary' ? 'rgba(255,255,255,0.9)' : palette.text}
+				/>
 			</Pressable>
 
 			<Modal transparent visible={visible} animationType="fade" onRequestClose={onClose}>
 				<View style={styles.overlay}>
-					<View style={[styles.drawer, { backgroundColor: palette.surfaceBg, borderRightColor: palette.border }]}> 
-						<View style={[styles.header, { borderBottomColor: palette.border }]}> 
+					<View style={[styles.drawer, { backgroundColor: palette.surfaceBg, borderRightColor: palette.border }]}>
+						{/* Header */}
+						<View style={[styles.header, { borderBottomColor: palette.border }]}>
 							<ThemedText style={[styles.headerTitle, { color: palette.text }]}>GoEventify</ThemedText>
 							<ThemedText style={[styles.headerSub, { color: palette.subtext }]} numberOfLines={1}>
 								{email ?? 'Signed in user'}
 							</ThemedText>
 						</View>
 
-						<View style={styles.menuList}>
-							{items.map((item) => (
-								<Pressable
-									key={item.label}
-									style={[styles.menuItem, { borderColor: palette.border, backgroundColor: palette.headerBtnBg }]}
-									onPress={() => onNavigate(item.href)}
-								>
-									<Ionicons name={item.icon} size={17} color={palette.tint} />
-									<ThemedText style={[styles.menuLabel, { color: palette.text }]}>{item.label}</ThemedText>
-								</Pressable>
-							))}
-						</View>
+						{/* Menu items */}
+						<ScrollView
+							style={styles.menuList}
+							contentContainerStyle={styles.menuListContent}
+							showsVerticalScrollIndicator={false}
+						>
+							{items.map((item) => {
+								const hrefStr = typeof item.href === 'string' ? item.href : '';
+								const isActive = pathname === hrefStr || pathname.startsWith(hrefStr + '/');
+								return (
+									<Pressable
+										key={item.label}
+										style={[
+											styles.menuItem,
+											{
+												borderColor: isActive ? palette.primary : palette.border,
+												backgroundColor: isActive ? palette.primary : palette.elevatedBg,
+											},
+										]}
+										onPress={() => onNavigate(item.href)}
+									>
+										<Ionicons
+											name={item.icon}
+											size={17}
+											color={isActive ? palette.onPrimary : palette.tint}
+										/>
+										<ThemedText style={[styles.menuLabel, { color: isActive ? palette.onPrimary : palette.text }]}>
+											{item.label}
+										</ThemedText>
+									</Pressable>
+								);
+							})}
+						</ScrollView>
 
+						{/* Footer */}
 						<View style={[styles.footer, { borderTopColor: palette.border }]}>
 							<Pressable style={[styles.footerBtn, { borderColor: palette.border }]} onPress={onBack}>
 								<Ionicons name="arrow-back-outline" size={16} color={palette.text} />
 								<ThemedText style={[styles.footerLabel, { color: palette.text }]}>Back</ThemedText>
 							</Pressable>
 
-							<Pressable style={[styles.footerBtn, { borderColor: palette.dangerBorder, backgroundColor: palette.dangerSoft }]} onPress={onLogout} disabled={isLoading}>
+							<Pressable
+								style={[styles.footerBtn, { borderColor: palette.dangerBorder, backgroundColor: palette.dangerSoft }]}
+								onPress={onLogout}
+								disabled={isLoading}
+							>
 								<Ionicons name="log-out-outline" size={16} color={palette.danger} />
-								<ThemedText style={[styles.logoutText, { color: palette.danger }]}>{isLoading ? 'Logging out...' : 'Logout'}</ThemedText>
+								<ThemedText style={[styles.logoutText, { color: palette.danger }]}>
+									{isLoading ? 'Logging out...' : 'Logout'}
+								</ThemedText>
 							</Pressable>
 						</View>
 					</View>
@@ -174,8 +204,12 @@ const styles = StyleSheet.create({
 		marginTop: 2,
 	},
 	menuList: {
+		flex: 1,
 		paddingTop: 10,
+	},
+	menuListContent: {
 		gap: 8,
+		paddingBottom: 8,
 	},
 	menuItem: {
 		height: 42,

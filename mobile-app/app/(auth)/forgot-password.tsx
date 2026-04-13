@@ -1,55 +1,65 @@
 import { useState } from 'react';
+import {
+	Image,
+	KeyboardAvoidingView,
+	Platform,
+	Pressable,
+	ScrollView,
+	StyleSheet,
+	Text,
+	TextInput,
+	View,
+} from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Feather } from '@expo/vector-icons';
 
-import { ThemedText } from '@/components/themed-text';
 import { useAppToast } from '@/components/common/AppToastProvider';
 import { forgotPassword } from '@/services/auth/authApi';
-import { useSettingsTheme } from '@/theme/settingsTheme';
+import { useAppTheme } from '@/theme/useAppTheme';
 
 export default function ForgotPasswordScreen() {
 	const [email, setEmail] = useState('');
-	const [message, setMessage] = useState('');
+	const [emailSent, setEmailSent] = useState(false);
 	const [error, setError] = useState('');
 	const [loading, setLoading] = useState(false);
 	const router = useRouter();
 	const { showError, showSuccess } = useAppToast();
-	const { mode, palette } = useSettingsTheme();
-	const isDark = mode === 'dark';
+	const { palette, isDark } = useAppTheme();
+
+	const validate = () => {
+		if (!email.trim()) { setError('Email is required'); return false; }
+		if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setError('Enter a valid email address'); return false; }
+		setError('');
+		return true;
+	};
 
 	const onSubmit = async () => {
-		setError('');
-		setMessage('');
-
-		if (!email.trim()) {
-			setError('Please enter your email address.');
-			return;
-		}
-
+		if (!validate()) return;
 		setLoading(true);
 		try {
-			const responseMessage = await forgotPassword(email.trim().toLowerCase());
-			setMessage(responseMessage);
-			showSuccess(responseMessage);
+			const msg = await forgotPassword(email.trim().toLowerCase());
+			setEmailSent(true);
+			showSuccess(msg || 'Password reset link sent! Check your email.');
 		} catch (err) {
-			const fallback = 'Unable to send reset request. Please try again.';
-			if (err && typeof err === 'object' && 'message' in err && typeof (err as { message?: unknown }).message === 'string') {
-				const message = (err as { message: string }).message;
-				setError(message);
-				showError(message);
-			} else {
-				setError(fallback);
-				showError(fallback);
-			}
+			const fallback = 'Failed to send reset link. Please try again.';
+			const msg =
+				err && typeof err === 'object' && 'message' in err && typeof (err as { message?: unknown }).message === 'string'
+					? (err as { message: string }).message
+					: fallback;
+			setError(msg);
+			showError(msg);
 		} finally {
 			setLoading(false);
 		}
 	};
 
+	const c = palette;
+
 	return (
-		<SafeAreaView style={[styles.safeArea, { backgroundColor: palette.screenBg }]} edges={['top', 'bottom']}>
+		<SafeAreaView style={[s.safe, { backgroundColor: c.screenBg }]} edges={['top', 'bottom']}>
 			<StatusBar style={isDark ? 'light' : 'dark'} />
 			<ScrollView contentContainerStyle={styles.container}>
 				<Image source={require('@/assets/images/home/logo2.png')} style={styles.brandLogo} resizeMode="contain" />
@@ -128,6 +138,7 @@ const styles = StyleSheet.create({
 		lineHeight: 21,
 	},
 	card: {
+		borderRadius: 20,
 		borderWidth: 1,
 		borderRadius: 16,
 		padding: 14,
@@ -136,22 +147,54 @@ const styles = StyleSheet.create({
 	input: {
 		height: 48,
 		borderWidth: 1,
-		borderRadius: 11,
-		paddingHorizontal: 12,
-		fontSize: 15,
+		borderRadius: 14,
+		paddingHorizontal: 14,
+		height: 52,
 	},
-	primaryBtn: {
-		height: 44,
-		borderRadius: 11,
+	icon: { marginRight: 10 },
+	input: { flex: 1, fontSize: 15, height: '100%' },
+
+	errText: { fontSize: 12, fontWeight: '600', marginTop: -10 },
+
+	btn: {
+		borderRadius: 14,
+		paddingVertical: 15,
 		alignItems: 'center',
-		justifyContent: 'center',
+		shadowColor: '#000',
+		shadowOffset: { width: 0, height: 2 },
+		shadowOpacity: 0.15,
+		shadowRadius: 6,
+		elevation: 3,
 	},
-	primaryBtnText: {
-		fontSize: 14,
-		fontWeight: '700',
-		color: '#FFFFFF',
+	btnDisabled: { opacity: 0.55 },
+	btnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+
+	switchWrap: { alignItems: 'center', paddingTop: 2 },
+	switchText: { fontSize: 14, textAlign: 'center' },
+	switchLink: { fontWeight: '700' },
+
+	successBanner: {
+		flexDirection: 'row',
+		alignItems: 'flex-start',
+		gap: 12,
+		borderRadius: 12,
+		padding: 14,
 	},
-	linkBtn: {
+	successTitle: { fontSize: 15, fontWeight: '700' },
+	successBody: { fontSize: 13 },
+	successEmail: { fontWeight: '700' },
+
+	stepsCard: { borderRadius: 12, padding: 14, gap: 8 },
+	stepsTitle: { fontSize: 14, fontWeight: '700', marginBottom: 2 },
+	stepRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+	stepText: { fontSize: 13, flex: 1 },
+	spamNote: { fontSize: 12, marginTop: 4 },
+	tryAgain: { fontWeight: '700' },
+
+	outlineBtn: {
+		borderWidth: 1,
+		borderRadius: 14,
+		paddingVertical: 15,
 		alignItems: 'center',
 		paddingVertical: 4,
 	},
@@ -167,4 +210,5 @@ const styles = StyleSheet.create({
 		fontSize: 12,
 		fontWeight: '700',
 	},
+	outlineBtnText: { fontSize: 16, fontWeight: '700' },
 });
