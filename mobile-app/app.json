@@ -63,11 +63,7 @@
       "reactCompiler": true
     },
     "extra": {
-      "router": {},
-      "eas": {
-        "projectId": "604055e8-eac9-4838-a08b-f437bd6b5127"
-      }
-    },
-    "owner": "codewithnayan"
+      "router": {}
+    }
   }
 }
