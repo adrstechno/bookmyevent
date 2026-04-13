@@ -14,85 +14,109 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import FadeInView from '@/components/common/FadeInView';
+import PageLoadingState from '@/components/common/PageLoadingState';
 import { useAppToast } from '@/components/common/AppToastProvider';
 import { ThemedText } from '@/components/themed-text';
-import { useSettingsTheme } from '@/theme/settingsTheme';
 import VendorAppBar from '@/components/vendor/VendorAppBar';
+import {
+	createVendorPackage,
+	deleteVendorPackage,
+	fetchVendorPackages,
+	fetchVendorProfile,
+	updateVendorPackage,
+} from '@/services/vendor/vendorService';
+import { useSettingsTheme } from '@/theme/settingsTheme';
+import type { VendorPackage } from '@/types/vendor';
 
-interface PackageItem {
-	package_id: number;
-	package_name: string;
-	package_desc: string;
+type PackageForm = {
+	packageId: string | null;
+	packageName: string;
+	packageDesc: string;
 	amount: string;
-	is_active: boolean;
-}
-
-interface PackageForm {
-	package_id: number | null;
-	package_name: string;
-	package_desc: string;
-	amount: string;
-}
-
-const MOCK_PACKAGES: PackageItem[] = [
-	{
-		package_id: 1,
-		package_name: 'Wedding Essentials',
-		package_desc: 'Decoration, planning, and coordination for intimate weddings.',
-		amount: '45000',
-		is_active: true,
-	},
-	{
-		package_id: 2,
-		package_name: 'Corporate Premium',
-		package_desc: 'Venue setup, sound, and event management for business functions.',
-		amount: '65000',
-		is_active: true,
-	},
-	{
-		package_id: 3,
-		package_name: 'Birthday Delight',
-		package_desc: 'Theme planning, balloons, and entertainment support.',
-		amount: '22000',
-		is_active: false,
-	},
-];
+};
 
 const EMPTY_FORM: PackageForm = {
-	package_id: null,
-	package_name: '',
-	package_desc: '',
+	packageId: null,
+	packageName: '',
+	packageDesc: '',
 	amount: '',
+};
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+	if (error && typeof error === 'object' && 'message' in error) {
+		const message = (error as { message?: string }).message;
+		if (typeof message === 'string' && message.trim()) {
+			return message;
+		}
+	}
+
+	return fallback;
 };
 
 export default function VendorPackagesScreen() {
 	const { palette } = useSettingsTheme();
-	const { showSuccess, showError } = useAppToast();
+	const { showSuccess, showError, showInfo } = useAppToast();
+	const styles = useMemo(() => createStyles(palette), [palette]);
 
-	const [loading, setLoading] = useState(true);
-	const [packages, setPackages] = useState<PackageItem[]>([]);
-	const [openModal, setOpenModal] = useState(false);
-	const [isUpdate, setIsUpdate] = useState(false);
+	const [isLoading, setIsLoading] = useState(true);
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [vendorId, setVendorId] = useState<string | null>(null);
+	const [packages, setPackages] = useState<VendorPackage[]>([]);
 	const [form, setForm] = useState<PackageForm>(EMPTY_FORM);
 	const [errors, setErrors] = useState<Record<string, string>>({});
-	const [expandedPackageId, setExpandedPackageId] = useState<number | null>(1);
-
-	useEffect(() => {
-		const timer = setTimeout(() => {
-			setPackages(MOCK_PACKAGES);
-			setLoading(false);
-		}, 350);
-
-		return () => clearTimeout(timer);
-	}, []);
-
-	const styles = useMemo(() => createStyles(palette), [palette]);
+	const [openModal, setOpenModal] = useState(false);
+	const [isUpdate, setIsUpdate] = useState(false);
+	const [expandedPackageId, setExpandedPackageId] = useState<string | null>(null);
 
 	const resetForm = useCallback(() => {
 		setForm(EMPTY_FORM);
 		setErrors({});
 	}, []);
+
+	const loadPackages = useCallback(
+		async (nextVendorId?: string | null) => {
+			const targetVendorId = nextVendorId ?? vendorId;
+			if (!targetVendorId) {
+				setPackages([]);
+				return;
+			}
+
+			const packageRows = await fetchVendorPackages(targetVendorId);
+			setPackages(packageRows);
+			if (packageRows.length > 0) {
+				setExpandedPackageId(String(packageRows[0].packageId));
+			} else {
+				setExpandedPackageId(null);
+			}
+		},
+		[vendorId]
+	);
+
+	const initialize = useCallback(async () => {
+		setIsLoading(true);
+		try {
+			const profile = await fetchVendorProfile();
+			if (!profile?.vendorId) {
+				setVendorId(null);
+				setPackages([]);
+				showInfo('Complete your vendor profile in Settings before creating packages.');
+				return;
+			}
+
+			const nextVendorId = String(profile.vendorId);
+			setVendorId(nextVendorId);
+			await loadPackages(nextVendorId);
+		} catch (error) {
+			const message = getErrorMessage(error, 'Unable to load packages right now.');
+			showError(message);
+		} finally {
+			setIsLoading(false);
+		}
+	}, [loadPackages, showError, showInfo]);
+
+	useEffect(() => {
+		void initialize();
+	}, [initialize]);
 
 	const openCreate = useCallback(() => {
 		setIsUpdate(false);
@@ -100,13 +124,13 @@ export default function VendorPackagesScreen() {
 		setOpenModal(true);
 	}, [resetForm]);
 
-	const openEdit = useCallback((pkg: PackageItem) => {
+	const openEdit = useCallback((pkg: VendorPackage) => {
 		setIsUpdate(true);
 		setForm({
-			package_id: pkg.package_id,
-			package_name: pkg.package_name,
-			package_desc: pkg.package_desc,
-			amount: pkg.amount,
+			packageId: String(pkg.packageId),
+			packageName: pkg.packageName,
+			packageDesc: pkg.packageDesc,
+			amount: String(pkg.amount),
 		});
 		setErrors({});
 		setOpenModal(true);
@@ -115,175 +139,192 @@ export default function VendorPackagesScreen() {
 	const validateForm = useCallback(() => {
 		const nextErrors: Record<string, string> = {};
 
-		if (!form.package_name.trim()) {
-			nextErrors.package_name = 'Package name is required';
+		if (!form.packageName.trim()) {
+			nextErrors.packageName = 'Package name is required';
 		}
 
 		if (!form.amount.trim()) {
 			nextErrors.amount = 'Amount is required';
-		} else if (Number(form.amount) <= 0 || Number.isNaN(Number(form.amount))) {
+		} else if (Number.isNaN(Number(form.amount)) || Number(form.amount) <= 0) {
 			nextErrors.amount = 'Enter a valid amount';
 		}
 
 		setErrors(nextErrors);
 		return Object.keys(nextErrors).length === 0;
-	}, [form.amount, form.package_name]);
+	}, [form.amount, form.packageName]);
 
 	const handleSave = useCallback(async () => {
+		if (!vendorId) {
+			showError('Vendor profile not found. Please complete Settings first.');
+			return;
+		}
+
 		if (!validateForm()) {
-			showError('Please fix the highlighted fields');
+			showError('Please fix the highlighted fields.');
 			return;
 		}
 
 		setIsSubmitting(true);
 		try {
-			await new Promise((resolve) => setTimeout(resolve, 500));
+			const payload = {
+				packageName: form.packageName,
+				packageDesc: form.packageDesc,
+				amount: Number(form.amount),
+			};
 
-			if (isUpdate && form.package_id !== null) {
-				setPackages((prev) =>
-					prev.map((item) =>
-						item.package_id === form.package_id
-							? {
-								...item,
-								package_name: form.package_name.trim(),
-								package_desc: form.package_desc.trim(),
-								amount: form.amount.trim(),
-							}
-							: item
-					),
-				);
+			if (isUpdate && form.packageId) {
+				await updateVendorPackage(form.packageId, payload);
 				showSuccess('Package updated successfully');
 			} else {
-				const nextId = packages.length > 0 ? Math.max(...packages.map((item) => item.package_id)) + 1 : 1;
-				setPackages((prev) => [
-					{
-						package_id: nextId,
-						package_name: form.package_name.trim(),
-						package_desc: form.package_desc.trim(),
-						amount: form.amount.trim(),
-						is_active: true,
-					},
-					...prev,
-				]);
+				await createVendorPackage(payload);
 				showSuccess('Package created successfully');
 			}
 
 			setOpenModal(false);
 			resetForm();
-		} catch {
-			showError('Failed to save package');
+			await loadPackages(vendorId);
+		} catch (error) {
+			showError(
+				getErrorMessage(
+					error,
+					isUpdate ? 'Failed to update package.' : 'Failed to create package.'
+				)
+			);
 		} finally {
 			setIsSubmitting(false);
 		}
-	}, [form.amount, form.package_desc, form.package_id, form.package_name, isUpdate, packages, resetForm, showError, showSuccess, validateForm]);
+	}, [
+		form.amount,
+		form.packageDesc,
+		form.packageId,
+		form.packageName,
+		isUpdate,
+		loadPackages,
+		resetForm,
+		showError,
+		showSuccess,
+		validateForm,
+		vendorId,
+	]);
 
 	const handleDelete = useCallback(
-		(pkg: PackageItem) => {
-			Alert.alert('Delete Package', `Delete "${pkg.package_name}"?`, [
+		(pkg: VendorPackage) => {
+			Alert.alert('Delete Package', `Delete "${pkg.packageName}"?`, [
 				{ text: 'Cancel', style: 'cancel' },
 				{
 					text: 'Delete',
 					style: 'destructive',
 					onPress: () => {
-						setPackages((prev) => prev.filter((item) => item.package_id !== pkg.package_id));
-						showSuccess('Package deleted successfully');
+						void (async () => {
+							try {
+								await deleteVendorPackage(pkg.packageId);
+								showSuccess('Package deleted successfully');
+								await loadPackages(vendorId);
+							} catch (error) {
+								showError(getErrorMessage(error, 'Failed to delete package.'));
+							}
+						})();
 					},
 				},
 			]);
 		},
-		[showSuccess],
+		[loadPackages, showError, showSuccess, vendorId]
 	);
 
 	const renderPackageRow = useCallback(
-		({ item }: { item: PackageItem }) => (
-			<View style={styles.packageCard}>
-				<View style={styles.packageTopRow}>
-					<View style={styles.packageTitleWrap}>
-						<View style={styles.packageIconBubble}>
-							<Ionicons name="cube-outline" size={18} color="#fff" />
-						</View>
-						<View style={styles.packageTitleStack}>
-							<ThemedText style={styles.packageName}>{item.package_name}</ThemedText>
-							<View style={[styles.stateChip, item.is_active ? styles.activeChip : styles.inactiveChip]}>
-								<ThemedText style={[styles.stateChipText, item.is_active ? styles.activeChipText : styles.inactiveChipText]}>
-									{item.is_active ? 'Active' : 'Inactive'}
-								</ThemedText>
+		({ item }: { item: VendorPackage }) => {
+			const packageId = String(item.packageId);
+			const isExpanded = expandedPackageId === packageId;
+			return (
+				<View style={styles.packageCard}>
+					<View style={styles.packageTopRow}>
+						<View style={styles.packageTitleWrap}>
+							<View style={styles.packageIconBubble}>
+								<Ionicons name="cube-outline" size={18} color="#fff" />
+							</View>
+							<View style={styles.packageTitleStack}>
+								<ThemedText style={styles.packageName}>{item.packageName}</ThemedText>
+								<View style={[styles.stateChip, styles.activeChip]}>
+									<ThemedText style={[styles.stateChipText, styles.activeChipText]}>Active</ThemedText>
+								</View>
 							</View>
 						</View>
+
+						<View style={styles.amountBadge}>
+							<ThemedText style={styles.amountText}>₹ {item.amount.toLocaleString('en-IN')}</ThemedText>
+						</View>
 					</View>
 
-					<View style={styles.amountBadge}>
-						<ThemedText style={styles.amountText}>₹ {Number(item.amount).toLocaleString()}</ThemedText>
+					<View style={styles.metaRow}>
+						<View style={styles.metaPill}>
+							<Ionicons name="pricetag-outline" size={12} color={palette.primary} />
+							<ThemedText style={styles.metaText}>Package #{packageId}</ThemedText>
+						</View>
+						<View style={styles.metaPill}>
+							<Ionicons name="checkmark-circle-outline" size={12} color="#166534" />
+							<ThemedText style={[styles.metaText, styles.activeMetaText]}>Visible in listing</ThemedText>
+						</View>
 					</View>
-				</View>
 
-				<View style={styles.metaRow}>
-					<View style={styles.metaPill}>
-						<Ionicons name="pricetag-outline" size={12} color={palette.primary} />
-						<ThemedText style={styles.metaText}>Package #{item.package_id}</ThemedText>
-					</View>
-					<View style={styles.metaPill}>
-						<Ionicons name={item.is_active ? 'checkmark-circle-outline' : 'pause-circle-outline'} size={12} color={item.is_active ? '#166534' : '#92400e'} />
-						<ThemedText style={[styles.metaText, item.is_active ? styles.activeMetaText : styles.inactiveMetaText]}>
-							{item.is_active ? 'Visible in listing' : 'Hidden from listing'}
-						</ThemedText>
-					</View>
-				</View>
-
-				<Pressable
-					style={({ pressed }) => [styles.detailsToggle, { opacity: pressed ? 0.82 : 1 }]}
-					onPress={() => setExpandedPackageId((prev) => (prev === item.package_id ? null : item.package_id))}
-				>
-					<ThemedText style={styles.detailsToggleText}>
-						{expandedPackageId === item.package_id ? 'Hide details' : 'View details'}
-					</ThemedText>
-					<Ionicons name={expandedPackageId === item.package_id ? 'chevron-up' : 'chevron-down'} size={16} color={palette.primary} />
-				</Pressable>
-
-				{expandedPackageId === item.package_id ? (
-					<View style={styles.detailsBox}>
-						<ThemedText style={styles.detailsLabel}>Description</ThemedText>
-						<ThemedText style={styles.detailsText}>
-							{item.package_desc || 'No description available for this package.'}
-						</ThemedText>
-					</View>
-				) : null}
-
-				<View style={styles.cardFooter}>
 					<Pressable
-						style={({ pressed }) => [
-							styles.cardAction,
-							styles.editButton,
-							{ opacity: pressed ? 0.86 : 1 },
-						]}
-						onPress={() => openEdit(item)}
+						style={({ pressed }) => [styles.detailsToggle, { opacity: pressed ? 0.82 : 1 }]}
+						onPress={() => setExpandedPackageId((prev) => (prev === packageId ? null : packageId))}
 					>
-						<Ionicons name="create-outline" size={16} color="#2563eb" />
-						<ThemedText style={styles.editText}>Edit</ThemedText>
+						<ThemedText style={styles.detailsToggleText}>
+							{isExpanded ? 'Hide details' : 'View details'}
+						</ThemedText>
+						<Ionicons name={isExpanded ? 'chevron-up' : 'chevron-down'} size={16} color={palette.primary} />
 					</Pressable>
-					<Pressable
-						style={({ pressed }) => [
-							styles.cardAction,
-							styles.deleteButton,
-							{ opacity: pressed ? 0.86 : 1 },
-						]}
-						onPress={() => handleDelete(item)}
-					>
-						<Ionicons name="trash-outline" size={16} color="#dc2626" />
-						<ThemedText style={styles.deleteText}>Delete</ThemedText>
-					</Pressable>
+
+					{isExpanded ? (
+						<View style={styles.detailsBox}>
+							<ThemedText style={styles.detailsLabel}>Description</ThemedText>
+							<ThemedText style={styles.detailsText}>
+								{item.packageDesc || 'No description available for this package.'}
+							</ThemedText>
+						</View>
+					) : null}
+
+					<View style={styles.cardFooter}>
+						<Pressable
+							style={({ pressed }) => [styles.cardAction, styles.editButton, { opacity: pressed ? 0.86 : 1 }]}
+							onPress={() => openEdit(item)}
+						>
+							<Ionicons name="create-outline" size={16} color="#2563eb" />
+							<ThemedText style={styles.editText}>Edit</ThemedText>
+						</Pressable>
+						<Pressable
+							style={({ pressed }) => [styles.cardAction, styles.deleteButton, { opacity: pressed ? 0.86 : 1 }]}
+							onPress={() => handleDelete(item)}
+						>
+							<Ionicons name="trash-outline" size={16} color="#dc2626" />
+							<ThemedText style={styles.deleteText}>Delete</ThemedText>
+						</Pressable>
+					</View>
 				</View>
-			</View>
-		),
-		[handleDelete, openEdit, palette.primary, styles],
+			);
+		},
+		[expandedPackageId, handleDelete, openEdit, palette.primary, styles]
 	);
+
+	if (isLoading) {
+		return <PageLoadingState text="Loading packages..." />;
+	}
 
 	return (
 		<SafeAreaView style={{ flex: 1, backgroundColor: palette.screenBg }}>
 			<VendorAppBar
 				title="My Packages"
 				actionElement={
-					<Pressable style={({ pressed }) => [styles.createButton, { opacity: pressed ? 0.9 : 1 }]} onPress={openCreate}>
+					<Pressable
+						style={({ pressed }) => [
+							styles.createButton,
+							{ opacity: pressed || !vendorId ? 0.9 : 1 },
+							!vendorId ? styles.disabledCreateButton : null,
+						]}
+						onPress={openCreate}
+						disabled={!vendorId}
+					>
 						<Ionicons name="add" size={18} color="#fff" />
 						<ThemedText style={styles.createButtonText}>Create</ThemedText>
 					</Pressable>
@@ -293,9 +334,13 @@ export default function VendorPackagesScreen() {
 			<ScrollView style={styles.screen} contentContainerStyle={styles.screenContent} showsVerticalScrollIndicator={false}>
 				<FadeInView>
 					<View style={styles.panel}>
-						{loading ? (
+						{!vendorId ? (
 							<View style={styles.centerState}>
-								<ActivityIndicator size="large" color={palette.primary} />
+								<Ionicons name="alert-circle-outline" size={56} color={palette.muted} />
+								<ThemedText style={styles.emptyTitle}>Vendor profile required</ThemedText>
+								<ThemedText style={styles.emptySubtitle}>
+									Please complete your vendor profile in Settings before creating packages.
+								</ThemedText>
 							</View>
 						) : packages.length === 0 ? (
 							<View style={styles.centerState}>
@@ -306,7 +351,7 @@ export default function VendorPackagesScreen() {
 						) : (
 							<FlatList
 								data={packages}
-								keyExtractor={(item) => String(item.package_id)}
+								keyExtractor={(item) => String(item.packageId)}
 								renderItem={renderPackageRow}
 								scrollEnabled={false}
 								contentContainerStyle={styles.cardList}
@@ -332,16 +377,16 @@ export default function VendorPackagesScreen() {
 							<View style={styles.fieldGroup}>
 								<ThemedText style={styles.label}>Package Name</ThemedText>
 								<TextInput
-									style={[styles.input, { borderColor: errors.package_name ? '#dc2626' : palette.border, color: palette.text }]}
+									style={[styles.input, { borderColor: errors.packageName ? '#dc2626' : palette.border, color: palette.text }]}
 									placeholder="Enter package name"
 									placeholderTextColor={palette.muted}
-									value={form.package_name}
+									value={form.packageName}
 									onChangeText={(value) => {
-										setForm((prev) => ({ ...prev, package_name: value }));
-										setErrors((prev) => ({ ...prev, package_name: '' }));
+										setForm((prev) => ({ ...prev, packageName: value }));
+										setErrors((prev) => ({ ...prev, packageName: '' }));
 									}}
 								/>
-								{errors.package_name ? <ThemedText style={styles.errorText}>{errors.package_name}</ThemedText> : null}
+								{errors.packageName ? <ThemedText style={styles.errorText}>{errors.packageName}</ThemedText> : null}
 							</View>
 
 							<View style={styles.fieldGroup}>
@@ -350,8 +395,8 @@ export default function VendorPackagesScreen() {
 									style={[styles.textArea, { borderColor: palette.border, color: palette.text }]}
 									placeholder="Enter package description"
 									placeholderTextColor={palette.muted}
-									value={form.package_desc}
-									onChangeText={(value) => setForm((prev) => ({ ...prev, package_desc: value }))}
+									value={form.packageDesc}
+									onChangeText={(value) => setForm((prev) => ({ ...prev, packageDesc: value }))}
 									multiline
 									numberOfLines={4}
 								/>
@@ -375,11 +420,23 @@ export default function VendorPackagesScreen() {
 						</ScrollView>
 
 						<View style={styles.modalActions}>
-							<Pressable style={({ pressed }) => [styles.secondaryButton, { backgroundColor: pressed ? palette.pressedBg : palette.elevatedBg }]} onPress={() => setOpenModal(false)} disabled={isSubmitting}>
+							<Pressable
+								style={({ pressed }) => [styles.secondaryButton, { backgroundColor: pressed ? palette.pressedBg : palette.elevatedBg }]}
+								onPress={() => setOpenModal(false)}
+								disabled={isSubmitting}
+							>
 								<ThemedText style={[styles.buttonText, { color: palette.primary }]}>Cancel</ThemedText>
 							</Pressable>
-							<Pressable style={({ pressed }) => [styles.primaryButton, { backgroundColor: pressed ? '#2f5b60' : palette.primary }]} onPress={handleSave} disabled={isSubmitting}>
-								{isSubmitting ? <ActivityIndicator size="small" color="#fff" /> : <ThemedText style={[styles.buttonText, { color: '#fff' }]}>{isUpdate ? 'Update' : 'Save'}</ThemedText>}
+							<Pressable
+								style={({ pressed }) => [styles.primaryButton, { backgroundColor: pressed ? '#2f5b60' : palette.primary }]}
+								onPress={handleSave}
+								disabled={isSubmitting}
+							>
+								{isSubmitting ? (
+									<ActivityIndicator size="small" color="#fff" />
+								) : (
+									<ThemedText style={[styles.buttonText, { color: '#fff' }]}>{isUpdate ? 'Update' : 'Save'}</ThemedText>
+								)}
 							</Pressable>
 						</View>
 					</View>
@@ -391,29 +448,6 @@ export default function VendorPackagesScreen() {
 
 function createStyles(palette: ReturnType<typeof useSettingsTheme>['palette']) {
 	return StyleSheet.create({
-		headerContainer: {
-			flexDirection: 'row',
-			alignItems: 'center',
-			gap: 12,
-			paddingHorizontal: 16,
-			paddingVertical: 12,
-			borderBottomWidth: 1,
-			borderBottomColor: palette.border,
-			backgroundColor: palette.screenBg,
-		},
-		headerCopy: {
-			flex: 1,
-		},
-		headerTitle: {
-			fontSize: 18,
-			fontWeight: '700',
-			color: palette.text,
-		},
-		headerSubtitle: {
-			fontSize: 12,
-			color: palette.muted,
-			marginTop: 2,
-		},
 		createButton: {
 			flexDirection: 'row',
 			alignItems: 'center',
@@ -422,6 +456,9 @@ function createStyles(palette: ReturnType<typeof useSettingsTheme>['palette']) {
 			paddingHorizontal: 14,
 			paddingVertical: 10,
 			borderRadius: 10,
+		},
+		disabledCreateButton: {
+			opacity: 0.55,
 		},
 		createButtonText: {
 			color: '#fff',
@@ -510,6 +547,11 @@ function createStyles(palette: ReturnType<typeof useSettingsTheme>['palette']) {
 			flex: 1,
 			gap: 6,
 		},
+		packageName: {
+			fontSize: 14,
+			fontWeight: '700',
+			color: palette.text,
+		},
 		stateChip: {
 			alignSelf: 'flex-start',
 			paddingHorizontal: 10,
@@ -519,18 +561,12 @@ function createStyles(palette: ReturnType<typeof useSettingsTheme>['palette']) {
 		activeChip: {
 			backgroundColor: 'rgba(22, 101, 52, 0.12)',
 		},
-		inactiveChip: {
-			backgroundColor: 'rgba(146, 64, 14, 0.12)',
+		activeChipText: {
+			color: '#166534',
 		},
 		stateChipText: {
 			fontSize: 11,
 			fontWeight: '700',
-		},
-		activeChipText: {
-			color: '#166534',
-		},
-		inactiveChipText: {
-			color: '#92400e',
 		},
 		metaRow: {
 			flexDirection: 'row',
@@ -555,8 +591,16 @@ function createStyles(palette: ReturnType<typeof useSettingsTheme>['palette']) {
 		activeMetaText: {
 			color: '#166534',
 		},
-		inactiveMetaText: {
-			color: '#92400e',
+		amountBadge: {
+			backgroundColor: 'rgba(34, 197, 94, 0.12)',
+			borderRadius: 999,
+			paddingHorizontal: 12,
+			paddingVertical: 8,
+		},
+		amountText: {
+			fontSize: 13,
+			fontWeight: '800',
+			color: '#166534',
 		},
 		detailsToggle: {
 			marginTop: 12,
@@ -606,6 +650,12 @@ function createStyles(palette: ReturnType<typeof useSettingsTheme>['palette']) {
 			paddingVertical: 11,
 			borderRadius: 12,
 		},
+		editButton: {
+			backgroundColor: 'rgba(37, 99, 235, 0.12)',
+		},
+		deleteButton: {
+			backgroundColor: 'rgba(220, 38, 38, 0.12)',
+		},
 		editText: {
 			fontSize: 13,
 			fontWeight: '700',
@@ -616,143 +666,59 @@ function createStyles(palette: ReturnType<typeof useSettingsTheme>['palette']) {
 			fontWeight: '700',
 			color: '#dc2626',
 		},
-		table: {
-			minWidth: 760,
-			flex: 1,
-		},
-		tableHeader: {
-			flexDirection: 'row',
-			backgroundColor: palette.primary,
-			paddingVertical: 14,
-			paddingHorizontal: 8,
-		},
-		tableHeaderText: {
-			color: '#fff',
-			fontSize: 13,
-			fontWeight: '700',
-		},
-		tableRow: {
-			flexDirection: 'row',
-			alignItems: 'center',
-			paddingHorizontal: 8,
-			paddingVertical: 14,
-		},
-		rowSeparator: {
-			height: 1,
-			backgroundColor: palette.border,
-			marginHorizontal: 12,
-		},
-		tableCell: {
-			paddingHorizontal: 12,
-		},
-		nameCell: {
-			width: 220,
-		},
-		descriptionCell: {
-			width: 320,
-		},
-		amountCell: {
-			width: 130,
-		},
-		actionsCell: {
-			width: 160,
-		},
-		centerText: {
-			textAlign: 'center',
-		},
-		packageNameWrap: {
-			flexDirection: 'row',
-			alignItems: 'center',
-			gap: 8,
-		},
-		packageName: {
-			fontSize: 14,
-			fontWeight: '700',
-			color: palette.text,
-		},
-		descriptionText: {
-			fontSize: 13,
-			color: palette.muted,
-		},
-		amountBadge: {
-			backgroundColor: 'rgba(34, 197, 94, 0.12)',
-			borderRadius: 999,
-			paddingHorizontal: 12,
-			paddingVertical: 7,
-			alignSelf: 'flex-start',
-		},
-		amountText: {
-			fontSize: 13,
-			fontWeight: '700',
-			color: '#166534',
-		},
-		actionsWrap: {
-			flexDirection: 'row',
-			justifyContent: 'center',
-			gap: 10,
-		},
-		actionButton: {
-			width: 38,
-			height: 38,
-			borderRadius: 10,
-			alignItems: 'center',
-			justifyContent: 'center',
-		},
-		editButton: {
-			backgroundColor: 'rgba(37, 99, 235, 0.1)',
-		},
-		deleteButton: {
-			backgroundColor: 'rgba(220, 38, 38, 0.1)',
-		},
 		modalOverlay: {
 			flex: 1,
-			backgroundColor: 'rgba(0,0,0,0.5)',
+			backgroundColor: palette.overlay,
 			justifyContent: 'center',
-			padding: 16,
+			paddingHorizontal: 18,
 		},
 		modalCard: {
-			borderRadius: 18,
-			maxHeight: '90%',
+			borderRadius: 20,
 			overflow: 'hidden',
+			shadowColor: palette.shadow,
+			shadowOffset: { width: 0, height: 10 },
+			shadowOpacity: 0.18,
+			shadowRadius: 24,
+			elevation: 12,
 		},
 		modalHeader: {
+			paddingHorizontal: 18,
+			paddingVertical: 16,
+			borderBottomWidth: 1,
+			borderBottomColor: palette.border,
 			flexDirection: 'row',
 			alignItems: 'center',
 			justifyContent: 'space-between',
-			paddingHorizontal: 16,
-			paddingVertical: 14,
-			borderBottomWidth: 1,
-			borderBottomColor: palette.border,
 		},
 		modalTitle: {
-			fontSize: 16,
-			fontWeight: '700',
+			fontSize: 18,
+			fontWeight: '800',
 			color: palette.text,
 		},
 		modalBody: {
-			padding: 16,
-			gap: 14,
+			padding: 18,
+			gap: 16,
 		},
 		fieldGroup: {
 			gap: 6,
 		},
 		label: {
 			fontSize: 13,
-			fontWeight: '600',
+			fontWeight: '700',
 			color: palette.text,
 		},
 		input: {
 			borderWidth: 1,
-			borderRadius: 10,
-			paddingHorizontal: 12,
+			borderRadius: 12,
+			paddingHorizontal: 14,
 			paddingVertical: 12,
 			fontSize: 14,
 			backgroundColor: palette.screenBg,
 		},
 		textArea: {
 			borderWidth: 1,
-			borderRadius: 10,
-			paddingHorizontal: 12,
+			borderRadius: 12,
+			paddingHorizontal: 14,
 			paddingVertical: 12,
 			fontSize: 14,
 			backgroundColor: palette.screenBg,
@@ -761,32 +727,34 @@ function createStyles(palette: ReturnType<typeof useSettingsTheme>['palette']) {
 		},
 		errorText: {
 			fontSize: 12,
+			fontWeight: '600',
 			color: '#dc2626',
 		},
 		modalActions: {
-			flexDirection: 'row',
-			gap: 12,
-			padding: 16,
+			paddingHorizontal: 18,
+			paddingVertical: 16,
 			borderTopWidth: 1,
 			borderTopColor: palette.border,
-		},
-		primaryButton: {
-			flex: 1,
-			alignItems: 'center',
-			justifyContent: 'center',
-			paddingVertical: 12,
-			borderRadius: 10,
+			flexDirection: 'row',
+			gap: 12,
 		},
 		secondaryButton: {
 			flex: 1,
+			borderRadius: 12,
+			paddingVertical: 13,
 			alignItems: 'center',
 			justifyContent: 'center',
-			paddingVertical: 12,
-			borderRadius: 10,
+		},
+		primaryButton: {
+			flex: 1,
+			borderRadius: 12,
+			paddingVertical: 13,
+			alignItems: 'center',
+			justifyContent: 'center',
 		},
 		buttonText: {
 			fontSize: 14,
-			fontWeight: '700',
+			fontWeight: '800',
 		},
 	});
 }

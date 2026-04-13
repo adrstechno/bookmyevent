@@ -1,12 +1,12 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
 	ActivityIndicator,
-	Alert,
 	Image,
 	Modal,
 	Pressable,
+	RefreshControl,
 	ScrollView,
 	StyleSheet,
 	View,
@@ -18,35 +18,60 @@ import { useAppToast } from '@/components/common/AppToastProvider';
 import { ThemedText } from '@/components/themed-text';
 import { useSettingsTheme } from '@/theme/settingsTheme';
 import VendorAppBar from '@/components/vendor/VendorAppBar';
+import {
+	fetchVendorEventImages,
+	uploadVendorEventImages,
+	type VendorEventImage,
+} from '@/services/vendor/vendorService';
 
-interface GalleryImageItem {
+interface SelectedImageItem {
 	id: string;
 	uri: string;
 }
-
-const INITIAL_GALLERY: GalleryImageItem[] = [
-	{ id: '1', uri: 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=900&q=80' },
-	{ id: '2', uri: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=900&q=80' },
-	{ id: '3', uri: 'https://images.unsplash.com/photo-1529636798458-92182e662485?auto=format&fit=crop&w=900&q=80' },
-	{ id: '4', uri: 'https://images.unsplash.com/photo-1505236858219-8359eb29e329?auto=format&fit=crop&w=900&q=80' },
-];
 
 export default function VendorGalleryScreen() {
 	const { palette } = useSettingsTheme();
 	const { showSuccess, showError } = useAppToast();
 
-	const [images, setImages] = useState<GalleryImageItem[]>(INITIAL_GALLERY);
-	const [selectedImages, setSelectedImages] = useState<GalleryImageItem[]>([]);
+	// ── Server gallery state ─────────────────────────────────────
+	const [galleryImages, setGalleryImages] = useState<VendorEventImage[]>([]);
+	const [loadingGallery, setLoadingGallery] = useState(true);
+	const [refreshing, setRefreshing] = useState(false);
+
+	// ── Local selected images (before upload) ────────────────────
+	const [selectedImages, setSelectedImages] = useState<SelectedImageItem[]>([]);
 	const [uploading, setUploading] = useState(false);
 	const [pickerOpen, setPickerOpen] = useState(false);
 	const [previewImage, setPreviewImage] = useState<string | null>(null);
 
 	const styles = useMemo(() => createStyles(palette), [palette]);
 
+	const MAX_UPLOAD = 5;
+	const galleryCount = galleryImages.length;
 	const selectedCount = selectedImages.length;
-	const galleryCount = images.length;
-	const maxImages = 5;
 
+	// ── Fetch gallery from API ───────────────────────────────────
+	const loadGallery = useCallback(async (isRefresh = false) => {
+		if (isRefresh) setRefreshing(true);
+		else setLoadingGallery(true);
+
+		try {
+			const images = await fetchVendorEventImages();
+			setGalleryImages(images);
+		} catch (err: unknown) {
+			const msg = (err as { message?: string })?.message ?? 'Failed to load gallery';
+			showError(msg);
+		} finally {
+			setLoadingGallery(false);
+			setRefreshing(false);
+		}
+	}, [showError]);
+
+	useEffect(() => {
+		loadGallery();
+	}, [loadGallery]);
+
+	// ── Pick images from device ──────────────────────────────────
 	const openImagePicker = useCallback(async () => {
 		const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
 		if (permission.status !== 'granted') {
@@ -54,9 +79,9 @@ export default function VendorGalleryScreen() {
 			return;
 		}
 
-		const remainingSlots = maxImages - selectedImages.length;
+		const remainingSlots = MAX_UPLOAD - selectedImages.length;
 		if (remainingSlots <= 0) {
-			showError('You can upload up to 5 images only');
+			showError(`You can select up to ${MAX_UPLOAD} images at a time`);
 			return;
 		}
 
@@ -68,89 +93,95 @@ export default function VendorGalleryScreen() {
 			allowsEditing: false,
 		});
 
-		if (result.canceled) {
-			return;
-		}
+		if (result.canceled) return;
 
 		const picked = result.assets.slice(0, remainingSlots).map((asset, index) => ({
-			id: `${Date.now()}-${index}-${asset.uri}`,
+			id: `${Date.now()}-${index}`,
 			uri: asset.uri,
 		}));
 
-		setSelectedImages((prev) => [...prev, ...picked].slice(0, maxImages));
+		setSelectedImages((prev) => [...prev, ...picked].slice(0, MAX_UPLOAD));
 		setPickerOpen(false);
-	}, [maxImages, selectedImages.length, showError]);
+	}, [MAX_UPLOAD, selectedImages.length, showError]);
 
+	// ── Remove from selected (before upload) ────────────────────
 	const removeSelectedImage = useCallback((id: string) => {
 		setSelectedImages((prev) => prev.filter((item) => item.id !== id));
 	}, []);
 
-	const removeGalleryImage = useCallback((id: string) => {
-		Alert.alert('Remove Image', 'Remove this image from the gallery?', [
-			{ text: 'Cancel', style: 'cancel' },
-			{
-				text: 'Remove',
-				style: 'destructive',
-				onPress: () => setImages((prev) => prev.filter((item) => item.id !== id)),
-			},
-		]);
-	}, []);
-
+	// ── Upload selected images to server ────────────────────────
 	const handleUpload = useCallback(async () => {
 		if (selectedImages.length === 0) {
-			showError('Select images first');
+			showError('Select at least one image first');
 			return;
 		}
 
 		setUploading(true);
 		try {
-			await new Promise((resolve) => setTimeout(resolve, 700));
-			setImages((prev) => [...selectedImages.reverse(), ...prev].slice(0, maxImages));
+			await uploadVendorEventImages(selectedImages.map((img) => img.uri));
+			showSuccess(`${selectedImages.length} image(s) uploaded successfully`);
 			setSelectedImages([]);
-			showSuccess('Images uploaded successfully');
-		} catch {
-			showError('Failed to upload images');
+			// Refresh gallery from server
+			await loadGallery();
+		} catch (err: unknown) {
+			const msg = (err as { message?: string })?.message ?? 'Failed to upload images';
+			showError(msg);
 		} finally {
 			setUploading(false);
 		}
-	}, [maxImages, selectedImages, showError, showSuccess]);
+	}, [selectedImages, showError, showSuccess, loadGallery]);
 
+	// ── Render ───────────────────────────────────────────────────
 	return (
 		<SafeAreaView style={{ flex: 1, backgroundColor: palette.screenBg }}>
 			<VendorAppBar title="Event Gallery" />
 
-			<ScrollView style={styles.screen} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+			<ScrollView
+				style={styles.screen}
+				contentContainerStyle={styles.content}
+				showsVerticalScrollIndicator={false}
+				refreshControl={
+					<RefreshControl
+						refreshing={refreshing}
+						onRefresh={() => loadGallery(true)}
+						colors={[palette.primary]}
+						tintColor={palette.primary}
+					/>
+				}
+			>
 				<FadeInView>
+					{/* ── Hero Card ── */}
 					<View style={styles.heroCard}>
 						<View style={styles.heroRow}>
 							<View style={styles.heroIconBubble}>
 								<Ionicons name="images-outline" size={20} color="#fff" />
 							</View>
 							<View style={styles.heroCopyBlock}>
-								<ThemedText style={styles.heroTitle}>Upload Event Gallery</ThemedText>
-								<ThemedText style={styles.heroSubtitleText}>Add high-quality images to showcase your event highlights</ThemedText>
+								<ThemedText style={styles.heroTitle}>Event Gallery</ThemedText>
+								<ThemedText style={styles.heroSubtitleText}>Showcase your best event highlights</ThemedText>
 							</View>
 						</View>
 						<View style={styles.heroMetaRow}>
 							<View style={styles.heroMetaChip}>
 								<ThemedText style={styles.heroMetaValue}>{galleryCount}</ThemedText>
-								<ThemedText style={styles.heroMetaLabel}>Current</ThemedText>
+								<ThemedText style={styles.heroMetaLabel}>Uploaded</ThemedText>
 							</View>
 							<View style={styles.heroMetaChip}>
 								<ThemedText style={styles.heroMetaValue}>{selectedCount}</ThemedText>
 								<ThemedText style={styles.heroMetaLabel}>Selected</ThemedText>
 							</View>
 							<View style={styles.heroMetaChip}>
-								<ThemedText style={styles.heroMetaValue}>{maxImages}</ThemedText>
-								<ThemedText style={styles.heroMetaLabel}>Limit</ThemedText>
+								<ThemedText style={styles.heroMetaValue}>{MAX_UPLOAD}</ThemedText>
+								<ThemedText style={styles.heroMetaLabel}>Max/Upload</ThemedText>
 							</View>
 						</View>
 					</View>
 
+					{/* ── Upload Card ── */}
 					<View style={styles.uploadCard}>
 						<View style={styles.sectionHeader}>
 							<ThemedText style={styles.sectionTitle}>Upload Images</ThemedText>
-							<ThemedText style={styles.sectionHint}>(Max 5)</ThemedText>
+							<ThemedText style={styles.sectionHint}>(Max {MAX_UPLOAD} per upload)</ThemedText>
 						</View>
 
 						<Pressable
@@ -164,16 +195,21 @@ export default function VendorGalleryScreen() {
 								<Ionicons name="cloud-upload-outline" size={28} color={palette.primary} />
 							</View>
 							<ThemedText style={styles.uploadTitle}>Upload Images</ThemedText>
-							<ThemedText style={styles.uploadDescription}>Tap to browse your photo library and add up to 5 images</ThemedText>
+							<ThemedText style={styles.uploadDescription}>
+								Tap to browse your photo library and select up to {MAX_UPLOAD} images
+							</ThemedText>
 							<View style={styles.uploadButton}>
 								<Ionicons name="add" size={16} color="#fff" />
 								<ThemedText style={styles.uploadButtonText}>Select Images</ThemedText>
 							</View>
 						</Pressable>
 
-						{selectedImages.length > 0 ? (
+						{/* Selected previews */}
+						{selectedImages.length > 0 && (
 							<View style={styles.previewSection}>
-								<ThemedText style={styles.previewTitle}>Selected Images</ThemedText>
+								<ThemedText style={styles.previewTitle}>
+									Selected ({selectedImages.length}/{MAX_UPLOAD})
+								</ThemedText>
 								<ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.previewRow}>
 									{selectedImages.map((item, index) => (
 										<View key={item.id} style={styles.previewCard}>
@@ -182,13 +218,13 @@ export default function VendorGalleryScreen() {
 												<Ionicons name="close" size={14} color="#fff" />
 											</Pressable>
 											<View style={styles.previewLabelBar}>
-												<ThemedText style={styles.previewLabelText}>Preview {index + 1}</ThemedText>
+												<ThemedText style={styles.previewLabelText}>#{index + 1}</ThemedText>
 											</View>
 										</View>
 									))}
 								</ScrollView>
 							</View>
-						) : null}
+						)}
 
 						<View style={styles.actionRow}>
 							<Pressable
@@ -197,13 +233,14 @@ export default function VendorGalleryScreen() {
 									{ backgroundColor: pressed ? palette.pressedBg : palette.elevatedBg },
 								]}
 								onPress={() => setPickerOpen(true)}
+								disabled={uploading}
 							>
 								<ThemedText style={[styles.secondaryButtonText, { color: palette.primary }]}>Add More</ThemedText>
 							</Pressable>
 							<Pressable
 								style={({ pressed }) => [
 									styles.primaryButton,
-									{ opacity: pressed || uploading ? 0.9 : 1 },
+									{ opacity: pressed || uploading || selectedImages.length === 0 ? 0.6 : 1 },
 								]}
 								onPress={handleUpload}
 								disabled={uploading || selectedImages.length === 0}
@@ -217,30 +254,51 @@ export default function VendorGalleryScreen() {
 						</View>
 					</View>
 
+					{/* ── Current Gallery ── */}
 					<View style={styles.galleryCard}>
 						<View style={styles.sectionHeader}>
 							<ThemedText style={styles.sectionTitle}>Current Gallery</ThemedText>
-							<ThemedText style={styles.sectionHint}>Tap a photo to preview</ThemedText>
+							<ThemedText style={styles.sectionHint}>Tap to preview</ThemedText>
 						</View>
 
-						<View style={styles.galleryGrid}>
-							{images.map((item, index) => (
-								<Pressable key={item.id} style={styles.galleryItem} onPress={() => setPreviewImage(item.uri)}>
-									<Image source={{ uri: item.uri }} style={styles.galleryImage} />
-									<View style={styles.galleryOverlay} />
-									<View style={styles.galleryFooter}>
-										<ThemedText style={styles.galleryIndexText}>#{index + 1}</ThemedText>
-										<Pressable style={styles.galleryRemoveButton} onPress={() => removeGalleryImage(item.id)}>
-											<Ionicons name="trash-outline" size={14} color="#fff" />
-										</Pressable>
-									</View>
-								</Pressable>
-							))}
-						</View>
+						{loadingGallery ? (
+							<View style={styles.galleryLoader}>
+								<ActivityIndicator size="large" color={palette.primary} />
+								<ThemedText style={{ color: palette.muted, marginTop: 10 }}>Loading gallery...</ThemedText>
+							</View>
+						) : galleryImages.length === 0 ? (
+							<View style={styles.emptyGallery}>
+								<Ionicons name="images-outline" size={48} color={palette.muted} />
+								<ThemedText style={[styles.emptyText, { color: palette.muted }]}>
+									No images yet. Upload your first event photo!
+								</ThemedText>
+							</View>
+						) : (
+							<View style={styles.galleryGrid}>
+								{galleryImages.map((item, index) => (
+									<Pressable
+										key={String(item.imageId)}
+										style={styles.galleryItem}
+										onPress={() => setPreviewImage(item.imageUrl)}
+									>
+										<Image
+											source={{ uri: item.imageUrl }}
+											style={styles.galleryImage}
+											resizeMode="cover"
+										/>
+										<View style={styles.galleryOverlay} />
+										<View style={styles.galleryFooter}>
+											<ThemedText style={styles.galleryIndexText}>#{index + 1}</ThemedText>
+										</View>
+									</Pressable>
+								))}
+							</View>
+						)}
 					</View>
 				</FadeInView>
 			</ScrollView>
 
+			{/* ── Image Picker Modal ── */}
 			<Modal visible={pickerOpen} transparent animationType="fade" onRequestClose={() => setPickerOpen(false)}>
 				<View style={styles.modalOverlay}>
 					<Pressable style={StyleSheet.absoluteFill} onPress={() => setPickerOpen(false)} />
@@ -251,12 +309,17 @@ export default function VendorGalleryScreen() {
 								<Ionicons name="close" size={24} color={palette.text} />
 							</Pressable>
 						</View>
-
 						<View style={styles.modalBody}>
 							<ThemedText style={styles.modalDescription}>
-								Choose photos from your device. You can keep up to 5 images ready before upload.
+								Choose photos from your device. You can select up to {MAX_UPLOAD} images before uploading.
 							</ThemedText>
-							<Pressable style={({ pressed }) => [styles.modalActionButton, { backgroundColor: pressed ? palette.pressedBg : palette.elevatedBg }]} onPress={openImagePicker}>
+							<Pressable
+								style={({ pressed }) => [
+									styles.modalActionButton,
+									{ backgroundColor: pressed ? palette.pressedBg : palette.elevatedBg },
+								]}
+								onPress={openImagePicker}
+							>
 								<Ionicons name="images-outline" size={18} color={palette.primary} />
 								<ThemedText style={[styles.modalActionText, { color: palette.primary }]}>Open Photo Library</ThemedText>
 							</Pressable>
@@ -265,11 +328,12 @@ export default function VendorGalleryScreen() {
 				</View>
 			</Modal>
 
+			{/* ── Full Preview Modal ── */}
 			<Modal visible={Boolean(previewImage)} transparent animationType="fade" onRequestClose={() => setPreviewImage(null)}>
 				<View style={styles.previewModalOverlay}>
 					<Pressable style={StyleSheet.absoluteFill} onPress={() => setPreviewImage(null)} />
 					<View style={[styles.previewModalCard, { backgroundColor: palette.surfaceBg }]}>
-						<Image source={{ uri: previewImage || undefined }} style={styles.previewModalImage} />
+						<Image source={{ uri: previewImage || undefined }} style={styles.previewModalImage} resizeMode="contain" />
 						<Pressable style={styles.previewModalClose} onPress={() => setPreviewImage(null)}>
 							<Ionicons name="close" size={20} color="#fff" />
 						</Pressable>
@@ -534,6 +598,20 @@ function createStyles(palette: ReturnType<typeof useSettingsTheme>['palette']) {
 			flexDirection: 'row',
 			flexWrap: 'wrap',
 			gap: 10,
+		},
+		galleryLoader: {
+			alignItems: 'center',
+			paddingVertical: 40,
+		},
+		emptyGallery: {
+			alignItems: 'center',
+			paddingVertical: 40,
+			gap: 12,
+		},
+		emptyText: {
+			fontSize: 13,
+			textAlign: 'center',
+			lineHeight: 20,
 		},
 		galleryItem: {
 			width: '48%',

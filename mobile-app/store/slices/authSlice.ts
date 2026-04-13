@@ -1,3 +1,8 @@
+/**
+ * authSlice.ts
+ * Real backend integration — no dummy credentials.
+ * Server: localhost:3232 (configured in mobile-app/.env)
+ */
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import {
@@ -7,17 +12,25 @@ import {
 	persistSession,
 	restoreSession,
 } from '@/services/auth/authService';
+import { login as apiLogin, register as apiRegister } from '@/services/auth/authApi';
 import type { LoginRequest, RegisterRequest } from '@/types/auth';
+
+// ─── State ───────────────────────────────────────────────────
 
 type AuthState = {
 	token: string | null;
 	role: UserRole | null;
 	name: string | null;
 	email: string | null;
+	userId: string | null;
 	isAuthenticated: boolean;
 	isHydrated: boolean;
 	isLoading: boolean;
 	error: string | null;
+	/** true when backend says email not verified yet */
+	requiresVerification: boolean;
+	/** email to show in "check your inbox" message */
+	pendingVerificationEmail: string | null;
 };
 
 const initialState: AuthState = {
@@ -25,251 +38,233 @@ const initialState: AuthState = {
 	role: null,
 	name: null,
 	email: null,
+	userId: null,
 	isAuthenticated: false,
 	isHydrated: false,
 	isLoading: false,
 	error: null,
+	requiresVerification: false,
+	pendingVerificationEmail: null,
 };
 
-const DUMMY_AUTH_ENABLED = true;
+// ─── Helper ──────────────────────────────────────────────────
 
-const DUMMY_CREDENTIALS: Record<UserRole, { email: string; password: string; name: string }> = {
-	user: {
-		email: 'user@test.com',
-		password: '123456',
-		name: 'Demo User',
-	},
-	vendor: {
-		email: 'vendor@test.com',
-		password: '123456',
-		name: 'Demo Vendor',
-	},
-	admin: {
-		email: 'admin@test.com',
-		password: '123456',
-		name: 'Demo Admin',
-	},
-};
-
-const toNameFromEmail = (email: string) => {
-	const prefix = email.split('@')[0] ?? 'Guest';
-	return prefix.charAt(0).toUpperCase() + prefix.slice(1);
-};
-
-const toErrorMessage = (error: unknown, fallback: string) => {
-	if (error instanceof Error) {
-		return error.message;
+const extractMessage = (error: unknown, fallback: string): string => {
+	if (error instanceof Error) return error.message;
+	if (error && typeof error === 'object') {
+		const e = error as Record<string, unknown>;
+		if (typeof e['message'] === 'string' && e['message'].trim()) return e['message'];
 	}
-
-	if (error && typeof error === 'object' && 'message' in error) {
-		const message = (error as { message?: unknown }).message;
-		if (typeof message === 'string' && message.trim().length > 0) {
-			return message;
-		}
-	}
-
 	return fallback;
 };
 
+// ─── Thunks ──────────────────────────────────────────────────
+
+/** Restore session from SecureStore on app launch */
 export const bootstrapAuth = createAsyncThunk('auth/bootstrap', async () => {
-	const session = await restoreSession();
-	return session;
+	return await restoreSession();
 });
 
+/** Sign out — clear token from store + SecureStore */
 export const signOut = createAsyncThunk('auth/signOut', async () => {
 	await clearSession();
 });
 
+/** Login with real backend */
 export const loginWithCredentials = createAsyncThunk(
 	'auth/loginWithCredentials',
 	async (credentials: LoginRequest, { rejectWithValue }) => {
 		try {
-			const email = credentials.email?.trim().toLowerCase();
-			const password = credentials.password?.trim();
-			const role = credentials.userType;
-
-			if (!email || !password || !role) {
-				return rejectWithValue('Please enter email, password, and role.');
-			}
-
-			if (DUMMY_AUTH_ENABLED) {
-				const expected = DUMMY_CREDENTIALS[role];
-				if (email !== expected.email || password !== expected.password) {
-					return rejectWithValue(
-						`Use demo credentials for ${role}: ${expected.email} / ${expected.password}`
-					);
-				}
-
-				const session: AuthSession = {
-					token: `dummy-token-${role}`,
-					role,
-					name: expected.name,
-					email: expected.email,
-				};
-
-				await persistSession(session);
-				return session;
-			}
+			const response = await apiLogin({
+				email: credentials.email.trim().toLowerCase(),
+				password: credentials.password.trim(),
+			});
 
 			const session: AuthSession = {
-				token: 'disabled-in-dummy-mode',
-				role,
-				name: toNameFromEmail(email),
-				email,
+				token: response.token,
+				role: response.role as UserRole,
+				name: response.name,
+				email: response.email,
 			};
 
 			await persistSession(session);
-			return session;
-		} catch (error) {
-			const message = toErrorMessage(error, 'Unable to login. Please try again.');
-			return rejectWithValue(message);
+
+			return {
+				session,
+				userId: response.user_id,
+			};
+		} catch (error: unknown) {
+			// Backend sends 403 when email not verified
+			const apiErr = error as {
+				status?: number;
+				message?: string;
+				details?: { requiresVerification?: boolean; email?: string };
+			};
+
+			if (apiErr?.status === 403) {
+				return rejectWithValue({
+					message: apiErr.message ?? 'Please verify your email before logging in.',
+					requiresVerification: true,
+					email: credentials.email,
+				});
+			}
+
+			return rejectWithValue({
+				message: extractMessage(error, 'Login failed. Please check your credentials.'),
+				requiresVerification: false,
+			});
 		}
 	}
 );
 
+/** Register with real backend — does NOT auto-login (email verification required) */
 export const registerWithCredentials = createAsyncThunk(
 	'auth/registerWithCredentials',
 	async (payload: RegisterRequest, { rejectWithValue }) => {
 		try {
-			const email = payload.email?.trim().toLowerCase();
-			const password = payload.password?.trim();
-			const firstName = payload.firstName?.trim();
-			const lastName = payload.lastName?.trim();
-			const role = payload.userType || 'user';
+			const response = await apiRegister({
+				firstName: payload.firstName.trim(),
+				lastName: payload.lastName.trim(),
+				email: payload.email.trim().toLowerCase(),
+				password: payload.password.trim(),
+				phone: payload.phone.trim(),
+				userType: payload.userType,
+			});
 
-			if (!firstName || !lastName || !email || !password || !role) {
-				return rejectWithValue('Please fill all required fields.');
-			}
-
-			if (password.length < 4) {
-				return rejectWithValue('Password must be at least 4 characters.');
-			}
-
-			if (DUMMY_AUTH_ENABLED) {
-				const session: AuthSession = {
-					token: `dummy-token-${role}-${Date.now()}`,
-					role,
-					name: `${firstName} ${lastName}`,
-					email,
-				};
-
-				await persistSession(session);
-				return session;
-			}
-
-			const session: AuthSession = {
-				token: 'disabled-in-dummy-mode',
-				role,
-				name: `${firstName} ${lastName}`,
-				email,
+			return {
+				message: response.message,
+				requiresVerification: response.requiresVerification ?? true,
+				email: payload.email.trim().toLowerCase(),
 			};
-
-			await persistSession(session);
-			return session;
-		} catch (error) {
-			const message = toErrorMessage(error, 'Unable to register. Please try again.');
-			return rejectWithValue(message);
+		} catch (error: unknown) {
+			return rejectWithValue({
+				message: extractMessage(error, 'Registration failed. Please try again.'),
+			});
 		}
 	}
 );
+
+// ─── Slice ───────────────────────────────────────────────────
 
 const authSlice = createSlice({
 	name: 'auth',
 	initialState,
 	reducers: {
-		setSignedIn(state, action: PayloadAction<AuthSession>) {
+		setSignedIn(state, action: PayloadAction<AuthSession & { userId?: string }>) {
 			state.token = action.payload.token;
 			state.role = action.payload.role;
 			state.name = action.payload.name;
 			state.email = action.payload.email;
+			state.userId = action.payload.userId ?? null;
 			state.isAuthenticated = true;
 			state.isHydrated = true;
 			state.error = null;
+			state.requiresVerification = false;
+			state.pendingVerificationEmail = null;
 		},
 		clearAuthError(state) {
 			state.error = null;
 		},
+		clearVerificationState(state) {
+			state.requiresVerification = false;
+			state.pendingVerificationEmail = null;
+		},
 	},
 	extraReducers: (builder) => {
+		// ── Bootstrap ──
+		builder
+			.addCase(bootstrapAuth.fulfilled, (state, action) => {
+				const s = action.payload;
+				state.token = s?.token ?? null;
+				state.role = s?.role ?? null;
+				state.name = s?.name ?? null;
+				state.email = s?.email ?? null;
+				state.isAuthenticated = Boolean(s?.token);
+				state.isHydrated = true;
+				state.error = null;
+			})
+			.addCase(bootstrapAuth.rejected, (state) => {
+				state.isAuthenticated = false;
+				state.isHydrated = true;
+			});
+
+		// ── Login ──
 		builder
 			.addCase(loginWithCredentials.pending, (state) => {
 				state.isLoading = true;
 				state.error = null;
+				state.requiresVerification = false;
+				state.pendingVerificationEmail = null;
 			})
 			.addCase(loginWithCredentials.fulfilled, (state, action) => {
-				state.token = action.payload.token;
-				state.role = action.payload.role;
-				state.name = action.payload.name;
-				state.email = action.payload.email;
+				const { session, userId } = action.payload;
+				state.token = session.token;
+				state.role = session.role;
+				state.name = session.name;
+				state.email = session.email;
+				state.userId = userId ?? null;
 				state.isAuthenticated = true;
 				state.isHydrated = true;
 				state.isLoading = false;
 				state.error = null;
+				state.requiresVerification = false;
+				state.pendingVerificationEmail = null;
 			})
 			.addCase(loginWithCredentials.rejected, (state, action) => {
 				state.isLoading = false;
-				state.error =
-					typeof action.payload === 'string'
-						? action.payload
-						: 'Login failed. Please verify your credentials.';
-			})
+				const payload = action.payload as {
+					message?: string;
+					requiresVerification?: boolean;
+					email?: string;
+				} | undefined;
+				state.error = payload?.message ?? 'Login failed.';
+				state.requiresVerification = payload?.requiresVerification ?? false;
+				state.pendingVerificationEmail = payload?.email ?? null;
+			});
+
+		// ── Register ──
+		builder
 			.addCase(registerWithCredentials.pending, (state) => {
 				state.isLoading = true;
 				state.error = null;
 			})
 			.addCase(registerWithCredentials.fulfilled, (state, action) => {
-				state.token = action.payload.token;
-				state.role = action.payload.role;
-				state.name = action.payload.name;
-				state.email = action.payload.email;
-				state.isAuthenticated = true;
-				state.isHydrated = true;
 				state.isLoading = false;
 				state.error = null;
+				// Registration does NOT log in — user must verify email first
+				state.requiresVerification = action.payload.requiresVerification;
+				state.pendingVerificationEmail = action.payload.email;
 			})
 			.addCase(registerWithCredentials.rejected, (state, action) => {
 				state.isLoading = false;
-				state.error =
-					typeof action.payload === 'string'
-						? action.payload
-						: 'Registration failed. Please try again.';
-			})
-			.addCase(bootstrapAuth.fulfilled, (state, action) => {
-				state.token = action.payload?.token ?? null;
-				state.role = action.payload?.role ?? null;
-				state.name = action.payload?.name ?? null;
-				state.email = action.payload?.email ?? null;
-				state.isAuthenticated = Boolean(action.payload?.token);
-				state.isHydrated = true;
-				state.error = null;
-			})
-			.addCase(bootstrapAuth.rejected, (state) => {
-				state.token = null;
-				state.role = null;
-				state.name = null;
-				state.email = null;
-				state.isAuthenticated = false;
-				state.isHydrated = true;
-				state.error = null;
-			})
-			.addCase(signOut.fulfilled, (state) => {
-				state.token = null;
-				state.role = null;
-				state.name = null;
-				state.email = null;
-				state.isAuthenticated = false;
-				state.isHydrated = true;
-				state.isLoading = false;
-				state.error = null;
+				const payload = action.payload as { message?: string } | undefined;
+				state.error = payload?.message ?? 'Registration failed.';
 			});
+
+		// ── Sign Out ──
+		builder.addCase(signOut.fulfilled, (state) => {
+			state.token = null;
+			state.role = null;
+			state.name = null;
+			state.email = null;
+			state.userId = null;
+			state.isAuthenticated = false;
+			state.isHydrated = true;
+			state.isLoading = false;
+			state.error = null;
+			state.requiresVerification = false;
+			state.pendingVerificationEmail = null;
+		});
 	},
 });
 
-export const signIn = createAsyncThunk('auth/signIn', async (session: AuthSession, { dispatch }) => {
-	await persistSession(session);
-	dispatch(setSignedIn(session));
-});
+export const signIn = createAsyncThunk(
+	'auth/signIn',
+	async (session: AuthSession, { dispatch }) => {
+		await persistSession(session);
+		dispatch(setSignedIn(session));
+	}
+);
 
-export const { setSignedIn, clearAuthError } = authSlice.actions;
+export const { setSignedIn, clearAuthError, clearVerificationState } = authSlice.actions;
 export default authSlice.reducer;
-

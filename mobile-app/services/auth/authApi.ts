@@ -1,93 +1,94 @@
+/**
+ * authApi.ts
+ * Real API calls to the backend at localhost:3232
+ * Endpoints: /User/Login, /User/InsertUser, /User/forgot-password
+ */
 import apiClient from '@/services/api/client';
 import { API_ENDPOINTS } from '@/services/api/endpoints';
 import type { LoginRequest, LoginResponse, RegisterRequest, RegisterResponse } from '@/types/auth';
 
-type BackendAuthResponse = {
-	token?: string;
-	access_token?: string;
-	message?: string;
-	success?: boolean;
-	user_id?: number | string;
-	uuid?: string;
-	user_type?: string;
-	data?: {
-		token?: string;
-		access_token?: string;
-		user_id?: number | string;
-		uuid?: string;
-		user_type?: string;
-	};
+// ─── Backend response shapes ──────────────────────────────────
+
+type BackendLoginResponse = {
+	message: string;
+	token: string;
+	role: string;           // user_type from DB: 'user' | 'vendor' | 'admin'
+	user_id: string;        // uuid
+	email: string;
+	first_name: string;
+	last_name: string;
 };
 
-const extractToken = (payload: BackendAuthResponse): string => {
-	const token = payload.token ?? payload.access_token ?? payload.data?.token ?? payload.data?.access_token;
-
-	if (!token) {
-		throw new Error('Login response did not include an access token.');
-	}
-
-	return token;
+type BackendRegisterResponse = {
+	message: string;
+	userId?: number;
+	requiresVerification?: boolean;
 };
 
-const normalizeRole = (roleValue?: string): LoginResponse['role'] => {
-	if (roleValue === 'admin' || roleValue === 'vendor' || roleValue === 'user') {
-		return roleValue;
-	}
-
-	return 'user';
+type BackendForgotPasswordResponse = {
+	success: boolean;
+	message: string;
 };
 
-const toNameFromEmail = (email: string) => {
-	const prefix = email.split('@')[0] ?? 'Guest';
-	return prefix.charAt(0).toUpperCase() + prefix.slice(1);
-};
+// ─── Login ───────────────────────────────────────────────────
 
 export const login = async (input: LoginRequest): Promise<LoginResponse> => {
-	const response = await apiClient.post<BackendAuthResponse>(API_ENDPOINTS.auth.login, {
-		email: input.email,
-		password: input.password,
-	});
+	const response = await apiClient.post<BackendLoginResponse>(
+		API_ENDPOINTS.auth.login,
+		{
+			email: input.email,
+			password: input.password,
+		}
+	);
 
-	const payload = response.data;
+	const d = response.data;
+
+	const role = (d.role === 'vendor' || d.role === 'admin') ? d.role : 'user';
 
 	return {
-		token: extractToken(payload),
-		role: normalizeRole(payload.user_type ?? payload.data?.user_type),
-		name: toNameFromEmail(input.email),
-		email: input.email,
-		userId: payload.user_id ?? payload.data?.user_id,
-		uuid: payload.uuid ?? payload.data?.uuid,
-		message: payload.message,
+		token: d.token,
+		role,
+		name: `${d.first_name ?? ''} ${d.last_name ?? ''}`.trim() || d.email,
+		email: d.email,
+		first_name: d.first_name ?? '',
+		last_name: d.last_name ?? '',
+		user_id: d.user_id,
 	};
 };
+
+// ─── Register ────────────────────────────────────────────────
 
 export const register = async (input: RegisterRequest): Promise<RegisterResponse> => {
-	const response = await apiClient.post<{
-		success?: boolean;
-		message?: string;
-		user_id?: number | string;
-		uuid?: string;
-	}>(API_ENDPOINTS.auth.register, {
-		email: input.email,
-		password_hash: input.password,
-		first_name: input.firstName ?? '',
-		last_name: input.lastName ?? '',
-		phone: input.phone ?? '',
-		user_type: input.userType ?? 'user',
-	});
+	const response = await apiClient.post<BackendRegisterResponse>(
+		API_ENDPOINTS.auth.register,
+		{
+			first_name: input.firstName,
+			last_name: input.lastName,
+			email: input.email,
+			password: input.password,   // backend hashes it (field name: password_hash in DB but controller reads req.body.password)
+			phone: input.phone,
+			user_type: input.userType,
+		}
+	);
 
 	return {
-		success: response.data.success ?? true,
-		message: response.data.message ?? 'Registration successful. Please login.',
-		userId: response.data.user_id,
-		uuid: response.data.uuid,
+		success: true,
+		message: response.data.message ?? 'Registration successful!',
+		userId: response.data.userId,
+		requiresVerification: response.data.requiresVerification ?? false,
 	};
 };
 
-export const forgotPassword = async (email: string): Promise<string> => {
-	const response = await apiClient.post<{ message?: string }>(API_ENDPOINTS.auth.forgotPassword, {
-		email,
-	});
+// ─── Forgot Password ─────────────────────────────────────────
 
-	return response.data.message ?? 'Reset instructions have been sent if the account exists.';
+export const forgotPassword = async (email: string): Promise<string> => {
+	const response = await apiClient.post<BackendForgotPasswordResponse>(
+		API_ENDPOINTS.auth.forgotPassword,
+		{ email }
+	);
+
+	return (
+		response.data.message ??
+		'If an account exists with this email, you will receive a reset link shortly.'
+	);
 };

@@ -6,8 +6,9 @@ import { Provider } from 'react-redux';
 import { AppToastProvider } from '@/components/common/AppToastProvider';
 import { AppPalettes } from '@/constants/theme';
 import { useAppDispatch, useAppSelector, store } from '@/store';
-import { bootstrapAuth } from '@/store/slices/authSlice';
+import { bootstrapAuth, signOut } from '@/store/slices/authSlice';
 import { useSettingsTheme } from '@/theme/settingsTheme';
+import { setApiAuthExpiredHandler, setApiAuthToken } from '@/services/api/client';
 
 type AppErrorBoundaryState = {
 	hasError: boolean;
@@ -72,12 +73,22 @@ function RootNavigator() {
 
 	useEffect(() => {
 		if (!token) {
+			setApiAuthToken(null);
 			return;
 		}
-
-		const authHeaders = { Authorization: `Bearer ${token}` };
-		void authHeaders;
+		setApiAuthToken(token);
 	}, [token]);
+
+	useEffect(() => {
+		const handleExpiredAuth = () => {
+			void dispatch(signOut());
+		};
+
+		setApiAuthExpiredHandler(handleExpiredAuth);
+		return () => {
+			setApiAuthExpiredHandler(null);
+		};
+	}, [dispatch]);
 
 	if (!isHydrated) {
 		return (
@@ -162,4 +173,3 @@ const styles = StyleSheet.create({
 		fontWeight: '700',
 	},
 });
-
