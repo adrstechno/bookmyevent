@@ -1,14 +1,15 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, TextInput, View, type ImageSourcePropType } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import FadeInView from '@/components/common/FadeInView';
-import AppMenuDrawer from '@/components/layout/AppMenuDrawer';
+import { TabsTopBar } from '@/components/layout/TabsTopBar';
 import { ThemedText } from '@/components/themed-text';
 import { API_ENDPOINTS } from '@/services/api/endpoints';
-import apiClient from '@/services/api/client';
+import api from '@/services/api/client';
 import { useSettingsTheme } from '@/theme/settingsTheme';
 
 type CategoryChip = {
@@ -145,6 +146,7 @@ type ServiceCardItemProps = {
 	card: ServiceCard;
 	hasImageFailed: boolean;
 	onImageError: (cardId: string) => void;
+	onViewVendors: (card: ServiceCard) => void;
 	isDark: boolean;
 	palette: {
 		surfaceBg: string;
@@ -152,8 +154,11 @@ type ServiceCardItemProps = {
 		text: string;
 		subtext: string;
 		accent: string;
-		rose: string;
 		tint: string;
+		primary: string;
+		primaryStrong: string;
+		onPrimary: string;
+		shadow: string;
 	};
 };
 
@@ -161,11 +166,12 @@ const ServiceCardItem = memo(function ServiceCardItem({
 	card,
 	hasImageFailed,
 	onImageError,
+	onViewVendors,
 	isDark,
 	palette,
 }: ServiceCardItemProps) {
 	const isRomanticCategory = /wedding|engagement|romantic/i.test(card.categoryName);
-	const badgeBg = isRomanticCategory ? palette.rose : palette.accent;
+	const badgeBg = isRomanticCategory ? palette.primary : palette.primaryStrong;
 
 	return (
 		<View style={[styles.serviceCard, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
@@ -184,7 +190,7 @@ const ServiceCardItem = memo(function ServiceCardItem({
 			)}
 			<View style={styles.imageOverlay} />
 			<View style={[styles.categoryBadge, { backgroundColor: badgeBg }]}>
-				<ThemedText style={[styles.categoryBadgeText, { color: palette.text }]} numberOfLines={1}>
+				<ThemedText style={[styles.categoryBadgeText, { color: palette.onPrimary }]} numberOfLines={1}>
 					{card.categoryName}
 				</ThemedText>
 			</View>
@@ -196,8 +202,22 @@ const ServiceCardItem = memo(function ServiceCardItem({
 				<ThemedText style={[styles.serviceCardDescription, { color: palette.subtext }]} numberOfLines={2}>
 					{card.description}
 				</ThemedText>
-				<Pressable style={[styles.viewButton, { backgroundColor: palette.accent }]}>
-					<ThemedText style={[styles.viewButtonText, { color: palette.text }]}>View Vendors -&gt;</ThemedText>
+				<Pressable
+					style={({ pressed }) => [
+						styles.viewButton,
+						{ backgroundColor: palette.primary, borderColor: palette.primaryStrong, shadowColor: palette.shadow },
+						pressed ? styles.viewButtonPressed : null,
+					]}
+					onPress={() => onViewVendors(card)}
+					accessibilityRole="button"
+					accessibilityLabel={`View vendors for ${card.title}`}
+				>
+					<View style={styles.viewButtonContent}>
+						<ThemedText style={[styles.viewButtonText, { color: palette.onPrimary }]}>View Vendors</ThemedText>
+						<View style={[styles.viewButtonIconWrap, { borderColor: 'rgba(255,255,255,0.35)' }]}>
+							<Ionicons name="arrow-forward" size={14} color={palette.onPrimary} />
+						</View>
+					</View>
 				</Pressable>
 			</View>
 		</View>
@@ -205,6 +225,7 @@ const ServiceCardItem = memo(function ServiceCardItem({
 });
 
 export default function CategoriesTabScreen() {
+	const router = useRouter();
 	const { mode, palette } = useSettingsTheme();
 	const isDark = mode === 'dark';
 	const [activeService, setActiveService] = useState<string>('all');
@@ -213,8 +234,10 @@ export default function CategoriesTabScreen() {
 	const [isLoading, setIsLoading] = useState(true);
 	const [loadError, setLoadError] = useState('');
 	const [allCards, setAllCards] = useState<ServiceCard[]>(CANONICAL_SERVICE_CARDS);
+	const [apiCategories, setApiCategories] = useState<CategoryChip[]>(CATEGORY_CHIPS); // Dynamic categories from API, fallback to hardcoded
 
-	const categories = CATEGORY_CHIPS;
+	// Use API-fetched categories, or fall back to hardcoded ones
+	const categories = apiCategories;
 
 	const handleSearchChange = useCallback((value: string) => {
 		setSearchValue(value);
@@ -238,6 +261,21 @@ export default function CategoriesTabScreen() {
 		});
 	}, []);
 
+	const handleViewVendors = useCallback(
+		(card: ServiceCard) => {
+			const isNumericSubservice = /^\d+$/.test(card.id);
+			router.push({
+				pathname: '/vendors',
+				params: {
+					serviceId: card.categoryId,
+					subserviceId: isNumericSubservice ? card.id : '',
+					serviceName: card.title,
+				},
+			});
+		},
+		[router]
+	);
+
 	useEffect(() => {
 		let isMounted = true;
 
@@ -248,86 +286,136 @@ export default function CategoriesTabScreen() {
 			}
 
 			try {
-				const categoryResponse = await apiClient.get(API_ENDPOINTS.service.all);
-				const categoryRows = toRows(categoryResponse.data);
+				// ==================== PHASE 1: Fetch & Validate Categories ====================
+				console.log('[Categories] Fetching service categories from API...');
+				const categoryResponse = await api.get(API_ENDPOINTS.service.all);
+				console.log('[Categories] Service categories response:', categoryResponse.data);
 
+				const categoryRows = toRows(categoryResponse.data);
+				console.log('[Categories] Parsed category rows:', categoryRows.length, 'items');
+
+				// Extract active categories with validation
 				const activeCategories = categoryRows
-					.filter((row) => Number(row.is_active ?? 1) === 1)
-					.map((row) => {
-						const categoryId = String(row.category_id ?? row.service_id ?? row.id ?? '');
+					.filter((row) => {
+						const isActive = Number(row.is_active ?? 1) === 1;
+						if (!isActive) {
+							console.log('[Categories] Skipping inactive category:', row.category_name ?? row.name);
+						}
+						return isActive;
+					})
+					.map((row, idx) => {
+						// Validate required category ID field
+						const categoryId = String(row.category_id ?? row.service_id ?? row.id ?? '').trim();
+						if (!categoryId) {
+							console.warn(`[Categories] Row ${idx} missing category ID (category_id, service_id, id all missing/empty)`);
+							return null;
+						}
+
+						const categoryName = String(row.category_name ?? row.name ?? 'Service');
+						const image = typeof row.icon_url === 'string' && row.icon_url.trim() ? row.icon_url : undefined;
+
+						console.log(`[Categories] Active category: id=${categoryId}, name=${categoryName}, hasImage=${Boolean(image)}`);
+
 						return {
 							id: categoryId,
-							name: String(row.category_name ?? row.name ?? 'Service'),
-							image: typeof row.icon_url === 'string' ? row.icon_url : undefined,
+							name: categoryName,
+							image,
 						};
 					})
-					.filter((item) => item.id.length > 0);
+					.filter((item) => item !== null) as ({ id: string; name: string; image?: string })[];
 
+				console.log('[Categories] Total active categories:', activeCategories.length);
+
+				// Phase 3: Fallback to hardcoded if no API results
 				if (activeCategories.length === 0) {
+					console.warn('[Categories] No active categories from API. Using fallback hardcoded services.');
 					if (isMounted) {
 						setLoadError('No active categories available right now. Showing saved services.');
 						setAllCards(CANONICAL_SERVICE_CARDS);
+						// Keep hardcoded category chips if API returns no categories
+						setApiCategories(CATEGORY_CHIPS);
 					}
 					return;
 				}
 
+				// Update category chips with API data (dynamic)
+				const dynamicCategories: CategoryChip[] = activeCategories.map((cat) => ({
+					id: cat.id,
+					name: cat.name,
+					image: cat.image,
+				}));
+
+				if (isMounted) {
+					// Update chips with API categories instead of using hardcoded ones
+					console.log('[Categories] Updating category chips from API:', dynamicCategories.length, 'categories');
+					setApiCategories(dynamicCategories);
+				}
+
+				// ==================== PHASE 2: Fetch & Validate Subservices ====================
+				console.log('[Categories] Fetching subservices for', activeCategories.length, 'categories...');
 				const serviceResponses = await Promise.all(
-					activeCategories.map((category) => apiClient.get(API_ENDPOINTS.service.subservicesByCategory(category.id)))
+					activeCategories.map((category) => {
+						console.log(`[Categories] Fetching subservices for category: ${category.name} (${category.id})`);
+						return api.get(API_ENDPOINTS.service.subservicesByCategory(category.id));
+					})
 				);
 
-				const cards = serviceResponses.flatMap((response, index) => {
+				// Transform API subservices to ServiceCard format
+				const apiCards = serviceResponses.flatMap((response, index) => {
 					const currentCategory = activeCategories[index];
-					return toRows(response.data)
-						.filter((row) => Number(row.is_active ?? 1) === 1)
-						.map((row, rowIndex) => ({
-							id: String(row.subservice_id ?? row.id ?? `${currentCategory.id}-${rowIndex}`),
-							title: String(row.subservice_name ?? row.name ?? 'Service'),
-							description: String(row.description ?? 'Explore vendors offering this service'),
-							image: typeof row.icon_url === 'string' ? row.icon_url : currentCategory.image,
-							categoryId: currentCategory.id,
-							categoryName: currentCategory.name,
-						}));
+					const subserviceRows = toRows(response.data);
+
+					console.log(
+						`[Categories] Category "${currentCategory.name}" (${currentCategory.id}): ${subserviceRows.length} subservices returned`
+					);
+
+					return subserviceRows
+						.filter((row) => {
+							const isActive = Number(row.is_active ?? 1) === 1;
+							if (!isActive) {
+								console.log(`[Categories] → Skipping inactive subservice: ${row.subservice_name ?? row.name}`);
+							}
+							return isActive;
+						})
+						.map((row, rowIndex) => {
+							// Validate required subservice ID field
+							const subserviceId = String(row.subservice_id ?? row.id ?? `${currentCategory.id}-${rowIndex}`).trim();
+
+							const card: ServiceCard = {
+								id: subserviceId,
+								title: String(row.subservice_name ?? row.name ?? 'Service'),
+								description: String(row.description ?? 'Explore vendors offering this service'),
+								image: typeof row.icon_url === 'string' && row.icon_url.trim() ? row.icon_url : currentCategory.image,
+								categoryId: currentCategory.id,
+								categoryName: currentCategory.name,
+							};
+
+							console.log(
+								`[Categories] → Subservice: id=${card.id}, title=${card.title}, categoryId=${card.categoryId}, hasImage=${Boolean(card.image)}`
+							);
+
+							return card;
+						});
 				});
 
-				const imageLookup = new Map<string, string>();
-				const imageByTitleLookup = new Map<string, string>();
-				for (const card of cards) {
-					if (card.image) {
-						const lookupKey = `${normalizeText(card.categoryName)}::${normalizeText(card.title)}`;
-						imageLookup.set(lookupKey, card.image);
-						const titleKey = normalizeText(card.title);
-						if (!imageByTitleLookup.has(titleKey)) {
-							imageByTitleLookup.set(titleKey, card.image);
-						}
-					}
-				}
-
-				const categoryImageLookup = new Map<string, string>();
-				for (const category of activeCategories) {
-					if (category.image) {
-						categoryImageLookup.set(normalizeText(category.name), category.image);
-					}
-				}
-
-				const mergedCards = CANONICAL_SERVICE_CARDS.map((card) => {
-					const lookupKey = `${normalizeText(card.categoryName)}::${normalizeText(card.title)}`;
-					const matchedImage = imageLookup.get(lookupKey);
-					const matchedByTitle = imageByTitleLookup.get(normalizeText(card.title));
-					const categoryImage = categoryImageLookup.get(normalizeText(card.categoryName));
-
-					return {
-						...card,
-						image: matchedImage ?? matchedByTitle ?? card.image ?? categoryImage,
-					};
-				});
+				console.log('[Categories] Total subservices loaded from API:', apiCards.length);
 
 				if (isMounted) {
-					setAllCards(mergedCards);
+					// Use API cards directly as the primary source (Phase 3: API-first approach)
+					console.log('[Categories] Setting all cards from API response');
+					setAllCards(apiCards);
 				}
 			} catch (error) {
+				// Error occurred during API fetch; fall back to hardcoded services
+				const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+				console.error('[Categories] Error loading services from API:', errorMessage, error);
+
 				if (isMounted) {
 					setLoadError('Unable to sync services from server, showing saved services.');
+					console.warn('[Categories] Using fallback hardcoded services due to API error');
 					setAllCards(CANONICAL_SERVICE_CARDS);
+					// Fallback to hardcoded category chips when API fails
+					setApiCategories(CATEGORY_CHIPS);
 				}
 			} finally {
 				if (isMounted) {
@@ -384,9 +472,8 @@ export default function CategoriesTabScreen() {
 		<SafeAreaView style={[styles.safeArea, { backgroundColor: palette.screenBg }]} edges={['top']}>
 			<StatusBar style={isDark ? 'light' : 'dark'} />
 			<View style={[styles.page, { backgroundColor: palette.screenBg }]}>
+				<TabsTopBar title="Services" />
 				<View style={[styles.appBar, { backgroundColor: palette.primary }]}>
-					<AppMenuDrawer />
-					<ThemedText style={[styles.appBarTitle, { color: palette.onPrimary }]}>Services</ThemedText>
 					<View style={[styles.searchWrap, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
 						<Ionicons name="search-outline" size={18} color={palette.subtext} />
 						<TextInput
@@ -437,7 +524,11 @@ export default function CategoriesTabScreen() {
 				</View>
 
 				<FadeInView delay={80} distance={8} style={styles.cardsScroll}>
-					<ScrollView contentContainerStyle={styles.cardsContainer} showsVerticalScrollIndicator={false}>
+					<ScrollView
+						contentContainerStyle={styles.cardsContainer}
+						showsVerticalScrollIndicator={false}
+						decelerationRate="fast"
+					>
 					{isLoading ? (
 						<View style={styles.loadingWrap}>
 							<ActivityIndicator size="large" color={palette.tint} />
@@ -449,12 +540,13 @@ export default function CategoriesTabScreen() {
 							<ThemedText style={[styles.emptyStateText, { color: palette.subtext }]}>{loadError || 'Try another service type or different search text.'}</ThemedText>
 						</View>
 					) : (
-						visibleCards.map((card) => (
+						visibleCards.map((card, index) => (
 							<ServiceCardItem
-								key={card.id}
+								key={`${card.categoryId}-${card.id}-${index}`}
 								card={card}
 								hasImageFailed={Boolean(failedImageIds[card.id])}
 								onImageError={handleImageError}
+								onViewVendors={handleViewVendors}
 								isDark={isDark}
 								palette={palette}
 							/>
@@ -478,15 +570,10 @@ const styles = StyleSheet.create({
 	},
 	appBar: {
 		paddingHorizontal: 16,
-		paddingTop: 10,
+		paddingTop: 12,
 		paddingBottom: 4,
 		gap: 10,
 		backgroundColor: '#F4F7F9',
-	},
-	appBarTitle: {
-		fontSize: 22,
-		fontWeight: '800',
-		color: '#0F172A',
 	},
 	searchWrap: {
 		flexDirection: 'row',
@@ -524,11 +611,7 @@ const styles = StyleSheet.create({
 	serviceChipActive: {
 		backgroundColor: '#2F6570',
 		borderColor: '#2F6570',
-		shadowColor: '#0F172A',
-		shadowOpacity: 0.12,
-		shadowOffset: { width: 0, height: 4 },
-		shadowRadius: 10,
-		elevation: 3,
+		boxShadow: '0px 4px 10px rgba(15, 23, 42, 0.12)',
 	},
 	serviceChipPressed: {
 		opacity: 0.88,
@@ -558,19 +641,15 @@ const styles = StyleSheet.create({
 		backgroundColor: '#FFFFFF',
 		borderWidth: 1,
 		borderColor: '#E2E8F0',
-		shadowColor: '#0F172A',
-		shadowOpacity: 0.08,
-		shadowOffset: { width: 0, height: 6 },
-		shadowRadius: 14,
-		elevation: 4,
+		boxShadow: '0px 6px 14px rgba(15, 23, 42, 0.08)',
 	},
 	serviceCardImage: {
 		width: '100%',
-		height: 280,
+		height: 240,
 	},
 	fallbackImage: {
 		width: '100%',
-		height: 280,
+		height: 240,
 		backgroundColor: '#2F6570',
 		justifyContent: 'center',
 		alignItems: 'center',
@@ -585,59 +664,79 @@ const styles = StyleSheet.create({
 		top: 0,
 		left: 0,
 		right: 0,
-		height: 280,
+		height: 240,
 		backgroundColor: 'rgba(15, 23, 42, 0.28)',
 	},
 	categoryBadge: {
 		position: 'absolute',
-		top: 14,
-		left: 14,
-		maxWidth: '72%',
-		paddingHorizontal: 12,
-		paddingVertical: 7,
+		top: 10,
+		left: 10,
+		maxWidth: '86%',
+		paddingHorizontal: 10,
+		paddingVertical: 5,
 		borderRadius: 999,
 		backgroundColor: '#F9A826',
 	},
 	categoryBadgeText: {
-		fontSize: 14,
+		fontSize: 11,
 		fontWeight: '800',
 		color: '#FFFFFF',
 	},
 	serviceCardFooter: {
 		paddingHorizontal: 16,
-		paddingVertical: 16,
+		paddingVertical: 14,
 	},
 	serviceCardTitle: {
-		fontSize: 22,
+		fontSize: 20,
 		fontWeight: '800',
 		color: '#102A4C',
 	},
 	titleUnderline: {
-		width: 82,
+		width: 74,
 		height: 4,
 		borderRadius: 999,
 		backgroundColor: '#F5B234',
-		marginTop: 10,
+		marginTop: 8,
 	},
 	serviceCardDescription: {
-		marginTop: 12,
+		marginTop: 10,
 		fontSize: 13,
 		lineHeight: 20,
 		fontWeight: '500',
 		color: '#334155',
 	},
 	viewButton: {
-		marginTop: 16,
-		height: 54,
-		borderRadius: 14,
+		marginTop: 14,
+		height: 48,
+		borderRadius: 12,
 		alignItems: 'center',
 		justifyContent: 'center',
 		backgroundColor: '#2F6570',
+		borderWidth: 1,
+		boxShadow: '0px 6px 10px rgba(15, 23, 42, 0.2)',
+	},
+	viewButtonPressed: {
+		opacity: 0.9,
+		transform: [{ scale: 0.98 }],
+	},
+	viewButtonContent: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 8,
 	},
 	viewButtonText: {
-		fontSize: 17,
-		fontWeight: '800',
+		fontSize: 15,
+		fontWeight: '700',
 		color: '#FFFFFF',
+	},
+	viewButtonIconWrap: {
+		width: 22,
+		height: 22,
+		borderRadius: 11,
+		alignItems: 'center',
+		justifyContent: 'center',
+		backgroundColor: 'rgba(255,255,255,0.2)',
+		borderWidth: 1,
 	},
 	loadingWrap: {
 		alignItems: 'center',

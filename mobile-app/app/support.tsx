@@ -6,6 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAppSelector } from '@/store';
+import { AppTopBar } from '@/components/layout/AppTopBar';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useSettingsTheme } from '@/theme/settingsTheme';
@@ -37,7 +38,6 @@ export default function SupportScreen() {
 	const screenBg = palette.screenBg;
 	const surfaceBg = palette.surfaceBg;
 	const border = palette.border;
-	const elevated = palette.headerBtnBg;
 	const supportEmail = 'support@goeventify.demo';
 	const supportPhone = '+91 98765 00000';
 
@@ -85,13 +85,7 @@ export default function SupportScreen() {
 	return (
 		<SafeAreaView style={[styles.safeArea, { backgroundColor: screenBg }]} edges={['top', 'bottom']}>
 			<StatusBar style={isDark ? 'light' : 'dark'} />
-			<View style={[styles.header, { backgroundColor: surfaceBg, borderBottomColor: border }]}>
-				<Pressable style={[styles.backBtn, { backgroundColor: elevated, borderColor: border }]} onPress={goToProfile} hitSlop={10}>
-					<Ionicons name="arrow-back" size={20} color={palette.text} />
-				</Pressable>
-				<ThemedText style={[styles.headerTitle, { color: palette.text }]}>Support</ThemedText>
-				<View style={styles.headerRightPlaceholder} />
-			</View>
+			<AppTopBar title="Support" onBackPress={goToProfile} />
 
 			<ScrollView
 				style={styles.page}
@@ -101,7 +95,13 @@ export default function SupportScreen() {
 				<ThemedView style={[styles.heroCard, { backgroundColor: surfaceBg, borderColor: border }]}>
 					<ThemedText style={[styles.heroTitle, { color: palette.text }]}>Need Help?</ThemedText>
 					<ThemedText style={[styles.heroSubtext, { color: palette.subtext }]}>Our support team is here to help you with bookings and payments.</ThemedText>
-					<Pressable style={[styles.primaryBtn, { backgroundColor: palette.tint }]}>
+					<Pressable
+						style={({ pressed }) => [
+							styles.primaryBtn,
+							{ backgroundColor: palette.primary, borderColor: palette.primaryStrong, shadowColor: palette.shadow },
+							pressed ? styles.primaryBtnPressed : null,
+						]}
+					>
 						<ThemedText style={styles.primaryBtnText}>Create New Ticket</ThemedText>
 					</Pressable>
 				</ThemedView>
@@ -141,35 +141,6 @@ const styles = StyleSheet.create({
 		flex: 1,
 		backgroundColor: '#F4F7F9',
 	},
-	header: {
-		height: 56,
-		paddingHorizontal: 16,
-		flexDirection: 'row',
-		alignItems: 'center',
-		justifyContent: 'space-between',
-		backgroundColor: '#FFFFFF',
-		borderBottomWidth: 1,
-		borderBottomColor: '#E2E8F0',
-	},
-	backBtn: {
-		width: 36,
-		height: 36,
-		borderRadius: 18,
-		alignItems: 'center',
-		justifyContent: 'center',
-		backgroundColor: '#F8FAFC',
-		borderWidth: 1,
-		borderColor: '#E2E8F0',
-	},
-	headerTitle: {
-		fontSize: 18,
-		fontWeight: '800',
-		color: '#0F172A',
-	},
-	headerRightPlaceholder: {
-		width: 36,
-		height: 36,
-	},
 	page: {
 		flex: 1,
 	},
@@ -200,6 +171,15 @@ const styles = StyleSheet.create({
 		paddingVertical: 11,
 		borderRadius: 10,
 		alignItems: 'center',
+		borderWidth: 1,
+		shadowOpacity: 0.2,
+		shadowOffset: { width: 0, height: 6 },
+		shadowRadius: 10,
+		elevation: 4,
+	},
+	primaryBtnPressed: {
+		opacity: 0.9,
+		transform: [{ scale: 0.98 }],
 	},
 	primaryBtnText: {
 		color: '#FFFFFF',

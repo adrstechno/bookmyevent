@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "scripts": {
     "start": "node ./scripts/start-no-doctor.js",
+    "start:clear": "node ./scripts/start-no-doctor.js --clear",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "node ./scripts/start-no-doctor.js --android",
     "ios": "node ./scripts/start-no-doctor.js --ios",

@@ -1,4 +1,4 @@
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet } from 'react-native';
 
 import FadeInView from '@/components/common/FadeInView';
 import { ThemedText } from '@/components/themed-text';

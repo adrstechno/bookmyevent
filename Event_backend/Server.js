@@ -57,22 +57,47 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // CORS configuration for production
-app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "http://localhost:5174",
-    "https://bookmyevent-e2c3.vercel.app",
-    "https://www.goeventify.com",
-    "https://goeventify.com",
-    "https://api.goeventify.com"
-  ],
+const staticAllowedOrigins = new Set([
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "https://bookmyevent-e2c3.vercel.app",
+  "https://www.goeventify.com",
+  "https://goeventify.com",
+  "https://api.goeventify.com",
+  "http://localhost:8081"
+]);
+
+const isLanOrDevOrigin = (origin) => {
+  return /^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3})(:\d+)?$/.test(origin);
+};
+
+const isExpoOrigin = (origin) => {
+  return /^exp:\/\/(192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3})(:\d+)?$/.test(origin);
+};
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow non-browser tools (curl/postman/native apps) that send no Origin header.
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    if (staticAllowedOrigins.has(origin) || isLanOrDevOrigin(origin) || isExpoOrigin(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Cookie"],
   exposedHeaders: ["Set-Cookie"],
   preflightContinue: false,
   optionsSuccessStatus: 204
-}));
+};
+
+app.use(cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
 
 // 🟢 Mount routers
 app.use('/User', UserRouter);

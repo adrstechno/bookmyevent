@@ -5,6 +5,7 @@
  */
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+import * as authApi from '@/services/auth/authApi';
 import {
 	clearSession,
 	type AuthSession,
@@ -14,6 +15,7 @@ import {
 } from '@/services/auth/authService';
 import { login as apiLogin, register as apiRegister } from '@/services/auth/authApi';
 import type { LoginRequest, RegisterRequest } from '@/types/auth';
+import { isTokenExpired } from '@/utils/jwt';
 
 // ─── State ───────────────────────────────────────────────────
 
@@ -33,6 +35,12 @@ type AuthState = {
 	pendingVerificationEmail: string | null;
 };
 
+export type LoginErrorPayload = {
+	message: string;
+	requiresVerification?: boolean;
+	email?: string;
+};
+
 const initialState: AuthState = {
 	token: null,
 	role: null,
@@ -47,7 +55,10 @@ const initialState: AuthState = {
 	pendingVerificationEmail: null,
 };
 
-// ─── Helper ──────────────────────────────────────────────────
+const toNameFromEmail = (email: string) => {
+	const prefix = email.split('@')[0] ?? 'Guest';
+	return prefix.charAt(0).toUpperCase() + prefix.slice(1);
+};
 
 const extractMessage = (error: unknown, fallback: string): string => {
 	if (error instanceof Error) return error.message;
@@ -58,11 +69,40 @@ const extractMessage = (error: unknown, fallback: string): string => {
 	return fallback;
 };
 
-// ─── Thunks ──────────────────────────────────────────────────
+const toLoginErrorPayload = (error: unknown, fallback: string): LoginErrorPayload => {
+	const message = toErrorMessage(error, fallback);
 
-/** Restore session from SecureStore on app launch */
+	if (error && typeof error === 'object' && 'details' in error) {
+		const details = (error as { details?: unknown }).details;
+		if (details && typeof details === 'object') {
+			const requiresVerification = Boolean(
+				(details as { requiresVerification?: unknown }).requiresVerification
+			);
+			const email =
+				typeof (details as { email?: unknown }).email === 'string'
+					? (details as { email: string }).email
+					: undefined;
+
+			return {
+				message,
+				requiresVerification,
+				email,
+			};
+		}
+	}
+
+	return { message };
+};
+
 export const bootstrapAuth = createAsyncThunk('auth/bootstrap', async () => {
-	return await restoreSession();
+	const session = await restoreSession();
+
+	if (session?.token && isTokenExpired(session.token)) {
+		await clearSession();
+		return null;
+	}
+
+	return session;
 });
 
 /** Sign out — clear token from store + SecureStore */
@@ -70,49 +110,40 @@ export const signOut = createAsyncThunk('auth/signOut', async () => {
 	await clearSession();
 });
 
-/** Login with real backend */
+export const handleSessionExpired = createAsyncThunk('auth/handleSessionExpired', async () => {
+	await clearSession();
+});
+
 export const loginWithCredentials = createAsyncThunk(
 	'auth/loginWithCredentials',
 	async (credentials: LoginRequest, { rejectWithValue }) => {
 		try {
-			const response = await apiLogin({
-				email: credentials.email.trim().toLowerCase(),
-				password: credentials.password.trim(),
+			const email = credentials.email?.trim().toLowerCase();
+			const password = credentials.password?.trim();
+
+			if (!email || !password) {
+				return rejectWithValue('Email and password are required.');
+			}
+
+			// Call real backend login API
+			const loginResponse = await authApi.login({
+				email,
+				password,
 			});
 
 			const session: AuthSession = {
-				token: response.token,
-				role: response.role as UserRole,
-				name: response.name,
-				email: response.email,
+				token: loginResponse.token,
+				role: loginResponse.role,
+				name: loginResponse.name,
+				email: loginResponse.email,
 			};
 
 			await persistSession(session);
-
-			return {
-				session,
-				userId: response.user_id,
-			};
-		} catch (error: unknown) {
-			// Backend sends 403 when email not verified
-			const apiErr = error as {
-				status?: number;
-				message?: string;
-				details?: { requiresVerification?: boolean; email?: string };
-			};
-
-			if (apiErr?.status === 403) {
-				return rejectWithValue({
-					message: apiErr.message ?? 'Please verify your email before logging in.',
-					requiresVerification: true,
-					email: credentials.email,
-				});
-			}
-
-			return rejectWithValue({
-				message: extractMessage(error, 'Login failed. Please check your credentials.'),
-				requiresVerification: false,
-			});
+			return session;
+		} catch (error) {
+			return rejectWithValue(
+				toLoginErrorPayload(error, 'Login failed. Please verify your credentials.')
+			);
 		}
 	}
 );
@@ -122,24 +153,46 @@ export const registerWithCredentials = createAsyncThunk(
 	'auth/registerWithCredentials',
 	async (payload: RegisterRequest, { rejectWithValue }) => {
 		try {
-			const response = await apiRegister({
-				firstName: payload.firstName.trim(),
-				lastName: payload.lastName.trim(),
-				email: payload.email.trim().toLowerCase(),
-				password: payload.password.trim(),
-				phone: payload.phone.trim(),
-				userType: payload.userType,
+			const email = payload.email?.trim().toLowerCase();
+			const password = payload.password?.trim();
+			const firstName = payload.firstName?.trim();
+			const lastName = payload.lastName?.trim();
+			const phone = payload.phone?.trim();
+			const role = payload.userType || 'user';
+
+			if (!email || !password || !phone) {
+				return rejectWithValue('Email, password, and phone are required.');
+			}
+
+			if (password.length < 4) {
+				return rejectWithValue('Password must be at least 4 characters.');
+			}
+
+			const fallbackName = toNameFromEmail(email ?? 'guest@example.com');
+			const normalizedFirstName = firstName || fallbackName;
+			const normalizedLastName = lastName || '';
+
+			// Call real backend register API
+			const registerResponse = await authApi.register({
+				firstName: normalizedFirstName,
+				lastName: normalizedLastName,
+				email,
+				password,
+				phone,
+				userType: role,
 			});
 
+			// Do not auto-login after registration; backend may require email verification first.
 			return {
-				message: response.message,
-				requiresVerification: response.requiresVerification ?? true,
-				email: payload.email.trim().toLowerCase(),
+				token: null,
+				role,
+				name: `${normalizedFirstName} ${normalizedLastName}`.trim(),
+				email,
+				message: registerResponse.message,
 			};
-		} catch (error: unknown) {
-			return rejectWithValue({
-				message: extractMessage(error, 'Registration failed. Please try again.'),
-			});
+		} catch (error) {
+			const message = toErrorMessage(error, 'Registration failed. Please try again.');
+			return rejectWithValue(message);
 		}
 	}
 );
@@ -165,9 +218,13 @@ const authSlice = createSlice({
 		clearAuthError(state) {
 			state.error = null;
 		},
-		clearVerificationState(state) {
-			state.requiresVerification = false;
-			state.pendingVerificationEmail = null;
+		sessionExpired(state) {
+			state.token = null;
+			state.role = null;
+			state.name = null;
+			state.email = null;
+			state.isAuthenticated = false;
+			state.error = 'Session expired. Please log in again.';
 		},
 	},
 	extraReducers: (builder) => {
@@ -212,23 +269,24 @@ const authSlice = createSlice({
 			})
 			.addCase(loginWithCredentials.rejected, (state, action) => {
 				state.isLoading = false;
-				const payload = action.payload as {
-					message?: string;
-					requiresVerification?: boolean;
-					email?: string;
-				} | undefined;
-				state.error = payload?.message ?? 'Login failed.';
-				state.requiresVerification = payload?.requiresVerification ?? false;
-				state.pendingVerificationEmail = payload?.email ?? null;
-			});
-
-		// ── Register ──
-		builder
+				state.error =
+					typeof action.payload === 'string'
+						? action.payload
+						: typeof action.payload === 'object' && action.payload && 'message' in action.payload
+							? String((action.payload as { message?: unknown }).message ?? 'Login failed. Please verify your credentials.')
+							: 'Login failed. Please verify your credentials.';
+			})
 			.addCase(registerWithCredentials.pending, (state) => {
 				state.isLoading = true;
 				state.error = null;
 			})
 			.addCase(registerWithCredentials.fulfilled, (state, action) => {
+				state.token = null;
+				state.role = null;
+				state.name = null;
+				state.email = action.payload.email;
+				state.isAuthenticated = false;
+				state.isHydrated = true;
 				state.isLoading = false;
 				state.error = null;
 				// Registration does NOT log in — user must verify email first
@@ -237,8 +295,48 @@ const authSlice = createSlice({
 			})
 			.addCase(registerWithCredentials.rejected, (state, action) => {
 				state.isLoading = false;
-				const payload = action.payload as { message?: string } | undefined;
-				state.error = payload?.message ?? 'Registration failed.';
+				state.error =
+					typeof action.payload === 'string'
+						? action.payload
+						: 'Registration failed. Please try again.';
+			})
+			.addCase(bootstrapAuth.fulfilled, (state, action) => {
+				state.token = action.payload?.token ?? null;
+				state.role = action.payload?.role ?? null;
+				state.name = action.payload?.name ?? null;
+				state.email = action.payload?.email ?? null;
+				state.isAuthenticated = Boolean(action.payload?.token);
+				state.isHydrated = true;
+				state.error = null;
+			})
+			.addCase(bootstrapAuth.rejected, (state) => {
+				state.token = null;
+				state.role = null;
+				state.name = null;
+				state.email = null;
+				state.isAuthenticated = false;
+				state.isHydrated = true;
+				state.error = null;
+			})
+			.addCase(signOut.fulfilled, (state) => {
+				state.token = null;
+				state.role = null;
+				state.name = null;
+				state.email = null;
+				state.isAuthenticated = false;
+				state.isHydrated = true;
+				state.isLoading = false;
+				state.error = null;
+			})
+			.addCase(handleSessionExpired.fulfilled, (state) => {
+				state.token = null;
+				state.role = null;
+				state.name = null;
+				state.email = null;
+				state.isAuthenticated = false;
+				state.isHydrated = true;
+				state.isLoading = false;
+				state.error = 'Session expired. Please log in again.';
 			});
 
 		// ── Sign Out ──
@@ -266,5 +364,5 @@ export const signIn = createAsyncThunk(
 	}
 );
 
-export const { setSignedIn, clearAuthError, clearVerificationState } = authSlice.actions;
+export const { setSignedIn, clearAuthError, sessionExpired } = authSlice.actions;
 export default authSlice.reducer;

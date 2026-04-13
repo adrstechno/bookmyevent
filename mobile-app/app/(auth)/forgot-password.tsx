@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
+import { Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 
@@ -60,147 +61,91 @@ export default function ForgotPasswordScreen() {
 	return (
 		<SafeAreaView style={[s.safe, { backgroundColor: c.screenBg }]} edges={['top', 'bottom']}>
 			<StatusBar style={isDark ? 'light' : 'dark'} />
-			<KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-				<ScrollView
-					contentContainerStyle={s.scroll}
-					showsVerticalScrollIndicator={false}
-					keyboardShouldPersistTaps="handled"
-				>
-					{/* ── Logo only ── */}
-					<View style={s.logoWrap}>
-						<Image
-							source={require('@/assets/images/logo2.png')}
-							style={s.logo}
-							resizeMode="contain"
-						/>
-					</View>
+			<ScrollView contentContainerStyle={styles.container}>
+				<Image source={require('@/assets/images/home/logo2.png')} style={styles.brandLogo} resizeMode="contain" />
+				<View style={styles.logoPill}>
+					<ThemedText style={[styles.logoPillText, { color: palette.primary }]}>GOEVENTIFY</ThemedText>
+				</View>
+				<ThemedText style={[styles.brand, { color: palette.text }]}>GoEventify</ThemedText>
+				<ThemedText style={[styles.title, { color: palette.text }]}>Forgot Password</ThemedText>
+				<ThemedText style={[styles.subtitle, { color: palette.subtext }]}>Enter your account email to receive password reset instructions.</ThemedText>
 
-					{/* ── Card ── */}
-					<View style={[s.card, { backgroundColor: c.surfaceBg, borderColor: c.border }]}>
+				<View style={[styles.card, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
+					<TextInput
+						style={[styles.input, { color: palette.text, borderColor: palette.border, backgroundColor: palette.headerBtnBg }]}
+						placeholder="Email"
+						placeholderTextColor={palette.subtext}
+						autoCapitalize="none"
+						keyboardType="email-address"
+						value={email}
+						onChangeText={setEmail}
+					/>
 
-						{/* Heading */}
-						<View style={s.cardHeader}>
-							<Text style={[s.title, { color: c.text }]}>Forgot Password?</Text>
-							<Text style={[s.subtitle, { color: c.subtext }]}>
-								{emailSent
-									? 'Check your email for reset instructions'
-									: 'Enter your email to receive a password reset link'}
-							</Text>
-						</View>
+					{error ? <ThemedText style={[styles.errorText, { color: palette.danger }]}>{error}</ThemedText> : null}
+					{message ? <ThemedText style={[styles.messageText, { color: '#0F766E' }]}>{message}</ThemedText> : null}
 
-						{!emailSent ? (
-							<>
-								{/* Email */}
-								<View style={[s.inputRow, { borderColor: error ? c.danger : c.border, backgroundColor: c.surfaceBg }]}>
-									<Feather name="mail" size={18} color={c.subtext} style={s.icon} />
-									<TextInput
-										style={[s.input, { color: c.text }]}
-										value={email}
-										onChangeText={(t) => { setEmail(t.replace(/\s/g, '')); setError(''); }}
-										placeholder="Enter your email address"
-										placeholderTextColor={c.muted}
-										autoCapitalize="none"
-										keyboardType="email-address"
-										autoComplete="email"
-									/>
-								</View>
-								{error ? <Text style={[s.errText, { color: c.danger }]}>{error}</Text> : null}
+					<Pressable style={[styles.primaryBtn, { backgroundColor: palette.tint }]} onPress={onSubmit} disabled={loading}>
+						<ThemedText style={styles.primaryBtnText}>{loading ? 'Sending...' : 'Send Reset Link'}</ThemedText>
+					</Pressable>
 
-								{/* Submit */}
-								<Pressable
-									style={[s.btn, { backgroundColor: c.primary }, loading && s.btnDisabled]}
-									onPress={onSubmit}
-									disabled={loading}
-								>
-									<Text style={s.btnText}>{loading ? 'Sending...' : 'Send Reset Link'}</Text>
-								</Pressable>
-
-								{/* Back to Login */}
-								<Pressable style={s.switchWrap} onPress={() => router.replace('/(auth)/login')}>
-									<Text style={[s.switchText, { color: c.subtext }]}>
-										Remember your password?{' '}
-										<Text style={[s.switchLink, { color: c.primary }]}>Back to Login</Text>
-									</Text>
-								</Pressable>
-							</>
-						) : (
-							<>
-								{/* Success banner */}
-								<View style={[s.successBanner, { backgroundColor: c.successSoft }]}>
-									<Feather name="check-circle" size={22} color={c.success} />
-									<View style={{ flex: 1, gap: 2 }}>
-										<Text style={[s.successTitle, { color: c.success }]}>Email Sent!</Text>
-										<Text style={[s.successBody, { color: c.subtext }]}>
-											We've sent a reset link to{' '}
-											<Text style={[s.successEmail, { color: c.text }]}>{email}</Text>
-										</Text>
-									</View>
-								</View>
-
-								{/* Next steps */}
-								<View style={[s.stepsCard, { backgroundColor: c.elevatedBg }]}>
-									<Text style={[s.stepsTitle, { color: c.text }]}>Next Steps:</Text>
-									{[
-										'Check your email inbox',
-										'Click the password reset link',
-										'Create a new password',
-										'Login with your new password',
-									].map((step, i) => (
-										<View key={i} style={s.stepRow}>
-											<Feather name="chevron-right" size={14} color={c.primary} />
-											<Text style={[s.stepText, { color: c.subtext }]}>{step}</Text>
-										</View>
-									))}
-									<Text style={[s.spamNote, { color: c.muted }]}>
-										Didn't receive it? Check spam or{' '}
-										<Text style={[s.tryAgain, { color: c.primary }]} onPress={() => setEmailSent(false)}>
-											try again
-										</Text>
-									</Text>
-								</View>
-
-								{/* Back to Login */}
-								<Pressable
-									style={[s.outlineBtn, { borderColor: c.border, backgroundColor: c.elevatedBg }]}
-									onPress={() => router.replace('/(auth)/login')}
-								>
-									<Text style={[s.outlineBtnText, { color: c.text }]}>Back to Login</Text>
-								</Pressable>
-							</>
-						)}
-					</View>
-				</ScrollView>
-			</KeyboardAvoidingView>
+					<Pressable style={styles.linkBtn} onPress={() => router.replace('/(auth)/login')}>
+						<ThemedText style={[styles.linkText, { color: palette.tint }]}>Back to Login</ThemedText>
+					</Pressable>
+				</View>
+			</ScrollView>
 		</SafeAreaView>
 	);
 }
 
-const s = StyleSheet.create({
-	safe: { flex: 1 },
-	scroll: { padding: 24, paddingBottom: 40 },
-
-	logoWrap: { alignItems: 'center', marginBottom: 20, marginTop: 12 },
-	logo: { width: 200, height: 80 },
-
+const styles = StyleSheet.create({
+	safeArea: {
+		flex: 1,
+	},
+	container: {
+		padding: 20,
+		gap: 12,
+		paddingBottom: 36,
+	},
+	brandLogo: {
+		width: 170,
+		height: 64,
+		alignSelf: 'flex-start',
+	},
+	logoPill: {
+		alignSelf: 'flex-start',
+		borderRadius: 999,
+		paddingHorizontal: 10,
+		paddingVertical: 4,
+		backgroundColor: '#FDE7EF',
+	},
+	logoPillText: {
+		fontSize: 11,
+		letterSpacing: 1,
+		fontWeight: '800',
+	},
+	brand: {
+		fontSize: 20,
+		fontWeight: '900',
+		letterSpacing: 0.2,
+	},
+	title: {
+		fontSize: 30,
+		fontWeight: '800',
+		lineHeight: 34,
+	},
+	subtitle: {
+		fontSize: 14,
+		lineHeight: 21,
+	},
 	card: {
 		borderRadius: 20,
 		borderWidth: 1,
-		padding: 24,
-		gap: 16,
-		shadowColor: '#000',
-		shadowOffset: { width: 0, height: 4 },
-		shadowOpacity: 0.08,
-		shadowRadius: 12,
-		elevation: 4,
+		borderRadius: 16,
+		padding: 14,
+		gap: 12,
 	},
-
-	cardHeader: { alignItems: 'center', gap: 4, marginBottom: 4 },
-	title: { fontSize: 24, fontWeight: '800', textAlign: 'center' },
-	subtitle: { fontSize: 14, textAlign: 'center', lineHeight: 20 },
-
-	inputRow: {
-		flexDirection: 'row',
-		alignItems: 'center',
+	input: {
+		height: 48,
 		borderWidth: 1,
 		borderRadius: 14,
 		paddingHorizontal: 14,
@@ -251,6 +196,19 @@ const s = StyleSheet.create({
 		borderRadius: 14,
 		paddingVertical: 15,
 		alignItems: 'center',
+		paddingVertical: 4,
+	},
+	linkText: {
+		fontSize: 14,
+		fontWeight: '700',
+	},
+	errorText: {
+		fontSize: 12,
+		fontWeight: '700',
+	},
+	messageText: {
+		fontSize: 12,
+		fontWeight: '700',
 	},
 	outlineBtnText: { fontSize: 16, fontWeight: '700' },
 });

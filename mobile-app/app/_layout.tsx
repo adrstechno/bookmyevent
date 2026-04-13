@@ -5,10 +5,11 @@ import { Provider } from 'react-redux';
 
 import { AppToastProvider } from '@/components/common/AppToastProvider';
 import { AppPalettes } from '@/constants/theme';
+import { clearApiAuthToken, setApiAuthToken, setOnTokenInvalidCallback } from '@/services/api/client';
 import { useAppDispatch, useAppSelector, store } from '@/store';
-import { bootstrapAuth, signOut } from '@/store/slices/authSlice';
+import { bootstrapAuth, handleSessionExpired } from '@/store/slices/authSlice';
 import { useSettingsTheme } from '@/theme/settingsTheme';
-import { setApiAuthExpiredHandler, setApiAuthToken } from '@/services/api/client';
+import { getTokenExpiryTimeMs } from '@/utils/jwt';
 
 type AppErrorBoundaryState = {
 	hasError: boolean;
@@ -72,23 +73,52 @@ function RootNavigator() {
 	}, [dispatch]);
 
 	useEffect(() => {
-		if (!token) {
-			setApiAuthToken(null);
+		// Register callback for when API detects invalid/expired token (401/403)
+		// This will automatically log out the user and clear their session
+		setOnTokenInvalidCallback(() => {
+			console.log('[RootNavigator] Token invalid/expired. Logging out...');
+			void dispatch(handleSessionExpired());
+		});
+
+		return () => {
+			setOnTokenInvalidCallback(null);
+		};
+	}, [dispatch]);
+
+	useEffect(() => {
+		if (token) {
+			setApiAuthToken(token);
 			return;
 		}
-		setApiAuthToken(token);
+
+		clearApiAuthToken();
 	}, [token]);
 
 	useEffect(() => {
-		const handleExpiredAuth = () => {
-			void dispatch(signOut());
-		};
+		if (!token) {
+			return;
+		}
 
-		setApiAuthExpiredHandler(handleExpiredAuth);
+		const expiryTimeMs = getTokenExpiryTimeMs(token);
+		if (!expiryTimeMs) {
+			return;
+		}
+
+		const msUntilExpiry = expiryTimeMs - Date.now();
+		if (msUntilExpiry <= 0) {
+			void dispatch(handleSessionExpired());
+			return;
+		}
+
+		const timeoutId = setTimeout(() => {
+			console.log('[RootNavigator] Token reached expiry time. Logging out...');
+			void dispatch(handleSessionExpired());
+		}, msUntilExpiry);
+
 		return () => {
-			setApiAuthExpiredHandler(null);
+			clearTimeout(timeoutId);
 		};
-	}, [dispatch]);
+	}, [dispatch, token]);
 
 	if (!isHydrated) {
 		return (
@@ -105,6 +135,7 @@ function RootNavigator() {
 			<Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 			<Stack.Screen name="(vendor)" options={{ headerShown: false }} />
 			<Stack.Screen name="(admin)" options={{ headerShown: false }} />
+			<Stack.Screen name="notifications" options={{ headerShown: false }} />
 			<Stack.Screen name="app-error" options={{ headerShown: false }} />
 			<Stack.Screen name="about-us" options={{ headerShown: false }} />
 			<Stack.Screen name="profile-edit" options={{ headerShown: false }} />

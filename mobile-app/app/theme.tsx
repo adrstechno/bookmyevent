@@ -5,15 +5,16 @@ import { BackHandler, Pressable, ScrollView, StyleSheet, View } from 'react-nati
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AppTopBar } from '@/components/layout/AppTopBar';
 import { ThemedText } from '@/components/themed-text';
 import { useAppSelector } from '@/store';
 import { useSettingsTheme, type SettingsThemeMode } from '@/theme/settingsTheme';
 
-const THEME_OPTIONS: Array<{
+const THEME_OPTIONS: {
 	key: SettingsThemeMode;
 	label: string;
 	description: string;
-}> = [
+}[] = [
 	{ key: 'light', label: 'Light', description: 'Use a bright interface for daytime usage.' },
 	{ key: 'dark', label: 'Dark', description: 'Use a low-glare interface for night usage.' },
 ];
@@ -55,13 +56,7 @@ export default function ThemeScreen() {
 	return (
 		<SafeAreaView style={[styles.safeArea, { backgroundColor: palette.screenBg }]} edges={['top', 'bottom']}>
 			<StatusBar style={isDark ? 'light' : 'dark'} />
-			<View style={[styles.header, { backgroundColor: palette.surfaceBg, borderBottomColor: palette.border }]}>
-				<Pressable style={[styles.backBtn, { backgroundColor: palette.headerBtnBg, borderColor: palette.border }]} onPress={goToSettings} hitSlop={10}>
-					<Ionicons name="arrow-back" size={20} color={palette.text} />
-				</Pressable>
-				<ThemedText style={[styles.headerTitle, { color: palette.text }]}>Theme</ThemedText>
-				<View style={styles.headerRightPlaceholder} />
-			</View>
+			<AppTopBar title="Theme" onBackPress={goToSettings} />
 
 			<ScrollView
 				style={[styles.page, { backgroundColor: palette.screenBg }]}
@@ -133,35 +128,6 @@ const styles = StyleSheet.create({
 	safeArea: {
 		flex: 1,
 		backgroundColor: '#F4F7F9',
-	},
-	header: {
-		height: 56,
-		paddingHorizontal: 16,
-		flexDirection: 'row',
-		alignItems: 'center',
-		justifyContent: 'space-between',
-		backgroundColor: '#FFFFFF',
-		borderBottomWidth: 1,
-		borderBottomColor: '#E2E8F0',
-	},
-	backBtn: {
-		width: 36,
-		height: 36,
-		borderRadius: 18,
-		alignItems: 'center',
-		justifyContent: 'center',
-		backgroundColor: '#F8FAFC',
-		borderWidth: 1,
-		borderColor: '#E2E8F0',
-	},
-	headerTitle: {
-		fontSize: 18,
-		fontWeight: '800',
-		color: '#0F172A',
-	},
-	headerRightPlaceholder: {
-		width: 36,
-		height: 36,
 	},
 	page: {
 		flex: 1,

@@ -19,9 +19,4 @@ router.delete("/:id", authenticateToken, NotificationController.deleteNotificati
 router.post("/", authenticateToken, NotificationController.createNotification);
 router.post("/bulk", authenticateToken, NotificationController.sendBulkNotifications);
 
-// Legacy routes for backward compatibility
-router.get("/notifications", NotificationController.getUserNotification);
-router.post("/send", NotificationController.sendNotification);
-router.put("/read/:notification_id", NotificationController.markNotificationAsRead);
-
 export default router;

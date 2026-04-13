@@ -4,12 +4,14 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useRouter } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Alert, Linking, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 
 import AppMenuDrawer from '@/components/layout/AppMenuDrawer';
+import { validateToken } from '@/services/auth/authApi';
 import { ThemedText } from '@/components/themed-text';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { signOut } from '@/store/slices/authSlice';
@@ -41,6 +43,8 @@ export default function ProfileTabScreen() {
 	const { mode, palette } = useSettingsTheme();
 	const isDark = mode === 'dark';
 	const isLoading = useAppSelector((state) => state.auth.isLoading);
+	const authName = useAppSelector((state) => state.auth.name);
+	const authEmail = useAppSelector((state) => state.auth.email);
 	const [profileImageUri, setProfileImageUri] = useState<string | null>(null);
 	const [isImageModalVisible, setIsImageModalVisible] = useState(false);
 	const [isImageUploading, setIsImageUploading] = useState(false);
@@ -48,13 +52,38 @@ export default function ProfileTabScreen() {
 	const [capturedImageUri, setCapturedImageUri] = useState<string | null>(null);
 	const cameraRef = useRef<CameraView | null>(null);
 	const [cameraPermission, requestCameraPermission] = useCameraPermissions();
-	const [profile] = useState<ProfileState>({
-		firstName: 'Nayan',
-		lastName: 'Malviya',
-		email: 'nayan@example.com',
-		phone: '+91 98765 43210',
+	const [profile, setProfile] = useState<ProfileState>({
+		firstName: (authName || 'Guest').split(' ')[0] || 'Guest',
+		lastName: (authName || '').split(' ').slice(1).join(' '),
+		email: authEmail || 'guest@example.com',
+		phone: '',
 	});
 	const [message, setMessage] = useState('');
+
+	const loadProfile = useCallback(async () => {
+		try {
+			const user = await validateToken();
+			setProfile((prev) => ({
+				...prev,
+				firstName: user.firstName || prev.firstName,
+				lastName: user.lastName || prev.lastName,
+				email: user.email || prev.email,
+			}));
+		} catch {
+			setProfile((prev) => ({
+				...prev,
+				firstName: (authName || prev.firstName).split(' ')[0] || prev.firstName,
+				lastName: (authName || '').split(' ').slice(1).join(' ') || prev.lastName,
+				email: authEmail || prev.email,
+			}));
+		}
+	}, [authEmail, authName]);
+
+	useFocusEffect(
+		useCallback(() => {
+			void loadProfile();
+		}, [loadProfile])
+	);
 
 	const onPressMenuItem = (key: string, label: string) => {
 		if (key === 'edit') {

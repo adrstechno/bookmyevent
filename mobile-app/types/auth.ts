@@ -19,9 +19,18 @@ export type LoginResponse = {
 	role: 'user' | 'vendor' | 'admin';
 	name: string;
 	email: string;
-	first_name: string;
-	last_name: string;
-	user_id: string;
+	userId?: number | string;
+	uuid?: string;
+	message?: string;
+};
+
+export type RegisterRequest = {
+	email: string;
+	password: string;
+	firstName?: string;
+	lastName?: string;
+	phone?: string;
+	userType?: 'user' | 'vendor' | 'admin';
 };
 
 export type RegisterResponse = {

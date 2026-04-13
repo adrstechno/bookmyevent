@@ -1,52 +1,65 @@
-import { useState } from 'react';
-import {
-	Image,
-	KeyboardAvoidingView,
-	Platform,
-	Pressable,
-	ScrollView,
-	StyleSheet,
-	Text,
-	TextInput,
-	View,
-} from 'react-native';
+import { useMemo, useState } from 'react';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Redirect, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 
 import { useAppToast } from '@/components/common/AppToastProvider';
+import { resendVerificationEmail } from '@/services/auth/authApi';
 import { useAppDispatch, useAppSelector } from '@/store';
-import { clearAuthError, loginWithCredentials } from '@/store/slices/authSlice';
+import {
+	clearAuthError,
+	loginWithCredentials,
+	registerWithCredentials,
+	type LoginErrorPayload,
+} from '@/store/slices/authSlice';
 import { useAppTheme } from '@/theme/useAppTheme';
 import { getRoleHomeRoute } from '@/utils/authRole';
+
+const ROLE_OPTIONS = [
+	{ key: 'user', label: 'User' },
+	{ key: 'vendor', label: 'Vendor' },
+] as const;
+
+type AuthMode = 'login' | 'register';
+type RoleType = 'user' | 'vendor';
 
 export default function LoginScreen() {
 	const dispatch = useAppDispatch();
 	const router = useRouter();
 	const { showError, showSuccess } = useAppToast();
-	const {
-		isAuthenticated,
-		isHydrated,
-		isLoading,
-		error,
-		role: authRole,
-		requiresVerification,
-		pendingVerificationEmail,
-	} = useAppSelector((s) => s.auth);
-	const { palette, isDark } = useAppTheme();
+	const { isAuthenticated, isHydrated, isLoading, error, role: authRole } = useAppSelector((state) => state.auth);
+	const { palette, resolvedMode } = useAppTheme();
+	const isDark = resolvedMode === 'dark';
 
 	const [email, setEmail] = useState('');
+	const [phone, setPhone] = useState('');
 	const [password, setPassword] = useState('');
-	const [showPassword, setShowPassword] = useState(false);
-	const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+	const [localError, setLocalError] = useState('');
+
+	const subtitle = useMemo(() => {
+		return mode === 'login'
+			? 'Sign in with your account and continue where you left off.'
+			: 'Create your account to start booking services with GoEventify.';
+	}, [mode]);
 
 	if (isHydrated && isAuthenticated) {
 		return <Redirect href={getRoleHomeRoute(authRole)} />;
 	}
 
+	const switchMode = (nextMode: AuthMode) => {
+		setMode(nextMode);
+		setLocalError('');
+		setFirstName('');
+		setLastName('');
+		setPhone('');
+		setEmail('');
+		setPassword('');
+		dispatch(clearAuthError());
+	};
+
 	const validate = () => {
-		const err: { email?: string; password?: string } = {};
 		if (!email.trim()) {
 			err.email = 'Email is required';
 		} else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
@@ -57,93 +70,205 @@ export default function LoginScreen() {
 		} else if (password.trim().length < 6) {
 			err.password = 'Password must be at least 6 characters';
 		}
-		setErrors(err);
-		return Object.keys(err).length === 0;
+
+		if (mode === 'register') {
+			if (!phone.trim()) {
+				setLocalError('Phone number is required.');
+				return false;
+			}
+		}
+
+		return true;
+	};
+
+	const handleResendVerification = async (targetEmail: string) => {
+		try {
+			const resendMessage = await resendVerificationEmail(targetEmail.trim().toLowerCase());
+			showSuccess(resendMessage || 'Verification email sent. Please check your inbox.');
+		} catch (resendError) {
+			const message =
+				resendError && typeof resendError === 'object' && 'message' in resendError
+					? String((resendError as { message?: unknown }).message ?? '')
+					: '';
+			showError(message || 'Failed to resend verification email. Please try again.');
+		}
 	};
 
 	const onSubmit = async () => {
 		dispatch(clearAuthError());
-		if (!validate()) return;
+
+		if (!validate()) {
+			return;
+		}
+
+		if (mode === 'login') {
+			try {
+				await dispatch(
+					loginWithCredentials({
+						email: email.trim().toLowerCase(),
+						password: password.trim(),
+					})
+				).unwrap();
+				showSuccess('Login successful!');
+			} catch (err) {
+				const loginError =
+					typeof err === 'string'
+						? ({ message: err } as LoginErrorPayload)
+						: (err as LoginErrorPayload);
+				const message = loginError?.message || 'Login failed. Please try again.';
+				showError(message);
+
+				if (loginError?.requiresVerification) {
+					const targetEmail = loginError.email || email.trim().toLowerCase();
+					Alert.alert(
+						'Email Verification Required',
+						'Would you like to resend the verification email?',
+						[
+							{ text: 'Cancel', style: 'cancel' },
+							{
+								text: 'Resend',
+								onPress: () => {
+									void handleResendVerification(targetEmail);
+								},
+							},
+						]
+					);
+				}
+			}
+			return;
+		}
+
+		// Register mode
 		try {
-			await dispatch(
-				loginWithCredentials({
+			const registerResult = await dispatch(
+				registerWithCredentials({
+					firstName: firstName.trim(),
+					lastName: lastName.trim(),
 					email: email.trim().toLowerCase(),
 					password: password.trim(),
+					phone: phone.trim(),
+					userType: role,
 				})
 			).unwrap();
-			showSuccess('Login Successful');
-		} catch {
-			// error is shown from redux state
+			showSuccess(registerResult.message ?? 'Registration successful. Please sign in.');
+			setMode('login');
+			setPassword('');
+			setLocalError('');
+		} catch (err) {
+			const message = typeof err === 'string' ? err : 'Registration failed. Please try again.';
+			showError(message);
 		}
 	};
 
-	const c = palette;
-
-	// ── Email not verified banner ──────────────────────────────
-	if (requiresVerification && pendingVerificationEmail) {
-		return (
-			<SafeAreaView style={[s.safe, { backgroundColor: c.screenBg }]} edges={['top', 'bottom']}>
-				<StatusBar style={isDark ? 'light' : 'dark'} />
-				<ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
-					<View style={s.logoWrap}>
-						<Image source={require('@/assets/images/logo2.png')} style={s.logo} resizeMode="contain" />
-					</View>
-					<View style={[s.card, { backgroundColor: c.surfaceBg, borderColor: c.border }]}>
-						<View style={[s.verifyBanner, { backgroundColor: c.warningSoft }]}>
-							<Feather name="mail" size={28} color={c.warning} />
-							<Text style={[s.verifyTitle, { color: c.text }]}>Verify Your Email</Text>
-							<Text style={[s.verifyBody, { color: c.subtext }]}>
-								We sent a verification link to{'\n'}
-								<Text style={{ fontWeight: '700', color: c.text }}>{pendingVerificationEmail}</Text>
-								{'\n\n'}Please check your inbox and click the link to activate your account.
-							</Text>
-						</View>
-						<Pressable
-							style={[s.btn, { backgroundColor: c.primary }]}
-							onPress={() => dispatch(clearAuthError())}
-						>
-							<Text style={s.btnText}>Back to Login</Text>
-						</Pressable>
-					</View>
-				</ScrollView>
-			</SafeAreaView>
-		);
-	}
-
 	return (
-		<SafeAreaView style={[s.safe, { backgroundColor: c.screenBg }]} edges={['top', 'bottom']}>
+		<SafeAreaView style={[styles.safeArea, { backgroundColor: palette.screenBg }]} edges={['top', 'bottom']}>
 			<StatusBar style={isDark ? 'light' : 'dark'} />
-			<KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-				<ScrollView
-					contentContainerStyle={s.scroll}
-					showsVerticalScrollIndicator={false}
-					keyboardShouldPersistTaps="handled"
-				>
-					{/* Logo */}
-					<View style={s.logoWrap}>
-						<Image source={require('@/assets/images/logo2.png')} style={s.logo} resizeMode="contain" />
+			<ScrollView
+				style={[styles.page, { backgroundColor: palette.screenBg }]}
+				contentContainerStyle={styles.container}
+				showsVerticalScrollIndicator={false}
+			>
+				{/* Header Section */}
+				<View style={styles.headerSection}>
+					<Image source={require('@/assets/images/home/logo2.png')} style={styles.brandLogo} resizeMode="contain" />
+					<View style={styles.logoPill}>
+						<ThemedText style={[styles.logoPillText, { color: palette.primary }]}>GOEVENTIFY</ThemedText>
 					</View>
+					<ThemedText style={[styles.brand, { color: palette.text }]}>GoEventify</ThemedText>
+					<ThemedText style={[styles.title, { color: palette.text }]}>
+						{mode === 'login' ? 'Welcome Back' : 'Join Us'}
+					</ThemedText>
+					<ThemedText style={[styles.subtitle, { color: palette.subtext }]}>{subtitle}</ThemedText>
+				</View>
 
-					{/* Card */}
-					<View style={[s.card, { backgroundColor: c.surfaceBg, borderColor: c.border }]}>
+				{/* Auth Mode Tabs */}
+				<View style={[styles.modeTabs, { backgroundColor: palette.elevatedBg }]}>
+					<Pressable
+						style={[
+							styles.modeTab,
+							mode === 'login' && [styles.modeTabActive, { backgroundColor: palette.primary }],
+						]}
+						onPress={() => switchMode('login')}
+					>
+						<ThemedText
+							style={[
+								styles.modeTabText,
+								mode === 'login'
+									? { color: palette.onPrimary, fontWeight: '700' }
+									: { color: palette.subtext },
+							]}
+						>
+							Login
+						</ThemedText>
+					</Pressable>
+					<Pressable
+						style={[
+							styles.modeTab,
+							mode === 'register' && [styles.modeTabActive, { backgroundColor: palette.primary }],
+						]}
+						onPress={() => switchMode('register')}
+					>
+						<ThemedText
+							style={[
+								styles.modeTabText,
+								mode === 'register'
+									? { color: palette.onPrimary, fontWeight: '700' }
+									: { color: palette.subtext },
+							]}
+						>
+							Register
+						</ThemedText>
+					</Pressable>
+				</View>
 
-						<View style={s.cardHeader}>
-							<Text style={[s.title, { color: c.text }]}>Welcome Back</Text>
-							<Text style={[s.subtitle, { color: c.subtext }]}>Login to continue your journey</Text>
-						</View>
-
-						{/* Email */}
-						<View style={[s.inputRow, { borderColor: errors.email ? c.danger : c.border, backgroundColor: c.surfaceBg }]}>
-							<Feather name="mail" size={18} color={c.subtext} style={s.icon} />
+				{/* Form Fields */}
+				<View style={[styles.section, styles.formPanel, { borderColor: palette.border, backgroundColor: palette.surfaceBg }]}>
+					{mode === 'register' && (
+						<>
+							<ThemedText style={[styles.label, { color: palette.text }]}>Select Role</ThemedText>
+							<View style={styles.roleGrid}>
+								{ROLE_OPTIONS.map((option) => (
+									<Pressable
+										key={option.key}
+										style={[
+											styles.roleButton,
+											{
+												backgroundColor: palette.elevatedBg,
+												borderColor: role === option.key ? palette.primary : palette.border,
+											},
+											role === option.key && { borderWidth: 2 },
+										]}
+										onPress={() => setRole(option.key)}
+									>
+										<ThemedText
+											style={[
+												styles.roleButtonText,
+												{ color: role === option.key ? palette.primary : palette.subtext },
+											]}
+										>
+											{option.label}
+										</ThemedText>
+									</Pressable>
+								))}
+							</View>
+						</>
+					)}
+					{/* Name Fields (Register only) */}
+					{mode === 'register' && (
+						<View style={styles.nameRow}>
 							<TextInput
-								style={[s.input, { color: c.text }]}
-								value={email}
-								onChangeText={(t) => { setEmail(t.replace(/\s/g, '')); setErrors((e) => ({ ...e, email: undefined })); dispatch(clearAuthError()); }}
-								placeholder="Email Address"
-								placeholderTextColor={c.muted}
-								autoCapitalize="none"
-								keyboardType="email-address"
-								autoComplete="email"
+								style={[
+									styles.inputHalf,
+									{
+										backgroundColor: palette.elevatedBg,
+										borderColor: palette.border,
+										color: palette.text,
+									},
+								]}
+								value={firstName}
+								onChangeText={setFirstName}
+								placeholder="First Name (optional)"
+								placeholderTextColor={palette.muted}
 							/>
 						</View>
 						{errors.email ? <Text style={[s.errText, { color: c.danger }]}>{errors.email}</Text> : null}
@@ -152,129 +277,295 @@ export default function LoginScreen() {
 						<View style={[s.inputRow, { borderColor: errors.password ? c.danger : c.border, backgroundColor: c.surfaceBg }]}>
 							<Feather name="lock" size={18} color={c.subtext} style={s.icon} />
 							<TextInput
-								style={[s.input, { color: c.text, flex: 1 }]}
-								value={password}
-								onChangeText={(t) => { setPassword(t); setErrors((e) => ({ ...e, password: undefined })); dispatch(clearAuthError()); }}
-								placeholder="Password"
-								placeholderTextColor={c.muted}
-								secureTextEntry={!showPassword}
+								style={[
+									styles.inputHalf,
+									{
+										backgroundColor: palette.elevatedBg,
+										borderColor: palette.border,
+										color: palette.text,
+									},
+								]}
+								value={lastName}
+								onChangeText={setLastName}
+								placeholder="Last Name (optional)"
+								placeholderTextColor={palette.muted}
 							/>
 							<Pressable onPress={() => setShowPassword((v) => !v)} hitSlop={10} style={s.eyeBtn}>
 								<Feather name={showPassword ? 'eye-off' : 'eye'} size={18} color={c.subtext} />
 							</Pressable>
 						</View>
-						{errors.password ? <Text style={[s.errText, { color: c.danger }]}>{errors.password}</Text> : null}
+					)}
 
-						{/* Forgot Password */}
-						<Pressable style={s.forgotWrap} onPress={() => router.push('/(auth)/forgot-password')}>
-							<Text style={[s.forgotText, { color: c.primary }]}>Forgot Password?</Text>
-						</Pressable>
+					{/* Email Input */}
+					<TextInput
+						style={[
+							styles.input,
+							{
+								backgroundColor: palette.elevatedBg,
+								borderColor: palette.border,
+								color: palette.text,
+							},
+						]}
+						value={email}
+						onChangeText={setEmail}
+						placeholder="Email"
+						placeholderTextColor={palette.muted}
+						autoCapitalize="none"
+						keyboardType="email-address"
+						editable={!isLoading}
+					/>
 
-						{/* API error */}
-						{error ? (
-							<View style={[s.errorBox, { backgroundColor: c.dangerSoft }]}>
-								<Feather name="alert-circle" size={15} color={c.danger} />
-								<Text style={[s.errText, { color: c.danger, marginTop: 0, flex: 1 }]}>{error}</Text>
-							</View>
-						) : null}
+					{/* Phone Input (Register only) */}
+					{mode === 'register' && (
+						<TextInput
+							style={[
+								styles.input,
+								{
+									backgroundColor: palette.elevatedBg,
+									borderColor: palette.border,
+									color: palette.text,
+								},
+							]}
+							value={phone}
+							onChangeText={setPhone}
+							placeholder="Phone Number"
+							placeholderTextColor={palette.muted}
+							keyboardType="phone-pad"
+							editable={!isLoading}
+						/>
+					)}
 
-						{/* Submit */}
+					{/* Password Input */}
+					<TextInput
+						style={[
+							styles.input,
+							{
+								backgroundColor: palette.elevatedBg,
+								borderColor: palette.border,
+								color: palette.text,
+							},
+						]}
+						value={password}
+						onChangeText={setPassword}
+						placeholder="Password"
+						placeholderTextColor={palette.muted}
+						secureTextEntry
+						editable={!isLoading}
+					/>
+
+					{/* Forgot Password Link (Login only) */}
+					{mode === 'login' && (
 						<Pressable
-							style={[s.btn, { backgroundColor: c.primary }, isLoading && s.btnDisabled]}
-							onPress={onSubmit}
+							style={styles.forgotPasswordBtn}
+							onPress={() => router.push('/(auth)/forgot-password')}
 							disabled={isLoading}
 						>
-							<Text style={s.btnText}>{isLoading ? 'Processing...' : 'Login'}</Text>
+							<ThemedText style={[styles.forgotPasswordText, { color: palette.primary }]}>
+								Forgot password?
+							</ThemedText>
 						</Pressable>
+					)}
 
-						{/* Register link */}
-						<Pressable style={s.switchWrap} onPress={() => router.push('/(auth)/register')}>
-							<Text style={[s.switchText, { color: c.subtext }]}>
-								Don't have an account?{' '}
-								<Text style={[s.switchLink, { color: c.primary }]}>Register</Text>
-							</Text>
-						</Pressable>
+					{/* Error Messages */}
+					{localError && (
+						<ThemedText style={[styles.errorMessage, { color: palette.danger }]}>{localError}</ThemedText>
+					)}
+					{error && <ThemedText style={[styles.errorMessage, { color: palette.danger }]}>{error}</ThemedText>}
 
-					</View>
-				</ScrollView>
-			</KeyboardAvoidingView>
+					{/* Submit Button */}
+					<Pressable
+						style={[
+							styles.submitButton,
+							{ backgroundColor: palette.primary },
+							isLoading && styles.submitButtonDisabled,
+						]}
+						onPress={onSubmit}
+						disabled={isLoading}
+					>
+						<ThemedText style={[styles.submitButtonText, { color: palette.onPrimary }]}>
+							{isLoading ? '...' : mode === 'login' ? 'Login' : 'Create Account'}
+						</ThemedText>
+					</Pressable>
+
+					{/* Mode Switch Footer */}
+					{mode === 'login' ? (
+						<View style={styles.footerRow}>
+							<ThemedText style={[styles.footerText, { color: palette.subtext }]}>Don&apos;t have an account?</ThemedText>
+							<Pressable onPress={() => switchMode('register')} disabled={isLoading}>
+								<ThemedText style={[styles.footerLink, styles.footerLinkSpacing, { color: palette.primary }]}>Register</ThemedText>
+							</Pressable>
+						</View>
+					) : (
+						<View style={styles.footerRow}>
+							<ThemedText style={[styles.footerText, { color: palette.subtext }]}>Already have an account?</ThemedText>
+							<Pressable onPress={() => switchMode('login')} disabled={isLoading}>
+								<ThemedText style={[styles.footerLink, styles.footerLinkSpacing, { color: palette.primary }]}>Login</ThemedText>
+							</Pressable>
+						</View>
+					)}
+				</View>
+			</ScrollView>
 		</SafeAreaView>
 	);
 }
 
-const s = StyleSheet.create({
-	safe: { flex: 1 },
-	scroll: { padding: 24, paddingBottom: 40 },
-
-	logoWrap: { alignItems: 'center', marginBottom: 20, marginTop: 12 },
-	logo: { width: 200, height: 80 },
-
-	card: {
-		borderRadius: 20,
-		borderWidth: 1,
-		padding: 24,
-		gap: 16,
-		shadowColor: '#000',
-		shadowOffset: { width: 0, height: 4 },
-		shadowOpacity: 0.08,
-		shadowRadius: 12,
-		elevation: 4,
+const styles = StyleSheet.create({
+	safeArea: {
+		flex: 1,
 	},
-
-	cardHeader: { alignItems: 'center', gap: 4, marginBottom: 4 },
-	title: { fontSize: 26, fontWeight: '800', textAlign: 'center' },
-	subtitle: { fontSize: 14, textAlign: 'center' },
-
-	inputRow: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		borderWidth: 1,
-		borderRadius: 14,
-		paddingHorizontal: 14,
-		height: 52,
+	page: {
+		flex: 1,
 	},
-	icon: { marginRight: 10 },
-	input: { flex: 1, fontSize: 15, height: '100%' },
-	eyeBtn: { padding: 4 },
-
-	errText: { fontSize: 12, fontWeight: '600', marginTop: -10 },
-
-	errorBox: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		gap: 8,
-		borderRadius: 10,
-		padding: 12,
-		marginTop: -6,
-	},
-
-	forgotWrap: { alignSelf: 'flex-end', marginTop: -6 },
-	forgotText: { fontSize: 13, fontWeight: '700' },
-
-	btn: {
-		borderRadius: 14,
-		paddingVertical: 15,
-		alignItems: 'center',
-		shadowColor: '#000',
-		shadowOffset: { width: 0, height: 2 },
-		shadowOpacity: 0.15,
-		shadowRadius: 6,
-		elevation: 3,
-	},
-	btnDisabled: { opacity: 0.55 },
-	btnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-
-	switchWrap: { alignItems: 'center', paddingTop: 2 },
-	switchText: { fontSize: 14, textAlign: 'center' },
-	switchLink: { fontWeight: '700' },
-
-	// Verification banner
-	verifyBanner: {
-		borderRadius: 14,
+	container: {
 		padding: 20,
+		gap: 20,
+		paddingBottom: 36,
+	},
+	headerSection: {
+		gap: 6,
+		marginBottom: 4,
+	},
+	brandLogo: {
+		width: 170,
+		height: 64,
+		alignSelf: 'flex-start',
+	},
+	logoPill: {
+		alignSelf: 'flex-start',
+		borderRadius: 999,
+		paddingHorizontal: 10,
+		paddingVertical: 4,
+		backgroundColor: '#FDE7EF',
+	},
+	logoPillText: {
+		fontSize: 11,
+		letterSpacing: 1,
+		fontWeight: '800',
+	},
+	brand: {
+		fontSize: 20,
+		fontWeight: '900',
+		letterSpacing: 0.2,
+	},
+	title: {
+		fontSize: 30,
+		fontWeight: '800',
+		lineHeight: 34,
+	},
+	subtitle: {
+		fontSize: 14,
+		lineHeight: 21,
+	},
+	modeTabs: {
+		flexDirection: 'row',
+		gap: 8,
+		padding: 4,
+		borderRadius: 12,
+	},
+	modeTab: {
+		flex: 1,
+		paddingVertical: 12,
+		paddingHorizontal: 16,
+		borderRadius: 10,
 		alignItems: 'center',
+		justifyContent: 'center',
+	},
+	modeTabActive: {},
+	modeTabText: {
+		fontSize: 14,
+		fontWeight: '600',
+	},
+	section: {
+		gap: 14,
+	},
+	formPanel: {
+		borderWidth: 1,
+		borderRadius: 16,
+		padding: 14,
+	},
+	label: {
+		fontSize: 14,
+		fontWeight: '600',
+	},
+	roleGrid: {
+		flexDirection: 'row',
 		gap: 12,
 	},
-	verifyTitle: { fontSize: 20, fontWeight: '800', textAlign: 'center' },
-	verifyBody: { fontSize: 14, textAlign: 'center', lineHeight: 22 },
+	roleButton: {
+		flex: 1,
+		paddingVertical: 12,
+		paddingHorizontal: 12,
+		borderRadius: 10,
+		alignItems: 'center',
+		borderWidth: 1,
+	},
+	roleButtonText: {
+		fontSize: 13,
+		fontWeight: '600',
+		textAlign: 'center',
+	},
+	nameRow: {
+		flexDirection: 'row',
+		gap: 12,
+	},
+	inputHalf: {
+		flex: 1,
+		borderWidth: 1,
+		borderRadius: 10,
+		paddingHorizontal: 14,
+		paddingVertical: 13,
+		minHeight: 48,
+		fontSize: 15,
+	},
+	input: {
+		borderWidth: 1,
+		borderRadius: 10,
+		paddingHorizontal: 14,
+		paddingVertical: 13,
+		minHeight: 48,
+		fontSize: 15,
+	},
+	forgotPasswordBtn: {
+		alignSelf: 'flex-end',
+	},
+	forgotPasswordText: {
+		fontSize: 13,
+		fontWeight: '600',
+	},
+	errorMessage: {
+		fontSize: 12,
+		fontWeight: '500',
+		paddingHorizontal: 12,
+		paddingVertical: 10,
+		borderRadius: 6,
+	},
+	submitButton: {
+		paddingVertical: 14,
+		borderRadius: 10,
+		alignItems: 'center',
+		marginVertical: 8,
+	},
+	submitButtonDisabled: {
+		opacity: 0.6,
+	},
+	submitButtonText: {
+		fontSize: 15,
+		fontWeight: '700',
+	},
+	footerRow: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'center',
+		marginTop: 8,
+	},
+	footerText: {
+		fontSize: 13,
+	},
+	footerLink: {
+		fontSize: 13,
+		fontWeight: '700',
+	},
+	footerLinkSpacing: {
+		marginLeft: 4,
+	},
 });
