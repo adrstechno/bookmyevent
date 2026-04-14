@@ -48,6 +48,7 @@ const adminMenu: MenuItem[] = [
 
 export default function AppMenuDrawer({ variant = 'default' }: { variant?: 'default' | 'onPrimary' }) {
 	const [visible, setVisible] = useState(false);
+	const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
 	const router = useRouter();
 	const pathname = usePathname();
 	const dispatch = useAppDispatch();
@@ -73,10 +74,20 @@ export default function AppMenuDrawer({ variant = 'default' }: { variant?: 'defa
 	};
 
 	const onLogout = () => {
-		onClose();
-		void dispatch(signOut()).then(() => {
-			router.replace('/(auth)/login');
-		});
+		setIsLogoutModalVisible(true);
+	 };
+
+	 const closeLogoutModal = () => {
+		setIsLogoutModalVisible(false);
+	 };
+
+	 const confirmLogout = () => {
+		void (async () => {
+		 closeLogoutModal();
+		 onClose();
+		 await dispatch(signOut());
+		 router.replace('/(auth)/login');
+		})();
 	};
 
 	return (
@@ -163,6 +174,28 @@ export default function AppMenuDrawer({ variant = 'default' }: { variant?: 'defa
 					</View>
 					<Pressable style={[styles.backdrop, { backgroundColor: palette.overlay }]} onPress={onClose} />
 				</View>
+
+				<Modal transparent visible={isLogoutModalVisible} animationType="fade" onRequestClose={closeLogoutModal}>
+					<View style={styles.logoutModalOverlay}>
+						<Pressable style={styles.logoutModalBackdrop} onPress={closeLogoutModal} />
+						<View style={[styles.logoutModalCard, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
+							<View style={[styles.logoutModalIconWrap, { backgroundColor: palette.dangerSoft }]}>
+								<Ionicons name="log-out-outline" size={22} color={palette.danger} />
+							</View>
+							<ThemedText style={[styles.logoutModalTitle, { color: palette.text }]}>Logout from your account?</ThemedText>
+							<ThemedText style={[styles.logoutModalSubtitle, { color: palette.subtext }]}>You can sign back in anytime. Your session will end on this device.</ThemedText>
+
+							<View style={styles.logoutModalActions}>
+								<Pressable style={[styles.logoutModalButton, styles.logoutModalSecondaryButton, { backgroundColor: palette.headerBtnBg, borderColor: palette.border }]} onPress={closeLogoutModal}>
+									<ThemedText style={[styles.logoutModalSecondaryText, { color: palette.text }]}>Cancel</ThemedText>
+								</Pressable>
+								<Pressable style={[styles.logoutModalButton, styles.logoutModalPrimaryButton, { backgroundColor: palette.danger }]} onPress={confirmLogout} disabled={isLoading}>
+									<ThemedText style={styles.logoutModalPrimaryText}>{isLoading ? 'Logging out...' : 'Logout'}</ThemedText>
+								</Pressable>
+							</View>
+						</View>
+					</View>
+				</Modal>
 			</Modal>
 		</>
 	);
@@ -246,5 +279,74 @@ const styles = StyleSheet.create({
 	logoutText: {
 		fontSize: 13,
 		fontWeight: '700',
+	},
+	logoutModalOverlay: {
+		flex: 1,
+		justifyContent: 'center',
+		alignItems: 'center',
+		paddingHorizontal: 20,
+		backgroundColor: 'rgba(15, 23, 42, 0.44)',
+	},
+	logoutModalBackdrop: {
+		...StyleSheet.absoluteFillObject,
+	},
+	logoutModalCard: {
+		width: '100%',
+		maxWidth: 360,
+		borderRadius: 24,
+		paddingHorizontal: 18,
+		paddingTop: 20,
+		paddingBottom: 16,
+		borderWidth: 1,
+		gap: 14,
+		shadowColor: '#0F172A',
+		shadowOpacity: 0.16,
+		shadowOffset: { width: 0, height: 16 },
+		shadowRadius: 28,
+		elevation: 10,
+	},
+	logoutModalIconWrap: {
+		width: 52,
+		height: 52,
+		borderRadius: 26,
+		alignItems: 'center',
+		justifyContent: 'center',
+		alignSelf: 'center',
+	},
+	logoutModalTitle: {
+		fontSize: 18,
+		fontWeight: '800',
+		textAlign: 'center',
+	},
+	logoutModalSubtitle: {
+		fontSize: 13,
+		lineHeight: 20,
+		textAlign: 'center',
+	},
+	logoutModalActions: {
+		flexDirection: 'row',
+		gap: 10,
+		marginTop: 2,
+	},
+	logoutModalButton: {
+		flex: 1,
+		height: 46,
+		borderRadius: 14,
+		alignItems: 'center',
+		justifyContent: 'center',
+		borderWidth: 1,
+	},
+	logoutModalSecondaryButton: {},
+	logoutModalPrimaryButton: {
+		borderWidth: 0,
+	},
+	logoutModalSecondaryText: {
+		fontSize: 14,
+		fontWeight: '700',
+	},
+	logoutModalPrimaryText: {
+		fontSize: 14,
+		fontWeight: '800',
+		color: '#FFFFFF',
 	},
 });

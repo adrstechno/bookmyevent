@@ -5,7 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppTopBar } from '@/components/layout/AppTopBar';
-import { changePassword, validateToken } from '@/services/auth/authApi';
+import { changePassword } from '@/services/auth/authApi';
 import { ThemedText } from '@/components/themed-text';
 import { useAppSelector } from '@/store';
 import { useSettingsTheme } from '@/theme/settingsTheme';
@@ -69,22 +69,17 @@ export default function ProfileEditScreen() {
 	}, [cardAnim, headerAnim]);
 
 	useEffect(() => {
-		const hydrateForm = async () => {
-			try {
-				const user = await validateToken();
-				setForm((prev) => ({
-					...prev,
-					firstName: user.firstName || prev.firstName,
-					lastName: user.lastName || prev.lastName,
-					email: user.email || prev.email,
-				}));
-			} catch {
-				// Keep current values when profile endpoint is unavailable.
-			}
-		};
+		const fallbackFirstName = (authName || params.firstName || 'Guest').split(' ')[0] || 'Guest';
+		const fallbackLastName = (authName || params.lastName || '').split(' ').slice(1).join(' ');
 
-		void hydrateForm();
-	}, []);
+		setForm((prev) => ({
+			...prev,
+			firstName: params.firstName ?? fallbackFirstName,
+			lastName: params.lastName ?? (fallbackLastName || prev.lastName),
+			email: params.email ?? authEmail ?? prev.email,
+			phone: params.phone ?? prev.phone,
+		}));
+	}, [authEmail, authName, params.email, params.firstName, params.lastName, params.phone]);
 
 	useEffect(() => {
 		const subscription = BackHandler.addEventListener('hardwareBackPress', () => {

@@ -22,8 +22,6 @@
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "android.permission.RECORD_AUDIO",
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO",
         "android.permission.CAMERA"
       ],
       "package": "com.adrs.goeventify"
@@ -65,7 +63,11 @@
       "reactCompiler": true
     },
     "extra": {
-      "router": {}
-    }
+      "router": {},
+      "eas": {
+        "projectId": "9425b6bb-224f-4a56-9e9e-5dbfdec1e237"
+      }
+    },
+    "owner": "adrstechnos-organization"
   }
 }

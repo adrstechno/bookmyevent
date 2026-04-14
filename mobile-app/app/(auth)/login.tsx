@@ -61,8 +61,8 @@ export default function LoginScreen() {
 
   const subtitle = useMemo(() => {
     return mode === "login"
-      ? "Sign in with your account and continue where you left off."
-      : "Create your account to start booking services with GoEventify.";
+      ? "Sign in to continue."
+      : "Create your account to get started.";
   }, [mode]);
 
   if (isHydrated && isAuthenticated) {
@@ -225,16 +225,6 @@ export default function LoginScreen() {
             style={styles.brandLogo}
             resizeMode="contain"
           />
-          <View style={styles.logoPill}>
-            <ThemedText
-              style={[styles.logoPillText, { color: palette.primary }]}
-            >
-              GOEVENTIFY
-            </ThemedText>
-          </View>
-          <ThemedText style={[styles.brand, { color: palette.text }]}>
-            GoEventify
-          </ThemedText>
           <ThemedText style={[styles.title, { color: palette.text }]}>
             {mode === "login" ? "Welcome Back" : "Join Us"}
           </ThemedText>
@@ -548,39 +538,26 @@ const styles = StyleSheet.create({
     paddingBottom: 36,
   },
   headerSection: {
-    gap: 6,
-    marginBottom: 4,
+    gap: 10,
+    marginBottom: 6,
+    alignItems: "center",
   },
   brandLogo: {
-    width: 170,
-    height: 64,
-    alignSelf: "flex-start",
-  },
-  logoPill: {
-    alignSelf: "flex-start",
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    backgroundColor: "#FDE7EF",
-  },
-  logoPillText: {
-    fontSize: 11,
-    letterSpacing: 1,
-    fontWeight: "800",
-  },
-  brand: {
-    fontSize: 20,
-    fontWeight: "900",
-    letterSpacing: 0.2,
+    width: 150,
+    height: 58,
   },
   title: {
-    fontSize: 30,
+    fontSize: 28,
     fontWeight: "800",
-    lineHeight: 34,
+    lineHeight: 32,
+    textAlign: "center",
+    letterSpacing: -0.4,
   },
   subtitle: {
     fontSize: 14,
     lineHeight: 21,
+    textAlign: "center",
+    maxWidth: 280,
   },
   modeTabs: {
     flexDirection: "row",

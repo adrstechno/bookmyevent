@@ -4,14 +4,12 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useRouter } from 'expo-router';
-import { useCallback, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Alert, Linking, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect } from '@react-navigation/native';
 
 import AppMenuDrawer from '@/components/layout/AppMenuDrawer';
-import { validateToken } from '@/services/auth/authApi';
 import { ThemedText } from '@/components/themed-text';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { signOut } from '@/store/slices/authSlice';
@@ -50,6 +48,7 @@ export default function ProfileTabScreen() {
 	const [isImageUploading, setIsImageUploading] = useState(false);
 	const [isCameraModalVisible, setIsCameraModalVisible] = useState(false);
 	const [capturedImageUri, setCapturedImageUri] = useState<string | null>(null);
+	const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
 	const cameraRef = useRef<CameraView | null>(null);
 	const [cameraPermission, requestCameraPermission] = useCameraPermissions();
 	const [profile, setProfile] = useState<ProfileState>({
@@ -60,30 +59,14 @@ export default function ProfileTabScreen() {
 	});
 	const [message, setMessage] = useState('');
 
-	const loadProfile = useCallback(async () => {
-		try {
-			const user = await validateToken();
-			setProfile((prev) => ({
-				...prev,
-				firstName: user.firstName || prev.firstName,
-				lastName: user.lastName || prev.lastName,
-				email: user.email || prev.email,
-			}));
-		} catch {
-			setProfile((prev) => ({
-				...prev,
-				firstName: (authName || prev.firstName).split(' ')[0] || prev.firstName,
-				lastName: (authName || '').split(' ').slice(1).join(' ') || prev.lastName,
-				email: authEmail || prev.email,
-			}));
-		}
+	useEffect(() => {
+		setProfile((prev) => ({
+			...prev,
+			firstName: (authName || prev.firstName).split(' ')[0] || prev.firstName,
+			lastName: (authName || '').split(' ').slice(1).join(' ') || prev.lastName,
+			email: authEmail || prev.email,
+		}));
 	}, [authEmail, authName]);
-
-	useFocusEffect(
-		useCallback(() => {
-			void loadProfile();
-		}, [loadProfile])
-	);
 
 	const onPressMenuItem = (key: string, label: string) => {
 		if (key === 'edit') {
@@ -253,17 +236,19 @@ export default function ProfileTabScreen() {
 	};
 
 	const onPressLogout = () => {
-		Alert.alert('Logout', 'Are you sure you want to logout?', [
-			{ text: 'Cancel', style: 'cancel' },
-			{
-				text: 'Logout',
-				style: 'destructive',
-				onPress: async () => {
-					await dispatch(signOut());
-					router.replace('/(auth)/login');
-				},
-			},
-		]);
+		setIsLogoutModalVisible(true);
+	};
+
+	const closeLogoutModal = () => {
+		setIsLogoutModalVisible(false);
+	};
+
+	const confirmLogout = () => {
+		void (async () => {
+			closeLogoutModal();
+			await dispatch(signOut());
+			router.replace('/(auth)/login');
+		})();
 	};
 
 	return (
@@ -422,6 +407,28 @@ export default function ProfileTabScreen() {
 						)}
 					</View>
 				</SafeAreaView>
+			</Modal>
+
+			<Modal transparent visible={isLogoutModalVisible} animationType="fade" onRequestClose={closeLogoutModal}>
+				<View style={styles.logoutModalOverlay}>
+					<Pressable style={styles.logoutModalBackdrop} onPress={closeLogoutModal} />
+					<View style={[styles.logoutModalCard, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
+						<View style={[styles.logoutModalIconWrap, { backgroundColor: isDark ? 'rgba(248, 113, 113, 0.12)' : '#FEF2F2' }]}>
+							<Ionicons name="log-out-outline" size={22} color={isDark ? '#FCA5A5' : '#B91C1C'} />
+						</View>
+						<ThemedText style={[styles.logoutModalTitle, { color: palette.text }]}>Logout from your account?</ThemedText>
+						<ThemedText style={[styles.logoutModalSubtitle, { color: palette.subtext }]}>You can sign back in anytime. Your session will end on this device.</ThemedText>
+
+						<View style={styles.logoutModalActions}>
+							<Pressable style={[styles.logoutModalButton, styles.logoutModalSecondaryButton, { backgroundColor: palette.headerBtnBg, borderColor: palette.border }]} onPress={closeLogoutModal}>
+								<ThemedText style={[styles.logoutModalSecondaryText, { color: palette.text }]}>Cancel</ThemedText>
+							</Pressable>
+							<Pressable style={[styles.logoutModalButton, styles.logoutModalPrimaryButton, { backgroundColor: isDark ? '#991B1B' : '#B91C1C' }]} onPress={confirmLogout}>
+								<ThemedText style={styles.logoutModalPrimaryText}>Logout</ThemedText>
+							</Pressable>
+						</View>
+					</View>
+				</View>
 			</Modal>
 		</SafeAreaView>
 	);
@@ -656,6 +663,75 @@ const styles = StyleSheet.create({
 		color: '#B91C1C',
 		fontSize: 14,
 		fontWeight: '700',
+	},
+	logoutModalOverlay: {
+		flex: 1,
+		justifyContent: 'center',
+		alignItems: 'center',
+		paddingHorizontal: 20,
+		backgroundColor: 'rgba(15, 23, 42, 0.44)',
+	},
+	logoutModalBackdrop: {
+		...StyleSheet.absoluteFillObject,
+	},
+	logoutModalCard: {
+		width: '100%',
+		maxWidth: 360,
+		borderRadius: 24,
+		paddingHorizontal: 18,
+		paddingTop: 20,
+		paddingBottom: 16,
+		borderWidth: 1,
+		gap: 14,
+		shadowColor: '#0F172A',
+		shadowOpacity: 0.16,
+		shadowOffset: { width: 0, height: 16 },
+		shadowRadius: 28,
+		elevation: 10,
+	},
+	logoutModalIconWrap: {
+		width: 52,
+		height: 52,
+		borderRadius: 26,
+		alignItems: 'center',
+		justifyContent: 'center',
+		alignSelf: 'center',
+	},
+	logoutModalTitle: {
+		fontSize: 18,
+		fontWeight: '800',
+		textAlign: 'center',
+	},
+	logoutModalSubtitle: {
+		fontSize: 13,
+		lineHeight: 20,
+		textAlign: 'center',
+	},
+	logoutModalActions: {
+		flexDirection: 'row',
+		gap: 10,
+		marginTop: 2,
+	},
+	logoutModalButton: {
+		flex: 1,
+		height: 46,
+		borderRadius: 14,
+		alignItems: 'center',
+		justifyContent: 'center',
+		borderWidth: 1,
+	},
+	logoutModalSecondaryButton: {},
+	logoutModalPrimaryButton: {
+		borderWidth: 0,
+	},
+	logoutModalSecondaryText: {
+		fontSize: 14,
+		fontWeight: '700',
+	},
+	logoutModalPrimaryText: {
+		fontSize: 14,
+		fontWeight: '800',
+		color: '#FFFFFF',
 	},
 	footerText: {
 		fontSize: 12,
