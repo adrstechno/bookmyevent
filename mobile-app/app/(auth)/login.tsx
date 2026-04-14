@@ -5,14 +5,12 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   TextInput,
   View,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { Redirect, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
 
 import { ThemedText } from "@/components/themed-text";
 import { useAppToast } from "@/components/common/AppToastProvider";
@@ -56,7 +54,6 @@ export default function LoginScreen() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [role, setRole] = useState<RoleType>("user");
-  const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState("");
 
   const subtitle = useMemo(() => {
@@ -77,7 +74,6 @@ export default function LoginScreen() {
     setPhone("");
     setEmail("");
     setPassword("");
-    setShowPassword(false);
     dispatch(clearAuthError());
   };
 
@@ -221,18 +217,17 @@ export default function LoginScreen() {
         {/* Header Section */}
         <View style={styles.headerSection}>
           <Image
-            source={require("@/assets/images/home/logo2.png")}
+            source={require("@/assets/images/mobile_logo.png")}
             style={styles.brandLogo}
             resizeMode="contain"
           />
-          <ThemedText style={[styles.title, { color: palette.text }]}>
+          <ThemedText style={[styles.title, { color: palette.text }]}> 
             {mode === "login" ? "Welcome Back" : "Join Us"}
           </ThemedText>
-          <ThemedText style={[styles.subtitle, { color: palette.subtext }]}>
+          <ThemedText style={[styles.subtitle, { color: palette.subtext }]}> 
             {subtitle}
           </ThemedText>
         </View>
-
         {/* Auth Mode Tabs */}
         <View
           style={[styles.modeTabs, { backgroundColor: palette.elevatedBg }]}
@@ -538,26 +533,27 @@ const styles = StyleSheet.create({
     paddingBottom: 36,
   },
   headerSection: {
-    gap: 10,
-    marginBottom: 6,
+    gap: 8,
+    marginBottom: 12,
     alignItems: "center",
   },
   brandLogo: {
-    width: 150,
-    height: 58,
+    width: 160,
+    height: 72,
+    marginBottom: 4,
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: "800",
-    lineHeight: 32,
+    lineHeight: 30,
     textAlign: "center",
     letterSpacing: -0.4,
   },
   subtitle: {
-    fontSize: 14,
-    lineHeight: 21,
+    fontSize: 15,
+    lineHeight: 22,
     textAlign: "center",
-    maxWidth: 280,
+    maxWidth: 300,
   },
   modeTabs: {
     flexDirection: "row",

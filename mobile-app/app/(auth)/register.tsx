@@ -311,8 +311,8 @@ const s = StyleSheet.create({
 	safe: { flex: 1 },
 	scroll: { padding: 24, paddingBottom: 40 },
 
-	logoWrap: { alignItems: 'center', marginBottom: 20, marginTop: 12 },
-	logo: { width: 200, height: 80 },
+	logoWrap: { alignItems: 'center', marginBottom: 16, marginTop: 12 },
+	logo: { width: 170, height: 70 },
 
 	card: {
 		borderRadius: 20,
