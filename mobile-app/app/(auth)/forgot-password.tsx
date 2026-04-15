@@ -1,21 +1,18 @@
 import { useState } from "react";
 import {
   Image,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   TextInput,
   View,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
 
 import { useAppToast } from "@/components/common/AppToastProvider";
+import { ThemedText } from "@/components/themed-text";
 import { forgotPassword } from "@/services/auth/authApi";
 import { useAppTheme } from "@/theme/useAppTheme";
 
@@ -47,6 +44,7 @@ export default function ForgotPasswordScreen() {
     try {
       const msg = await forgotPassword(email.trim().toLowerCase());
       setEmailSent(true);
+      setError("");
       showSuccess(msg || "Password reset link sent! Check your email.");
     } catch (err) {
       const fallback = "Failed to send reset link. Please try again.";
@@ -68,28 +66,22 @@ export default function ForgotPasswordScreen() {
 
   return (
     <SafeAreaView
-      style={[s.safe, { backgroundColor: c.screenBg }]}
+      style={[styles.safeArea, { backgroundColor: c.screenBg }]}
       edges={["top", "bottom"]}
     >
       <StatusBar style={isDark ? "light" : "dark"} />
       <ScrollView contentContainerStyle={styles.container}>
-        <Image
-          source={require("@/assets/images/home/logo2.png")}
-          style={styles.brandLogo}
-          resizeMode="contain"
-        />
-        <View style={styles.logoPill}>
-          <ThemedText style={[styles.logoPillText, { color: palette.primary }]}>
-            GOEVENTIFY
-          </ThemedText>
+        <View style={styles.logoWrap}>
+          <Image
+            source={require("@/assets/images/login_logo.png")}
+            style={styles.brandLogo}
+            resizeMode="contain"
+          />
         </View>
-        <ThemedText style={[styles.brand, { color: palette.text }]}>
-          GoEventify
-        </ThemedText>
-        <ThemedText style={[styles.title, { color: palette.text }]}>
+        <ThemedText style={[styles.title, { color: palette.text }]}> 
           Forgot Password
         </ThemedText>
-        <ThemedText style={[styles.subtitle, { color: palette.subtext }]}>
+        <ThemedText style={[styles.subtitle, { color: palette.subtext }]}> 
           Enter your account email to receive password reset instructions.
         </ThemedText>
 
@@ -117,18 +109,22 @@ export default function ForgotPasswordScreen() {
           />
 
           {error ? (
-            <ThemedText style={[styles.errorText, { color: palette.danger }]}>
+            <ThemedText style={[styles.errorText, { color: palette.danger }]}> 
               {error}
             </ThemedText>
           ) : null}
-          {message ? (
-            <ThemedText style={[styles.messageText, { color: "#0F766E" }]}>
-              {message}
+          {emailSent ? (
+            <ThemedText style={[styles.messageText, { color: "#0F766E" }]}> 
+              Reset instructions have been sent. Please check your email.
             </ThemedText>
           ) : null}
 
           <Pressable
-            style={[styles.primaryBtn, { backgroundColor: palette.tint }]}
+            style={[
+              styles.primaryBtn,
+              { backgroundColor: palette.tint },
+              loading && styles.primaryBtnDisabled,
+            ]}
             onPress={onSubmit}
             disabled={loading}
           >
@@ -161,9 +157,22 @@ const styles = StyleSheet.create({
     paddingBottom: 36,
   },
   brandLogo: {
-    width: 170,
-    height: 64,
-    alignSelf: "flex-start",
+    width: "100%",
+    height: "100%",
+    resizeMode: "contain",
+    borderRadius: 18,
+    backgroundColor: "transparent",
+  },
+  logoWrap: {
+    alignSelf: "center",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+    width: 200,
+    height: 120,
+    borderRadius: 18,
+    backgroundColor: "transparent",
+    borderWidth: 0,
   },
   logoPill: {
     alignSelf: "flex-start",
@@ -192,25 +201,23 @@ const styles = StyleSheet.create({
     lineHeight: 21,
   },
   card: {
-    borderRadius: 20,
     borderWidth: 1,
     borderRadius: 16,
     padding: 14,
     gap: 12,
   },
   input: {
-    height: 48,
+    height: 52,
     borderWidth: 1,
     borderRadius: 14,
     paddingHorizontal: 14,
-    height: 52,
+    fontSize: 15,
   },
   icon: { marginRight: 10 },
-  input: { flex: 1, fontSize: 15, height: "100%" },
 
   errText: { fontSize: 12, fontWeight: "600", marginTop: -10 },
 
-  btn: {
+  primaryBtn: {
     borderRadius: 14,
     paddingVertical: 15,
     alignItems: "center",
@@ -220,12 +227,13 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 3,
   },
-  btnDisabled: { opacity: 0.55 },
-  btnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
+  primaryBtnDisabled: { opacity: 0.55 },
+  primaryBtnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
 
   switchWrap: { alignItems: "center", paddingTop: 2 },
   switchText: { fontSize: 14, textAlign: "center" },
   switchLink: { fontWeight: "700" },
+  linkBtn: { alignItems: "center", paddingVertical: 12 },
 
   successBanner: {
     flexDirection: "row",
@@ -248,9 +256,8 @@ const styles = StyleSheet.create({
   outlineBtn: {
     borderWidth: 1,
     borderRadius: 14,
-    paddingVertical: 15,
+    paddingVertical: 12,
     alignItems: "center",
-    paddingVertical: 4,
   },
   linkText: {
     fontSize: 14,

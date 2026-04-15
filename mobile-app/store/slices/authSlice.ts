@@ -241,6 +241,11 @@ const authSlice = createSlice({
     clearAuthError(state) {
       state.error = null;
     },
+    clearVerificationState(state) {
+      state.requiresVerification = false;
+      state.pendingVerificationEmail = null;
+      state.error = null;
+    },
     sessionExpired(state) {
       state.token = null;
       state.role = null;
@@ -362,6 +367,6 @@ export const signIn = createAsyncThunk(
   },
 );
 
-export const { setSignedIn, clearAuthError, sessionExpired } =
+export const { setSignedIn, clearAuthError, clearVerificationState, sessionExpired } =
   authSlice.actions;
 export default authSlice.reducer;

@@ -15,6 +15,7 @@ let tokenInvalidNotified = false;
 
 // Callback for when token is invalid/expired (401/403)
 let onTokenInvalid: (() => void) | null = null;
+let authExpiredHandler: (() => void) | null = null;
 
 export const setApiAuthToken = (token: string | null) => {
 	bearerToken = token;

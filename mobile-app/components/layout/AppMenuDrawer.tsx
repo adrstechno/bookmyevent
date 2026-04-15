@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useRouter, usePathname } from 'expo-router';
+import { useRouter, usePathname, useNavigationContainerRef } from 'expo-router';
 import type { Href } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -51,6 +51,7 @@ export default function AppMenuDrawer({ variant = 'default' }: { variant?: 'defa
 	const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
 	const router = useRouter();
 	const pathname = usePathname();
+	const navRef = useNavigationContainerRef();
 	const dispatch = useAppDispatch();
 	const { role, email, isLoading } = useAppSelector((state) => state.auth);
 	const { palette } = useSettingsTheme();
@@ -70,7 +71,11 @@ export default function AppMenuDrawer({ variant = 'default' }: { variant?: 'defa
 
 	const onBack = () => {
 		onClose();
-		router.back();
+		// Only go back if there's a screen in the history stack to return to
+		if (navRef?.canGoBack()) {
+			router.back();
+		}
+		// If can't go back (e.g. on dashboard root), do nothing — already at root
 	};
 
 	const onLogout = () => {
@@ -155,10 +160,12 @@ export default function AppMenuDrawer({ variant = 'default' }: { variant?: 'defa
 
 						{/* Footer */}
 						<View style={[styles.footer, { borderTopColor: palette.border }]}>
-							<Pressable style={[styles.footerBtn, { borderColor: palette.border }]} onPress={onBack}>
-								<Ionicons name="arrow-back-outline" size={16} color={palette.text} />
-								<ThemedText style={[styles.footerLabel, { color: palette.text }]}>Back</ThemedText>
-							</Pressable>
+							{navRef?.canGoBack() && (
+								<Pressable style={[styles.footerBtn, { borderColor: palette.border }]} onPress={onBack}>
+									<Ionicons name="arrow-back-outline" size={16} color={palette.text} />
+									<ThemedText style={[styles.footerLabel, { color: palette.text }]}>Back</ThemedText>
+								</Pressable>
+							)}
 
 							<Pressable
 								style={[styles.footerBtn, { borderColor: palette.dangerBorder, backgroundColor: palette.dangerSoft }]}

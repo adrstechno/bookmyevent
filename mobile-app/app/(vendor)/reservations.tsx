@@ -17,51 +17,15 @@ import { ThemedText } from '@/components/themed-text';
 import { useAppToast } from '@/components/common/AppToastProvider';
 import { useSettingsTheme } from '@/theme/settingsTheme';
 import VendorAppBar from '@/components/vendor/VendorAppBar';
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface Reservation {
-	reservation_id: string;
-	shift_name: string;
-	event_date: string;
-	start_time: string;
-	end_time: string;
-	reason?: string;
-}
-
-interface AvailableShift {
-	shift_id: string;
-	shift_name: string;
-	start_time: string;
-	end_time: string;
-}
-
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-
-const MOCK_RESERVATIONS: Reservation[] = [
-	{
-		reservation_id: 'R001',
-		shift_name: 'Morning Setup',
-		event_date: '2026-04-20',
-		start_time: '09:00:00',
-		end_time: '12:00:00',
-		reason: 'Booked via phone call',
-	},
-	{
-		reservation_id: 'R002',
-		shift_name: 'Evening Service',
-		event_date: '2026-04-24',
-		start_time: '14:00:00',
-		end_time: '18:00:00',
-		reason: 'External event',
-	},
-];
-
-const MOCK_AVAILABLE_SHIFTS: AvailableShift[] = [
-	{ shift_id: 'S1', shift_name: 'Morning Setup', start_time: '09:00', end_time: '12:00' },
-	{ shift_id: 'S2', shift_name: 'Evening Service', start_time: '14:00', end_time: '18:00' },
-	{ shift_id: 'S3', shift_name: 'Full Day Support', start_time: '10:00', end_time: '20:00' },
-];
+import {
+	type Reservation,
+	type AvailableShift,
+	fetchVendorId,
+	fetchReservations as apiFetchReservations,
+	fetchAvailableShifts as apiFetchAvailableShifts,
+	createReservation as apiCreateReservation,
+	cancelReservation as apiCancelReservation,
+} from '@/services/vendor/reservationService';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -192,8 +156,9 @@ const cal = StyleSheet.create({
 
 export default function VendorReservationsScreen() {
 	const { palette } = useSettingsTheme();
-	const { showError, showSuccess, showInfo } = useAppToast();
+	const { showError, showSuccess } = useAppToast();
 
+	const [vendorId, setVendorId] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [isRefreshing, setIsRefreshing] = useState(false);
 	const [reservations, setReservations] = useState<Reservation[]>([]);
@@ -213,28 +178,64 @@ export default function VendorReservationsScreen() {
 		new Date(r.event_date).toISOString().split('T')[0]
 	);
 
-	const loadReservations = useCallback(async (silent = false) => {
-		silent ? setIsRefreshing(true) : setIsLoading(true);
-		await new Promise(r => setTimeout(r, 350));
-		setReservations(prev => prev.length > 0 ? prev : MOCK_RESERVATIONS);
-		setIsLoading(false);
-		setIsRefreshing(false);
+	// Load vendor profile once, then fetch reservations
+	useEffect(() => {
+		const init = async () => {
+			try {
+				const id = await fetchVendorId();
+				setVendorId(id);
+			} catch {
+				showError('Failed to load vendor profile.');
+				setIsLoading(false);
+			}
+		};
+		void init();
 	}, []);
 
-	useEffect(() => { void loadReservations(); }, [loadReservations]);
+	const loadReservations = useCallback(async (silent = false) => {
+		if (!vendorId) return;
+		silent ? setIsRefreshing(true) : setIsLoading(true);
+		try {
+			const data = await apiFetchReservations(vendorId);
+			setReservations(data);
+		} catch {
+			showError('Failed to load reservations.');
+		} finally {
+			setIsLoading(false);
+			setIsRefreshing(false);
+		}
+	}, [vendorId]);
 
-	const fetchAvailableShifts = async (date: Date) => {
+	useEffect(() => {
+		if (vendorId) void loadReservations();
+	}, [vendorId, loadReservations]);
+
+	const loadAvailableShifts = async (date: Date) => {
+		if (!vendorId) return;
 		setShiftsLoading(true);
 		setAvailableShifts([]);
-		await new Promise(r => setTimeout(r, 300));
-		setAvailableShifts(MOCK_AVAILABLE_SHIFTS);
-		setShiftsLoading(false);
+		try {
+			const shifts = await apiFetchAvailableShifts(vendorId, date);
+			setAvailableShifts(shifts);
+			if (shifts.length === 0) {
+				showError('No available shifts for this date. All shifts are already booked or reserved.');
+			}
+		} catch (err: unknown) {
+			const apiErr = err as { status?: number };
+			if (apiErr?.status === 404) {
+				showError('No shifts available for this date.');
+			} else {
+				showError('Failed to load available shifts.');
+			}
+		} finally {
+			setShiftsLoading(false);
+		}
 	};
 
 	const handleDateSelect = (date: Date) => {
 		setSelectedDate(date);
 		setSelectedShift(null);
-		void fetchAvailableShifts(date);
+		void loadAvailableShifts(date);
 	};
 
 	const openModal = () => {
@@ -246,34 +247,42 @@ export default function VendorReservationsScreen() {
 	};
 
 	const handleReserve = async () => {
-		if (!selectedDate || !selectedShift) {
+		if (!selectedDate || !selectedShift || !vendorId) {
 			showError('Please select a date and shift.');
 			return;
 		}
 		setSubmitting(true);
-		await new Promise(r => setTimeout(r, 400));
-		const shift = availableShifts.find(s => s.shift_id === selectedShift)!;
-		const newRes: Reservation = {
-			reservation_id: `R${Date.now()}`,
-			shift_name: shift.shift_name,
-			event_date: formatDate(selectedDate),
-			start_time: shift.start_time + ':00',
-			end_time: shift.end_time + ':00',
-			reason: reason.trim() || 'Manual reservation by vendor',
-		};
-		setReservations(prev => [newRes, ...prev]);
-		showSuccess('Shift reserved successfully!');
-		setShowModal(false);
-		setSubmitting(false);
+		try {
+			await apiCreateReservation({
+				vendorId,
+				shiftId: selectedShift,
+				date: selectedDate,
+				reason,
+			});
+			showSuccess('Shift reserved successfully!');
+			setShowModal(false);
+			void loadReservations(true);
+		} catch (err: unknown) {
+			const apiErr = err as { message?: string };
+			showError(apiErr?.message ?? 'Failed to reserve shift.');
+		} finally {
+			setSubmitting(false);
+		}
 	};
 
 	const handleCancel = async (res: Reservation) => {
 		setCancellingId(res.reservation_id);
 		setConfirmCancel(null);
-		await new Promise(r => setTimeout(r, 350));
-		setReservations(prev => prev.filter(r => r.reservation_id !== res.reservation_id));
-		showSuccess('Reservation cancelled.');
-		setCancellingId(null);
+		try {
+			await apiCancelReservation(res.reservation_id);
+			showSuccess('Reservation cancelled.');
+			void loadReservations(true);
+		} catch (err: unknown) {
+			const apiErr = err as { message?: string };
+			showError(apiErr?.message ?? 'Failed to cancel reservation.');
+		} finally {
+			setCancellingId(null);
+		}
 	};
 
 	if (isLoading) {
@@ -281,7 +290,9 @@ export default function VendorReservationsScreen() {
 			<SafeAreaView style={[s.safeArea, { backgroundColor: palette.screenBg }]} edges={['top']}>
 				<View style={s.center}>
 					<ActivityIndicator size="large" color={palette.primary} />
-					<ThemedText style={[s.loadingText, { color: palette.muted }]}>Loading reservations...</ThemedText>
+					<ThemedText style={[s.loadingText, { color: palette.muted }]}>
+						{!vendorId ? 'Loading profile...' : 'Loading reservations...'}
+					</ThemedText>
 				</View>
 			</SafeAreaView>
 		);
@@ -443,7 +454,7 @@ export default function VendorReservationsScreen() {
 														{shift.shift_name}
 													</ThemedText>
 													<ThemedText style={[s.shiftChipTime, { color: active ? '#3c6e71' : palette.muted }]}>
-														{shift.start_time} – {shift.end_time}
+														{shift.time_display ?? `${shift.start_time} – ${shift.end_time}`}
 													</ThemedText>
 													{active && <Ionicons name="checkmark-circle" size={16} color="#3c6e71" style={s.shiftCheck} />}
 												</Pressable>

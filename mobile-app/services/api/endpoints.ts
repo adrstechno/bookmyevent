@@ -110,6 +110,11 @@ export const API_ENDPOINTS = {
 		checkShift: `${ROOT.SHIFT_AVAILABILITY}/check-shift`,
 		calendar: `${ROOT.SHIFT_AVAILABILITY}/calendar`,
 	},
+	manualReservations: {
+		create: '/manual-reservations',
+		listByVendor: (vendorId: number | string) => `/manual-reservations/vendor/${vendorId}`,
+		cancel: (reservationId: number | string) => `/manual-reservations/${reservationId}`,
+	},
 } as const;
 
 export type ApiEndpoints = typeof API_ENDPOINTS;
