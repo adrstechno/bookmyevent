@@ -84,11 +84,21 @@ const normalizeApiError = (error: AxiosError): ApiError => {
 	// Network error — no response received at all
 	if (!error.response) {
 		const isTimeout = error.code === 'ECONNABORTED';
+		const isNetworkError = error.code === 'ERR_NETWORK' || error.message.includes('Network Error');
+		
+		if (isNetworkError || !error.code) {
+			return {
+				status: 0,
+				message: 'No internet connection. Please check your network and try again.',
+				isNetworkError: true,
+			};
+		}
+		
 		return {
 			status: 0,
 			message: isTimeout
-				? 'Request timed out. Check your connection.'
-				: `Network error — cannot reach server at ${APP_CONFIG.api.baseUrl}. Make sure the backend is running.`,
+				? 'Request timed out. Please check your connection and try again.'
+				: 'Unable to connect to server. Please check your internet connection.',
 			isNetworkError: true,
 		};
 	}

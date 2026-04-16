@@ -4,6 +4,7 @@ import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Provider } from 'react-redux';
 
 import { AppToastProvider } from '@/components/common/AppToastProvider';
+// import { OfflineBanner } from '@/components/common/OfflineBanner';
 import { AppPalettes } from '@/constants/theme';
 import { clearApiAuthToken, setApiAuthToken, setOnTokenInvalidCallback } from '@/services/api/client';
 import { useAppDispatch, useAppSelector, store } from '@/store';
@@ -131,21 +132,15 @@ function GlobalLoadingScreen({ palette }: { palette: AppPalette }) {
 
 	return (
 		<View style={[styles.loaderWrap, { backgroundColor: palette.screenBg }]}> 
-			<View style={styles.decorativeBackground} pointerEvents="none">
-				<View style={[styles.circle, styles.circleOne]} />
-				<View style={[styles.circle, styles.circleTwo]} />
-			</View>
 			<Animated.Image
-				source={require('../assets/images/mobile_logo.png')}
+				source={require('../assets/images/login_logo.png')}
 				style={[styles.logo, { opacity: logoFade, transform: [{ scale: logoScale }] }]}
 				resizeMode="contain"
 			/>
-			<Text style={[styles.brandText, { color: palette.primary }]}>GoEventify</Text>
-			<Text style={[styles.loaderText, { color: palette.subtext }]}>Preparing your event world...</Text>
 			<View style={styles.dotRow}>
-				<Animated.View style={[styles.dot, { opacity: dotAnim1, transform: [{ scale: dotAnim1.interpolate({ inputRange: [0.3, 1], outputRange: [0.8, 1.12] }) }] }]} />
-				<Animated.View style={[styles.dot, { opacity: dotAnim2, transform: [{ scale: dotAnim2.interpolate({ inputRange: [0.3, 1], outputRange: [0.8, 1.12] }) }] }]} />
-				<Animated.View style={[styles.dot, { opacity: dotAnim3, transform: [{ scale: dotAnim3.interpolate({ inputRange: [0.3, 1], outputRange: [0.8, 1.12] }) }] }]} />
+				<Animated.View style={[styles.dot, { backgroundColor: palette.primary, opacity: dotAnim1, transform: [{ scale: dotAnim1.interpolate({ inputRange: [0.3, 1], outputRange: [0.8, 1.12] }) }] }]} />
+				<Animated.View style={[styles.dot, { backgroundColor: palette.primary, opacity: dotAnim2, transform: [{ scale: dotAnim2.interpolate({ inputRange: [0.3, 1], outputRange: [0.8, 1.12] }) }] }]} />
+				<Animated.View style={[styles.dot, { backgroundColor: palette.primary, opacity: dotAnim3, transform: [{ scale: dotAnim3.interpolate({ inputRange: [0.3, 1], outputRange: [0.8, 1.12] }) }] }]} />
 			</View>
 		</View>
 	);
@@ -237,6 +232,7 @@ export default function RootLayout() {
 			<AppToastProvider>
 				<AppErrorBoundary palette={palette}>
 					<RootNavigator />
+					{/* <OfflineBanner /> */}
 				</AppErrorBoundary>
 			</AppToastProvider>
 		</Provider>
@@ -250,65 +246,22 @@ const styles = StyleSheet.create({
 		justifyContent: 'center',
 		paddingHorizontal: 20,
 	},
-	decorativeBackground: {
-		...StyleSheet.absoluteFillObject,
-		alignItems: 'center',
-		justifyContent: 'center',
-	},
-	circle: {
-		position: 'absolute',
-		borderRadius: 200,
-	},
-	circleOne: {
-		height: 240,
-		width: 240,
-		backgroundColor: 'rgba(192, 50, 107, 0.12)',
-		top: -80,
-		right: -80,
-	},
-	circleTwo: {
-		height: 180,
-		width: 180,
-		backgroundColor: 'rgba(248, 192, 160, 0.16)',
-		bottom: -40,
-		left: -30,
-	},
-	brandBlock: {
-		alignItems: 'center',
-		justifyContent: 'center',
-		gap: 10,
-	},
 	logo: {
 		height: 120,
 		width: 200,
-		marginBottom: 8,
+		marginBottom: 24,
 	},
 	dotRow: {
 		flexDirection: 'row',
 		alignItems: 'center',
 		justifyContent: 'center',
 		gap: 10,
-		marginTop: 18,
+		marginTop: 8,
 	},
 	dot: {
 		height: 12,
 		width: 12,
 		borderRadius: 8,
-		backgroundColor: '#C0326B',
-	},
-	brandText: {
-		fontSize: 24,
-		fontWeight: '800',
-		letterSpacing: 0.4,
-	},
-	loaderText: {
-		fontSize: 15,
-		fontWeight: '700',
-		textAlign: 'center',
-		maxWidth: 260,
-	},
-	indicator: {
-		marginTop: 18,
 	},
 	errorWrap: {
 		flex: 1,

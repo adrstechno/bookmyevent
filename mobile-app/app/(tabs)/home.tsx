@@ -120,6 +120,11 @@ export default function HomeTabScreen() {
 		router.push('/(tabs)/categories');
 	}, [router]);
 
+	const onOpenVendors = useCallback(async () => {
+		await Haptics.selectionAsync();
+		router.push('/vendors');
+	}, [router]);
+
 	const onSelectFilter = useCallback(async (filterId: string) => {
 		await Haptics.selectionAsync();
 		setActiveFilter(filterId);
@@ -343,6 +348,24 @@ export default function HomeTabScreen() {
 				</ThemedView>
 			</FadeInView>
 
+			{/* View All Vendors Button */}
+			<FadeInView delay={110} distance={8}>
+				<Pressable
+					style={({ pressed }) => [
+						styles.viewAllVendorsBtn,
+						{ backgroundColor: palette.primary, borderColor: palette.primaryStrong, shadowColor: palette.shadow },
+						pressed ? styles.viewAllVendorsBtnPressed : null,
+					]}
+					onPress={onOpenVendors}
+				>
+					<Ionicons name="people-outline" size={20} color={palette.onPrimary} />
+					<ThemedText style={[styles.viewAllVendorsText, { color: palette.onPrimary }]}>
+						View All Vendors
+					</ThemedText>
+					<Ionicons name="arrow-forward" size={18} color={palette.onPrimary} />
+				</Pressable>
+			</FadeInView>
+
 			<FadeInView delay={130} distance={8}>
 				<View style={styles.engagementMetaRow}>
 					<View style={[styles.savedPill, { backgroundColor: palette.elevatedBg, borderColor: palette.border }]}>
@@ -544,6 +567,28 @@ const styles = StyleSheet.create({
 		fontSize: 17,
 		fontWeight: '700',
 		color: '#0F766E',
+	},
+	viewAllVendorsBtn: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'center',
+		gap: 10,
+		paddingVertical: 14,
+		paddingHorizontal: 20,
+		borderRadius: 14,
+		borderWidth: 1,
+		shadowOffset: { width: 0, height: 4 },
+		shadowOpacity: 0.15,
+		shadowRadius: 8,
+		elevation: 4,
+	},
+	viewAllVendorsBtnPressed: {
+		opacity: 0.88,
+		transform: [{ scale: 0.98 }],
+	},
+	viewAllVendorsText: {
+		fontSize: 15,
+		fontWeight: '700',
 	},
 	cardsRow: {
 		paddingRight: 6,

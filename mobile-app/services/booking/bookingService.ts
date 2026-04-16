@@ -71,6 +71,28 @@ const toAmountLabel = (value: unknown): string => {
 	return 'Rs N/A';
 };
 
+const toAdminApprovalStatus = (status: unknown): 'pending' | 'approved' | 'rejected' | undefined => {
+	if (typeof status !== 'string') {
+		return undefined;
+	}
+
+	const normalized = status.toLowerCase();
+
+	if (normalized.includes('approve')) {
+		return 'approved';
+	}
+
+	if (normalized.includes('reject')) {
+		return 'rejected';
+	}
+
+	if (normalized.includes('pending')) {
+		return 'pending';
+	}
+
+	return undefined;
+};
+
 const toBookingItem = (row: Record<string, unknown>, index: number): BookingItem => {
 	const idCandidate = row.booking_id ?? row.booking_uuid ?? row.id ?? `booking-${index + 1}`;
 	const eventNameCandidate =
@@ -102,6 +124,13 @@ const toBookingItem = (row: Record<string, unknown>, index: number): BookingItem
 		venue: venueCandidate,
 		amount: toAmountLabel(row.amount),
 		status: toBookingStatus(row.status),
+		adminApproval: toAdminApprovalStatus(row.admin_approval),
+		vendorName: typeof row.vendor_name === 'string' ? row.vendor_name : typeof row.business_name === 'string' ? row.business_name : undefined,
+		packageName: typeof row.package_name === 'string' ? row.package_name : undefined,
+		eventDate: typeof row.event_date === 'string' ? row.event_date : undefined,
+		eventTime: typeof row.event_time === 'string' ? row.event_time : undefined,
+		eventAddress: typeof row.event_address === 'string' ? row.event_address : undefined,
+		specialRequirement: typeof row.special_requirement === 'string' ? row.special_requirement : undefined,
 	};
 };
 
@@ -115,4 +144,35 @@ export const fetchUserBookings = async (query: BookingQuery = {}): Promise<ApiRe
 		const rows = extractListFromPayload<Record<string, unknown>>(payload, ['bookings']);
 		return rows.map(toBookingItem);
 	}, 'Unable to load bookings right now.');
+};
+
+export const cancelBooking = async (bookingId: string | number, reason?: string): Promise<ApiResult<void>> => {
+	return executeApi(async () => {
+		await apiClient.put(API_ENDPOINTS.booking.cancel(bookingId), {
+			reason: reason || 'Cancelled by user',
+		});
+	}, 'Unable to cancel booking right now.');
+};
+
+export const submitReview = async (
+	bookingId: string | number,
+	reviewData: {
+		rating: number;
+		review_text?: string;
+		service_quality?: number;
+		communication?: number;
+		value_for_money?: number;
+		punctuality?: number;
+	}
+): Promise<ApiResult<void>> => {
+	return executeApi(async () => {
+		await apiClient.post(API_ENDPOINTS.review.submitAuthenticated(bookingId), reviewData);
+	}, 'Unable to submit review right now.');
+};
+
+export const getOTPStatus = async (bookingId: string | number): Promise<ApiResult<any>> => {
+	return executeApi(async () => {
+		const response = await apiClient.get(API_ENDPOINTS.otp.status(bookingId));
+		return unwrapApiPayload<any>(response.data);
+	}, 'Unable to fetch OTP status.');
 };
