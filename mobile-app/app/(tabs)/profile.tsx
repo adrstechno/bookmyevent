@@ -253,94 +253,141 @@ export default function ProfileTabScreen() {
 
 	return (
 		<SafeAreaView style={[styles.safeArea, { backgroundColor: palette.screenBg }]} edges={['top']}>
-			<StatusBar style={isDark ? 'light' : 'dark'} />
-			<View style={[styles.appBar, { backgroundColor: palette.surfaceBg, borderBottomColor: palette.border }]}>
-				<AppMenuDrawer />
-				<ThemedText style={[styles.appBarTitle, { color: palette.text }]}>My Profile</ThemedText>
-				<Pressable style={[styles.appBarAction, { backgroundColor: palette.headerBtnBg, borderColor: palette.border }]} onPress={() => router.push('/settings')}>
-					<Ionicons name="settings-outline" size={19} color={palette.text} />
-				</Pressable>
-			</View>
+			<StatusBar style="light" />
 			<ScrollView
 				style={[styles.page, { backgroundColor: palette.screenBg }]}
 				showsVerticalScrollIndicator={false}
-				bounces={false}
-				overScrollMode="never"
-				contentContainerStyle={[styles.container, { paddingBottom: tabBarHeight + 6 }]}
+				contentContainerStyle={[styles.container, { paddingBottom: tabBarHeight + 16 }]}
 			>
-				<View style={[styles.profileCard, { backgroundColor: palette.surfaceBg, borderColor: palette.border, borderTopColor: palette.tint }]}>
-					<ThemedText style={[styles.profileCardTitle, { color: palette.text, borderBottomColor: palette.border }]}>Profile Details</ThemedText>
-					<View style={styles.profileCenterBlock}>
-						<View style={styles.avatarWrap}>
+				{/* Hero Section with Gradient */}
+				<View style={[styles.heroSection, { backgroundColor: palette.tint }]}>
+					<View style={styles.heroHeader}>
+						<AppMenuDrawer variant="onPrimary" />
+						<Pressable 
+							style={[styles.settingsBtn, { backgroundColor: 'rgba(255, 255, 255, 0.2)' }]}
+							onPress={() => router.push('/settings')}
+						>
+							<Ionicons name="settings-outline" size={22} color="#FFFFFF" />
+						</Pressable>
+					</View>
+
+					<View style={styles.heroContent}>
+						<View style={styles.avatarContainer}>
 							{profileImageUri ? (
 								<Image source={{ uri: profileImageUri }} style={styles.avatarImage} contentFit="cover" />
 							) : (
-								<View style={[styles.avatarCircle, { backgroundColor: palette.headerBtnBg, borderColor: palette.tint }]}>
-									<Ionicons name="person" size={54} color={palette.subtext} />
+								<View style={[styles.avatarCircle, { backgroundColor: 'rgba(255, 255, 255, 0.2)' }]}>
+									<Ionicons name="person" size={60} color="#FFFFFF" />
 								</View>
 							)}
-							<Pressable style={[styles.addImageBtn, { backgroundColor: palette.tint, borderColor: palette.surfaceBg }]} onPress={onAddImage}>
-								<Ionicons name="camera" size={14} color="#FFFFFF" />
+							<Pressable 
+								style={[styles.cameraBtn, { backgroundColor: '#284B63' }]}
+								onPress={onAddImage}
+							>
+								<Ionicons name="camera" size={18} color="#FFFFFF" />
 							</Pressable>
 						</View>
 
-						<View style={styles.profileMeta}>
-							<ThemedText style={[styles.profileName, { color: palette.text }]}>
-								{profile.firstName} {profile.lastName}
-							</ThemedText>
-							<ThemedText style={[styles.profileEmail, { color: palette.subtext }]}>{profile.email}</ThemedText>
-						</View>
-					</View>
-
-					<View style={styles.infoPillRow}>
-						<View style={[styles.infoPill, { backgroundColor: isDark ? palette.pressedBg : '#ECFEFF', borderColor: palette.border }]}>
-							<Ionicons name="call-outline" size={14} color={palette.tint} />
-							<ThemedText style={[styles.infoPillText, { color: palette.tint }]}>{profile.phone}</ThemedText>
-						</View>
+						<ThemedText style={styles.heroName}>
+							{profile.firstName} {profile.lastName}
+						</ThemedText>
+						<ThemedText style={styles.heroEmail}>{profile.email}</ThemedText>
+						
+						{profile.phone && (
+							<View style={[styles.phoneChip, { backgroundColor: 'rgba(255, 255, 255, 0.2)' }]}>
+								<Ionicons name="call" size={14} color="#FFFFFF" />
+								<ThemedText style={styles.phoneText}>{profile.phone}</ThemedText>
+							</View>
+						)}
 					</View>
 				</View>
 
-				<View style={[styles.sectionCard, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
+				{/* Quick Actions */}
+				<View style={[styles.section, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
 					<ThemedText style={[styles.sectionTitle, { color: palette.text }]}>Quick Actions</ThemedText>
-					<View style={styles.quickGrid}>
+					<View style={styles.actionsGrid}>
 						{QUICK_ACTIONS.map((item) => (
-							<Pressable key={item.key} style={[styles.quickItem, { backgroundColor: palette.headerBtnBg, borderColor: palette.border }]} onPress={() => onQuickAction(item.key, item.label)}>
-								<View style={[styles.quickIconWrap, { backgroundColor: palette.pressedBg }]}>
-									<Ionicons name={item.icon as any} size={18} color={palette.tint} />
+							<Pressable 
+								key={item.key} 
+								style={({ pressed }) => [
+									styles.actionCard,
+									{ 
+										backgroundColor: palette.screenBg, 
+										borderColor: palette.border 
+									},
+									pressed && styles.actionCardPressed
+								]} 
+								onPress={() => onQuickAction(item.key, item.label)}
+							>
+								<View style={[styles.actionIcon, { backgroundColor: palette.tint }]}>
+									<Ionicons name={item.icon as any} size={22} color="#FFFFFF" />
 								</View>
-								<ThemedText style={[styles.quickLabel, { color: palette.text }]}>{item.label}</ThemedText>
+								<ThemedText style={[styles.actionLabel, { color: palette.text }]}>{item.label}</ThemedText>
+								<Ionicons name="chevron-forward" size={16} color={palette.subtext} />
 							</Pressable>
 						))}
 					</View>
 				</View>
 
-				<View style={[styles.sectionCard, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
+				{/* Menu Items */}
+				<View style={[styles.section, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
+					<ThemedText style={[styles.sectionTitle, { color: palette.text }]}>Account Settings</ThemedText>
 					{MENU_ITEMS.map((item, index) => (
 						<Pressable
 							key={item.key}
-							style={[styles.menuRow, index !== MENU_ITEMS.length - 1 ? [styles.menuDivider, { borderBottomColor: palette.border }] : null]}
+							style={({ pressed }) => [
+								styles.menuItem,
+								index !== MENU_ITEMS.length - 1 && [styles.menuDivider, { borderBottomColor: palette.border }],
+								pressed && styles.menuItemPressed
+							]}
 							onPress={() => onPressMenuItem(item.key, item.label)}
 						>
-							<View style={styles.menuLeft}>
-								<View style={[styles.menuIconWrap, { backgroundColor: palette.pressedBg }]}>
-									<Ionicons name={item.icon as any} size={17} color={palette.tint} />
-								</View>
-								<ThemedText style={[styles.menuText, { color: palette.text }]}>{item.label}</ThemedText>
+							<View style={[styles.menuIcon, { backgroundColor: palette.screenBg }]}>
+								<Ionicons name={item.icon as any} size={20} color={palette.tint} />
 							</View>
-							<Ionicons name="chevron-forward" size={18} color={palette.subtext} />
+							<ThemedText style={[styles.menuLabel, { color: palette.text }]}>{item.label}</ThemedText>
+							<Ionicons name="chevron-forward" size={20} color={palette.subtext} />
 						</Pressable>
 					))}
 				</View>
 
-				{isImageUploading ? <ThemedText style={[styles.messageText, { color: palette.tint }]}>Uploading profile image...</ThemedText> : null}
-				{message ? <ThemedText style={[styles.messageText, { color: palette.tint }]}>{message}</ThemedText> : null}
+				{/* Messages */}
+				{isImageUploading && (
+					<View style={[styles.messageCard, { backgroundColor: '#DBEAFE', borderColor: '#93C5FD' }]}>
+						<Ionicons name="cloud-upload-outline" size={16} color="#1D4ED8" />
+						<ThemedText style={[styles.messageText, { color: '#1E40AF' }]}>Uploading profile image...</ThemedText>
+					</View>
+				)}
+				{message && (
+					<View style={[styles.messageCard, { backgroundColor: '#D1FAE5', borderColor: '#86EFAC' }]}>
+						<Ionicons name="checkmark-circle" size={16} color="#059669" />
+						<ThemedText style={[styles.messageText, { color: '#047857' }]}>{message}</ThemedText>
+					</View>
+				)}
 
-				<Pressable style={[styles.logoutBtn, { backgroundColor: palette.surfaceBg, borderColor: isDark ? '#7F1D1D' : '#FECACA' }, isLoading ? styles.logoutBtnDisabled : null]} onPress={onPressLogout} disabled={isLoading}>
-					<Ionicons name="log-out-outline" size={17} color={isDark ? '#FCA5A5' : '#B91C1C'} />
-					<ThemedText style={[styles.logoutText, { color: isDark ? '#FCA5A5' : '#B91C1C' }]}>{isLoading ? 'Logging out...' : 'Logout'}</ThemedText>
+				{/* Logout Button */}
+				<Pressable 
+					style={({ pressed }) => [
+						styles.logoutBtn,
+						{ 
+							backgroundColor: palette.surfaceBg, 
+							borderColor: isDark ? '#7F1D1D' : '#FCA5A5' 
+						},
+						pressed && styles.logoutBtnPressed,
+						isLoading && styles.logoutBtnDisabled
+					]} 
+					onPress={onPressLogout} 
+					disabled={isLoading}
+				>
+					<Ionicons name="log-out-outline" size={20} color={isDark ? '#FCA5A5' : '#DC2626'} />
+					<ThemedText style={[styles.logoutText, { color: isDark ? '#FCA5A5' : '#DC2626' }]}>
+						{isLoading ? 'Logging out...' : 'Logout'}
+					</ThemedText>
 				</Pressable>
 
-				<ThemedText style={[styles.footerText, { color: palette.subtext }]}>GoEventify Customer App v1.0</ThemedText>
+				<ThemedText style={[styles.footerText, { color: palette.subtext }]}>
+					GoEventify Customer App v1.0
+				</ThemedText>
 			</ScrollView>
 
 			<Modal transparent visible={isImageModalVisible} animationType="fade" onRequestClose={closeImageModal}>
@@ -439,370 +486,289 @@ const styles = StyleSheet.create({
 		flex: 1,
 		backgroundColor: '#F3F7F6',
 	},
-	appBar: {
-		height: 56,
-		paddingHorizontal: 16,
-		flexDirection: 'row',
-		alignItems: 'center',
-		justifyContent: 'space-between',
-		backgroundColor: '#FFFFFF',
-		borderBottomWidth: 1,
-		borderBottomColor: '#E2E8F0',
-	},
-	appBarTitle: {
-		fontSize: 20,
-		fontWeight: '800',
-		color: '#0F172A',
-	},
-	appBarAction: {
-		width: 34,
-		height: 34,
-		borderRadius: 17,
-		alignItems: 'center',
-		justifyContent: 'center',
-		backgroundColor: '#F8FAFC',
-		borderWidth: 1,
-		borderColor: '#E2E8F0',
-	},
 	page: {
 		flex: 1,
 		backgroundColor: '#F3F7F6',
 	},
 	container: {
-		paddingHorizontal: 16,
-		paddingTop: 10,
-		gap: 10,
+		gap: 16,
 	},
-	profileCard: {
-		borderRadius: 22,
-		padding: 14,
-		gap: 10,
-		backgroundColor: '#FFFFFF',
-		borderTopWidth: 4,
-		borderTopColor: '#3C6E71',
-		borderWidth: 1,
-		borderColor: '#DCE5E8',
-		shadowColor: '#0F172A',
-		shadowOpacity: 0.07,
-		shadowOffset: { width: 0, height: 8 },
-		shadowRadius: 14,
-		elevation: 5,
-	},
-	profileCardTitle: {
-		fontSize: 17,
-		fontWeight: '800',
-		color: '#1E293B',
-		paddingBottom: 8,
-		borderBottomWidth: 1,
-		borderBottomColor: '#EEF2F7',
-	},
-	profileCenterBlock: {
-		alignItems: 'center',
-		justifyContent: 'center',
-		gap: 10,
-	},
-	avatarWrap: {
-		position: 'relative',
-	},
-	avatarImage: {
-		width: 112,
-		height: 112,
-		borderRadius: 56,
-		borderWidth: 4,
-		borderColor: '#3C6E71',
-	},
-	avatarCircle: {
-		width: 112,
-		height: 112,
-		borderRadius: 56,
-		alignItems: 'center',
-		justifyContent: 'center',
-		backgroundColor: '#F8FAFC',
-		borderWidth: 4,
-		borderColor: '#3C6E71',
-	},
-	addImageBtn: {
-		position: 'absolute',
-		right: 2,
-		bottom: 2,
-		width: 30,
-		height: 30,
-		borderRadius: 15,
+	// Hero Section
+	heroSection: {
 		backgroundColor: '#3C6E71',
-		alignItems: 'center',
-		justifyContent: 'center',
-		borderWidth: 2,
-		borderColor: '#FFFFFF',
+		paddingBottom: 32,
+		borderBottomLeftRadius: 32,
+		borderBottomRightRadius: 32,
 	},
-	profileMeta: {
-		alignItems: 'center',
-		gap: 2,
-	},
-	profileName: {
-		fontSize: 22,
-		fontWeight: '800',
-		color: '#1E293B',
-	},
-	profileEmail: {
-		fontSize: 14,
-		color: '#64748B',
-	},
-	infoPillRow: {
-		flexDirection: 'row',
-		gap: 8,
-	},
-	infoPill: {
-		flex: 1,
-		borderRadius: 12,
-		paddingHorizontal: 10,
-		paddingVertical: 8,
-		backgroundColor: '#ECFEFF',
-		borderWidth: 1,
-		borderColor: '#CCFBF1',
-		flexDirection: 'row',
-		alignItems: 'center',
-		justifyContent: 'center',
-		gap: 6,
-	},
-	infoPillText: {
-		fontSize: 12,
-		fontWeight: '700',
-		color: '#0F766E',
-	},
-	sectionCard: {
-		backgroundColor: '#FFFFFF',
-		borderRadius: 16,
-		padding: 10,
-		borderWidth: 1,
-		borderColor: '#E2E8F0',
-	},
-	sectionTitle: {
-		fontSize: 15,
-		fontWeight: '800',
-		color: '#1E293B',
-		marginBottom: 10,
-	},
-	quickGrid: {
-		flexDirection: 'row',
-		gap: 8,
-	},
-	quickItem: {
-		flex: 1,
-		backgroundColor: '#F8FAFC',
-		borderWidth: 1,
-		borderColor: '#E2E8F0',
-		borderRadius: 12,
-		paddingVertical: 10,
-		alignItems: 'center',
-		justifyContent: 'center',
-		gap: 6,
-	},
-	quickIconWrap: {
-		width: 30,
-		height: 30,
-		borderRadius: 15,
-		alignItems: 'center',
-		justifyContent: 'center',
-		backgroundColor: '#D1FAE5',
-	},
-	quickLabel: {
-		fontSize: 12,
-		fontWeight: '700',
-		color: '#334155',
-	},
-	menuRow: {
-		paddingVertical: 10,
+	heroHeader: {
 		flexDirection: 'row',
 		alignItems: 'center',
 		justifyContent: 'space-between',
+		paddingHorizontal: 16,
+		paddingTop: 16,
+		paddingBottom: 8,
+	},
+	settingsBtn: {
+		width: 40,
+		height: 40,
+		borderRadius: 20,
+		backgroundColor: 'rgba(255, 255, 255, 0.2)',
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
+	heroContent: {
+		alignItems: 'center',
+		paddingTop: 16,
+		gap: 8,
+	},
+	avatarContainer: {
+		position: 'relative',
+		marginBottom: 8,
+	},
+	avatarImage: {
+		width: 120,
+		height: 120,
+		borderRadius: 60,
+		borderWidth: 4,
+		borderColor: '#FFFFFF',
+	},
+	avatarCircle: {
+		width: 120,
+		height: 120,
+		borderRadius: 60,
+		alignItems: 'center',
+		justifyContent: 'center',
+		borderWidth: 4,
+		borderColor: '#FFFFFF',
+	},
+	cameraBtn: {
+		position: 'absolute',
+		right: 0,
+		bottom: 0,
+		width: 40,
+		height: 40,
+		borderRadius: 20,
+		backgroundColor: '#284B63',
+		alignItems: 'center',
+		justifyContent: 'center',
+		borderWidth: 3,
+		borderColor: '#FFFFFF',
+		shadowColor: '#000',
+		shadowOffset: { width: 0, height: 2 },
+		shadowOpacity: 0.25,
+		shadowRadius: 4,
+		elevation: 5,
+	},
+	heroName: {
+		fontSize: 24,
+		fontWeight: '800',
+		color: '#FFFFFF',
+	},
+	heroEmail: {
+		fontSize: 14,
+		color: 'rgba(255, 255, 255, 0.85)',
+		fontWeight: '500',
+	},
+	phoneChip: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 6,
+		backgroundColor: 'rgba(255, 255, 255, 0.2)',
+		paddingHorizontal: 16,
+		paddingVertical: 8,
+		borderRadius: 20,
+		marginTop: 4,
+	},
+	phoneText: {
+		fontSize: 13,
+		fontWeight: '700',
+		color: '#FFFFFF',
+	},
+	// Sections
+	section: {
+		backgroundColor: '#FFFFFF',
+		borderRadius: 20,
+		padding: 16,
+		marginHorizontal: 16,
+		borderWidth: 1,
+		borderColor: '#E2E8F0',
+		shadowColor: '#0F172A',
+		shadowOffset: { width: 0, height: 2 },
+		shadowOpacity: 0.06,
+		shadowRadius: 8,
+		elevation: 2,
+	},
+	sectionTitle: {
+		fontSize: 16,
+		fontWeight: '800',
+		marginBottom: 12,
+	},
+	// Quick Actions
+	actionsGrid: {
+		gap: 10,
+	},
+	actionCard: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 12,
+		padding: 14,
+		borderRadius: 14,
+		borderWidth: 1,
+		borderColor: '#E2E8F0',
+	},
+	actionCardPressed: {
+		opacity: 0.7,
+		transform: [{ scale: 0.98 }],
+	},
+	actionIcon: {
+		width: 44,
+		height: 44,
+		borderRadius: 22,
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
+	actionLabel: {
+		flex: 1,
+		fontSize: 15,
+		fontWeight: '700',
+	},
+	// Menu Items
+	menuItem: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 12,
+		paddingVertical: 14,
+	},
+	menuItemPressed: {
+		opacity: 0.7,
 	},
 	menuDivider: {
 		borderBottomWidth: 1,
 		borderBottomColor: '#F1F5F9',
 	},
-	menuLeft: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		gap: 10,
-	},
-	menuIconWrap: {
-		width: 30,
-		height: 30,
-		borderRadius: 8,
+	menuIcon: {
+		width: 44,
+		height: 44,
+		borderRadius: 12,
 		alignItems: 'center',
 		justifyContent: 'center',
-		backgroundColor: '#ECFEFF',
 	},
-	menuText: {
+	menuLabel: {
+		flex: 1,
 		fontSize: 15,
 		fontWeight: '700',
-		color: '#334155',
+	},
+	// Messages
+	messageCard: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 8,
+		paddingHorizontal: 16,
+		paddingVertical: 12,
+		borderRadius: 12,
+		marginHorizontal: 16,
+		borderWidth: 1,
 	},
 	messageText: {
 		fontSize: 13,
-		fontWeight: '700',
-		color: '#0F766E',
-		paddingHorizontal: 2,
+		fontWeight: '600',
+		flex: 1,
 	},
+	// Logout Button
 	logoutBtn: {
-		marginTop: 4,
-		borderRadius: 12,
-		paddingVertical: 12,
-		backgroundColor: '#FFFFFF',
-		borderWidth: 1,
-		borderColor: '#FECACA',
 		flexDirection: 'row',
 		alignItems: 'center',
 		justifyContent: 'center',
 		gap: 8,
+		marginHorizontal: 16,
+		paddingVertical: 14,
+		borderRadius: 14,
+		borderWidth: 2,
+		backgroundColor: '#FFFFFF',
+	},
+	logoutBtnPressed: {
+		opacity: 0.7,
+		transform: [{ scale: 0.98 }],
 	},
 	logoutBtnDisabled: {
-		opacity: 0.7,
+		opacity: 0.5,
 	},
 	logoutText: {
-		color: '#B91C1C',
-		fontSize: 14,
-		fontWeight: '700',
-	},
-	logoutModalOverlay: {
-		flex: 1,
-		justifyContent: 'center',
-		alignItems: 'center',
-		paddingHorizontal: 20,
-		backgroundColor: 'rgba(15, 23, 42, 0.44)',
-	},
-	logoutModalBackdrop: {
-		...StyleSheet.absoluteFillObject,
-	},
-	logoutModalCard: {
-		width: '100%',
-		maxWidth: 360,
-		borderRadius: 24,
-		paddingHorizontal: 18,
-		paddingTop: 20,
-		paddingBottom: 16,
-		borderWidth: 1,
-		gap: 14,
-		shadowColor: '#0F172A',
-		shadowOpacity: 0.16,
-		shadowOffset: { width: 0, height: 16 },
-		shadowRadius: 28,
-		elevation: 10,
-	},
-	logoutModalIconWrap: {
-		width: 52,
-		height: 52,
-		borderRadius: 26,
-		alignItems: 'center',
-		justifyContent: 'center',
-		alignSelf: 'center',
-	},
-	logoutModalTitle: {
-		fontSize: 18,
+		fontSize: 15,
 		fontWeight: '800',
-		textAlign: 'center',
-	},
-	logoutModalSubtitle: {
-		fontSize: 13,
-		lineHeight: 20,
-		textAlign: 'center',
-	},
-	logoutModalActions: {
-		flexDirection: 'row',
-		gap: 10,
-		marginTop: 2,
-	},
-	logoutModalButton: {
-		flex: 1,
-		height: 46,
-		borderRadius: 14,
-		alignItems: 'center',
-		justifyContent: 'center',
-		borderWidth: 1,
-	},
-	logoutModalSecondaryButton: {},
-	logoutModalPrimaryButton: {
-		borderWidth: 0,
-	},
-	logoutModalSecondaryText: {
-		fontSize: 14,
-		fontWeight: '700',
-	},
-	logoutModalPrimaryText: {
-		fontSize: 14,
-		fontWeight: '800',
-		color: '#FFFFFF',
 	},
 	footerText: {
 		fontSize: 12,
 		textAlign: 'center',
-		color: '#94A3B8',
-		paddingTop: 4,
+		paddingVertical: 8,
+		marginHorizontal: 16,
 	},
+	// Modals
 	modalOverlay: {
 		flex: 1,
 		justifyContent: 'flex-end',
-		backgroundColor: 'rgba(15, 23, 42, 0.36)',
+		backgroundColor: 'rgba(15, 23, 42, 0.5)',
 	},
 	modalBackdrop: {
 		...StyleSheet.absoluteFillObject,
 	},
 	imageModalCard: {
 		backgroundColor: '#FFFFFF',
-		borderTopLeftRadius: 20,
-		borderTopRightRadius: 20,
-		paddingHorizontal: 16,
-		paddingTop: 14,
-		paddingBottom: 20,
-		gap: 10,
+		borderTopLeftRadius: 24,
+		borderTopRightRadius: 24,
+		paddingHorizontal: 20,
+		paddingTop: 20,
+		paddingBottom: 32,
+		gap: 12,
 		borderTopWidth: 1,
 		borderTopColor: '#E2E8F0',
 	},
 	imageModalTitle: {
-		fontSize: 17,
+		fontSize: 20,
 		fontWeight: '800',
 		color: '#0F172A',
 	},
 	imageModalSubtitle: {
-		fontSize: 12,
-		fontWeight: '600',
+		fontSize: 13,
+		fontWeight: '500',
 		color: '#64748B',
-		marginBottom: 4,
+		marginBottom: 8,
 	},
 	imageModalAction: {
-		height: 44,
-		borderRadius: 12,
+		height: 52,
+		borderRadius: 14,
 		borderWidth: 1,
 		borderColor: '#E2E8F0',
 		backgroundColor: '#F8FAFC',
-		paddingHorizontal: 12,
+		paddingHorizontal: 16,
 		flexDirection: 'row',
 		alignItems: 'center',
-		gap: 10,
+		gap: 12,
 	},
 	imageModalActionText: {
-		fontSize: 14,
+		fontSize: 15,
 		fontWeight: '700',
 		color: '#1E293B',
 	},
 	imageModalActionDangerText: {
-		fontSize: 14,
+		fontSize: 15,
 		fontWeight: '700',
-		color: '#B91C1C',
+		color: '#DC2626',
 	},
 	imageModalCancelBtn: {
-		height: 44,
-		borderRadius: 12,
+		height: 52,
+		borderRadius: 14,
 		alignItems: 'center',
 		justifyContent: 'center',
-		backgroundColor: '#0F766E',
-		marginTop: 2,
+		backgroundColor: '#3C6E71',
+		marginTop: 8,
 	},
 	imageModalCancelText: {
-		fontSize: 14,
+		fontSize: 15,
 		fontWeight: '800',
 		color: '#FFFFFF',
 	},
+	// Camera Modal
 	cameraScreen: {
 		flex: 1,
 		backgroundColor: '#020617',
@@ -815,26 +781,26 @@ const styles = StyleSheet.create({
 		justifyContent: 'space-between',
 	},
 	cameraHeaderBtn: {
-		width: 36,
-		height: 36,
-		borderRadius: 18,
-		backgroundColor: 'rgba(148,163,184,0.28)',
+		width: 40,
+		height: 40,
+		borderRadius: 20,
+		backgroundColor: 'rgba(148,163,184,0.3)',
 		alignItems: 'center',
 		justifyContent: 'center',
 	},
 	cameraHeaderTitle: {
-		fontSize: 16,
+		fontSize: 17,
 		fontWeight: '800',
 		color: '#FFFFFF',
 	},
 	cameraHeaderPlaceholder: {
-		width: 36,
-		height: 36,
+		width: 40,
+		height: 40,
 	},
 	cameraPreviewWrap: {
 		flex: 1,
-		marginHorizontal: 14,
-		borderRadius: 20,
+		marginHorizontal: 16,
+		borderRadius: 24,
 		overflow: 'hidden',
 		backgroundColor: '#0F172A',
 	},
@@ -845,54 +811,124 @@ const styles = StyleSheet.create({
 		flex: 1,
 	},
 	cameraFooter: {
-		height: 112,
+		height: 120,
 		paddingHorizontal: 20,
-		paddingTop: 16,
+		paddingTop: 20,
 		flexDirection: 'row',
 		alignItems: 'center',
 		justifyContent: 'center',
 		gap: 12,
 	},
 	captureBtnOuter: {
-		width: 76,
-		height: 76,
-		borderRadius: 38,
-		borderWidth: 4,
+		width: 80,
+		height: 80,
+		borderRadius: 40,
+		borderWidth: 5,
 		borderColor: 'rgba(255,255,255,0.9)',
 		alignItems: 'center',
 		justifyContent: 'center',
 	},
 	captureBtnInner: {
-		width: 58,
-		height: 58,
-		borderRadius: 29,
+		width: 64,
+		height: 64,
+		borderRadius: 32,
 		backgroundColor: '#FFFFFF',
 	},
 	cameraPrimaryBtn: {
 		flex: 1,
-		height: 46,
-		borderRadius: 12,
-		backgroundColor: '#0F766E',
+		height: 50,
+		borderRadius: 14,
+		backgroundColor: '#3C6E71',
 		alignItems: 'center',
 		justifyContent: 'center',
 	},
 	cameraPrimaryBtnText: {
-		fontSize: 14,
+		fontSize: 15,
 		fontWeight: '800',
 		color: '#FFFFFF',
 	},
 	cameraSecondaryBtn: {
 		flex: 1,
-		height: 46,
-		borderRadius: 12,
-		borderWidth: 1,
+		height: 50,
+		borderRadius: 14,
+		borderWidth: 2,
 		borderColor: '#94A3B8',
-		backgroundColor: 'rgba(255,255,255,0.1)',
+		backgroundColor: 'rgba(255,255,255,0.15)',
 		alignItems: 'center',
 		justifyContent: 'center',
 	},
 	cameraSecondaryBtnText: {
+		fontSize: 15,
+		fontWeight: '800',
+		color: '#FFFFFF',
+	},
+	// Logout Modal
+	logoutModalOverlay: {
+		flex: 1,
+		justifyContent: 'center',
+		alignItems: 'center',
+		paddingHorizontal: 20,
+		backgroundColor: 'rgba(15, 23, 42, 0.5)',
+	},
+	logoutModalBackdrop: {
+		...StyleSheet.absoluteFillObject,
+	},
+	logoutModalCard: {
+		width: '100%',
+		maxWidth: 380,
+		borderRadius: 24,
+		paddingHorizontal: 20,
+		paddingTop: 24,
+		paddingBottom: 20,
+		borderWidth: 1,
+		gap: 16,
+		shadowColor: '#0F172A',
+		shadowOpacity: 0.2,
+		shadowOffset: { width: 0, height: 16 },
+		shadowRadius: 32,
+		elevation: 12,
+	},
+	logoutModalIconWrap: {
+		width: 56,
+		height: 56,
+		borderRadius: 28,
+		alignItems: 'center',
+		justifyContent: 'center',
+		alignSelf: 'center',
+	},
+	logoutModalTitle: {
+		fontSize: 20,
+		fontWeight: '800',
+		textAlign: 'center',
+	},
+	logoutModalSubtitle: {
 		fontSize: 14,
+		lineHeight: 20,
+		textAlign: 'center',
+	},
+	logoutModalActions: {
+		flexDirection: 'row',
+		gap: 12,
+		marginTop: 4,
+	},
+	logoutModalButton: {
+		flex: 1,
+		height: 50,
+		borderRadius: 14,
+		alignItems: 'center',
+		justifyContent: 'center',
+		borderWidth: 1,
+	},
+	logoutModalSecondaryButton: {},
+	logoutModalPrimaryButton: {
+		borderWidth: 0,
+	},
+	logoutModalSecondaryText: {
+		fontSize: 15,
+		fontWeight: '700',
+	},
+	logoutModalPrimaryText: {
+		fontSize: 15,
 		fontWeight: '800',
 		color: '#FFFFFF',
 	},

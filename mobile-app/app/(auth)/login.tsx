@@ -1,18 +1,17 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  Animated,
   Alert,
   Image,
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   TextInput,
   View,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { Redirect, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
 
 import { ThemedText } from "@/components/themed-text";
 import { useAppToast } from "@/components/common/AppToastProvider";
@@ -56,8 +55,22 @@ export default function LoginScreen() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [role, setRole] = useState<RoleType>("user");
-  const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState("");
+  const transition = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    dispatch(clearAuthError());
+    setLocalError("");
+  }, [dispatch]);
+
+  useEffect(() => {
+    transition.setValue(0);
+    Animated.timing(transition, {
+      toValue: 1,
+      duration: 220,
+      useNativeDriver: true,
+    }).start();
+  }, [mode, transition]);
 
   const subtitle = useMemo(() => {
     return mode === "login"
@@ -77,36 +90,40 @@ export default function LoginScreen() {
     setPhone("");
     setEmail("");
     setPassword("");
-    setShowPassword(false);
     dispatch(clearAuthError());
   };
 
   const validate = () => {
     setLocalError("");
 
+    // Email validation
     if (!email.trim()) {
       setLocalError("Email is required");
       return false;
     }
-
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      setLocalError("Enter a valid email");
+      setLocalError("Enter a valid email address");
       return false;
     }
 
+    // Password validation
     if (!password.trim()) {
       setLocalError("Password is required");
       return false;
     }
-
     if (password.trim().length < 6) {
       setLocalError("Password must be at least 6 characters");
       return false;
     }
 
+    // Registration-specific validation
     if (mode === "register") {
       if (!phone.trim()) {
-        setLocalError("Phone number is required.");
+        setLocalError("Phone number is required");
+        return false;
+      }
+      if (!/^[6-9]\d{9}$/.test(phone.trim())) {
+        setLocalError("Enter a valid 10-digit phone number");
         return false;
       }
     }
@@ -139,6 +156,7 @@ export default function LoginScreen() {
     dispatch(clearAuthError());
 
     if (!validate()) {
+      // Focus on the first error field if needed
       return;
     }
 
@@ -158,6 +176,7 @@ export default function LoginScreen() {
             : (err as LoginErrorPayload);
         const message =
           loginError?.message || "Login failed. Please try again.";
+        setLocalError(message);
         showError(message);
 
         if (loginError?.requiresVerification) {
@@ -203,6 +222,7 @@ export default function LoginScreen() {
         typeof err === "string"
           ? err
           : "Registration failed. Please try again.";
+      setLocalError(message);
       showError(message);
     }
   };
@@ -220,19 +240,20 @@ export default function LoginScreen() {
       >
         {/* Header Section */}
         <View style={styles.headerSection}>
-          <Image
-            source={require("@/assets/images/home/logo2.png")}
-            style={styles.brandLogo}
-            resizeMode="contain"
-          />
-          <ThemedText style={[styles.title, { color: palette.text }]}>
+          <View style={styles.logoWrap}>
+            <Image
+              source={require("@/assets/images/login_logo.png")}
+              style={styles.brandLogo}
+              resizeMode="contain"
+            />
+          </View>
+          <ThemedText style={[styles.title, { color: palette.text }]}> 
             {mode === "login" ? "Welcome Back" : "Join Us"}
           </ThemedText>
-          <ThemedText style={[styles.subtitle, { color: palette.subtext }]}>
+          <ThemedText style={[styles.subtitle, { color: palette.subtext }]}> 
             {subtitle}
           </ThemedText>
         </View>
-
         {/* Auth Mode Tabs */}
         <View
           style={[styles.modeTabs, { backgroundColor: palette.elevatedBg }]}
@@ -282,11 +303,22 @@ export default function LoginScreen() {
         </View>
 
         {/* Form Fields */}
-        <View
+        <Animated.View
           style={[
             styles.section,
             styles.formPanel,
             { borderColor: palette.border, backgroundColor: palette.surfaceBg },
+            {
+              opacity: transition,
+              transform: [
+                {
+                  translateY: transition.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [10, 0],
+                  }),
+                },
+              ],
+            },
           ]}
         >
           {mode === "register" && (
@@ -444,13 +476,6 @@ export default function LoginScreen() {
               {localError}
             </ThemedText>
           )}
-          {error && (
-            <ThemedText
-              style={[styles.errorMessage, { color: palette.danger }]}
-            >
-              {error}
-            </ThemedText>
-          )}
 
           {/* Submit Button */}
           <Pressable
@@ -473,53 +498,7 @@ export default function LoginScreen() {
             </ThemedText>
           </Pressable>
 
-          {/* Mode Switch Footer */}
-          {mode === "login" ? (
-            <View style={styles.footerRow}>
-              <ThemedText
-                style={[styles.footerText, { color: palette.subtext }]}
-              >
-                Don&apos;t have an account?
-              </ThemedText>
-              <Pressable
-                onPress={() => switchMode("register")}
-                disabled={isLoading}
-              >
-                <ThemedText
-                  style={[
-                    styles.footerLink,
-                    styles.footerLinkSpacing,
-                    { color: palette.primary },
-                  ]}
-                >
-                  Register
-                </ThemedText>
-              </Pressable>
-            </View>
-          ) : (
-            <View style={styles.footerRow}>
-              <ThemedText
-                style={[styles.footerText, { color: palette.subtext }]}
-              >
-                Already have an account?
-              </ThemedText>
-              <Pressable
-                onPress={() => switchMode("login")}
-                disabled={isLoading}
-              >
-                <ThemedText
-                  style={[
-                    styles.footerLink,
-                    styles.footerLinkSpacing,
-                    { color: palette.primary },
-                  ]}
-                >
-                  Login
-                </ThemedText>
-              </Pressable>
-            </View>
-          )}
-        </View>
+        </Animated.View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -538,26 +517,39 @@ const styles = StyleSheet.create({
     paddingBottom: 36,
   },
   headerSection: {
-    gap: 10,
-    marginBottom: 6,
+    gap: 8,
+    marginBottom: 12,
     alignItems: "center",
   },
+  logoWrap: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+    marginTop: 12,
+    width: 200,
+    height: 120,
+    borderRadius: 18,
+    backgroundColor: "transparent",
+    borderWidth: 0,
+  },
   brandLogo: {
-    width: 150,
-    height: 58,
+    width: "100%",
+    height: "100%",
+    borderRadius: 18,
+    backgroundColor: "transparent",
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: "800",
-    lineHeight: 32,
+    lineHeight: 30,
     textAlign: "center",
     letterSpacing: -0.4,
   },
   subtitle: {
-    fontSize: 14,
-    lineHeight: 21,
+    fontSize: 15,
+    lineHeight: 22,
     textAlign: "center",
-    maxWidth: 280,
+    maxWidth: 300,
   },
   modeTabs: {
     flexDirection: "row",

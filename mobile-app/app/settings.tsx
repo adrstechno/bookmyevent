@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Redirect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { BackHandler, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { BackHandler, Modal, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -34,6 +34,7 @@ export default function SettingsScreen() {
 	const [emailNotifications, setEmailNotifications] = useState(true);
 	const [biometricLogin, setBiometricLogin] = useState(false);
 	const [marketingUpdates, setMarketingUpdates] = useState(false);
+	const [showComingSoon, setShowComingSoon] = useState(false);
 
 	const goToProfile = useCallback(() => {
 		router.replace('/(tabs)/profile');
@@ -56,6 +57,22 @@ export default function SettingsScreen() {
 		<SafeAreaView style={[styles.safeArea, { backgroundColor: palette.screenBg }]} edges={['top', 'bottom']}>
 			<StatusBar style={isDark ? 'light' : 'dark'} />
 			<AppTopBar title="Settings" onBackPress={goToProfile} />
+
+			{/* Coming Soon Modal */}
+			<Modal transparent animationType="fade" visible={showComingSoon} onRequestClose={() => setShowComingSoon(false)}>
+				<Pressable style={styles.modalOverlay} onPress={() => setShowComingSoon(false)}>
+					<View style={[styles.modalBox, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
+						<ThemedText style={[styles.modalEmoji]}>🚀</ThemedText>
+						<ThemedText style={[styles.modalTitle, { color: palette.text }]}>Coming Soon</ThemedText>
+						<ThemedText style={[styles.modalSubtitle, { color: palette.subtext }]}>
+							This feature is under development and will be available soon.
+						</ThemedText>
+						<Pressable style={[styles.modalBtn, { backgroundColor: palette.primary }]} onPress={() => setShowComingSoon(false)}>
+							<ThemedText style={[styles.modalBtnText, { color: palette.onPrimary }]}>Got it</ThemedText>
+						</Pressable>
+					</View>
+				</Pressable>
+			</Modal>
 
 			<ScrollView
 				style={[styles.page, { backgroundColor: palette.screenBg }]}
@@ -81,37 +98,36 @@ export default function SettingsScreen() {
 							);
 						})}
 					</View>
-					<ThemedText style={[styles.themeHint, { color: palette.subtext }]}>Theme currently applies only on the Settings screen.</ThemedText>
 				</ThemedView>
 
 				<ThemedView style={[styles.card, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
 					<ThemedText style={[styles.cardTitle, { color: palette.text }]}>Notifications</ThemedText>
-					<Pressable style={({ pressed }) => [styles.switchRow, pressed ? [styles.rowPressed, { backgroundColor: palette.pressedBg }] : null]} onPress={() => setPushNotifications((prev) => !prev)}>
+					<Pressable style={({ pressed }) => [styles.switchRow, pressed ? [styles.rowPressed, { backgroundColor: palette.pressedBg }] : null]} onPress={() => setShowComingSoon(true)}>
 						<ThemedText style={[styles.switchLabel, { color: palette.text }]}>Push Notifications</ThemedText>
-						<Switch value={pushNotifications} onValueChange={setPushNotifications} trackColor={{ false: palette.switchOff, true: palette.switchOn }} thumbColor="#FFFFFF" />
+						<Switch value={pushNotifications} onValueChange={() => setShowComingSoon(true)} trackColor={{ false: palette.switchOff, true: palette.switchOn }} thumbColor="#FFFFFF" />
 					</Pressable>
-					<Pressable style={({ pressed }) => [styles.switchRow, [styles.switchDivider, { borderTopColor: palette.border }], pressed ? [styles.rowPressed, { backgroundColor: palette.pressedBg }] : null]} onPress={() => setEmailNotifications((prev) => !prev)}>
+					<Pressable style={({ pressed }) => [styles.switchRow, [styles.switchDivider, { borderTopColor: palette.border }], pressed ? [styles.rowPressed, { backgroundColor: palette.pressedBg }] : null]} onPress={() => setShowComingSoon(true)}>
 						<ThemedText style={[styles.switchLabel, { color: palette.text }]}>Email Notifications</ThemedText>
-						<Switch value={emailNotifications} onValueChange={setEmailNotifications} trackColor={{ false: palette.switchOff, true: palette.switchOn }} thumbColor="#FFFFFF" />
+						<Switch value={emailNotifications} onValueChange={() => setShowComingSoon(true)} trackColor={{ false: palette.switchOff, true: palette.switchOn }} thumbColor="#FFFFFF" />
 					</Pressable>
-					<Pressable style={({ pressed }) => [styles.switchRow, [styles.switchDivider, { borderTopColor: palette.border }], pressed ? [styles.rowPressed, { backgroundColor: palette.pressedBg }] : null]} onPress={() => setMarketingUpdates((prev) => !prev)}>
+					<Pressable style={({ pressed }) => [styles.switchRow, [styles.switchDivider, { borderTopColor: palette.border }], pressed ? [styles.rowPressed, { backgroundColor: palette.pressedBg }] : null]} onPress={() => setShowComingSoon(true)}>
 						<ThemedText style={[styles.switchLabel, { color: palette.text }]}>Marketing Updates</ThemedText>
-						<Switch value={marketingUpdates} onValueChange={setMarketingUpdates} trackColor={{ false: palette.switchOff, true: palette.switchOn }} thumbColor="#FFFFFF" />
+						<Switch value={marketingUpdates} onValueChange={() => setShowComingSoon(true)} trackColor={{ false: palette.switchOff, true: palette.switchOn }} thumbColor="#FFFFFF" />
 					</Pressable>
 				</ThemedView>
 
 				<ThemedView style={[styles.card, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
 					<ThemedText style={[styles.cardTitle, { color: palette.text }]}>Security</ThemedText>
-					<Pressable style={({ pressed }) => [styles.switchRow, pressed ? [styles.rowPressed, { backgroundColor: palette.pressedBg }] : null]} onPress={() => setBiometricLogin((prev) => !prev)}>
+					<Pressable style={({ pressed }) => [styles.switchRow, pressed ? [styles.rowPressed, { backgroundColor: palette.pressedBg }] : null]} onPress={() => setShowComingSoon(true)}>
 						<ThemedText style={[styles.switchLabel, { color: palette.text }]}>Biometric Login</ThemedText>
-						<Switch value={biometricLogin} onValueChange={setBiometricLogin} trackColor={{ false: palette.switchOff, true: palette.switchOn }} thumbColor="#FFFFFF" />
+						<Switch value={biometricLogin} onValueChange={() => setShowComingSoon(true)} trackColor={{ false: palette.switchOff, true: palette.switchOn }} thumbColor="#FFFFFF" />
 					</Pressable>
 				</ThemedView>
 
 				<ThemedView style={[styles.card, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
 					<ThemedText style={[styles.cardTitle, { color: palette.text }]}>Preferences</ThemedText>
 					{PREFERENCE_ITEMS.map((item, index) => (
-						<Pressable key={item.key} style={({ pressed }) => [styles.optionRow, index !== PREFERENCE_ITEMS.length - 1 ? [styles.optionDivider, { borderBottomColor: palette.border }] : null, pressed ? [styles.rowPressed, { backgroundColor: palette.pressedBg }] : null]}>
+						<Pressable key={item.key} onPress={() => setShowComingSoon(true)} style={({ pressed }) => [styles.optionRow, index !== PREFERENCE_ITEMS.length - 1 ? [styles.optionDivider, { borderBottomColor: palette.border }] : null, pressed ? [styles.rowPressed, { backgroundColor: palette.pressedBg }] : null]}>
 							<ThemedText style={[styles.optionLabel, { color: palette.text }]}>{item.label}</ThemedText>
 							<View style={styles.optionRight}>
 								<ThemedText style={[styles.optionValue, { color: palette.subtext }]}>{item.value}</ThemedText>
@@ -216,5 +232,44 @@ const styles = StyleSheet.create({
 	optionValue: {
 		fontSize: 13,
 		color: '#64748B',
+	},
+	modalOverlay: {
+		flex: 1,
+		backgroundColor: 'rgba(0,0,0,0.45)',
+		alignItems: 'center',
+		justifyContent: 'center',
+		padding: 32,
+	},
+	modalBox: {
+		width: '100%',
+		borderRadius: 20,
+		borderWidth: 1,
+		padding: 28,
+		alignItems: 'center',
+		gap: 10,
+	},
+	modalEmoji: {
+		fontSize: 42,
+		marginBottom: 4,
+	},
+	modalTitle: {
+		fontSize: 20,
+		fontWeight: '800',
+		textAlign: 'center',
+	},
+	modalSubtitle: {
+		fontSize: 14,
+		textAlign: 'center',
+		lineHeight: 22,
+	},
+	modalBtn: {
+		marginTop: 8,
+		paddingVertical: 12,
+		paddingHorizontal: 36,
+		borderRadius: 12,
+	},
+	modalBtnText: {
+		fontSize: 15,
+		fontWeight: '700',
 	},
 });

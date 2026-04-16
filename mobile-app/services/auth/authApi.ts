@@ -65,6 +65,11 @@ type BackendForgotPasswordResponse = {
   message: string;
 };
 
+const toNameFromEmail = (email: string): string => {
+  const prefix = email.split('@')[0] ?? 'Guest';
+  return prefix.charAt(0).toUpperCase() + prefix.slice(1);
+};
+
 // ─── Login ───────────────────────────────────────────────────
 
 export const login = async (input: LoginRequest): Promise<LoginResponse> => {

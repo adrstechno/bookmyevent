@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
 	Image,
 	KeyboardAvoidingView,
@@ -44,6 +44,11 @@ export default function RegisterScreen() {
 	const [phone, setPhone] = useState('');
 	const [password, setPassword] = useState('');
 
+	useEffect(() => {
+		dispatch(clearAuthError());
+		setErrors({});
+	}, [dispatch]);
+
 	const clearErr = (key: keyof FormErrors) => setErrors((e) => ({ ...e, [key]: undefined }));
 
 	const validate = (): boolean => {
@@ -52,7 +57,7 @@ export default function RegisterScreen() {
 		if (!email.trim()) {
 			err.email = 'Email is required';
 		} else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-			err.email = 'Enter a valid email';
+			err.email = 'Enter a valid email address';
 		}
 		if (!phone.trim()) {
 			err.phone = 'Phone number is required';
@@ -83,8 +88,9 @@ export default function RegisterScreen() {
 				})
 			).unwrap();
 			showSuccess('Registration successful! Check your email.');
-		} catch {
-			// error shown from redux state
+		} catch (err) {
+			const message = typeof err === 'string' ? err : 'Registration failed. Please try again.';
+			setErrors((prev) => ({ ...prev, api: message }));
 		}
 	};
 
@@ -97,9 +103,9 @@ export default function RegisterScreen() {
 				<StatusBar style={isDark ? 'light' : 'dark'} />
 				<ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 					<View style={s.logoWrap}>
-						<Image source={require('@/assets/images/logo2.png')} style={s.logo} resizeMode="contain" />
+						<Image source={require('@/assets/images/login_logo.png')} style={s.logo} resizeMode="contain" />
 					</View>
-					<View style={[s.card, { backgroundColor: c.surfaceBg, borderColor: c.border }]}>
+					<View style={[s.card, { backgroundColor: c.surfaceBg, borderColor: c.border }]}> 
 						<View style={[s.successBanner, { backgroundColor: c.successSoft }]}>
 							<Feather name="check-circle" size={32} color={c.success} />
 							<Text style={[s.successTitle, { color: c.text }]}>Registration Successful!</Text>
@@ -149,8 +155,8 @@ export default function RegisterScreen() {
 					keyboardShouldPersistTaps="handled"
 				>
 					{/* Logo */}
-					<View style={s.logoWrap}>
-						<Image source={require('@/assets/images/logo2.png')} style={s.logo} resizeMode="contain" />
+				<View style={s.logoWrap}>
+						<Image source={require('@/assets/images/mobile_logo.png')} style={s.logo} resizeMode="contain" />
 					</View>
 
 					{/* Card */}
@@ -170,8 +176,8 @@ export default function RegisterScreen() {
 						{/* First + Last Name */}
 						<View style={s.nameRow}>
 							<View style={s.nameCol}>
-								<View style={[s.inputRow, { borderColor: errors.first_name ? c.danger : c.border, backgroundColor: c.surfaceBg }]}>
-									<Feather name="user" size={18} color={c.subtext} style={s.icon} />
+								<View style={[s.inputRow, { borderColor: errors.first_name ? c.danger : c.border, backgroundColor: c.surfaceBg, borderWidth: 1 }]}>
+									<Feather name="user" size={20} color={c.subtext} style={s.icon} />
 									<TextInput
 										style={[s.input, { color: c.text }]}
 										value={firstName}
@@ -185,7 +191,7 @@ export default function RegisterScreen() {
 							</View>
 							<View style={s.nameCol}>
 								<View style={[s.inputRow, { borderColor: c.border, backgroundColor: c.surfaceBg }]}>
-									<Feather name="user" size={18} color={c.subtext} style={s.icon} />
+									<Feather name="user" size={20} color={c.subtext} style={s.icon} />
 									<TextInput
 										style={[s.input, { color: c.text }]}
 										value={lastName}
@@ -200,7 +206,7 @@ export default function RegisterScreen() {
 
 						{/* Email */}
 						<View style={[s.inputRow, { borderColor: errors.email ? c.danger : c.border, backgroundColor: c.surfaceBg }]}>
-							<Feather name="mail" size={18} color={c.subtext} style={s.icon} />
+							<Feather name="mail" size={20} color={c.subtext} style={s.icon} />
 							<TextInput
 								style={[s.input, { color: c.text }]}
 								value={email}
@@ -216,7 +222,7 @@ export default function RegisterScreen() {
 
 						{/* Phone */}
 						<View style={[s.inputRow, { borderColor: errors.phone ? c.danger : c.border, backgroundColor: c.surfaceBg }]}>
-							<Feather name="phone" size={18} color={c.subtext} style={s.icon} />
+							<Feather name="phone" size={20} color={c.subtext} style={s.icon} />
 							<TextInput
 								style={[s.input, { color: c.text }]}
 								value={phone}
@@ -235,7 +241,7 @@ export default function RegisterScreen() {
 
 						{/* Password */}
 						<View style={[s.inputRow, { borderColor: errors.password ? c.danger : c.border, backgroundColor: c.surfaceBg }]}>
-							<Feather name="lock" size={18} color={c.subtext} style={s.icon} />
+							<Feather name="lock" size={20} color={c.subtext} style={s.icon} />
 							<TextInput
 								style={[s.input, { color: c.text, flex: 1 }]}
 								value={password}
@@ -245,7 +251,7 @@ export default function RegisterScreen() {
 								secureTextEntry={!showPassword}
 							/>
 							<Pressable onPress={() => setShowPassword((v) => !v)} hitSlop={10} style={s.eyeBtn}>
-								<Feather name={showPassword ? 'eye-off' : 'eye'} size={18} color={c.subtext} />
+								<Feather name={showPassword ? 'eye-off' : 'eye'} size={20} color={c.subtext} />
 							</Pressable>
 						</View>
 						{errors.password ? (
@@ -257,13 +263,7 @@ export default function RegisterScreen() {
 						) : null}
 
 						{/* API error */}
-						{error ? (
-							<View style={[s.errorBox, { backgroundColor: c.dangerSoft }]}>
-								<Feather name="alert-circle" size={15} color={c.danger} />
-								<Text style={[s.errText, { color: c.danger, marginTop: 0, flex: 1 }]}>{error}</Text>
-							</View>
-						) : null}
-
+				{/* Backend errors are shown via toast, so avoid duplicate inline messages. */}
 						{/* Submit */}
 						<Pressable
 							style={[s.btn, { backgroundColor: c.primary }, isLoading && s.btnDisabled]}
@@ -311,22 +311,37 @@ const s = StyleSheet.create({
 	safe: { flex: 1 },
 	scroll: { padding: 24, paddingBottom: 40 },
 
-	logoWrap: { alignItems: 'center', marginBottom: 20, marginTop: 12 },
-	logo: { width: 200, height: 80 },
-
-	card: {
-		borderRadius: 20,
-		borderWidth: 1,
-		padding: 24,
-		gap: 16,
-		shadowColor: '#000',
-		shadowOffset: { width: 0, height: 4 },
-		shadowOpacity: 0.08,
-		shadowRadius: 12,
-		elevation: 4,
+	logoWrap: {
+		alignItems: 'center',
+		justifyContent: 'center',
+		marginBottom: 12,
+		marginTop: 12,
+		width: 200,
+		height: 120,
+		borderRadius: 18,
+		backgroundColor: 'transparent',
+		borderWidth: 0,
+	},
+	logo: {
+		width: '100%',
+		height: '100%',
+		borderRadius: 18,
+		backgroundColor: 'transparent',
 	},
 
-	cardHeader: { alignItems: 'center', gap: 4, marginBottom: 4 },
+  card: {
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 24,
+    gap: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+
+  cardHeader: { alignItems: 'center', gap: 4, marginBottom: 4 },
 	title: { fontSize: 24, fontWeight: '800', textAlign: 'center' },
 	subtitle: { fontSize: 14, textAlign: 'center' },
 

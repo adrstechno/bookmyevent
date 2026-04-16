@@ -1,5 +1,7 @@
 export type BookingStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
 
+export type AdminApprovalStatus = 'pending' | 'approved' | 'rejected';
+
 export type BookingItem = {
 	id: string;
 	eventName: string;
@@ -7,4 +9,11 @@ export type BookingItem = {
 	venue: string;
 	amount: string;
 	status: BookingStatus;
+	adminApproval?: AdminApprovalStatus;
+	vendorName?: string;
+	packageName?: string;
+	eventDate?: string;
+	eventTime?: string;
+	eventAddress?: string;
+	specialRequirement?: string;
 };

@@ -10,7 +10,11 @@ import { useAppToast } from '@/components/common/AppToastProvider';
 import { TabsTopBar } from '@/components/layout/TabsTopBar';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { fetchUserBookings } from '@/services/booking/bookingService';
+import { CancelBookingModal } from '@/components/booking/CancelBookingModal';
+import { ReviewBookingModal } from '@/components/booking/ReviewBookingModal';
+import { BookingOTPSection } from '@/components/booking/BookingOTPSection';
+import { BookingStatusAlert } from '@/components/booking/BookingStatusAlert';
+import { fetchUserBookings, cancelBooking, submitReview } from '@/services/booking/bookingService';
 import { useAppSelector } from '@/store';
 import { useSettingsTheme } from '@/theme/settingsTheme';
 import type { BookingItem, BookingStatus } from '@/types/booking';
@@ -54,6 +58,8 @@ const STATUS_CHIPS: ('all' | BookingStatus)[] = ['all', 'pending', 'confirmed', 
 const BookingCard = memo(function BookingCard({
 	booking,
 	palette,
+	onCancel,
+	onReview,
 }: {
 	booking: BookingItem;
 	palette: {
@@ -67,13 +73,19 @@ const BookingCard = memo(function BookingCard({
 		onPrimary: string;
 		shadow: string;
 	};
+	onCancel: (bookingId: string) => void;
+	onReview: (booking: BookingItem) => void;
 }) {
 	const isPending = booking.status === 'pending';
 	const isCompleted = booking.status === 'completed';
 	const isCancelled = booking.status === 'cancelled';
+	const isApproved = booking.status === 'confirmed' && booking.adminApproval === 'approved';
+	
+	const canCancel = isPending || (booking.status === 'confirmed' && booking.adminApproval === 'pending');
+	const canReview = isCompleted;
 
 	return (
-		<ThemedView style={[styles.bookingCard, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
+		<ThemedView style={[styles.bookingCard, { backgroundColor: palette.surfaceBg, borderColor: palette.border }, isApproved && styles.bookingCardApproved]}>
 			<View style={styles.rowTop}>
 				<View style={styles.eventMeta}>
 					<ThemedText type="defaultSemiBold" style={[styles.eventName, { color: palette.text }]}>{booking.eventName}</ThemedText>
@@ -85,6 +97,7 @@ const BookingCard = memo(function BookingCard({
 						isPending ? styles.statusPending : null,
 						isCompleted ? styles.statusCompleted : null,
 						isCancelled ? styles.statusCancelled : null,
+						isApproved ? styles.statusApproved : null,
 					]}
 				>
 					<ThemedText
@@ -93,6 +106,7 @@ const BookingCard = memo(function BookingCard({
 							isPending ? styles.statusTextPending : null,
 							isCompleted ? styles.statusTextCompleted : null,
 							isCancelled ? styles.statusTextCancelled : null,
+							isApproved ? styles.statusTextApproved : null,
 						]}
 					>
 						{STATUS_META[booking.status].label}
@@ -100,6 +114,12 @@ const BookingCard = memo(function BookingCard({
 				</ThemedView>
 			</View>
 
+			{booking.vendorName && (
+				<View style={styles.detailRow}>
+					<Ionicons name="person-outline" size={15} color={palette.subtext} />
+					<ThemedText style={[styles.detailText, { color: palette.subtext }]}>{booking.vendorName}</ThemedText>
+				</View>
+			)}
 			<View style={styles.detailRow}>
 				<Ionicons name="calendar-outline" size={15} color={palette.subtext} />
 				<ThemedText style={[styles.detailText, { color: palette.subtext }]}>{booking.date}</ThemedText>
@@ -111,6 +131,50 @@ const BookingCard = memo(function BookingCard({
 			<View style={styles.detailRow}>
 				<Ionicons name="wallet-outline" size={15} color={palette.subtext} />
 				<ThemedText style={[styles.detailText, { color: palette.subtext }]}>{booking.amount}</ThemedText>
+			</View>
+
+			{booking.specialRequirement && (
+				<View style={[styles.specialReq, { backgroundColor: palette.screenBg }]}>
+					<ThemedText style={[styles.specialReqLabel, { color: palette.subtext }]}>Special Requirements</ThemedText>
+					<ThemedText style={[styles.specialReqText, { color: palette.text }]}>{booking.specialRequirement}</ThemedText>
+				</View>
+			)}
+
+			{/* OTP Section for approved bookings */}
+			{isApproved && <BookingOTPSection bookingId={booking.id} />}
+
+			{/* Status Alerts */}
+			<BookingStatusAlert status={booking.status} adminApproval={booking.adminApproval} />
+
+			{/* Action Buttons */}
+			<View style={styles.actionButtons}>
+				{canReview && (
+					<Pressable
+						onPress={() => onReview(booking)}
+						style={({ pressed }) => [
+							styles.actionBtn,
+							styles.actionBtnReview,
+							pressed && styles.actionBtnPressed,
+						]}
+					>
+						<Ionicons name="star" size={16} color="#FFFFFF" />
+						<ThemedText style={[styles.actionBtnText, { color: '#FFFFFF' }]}>Write Review</ThemedText>
+					</Pressable>
+				)}
+				{canCancel && (
+					<Pressable
+						onPress={() => onCancel(booking.id)}
+						style={({ pressed }) => [
+							styles.actionBtn,
+							styles.actionBtnCancel,
+							{ borderColor: palette.border },
+							pressed && styles.actionBtnPressed,
+						]}
+					>
+						<Ionicons name="close-circle-outline" size={16} color="#DC2626" />
+						<ThemedText style={[styles.actionBtnText, { color: '#DC2626' }]}>Cancel</ThemedText>
+					</Pressable>
+				)}
 			</View>
 
 			<ThemedView
@@ -130,7 +194,7 @@ export default function BookingsTabScreen() {
 	const { mode, palette } = useSettingsTheme();
 	const isDark = mode === 'dark';
 	const { token } = useAppSelector((state) => state.auth);
-	const { showError, showInfo } = useAppToast();
+	const { showError, showInfo, showSuccess } = useAppToast();
 	const hasShownDevInfoRef = useRef(false);
 	const isDummyToken = typeof token === 'string' && token.startsWith('dummy-token-');
 	const [bookings, setBookings] = useState<BookingItem[]>([]);
@@ -138,6 +202,12 @@ export default function BookingsTabScreen() {
 	const [isRefreshing, setIsRefreshing] = useState(false);
 	const [loadError, setLoadError] = useState<string | null>(null);
 	const [activeStatus, setActiveStatus] = useState<'all' | BookingStatus>('all');
+	
+	// Modal states
+	const [showCancelModal, setShowCancelModal] = useState(false);
+	const [selectedBookingForCancel, setSelectedBookingForCancel] = useState<string | null>(null);
+	const [showReviewModal, setShowReviewModal] = useState(false);
+	const [selectedBookingForReview, setSelectedBookingForReview] = useState<BookingItem | null>(null);
 
 	const loadBookings = useCallback(
 		async (isManualRefresh = false) => {
@@ -188,6 +258,44 @@ export default function BookingsTabScreen() {
 	useEffect(() => {
 		void loadBookings();
 	}, [loadBookings]);
+
+	const handleCancelBooking = useCallback(
+		async (bookingId: string, reason: string) => {
+			const response = await cancelBooking(bookingId, reason);
+			if (response.success) {
+				showSuccess('Booking cancelled successfully!');
+				void loadBookings(true);
+			} else {
+				showError(response.error.message);
+				throw new Error(response.error.message);
+			}
+		},
+		[showSuccess, showError, loadBookings]
+	);
+
+	const handleSubmitReview = useCallback(
+		async (bookingId: string, reviewData: any) => {
+			const response = await submitReview(bookingId, reviewData);
+			if (response.success) {
+				showSuccess('Thank you for your review!');
+				void loadBookings(true);
+			} else {
+				showError(response.error.message);
+				throw new Error(response.error.message);
+			}
+		},
+		[showSuccess, showError, loadBookings]
+	);
+
+	const handleOpenCancelModal = useCallback((bookingId: string) => {
+		setSelectedBookingForCancel(bookingId);
+		setShowCancelModal(true);
+	}, []);
+
+	const handleOpenReviewModal = useCallback((booking: BookingItem) => {
+		setSelectedBookingForReview(booking);
+		setShowReviewModal(true);
+	}, []);
 
 	const filteredBookings = useMemo(() => {
 		if (activeStatus === 'all') {
@@ -305,7 +413,13 @@ export default function BookingsTabScreen() {
 					</ThemedView>
 				) : (
 					filteredBookings.map((booking) => (
-						<BookingCard key={booking.id} booking={booking} palette={palette} />
+						<BookingCard 
+							key={booking.id} 
+							booking={booking} 
+							palette={palette}
+							onCancel={handleOpenCancelModal}
+							onReview={handleOpenReviewModal}
+						/>
 					))
 				)}
 
@@ -314,6 +428,28 @@ export default function BookingsTabScreen() {
 					<ThemedText style={[styles.helpSubtext, { color: palette.subtext }]}>Go to Support from profile quick actions for instant dummy help options.</ThemedText>
 				</ThemedView>
 			</ScrollView>
+
+			{/* Cancel Booking Modal */}
+			<CancelBookingModal
+				visible={showCancelModal}
+				bookingId={selectedBookingForCancel || ''}
+				onClose={() => {
+					setShowCancelModal(false);
+					setSelectedBookingForCancel(null);
+				}}
+				onConfirm={handleCancelBooking}
+			/>
+
+			{/* Review Booking Modal */}
+			<ReviewBookingModal
+				visible={showReviewModal}
+				booking={selectedBookingForReview}
+				onClose={() => {
+					setShowReviewModal(false);
+					setSelectedBookingForReview(null);
+				}}
+				onSubmit={handleSubmitReview}
+			/>
 		</SafeAreaView>
 	);
 }
@@ -405,6 +541,10 @@ const styles = StyleSheet.create({
 		backgroundColor: '#FFFFFF',
 		boxShadow: '0px 3px 8px rgba(15, 23, 42, 0.04)',
 	},
+	bookingCardApproved: {
+		borderLeftWidth: 4,
+		borderLeftColor: '#7C3AED',
+	},
 	rowTop: {
 		flexDirection: 'row',
 		justifyContent: 'space-between',
@@ -447,6 +587,9 @@ const styles = StyleSheet.create({
 	statusCancelled: {
 		backgroundColor: '#FEE2E2',
 	},
+	statusApproved: {
+		backgroundColor: '#F3E8FF',
+	},
 	statusText: {
 		color: '#1D4ED8',
 		fontWeight: '700',
@@ -460,6 +603,51 @@ const styles = StyleSheet.create({
 	},
 	statusTextCancelled: {
 		color: '#991B1B',
+	},
+	statusTextApproved: {
+		color: '#7C3AED',
+	},
+	specialReq: {
+		borderRadius: 8,
+		padding: 8,
+		marginTop: 4,
+	},
+	specialReqLabel: {
+		fontSize: 11,
+		fontWeight: '600',
+		marginBottom: 2,
+	},
+	specialReqText: {
+		fontSize: 12,
+		lineHeight: 16,
+	},
+	actionButtons: {
+		flexDirection: 'row',
+		gap: 8,
+		marginTop: 4,
+	},
+	actionBtn: {
+		flex: 1,
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'center',
+		gap: 4,
+		paddingVertical: 8,
+		borderRadius: 8,
+	},
+	actionBtnReview: {
+		backgroundColor: '#F59E0B',
+	},
+	actionBtnCancel: {
+		backgroundColor: '#FEE2E2',
+		borderWidth: 1,
+	},
+	actionBtnPressed: {
+		opacity: 0.8,
+	},
+	actionBtnText: {
+		fontSize: 12,
+		fontWeight: '700',
 	},
 	ctaBtn: {
 		marginTop: 2,
