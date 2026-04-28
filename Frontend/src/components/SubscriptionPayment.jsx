@@ -10,6 +10,19 @@ const SubscriptionPayment = ({ onClose, onSuccess }) => {
   const [couponCode, setCouponCode] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
   const [couponError, setCouponError] = useState("");
+  const [testMode, setTestMode] = useState(false);
+
+  // Enable test mode with special key combination (Ctrl + Shift + T)
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'T') {
+        setTestMode(prev => !prev);
+        toast.success(testMode ? "Test mode disabled" : "🧪 Test mode enabled - Payment bypass active");
+      }
+    };
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [testMode]);
 
   const SUBSCRIPTION_DETAILS = {
     originalAmount: 999,
@@ -69,6 +82,21 @@ const SubscriptionPayment = ({ onClose, onSuccess }) => {
   const handlePayment = async () => {
     try {
       setLoading(true);
+
+      // TEST MODE BYPASS - Skip payment for testing
+      if (testMode) {
+        toast.success("🧪 Test Mode: Simulating successful payment...");
+        
+        // Simulate payment delay
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Call success callback directly
+        toast.success("🎉 Test subscription activated successfully!");
+        if (onSuccess) onSuccess();
+        if (onClose) onClose();
+        setLoading(false);
+        return;
+      }
 
       // Load Razorpay script
       const scriptLoaded = await loadRazorpayScript();
@@ -283,21 +311,40 @@ const SubscriptionPayment = ({ onClose, onSuccess }) => {
             </div>
           </div>
 
+          {/* Test Mode Indicator */}
+          {testMode && (
+            <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4 mb-6">
+              <div className="flex items-center gap-3">
+                <div className="text-2xl">🧪</div>
+                <div>
+                  <div className="font-semibold text-yellow-900">Test Mode Active</div>
+                  <div className="text-sm text-yellow-700">
+                    Payment will be bypassed for testing. Press Ctrl+Shift+T to disable.
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Payment Button */}
           <button
             onClick={handlePayment}
             disabled={loading}
-            className="w-full bg-[#f9a826] hover:bg-[#f7b733] text-white font-semibold py-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`w-full font-semibold py-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+              testMode 
+                ? 'bg-yellow-500 hover:bg-yellow-600 text-white' 
+                : 'bg-[#f9a826] hover:bg-[#f7b733] text-white'
+            }`}
           >
             {loading ? (
               <>
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                Processing...
+                {testMode ? 'Simulating Payment...' : 'Processing...'}
               </>
             ) : (
               <>
                 <FiCreditCard className="text-xl" />
-                Pay ₹{finalAmount} & Activate
+                {testMode ? '🧪 Test Payment (Bypass)' : `Pay ₹${finalAmount} & Activate`}
               </>
             )}
           </button>
