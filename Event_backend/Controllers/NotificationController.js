@@ -13,11 +13,13 @@ class NotificationController {
                 });
             }
 
-            const { page = 1, limit = 20 } = req.query;
+            const { page = 1, limit = 20, status, type } = req.query;
 
             const options = {
                 page: parseInt(page),
-                limit: Math.min(parseInt(limit), 100)
+                limit: Math.min(parseInt(limit), 100),
+                status,
+                type
             };
 
             const notifications = await NotificationModel.getUserNotifications(user_id, options);
@@ -242,7 +244,7 @@ class NotificationController {
     // Create notification (admin/system use)
     static async createNotification(req, res) {
         try {
-            const { user_id, title, message } = req.body;
+            const { user_id, title, message, type, related_booking_id } = req.body;
 
             if (!user_id || !title || !message) {
                 return res.status(400).json({
@@ -251,7 +253,13 @@ class NotificationController {
                 });
             }
 
-            const result = await NotificationModel.createNotification({ user_id, title, message });
+            const result = await NotificationModel.createNotification({
+                user_id,
+                title,
+                message,
+                type,
+                related_booking_id
+            });
 
             res.status(201).json({
                 success: true,
@@ -311,7 +319,9 @@ class NotificationController {
                 NotificationModel.createNotification({ 
                     user_id: n.user_id, 
                     title: n.title, 
-                    message: n.message 
+                    message: n.message,
+                    type: n.type,
+                    related_booking_id: n.related_booking_id
                 })
             );
 

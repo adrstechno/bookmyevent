@@ -252,7 +252,7 @@ class EmailService {
 
         // Generate secure review token
         const reviewToken = ReviewTokenService.generateReviewToken(bookingId, userEmail);
-        const reviewLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/review/${bookingId}?token=${reviewToken}`;
+        const reviewLink = `${process.env.FRONTEND_URL || 'https://goeventify.com'}/review/${bookingId}?token=${reviewToken}`;
         
         // console.log('Generated review token for booking:', bookingId, 'user:', userEmail);
         // console.log('Review link:', reviewLink);
@@ -519,7 +519,7 @@ class EmailService {
 
         // Generate secure review token
         const reviewToken = ReviewTokenService.generateReviewToken(bookingId, userEmail);
-        const reviewLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/review/${bookingId}?token=${reviewToken}`;
+        const reviewLink = `${process.env.FRONTEND_URL || 'https://goeventify.com'}/review/${bookingId}?token=${reviewToken}`;
 
         const mailOptions = {
             from: process.env.EMAIL_USER,
@@ -717,7 +717,7 @@ class EmailService {
                             </div>
                             
                             <div style="text-align: center; margin: 30px 0;">
-                                <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/vendor/bookings" class="btn">
+                                <a href="${process.env.FRONTEND_URL || 'https://goeventify.com'}/vendor/bookings" class="btn">
                                     📋 View Booking Details
                                 </a>
                             </div>
@@ -760,7 +760,7 @@ class EmailService {
             userType 
         } = emailData;
 
-        const verificationLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify-email?token=${verificationToken}`;
+        const verificationLink = `${process.env.FRONTEND_URL || 'https://goeventify.com'}/verify-email?token=${verificationToken}`;
 
         const mailOptions = {
             from: process.env.EMAIL_USER,
@@ -945,7 +945,7 @@ class EmailService {
                             </div>
                             
                             <div style="text-align: center; margin: 30px 0;">
-                                <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/vendor/bookings" class="btn">
+                                <a href="${process.env.FRONTEND_URL || 'https://goeventify.com'}/vendor/bookings" class="btn">
                                     📋 View Booking Details
                                 </a>
                             </div>
@@ -1065,7 +1065,7 @@ class EmailService {
                             </div>
                             
                             <div style="text-align: center; margin: 30px 0;">
-                                <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/vendor/dashboard" class="btn">
+                                <a href="${process.env.FRONTEND_URL || 'https://goeventify.com'}/vendor/dashboard" class="btn">
                                     🚀 Go to Dashboard
                                 </a>
                             </div>
@@ -1849,7 +1849,7 @@ class EmailService {
             userType 
         } = emailData;
 
-        const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${resetToken}`;
+        const resetLink = `${process.env.FRONTEND_URL || 'https://goeventify.com'}/reset-password?token=${resetToken}`;
 
         const mailOptions = {
             from: process.env.EMAIL_USER,
@@ -1976,7 +1976,7 @@ class EmailService {
                             <p>This email confirms that your password was recently changed. You can now use your new password to log in to your account.</p>
                             
                             <div style="text-align: center; margin: 30px 0;">
-                                <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/login" class="btn">
+                                <a href="${process.env.FRONTEND_URL || 'https://goeventify.com'}/login" class="btn">
                                     Login to Your Account
                                 </a>
                             </div>

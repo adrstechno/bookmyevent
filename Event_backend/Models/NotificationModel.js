@@ -1,42 +1,66 @@
 import db from "../Config/DatabaseCon.js";
 
 class NotificationModel {
-    // Create notification - works with existing schema (user_id, title, message, is_read, created_at)
+    // Create notification with optional type and related booking linkage
     static async createNotification(notificationData) {
-        const { user_id, title, message } = notificationData;
-        
+        const {
+            user_id,
+            title,
+            message,
+            type = null,
+            related_booking_id = null
+        } = notificationData;
+
         const sql = `
-            INSERT INTO notifications (user_id, title, message, is_read)
-            VALUES (?, ?, ?, FALSE)
+            INSERT INTO notifications (user_id, title, message, type, related_booking_id, is_read)
+            VALUES (?, ?, ?, ?, ?, FALSE)
         `;
-        
+
         return new Promise((resolve, reject) => {
-            db.query(sql, [user_id, title, message], (err, result) => {
-                if (err) {
-                    console.error('Notification creation error:', err);
-                    reject(err);
-                } else {
-                    resolve(result);
+            db.query(
+                sql,
+                [user_id, title, message, type, related_booking_id],
+                (err, result) => {
+                    if (err) {
+                        console.error('Notification creation error:', err);
+                        reject(err);
+                    } else {
+                        resolve(result);
+                    }
                 }
-            });
+            );
         });
     }
 
-    // Get user notifications with pagination
+    // Get user notifications with pagination and optional status/type filters
     static async getUserNotifications(user_id, options = {}) {
-        const { page = 1, limit = 20 } = options;
+        const { page = 1, limit = 20, status, type } = options;
         const offset = (page - 1) * limit;
+
+        const whereClauses = ['user_id = ?'];
+        const queryParams = [user_id];
+
+        if (status === 'read') {
+            whereClauses.push('is_read = TRUE');
+        } else if (status === 'unread') {
+            whereClauses.push('is_read = FALSE');
+        }
+
+        if (type) {
+            whereClauses.push('type = ?');
+            queryParams.push(type);
+        }
         
         const sql = `
-            SELECT id, user_id, title, message, is_read, created_at
+            SELECT id, user_id, title, message, type, related_booking_id, is_read, created_at
             FROM notifications
-            WHERE user_id = ?
+            WHERE ${whereClauses.join(' AND ')}
             ORDER BY created_at DESC
             LIMIT ? OFFSET ?
         `;
         
         return new Promise((resolve, reject) => {
-            db.query(sql, [user_id, limit, offset], (err, results) => {
+            db.query(sql, [...queryParams, limit, offset], (err, results) => {
                 if (err) reject(err);
                 else resolve(results || []);
             });
@@ -109,7 +133,7 @@ class NotificationModel {
     // Get notification by ID
     static async getNotificationById(notification_id, user_id) {
         const sql = `
-            SELECT id, user_id, title, message, is_read, created_at
+            SELECT id, user_id, title, message, type, related_booking_id, is_read, created_at
             FROM notifications
             WHERE id = ? AND user_id = ?
         `;

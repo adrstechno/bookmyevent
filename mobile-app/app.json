@@ -1,0 +1,80 @@
+{
+  "expo": {
+    "name": "GoEventify",
+    "slug": "goeventify",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/login_logo.png",
+    "scheme": "mobileapp",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.adrs.goeventify"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/images/login_logo.png"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.CAMERA"
+      ],
+      "package": "com.adrs.goeventify"
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/login_logo.png"
+    },
+    "splash": {
+      "image": "./assets/images/login_logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F3F7F6"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow GoEventify to access your photos to set profile image.",
+          "cameraPermission": "Allow GoEventify to use your camera to capture profile image."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow GoEventify to use your camera to capture profile image."
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/login_logo.png",
+          "imageWidth": 250,
+          "resizeMode": "contain",
+          "backgroundColor": "#F3F7F6",
+          "dark": {
+            "image": "./assets/images/login_logo.png",
+            "imageWidth": 250,
+            "resizeMode": "contain",
+            "backgroundColor": "#1A1410"
+          }
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "9425b6bb-224f-4a56-9e9e-5dbfdec1e237"
+      }
+    },
+    "owner": "adrstechnos-organization"
+  }
+}

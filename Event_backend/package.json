@@ -7,7 +7,9 @@
   "scripts": {
     "start2": "nodemon Server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node Server.js"
+    "start": "node Server.js",
+    "migrate": "node run-all-migrations.js",
+    "migrate:baseline": "node run-all-migrations.js --baseline"
   },
   "author": "Siddhant dubey",
   "license": "ISC",
