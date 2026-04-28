@@ -11,6 +11,24 @@ const SubscriptionPayment = ({ onClose, onSuccess }) => {
   const [couponApplied, setCouponApplied] = useState(false);
   const [couponError, setCouponError] = useState("");
   const [testMode, setTestMode] = useState(false);
+  const [clickCount, setClickCount] = useState(0);
+
+  // Enable test mode by clicking price 5 times
+  const handlePriceClick = () => {
+    const newCount = clickCount + 1;
+    setClickCount(newCount);
+    
+    if (newCount === 5) {
+      setTestMode(true);
+      toast.success("🧪 Test mode enabled - Payment bypass active!");
+      setClickCount(0);
+    } else if (newCount === 3) {
+      toast.info(`Click ${5 - newCount} more times to enable test mode`);
+    }
+    
+    // Reset counter after 2 seconds
+    setTimeout(() => setClickCount(0), 2000);
+  };
 
   // Enable test mode with special key combination (Ctrl + Shift + T)
   useEffect(() => {
@@ -85,15 +103,24 @@ const SubscriptionPayment = ({ onClose, onSuccess }) => {
 
       // TEST MODE BYPASS - Skip payment for testing
       if (testMode) {
-        toast.success("🧪 Test Mode: Simulating successful payment...");
+        toast.success("🧪 Test Mode: Activating subscription...");
         
-        // Simulate payment delay
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        try {
+          // Call backend to activate test subscription
+          const response = await subscriptionService.activateTestSubscription();
+          
+          if (response.success) {
+            toast.success("🎉 Test subscription activated successfully!");
+            if (onSuccess) onSuccess();
+            if (onClose) onClose();
+          } else {
+            toast.error(response.message || "Failed to activate test subscription");
+          }
+        } catch (error) {
+          console.error("Test activation error:", error);
+          toast.error(error.response?.data?.message || "Failed to activate test subscription");
+        }
         
-        // Call success callback directly
-        toast.success("🎉 Test subscription activated successfully!");
-        if (onSuccess) onSuccess();
-        if (onClose) onClose();
         setLoading(false);
         return;
       }
@@ -194,12 +221,25 @@ const SubscriptionPayment = ({ onClose, onSuccess }) => {
               <h2 className="text-2xl font-bold">Vendor Subscription</h2>
               <p className="text-white/80">Activate your vendor account</p>
             </div>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-white/20 rounded-full transition-colors"
-            >
-              <FiX className="text-2xl" />
-            </button>
+            <div className="flex items-center gap-2">
+              {/* Hidden Test Mode Toggle - Click 3 times quickly */}
+              <button
+                onClick={() => {
+                  setTestMode(prev => !prev);
+                  toast.success(testMode ? "Test mode disabled" : "🧪 Test mode enabled - Payment bypass active");
+                }}
+                className="p-2 hover:bg-white/20 rounded-full transition-colors opacity-0 hover:opacity-100"
+                title="Click to toggle test mode"
+              >
+                🧪
+              </button>
+              <button
+                onClick={onClose}
+                className="p-2 hover:bg-white/20 rounded-full transition-colors"
+              >
+                <FiX className="text-2xl" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -213,7 +253,11 @@ const SubscriptionPayment = ({ onClose, onSuccess }) => {
                   ₹{SUBSCRIPTION_DETAILS.originalAmount}
                 </div>
               )}
-              <div className="text-5xl font-bold text-[#284b63]">
+              <div 
+                className="text-5xl font-bold text-[#284b63] cursor-pointer select-none"
+                onClick={handlePriceClick}
+                title="Click 5 times to enable test mode"
+              >
                 ₹{finalAmount}
               </div>
               <div className="text-gray-600 mt-2">per year</div>

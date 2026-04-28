@@ -279,6 +279,125 @@ class SubscriptionController {
         }
     }
 
+    // Test mode: Activate subscription without payment (for testing only)
+    static async testActivateSubscription(req, res) {
+        try {
+            const user_id = req.user?.uuid || req.user?.user_id;
+            
+            if (!user_id) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'User authentication required'
+                });
+            }
+
+            // Get vendor details
+            const vendorQuery = `
+                SELECT vp.vendor_id, vp.business_name, u.email, u.first_name, u.last_name
+                FROM vendor_profiles vp
+                JOIN users u ON (vp.user_id = u.user_id OR vp.user_id = u.uuid)
+                WHERE u.uuid = ?
+            `;
+
+            const vendorResult = await new Promise((resolve, reject) => {
+                db.query(vendorQuery, [user_id], (err, results) => {
+                    if (err) reject(err);
+                    else resolve(results);
+                });
+            });
+
+            if (!vendorResult || vendorResult.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Vendor profile not found'
+                });
+            }
+
+            const vendor = vendorResult[0];
+
+            // Check if vendor already has an active subscription
+            const subscriptionQuery = `
+                SELECT * FROM vendor_subscriptions 
+                WHERE vendor_id = ? AND status = 'active' AND end_date > NOW()
+                ORDER BY end_date DESC LIMIT 1
+            `;
+
+            const existingSubscription = await new Promise((resolve, reject) => {
+                db.query(subscriptionQuery, [vendor.vendor_id], (err, results) => {
+                    if (err) reject(err);
+                    else resolve(results);
+                });
+            });
+
+            if (existingSubscription && existingSubscription.length > 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'You already have an active subscription',
+                    subscription: existingSubscription[0]
+                });
+            }
+
+            // Calculate subscription dates (1 year from now)
+            const startDate = new Date();
+            const endDate = new Date();
+            endDate.setFullYear(endDate.getFullYear() + 1);
+
+            // Insert subscription record with TEST_MODE payment
+            const insertQuery = `
+                INSERT INTO vendor_subscriptions (
+                    vendor_id, start_date, end_date, billing_cycle, status,
+                    razorpay_order_id, razorpay_payment_id, amount_paid
+                ) VALUES (?, ?, ?, 'annual', 'active', 'TEST_MODE', 'TEST_MODE', 0)
+            `;
+
+            await new Promise((resolve, reject) => {
+                db.query(insertQuery, [
+                    vendor.vendor_id,
+                    startDate,
+                    endDate
+                ], (err, result) => {
+                    if (err) reject(err);
+                    else resolve(result);
+                });
+            });
+
+            // Send test subscription confirmation email
+            try {
+                await EmailService.sendSubscriptionConfirmationEmail({
+                    vendorEmail: vendor.email,
+                    vendorName: `${vendor.first_name} ${vendor.last_name}`,
+                    businessName: vendor.business_name,
+                    amount: 0,
+                    startDate: startDate,
+                    endDate: endDate,
+                    paymentId: 'TEST_MODE'
+                });
+            } catch (emailError) {
+                console.error('Failed to send test subscription email:', emailError);
+            }
+
+            res.status(200).json({
+                success: true,
+                message: 'Test subscription activated successfully',
+                data: {
+                    start_date: startDate,
+                    end_date: endDate,
+                    status: 'active',
+                    payment_id: 'TEST_MODE',
+                    note: 'This is a test subscription for development purposes'
+                }
+            });
+
+        } catch (error) {
+            console.error('Test activate subscription error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to activate test subscription',
+                error: error.message
+            });
+        }
+    }
+
     // Get vendor subscription status
     static async getSubscriptionStatus(req, res) {
         try {

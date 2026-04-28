@@ -24,6 +24,12 @@ const subscriptionService = {
     const response = await api.get("/subscription/all");
     return response.data;
   },
+
+  // Test mode: Activate subscription without payment (for testing only)
+  activateTestSubscription: async () => {
+    const response = await api.post("/subscription/test-activate");
+    return response.data;
+  },
 };
 
 export default subscriptionService;

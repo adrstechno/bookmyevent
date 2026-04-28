@@ -11,6 +11,9 @@ router.post('/create-order', authenticateToken, SubscriptionController.createSub
 // Verify payment and activate subscription (Vendor only)
 router.post('/verify-payment', authenticateToken, SubscriptionController.verifyAndActivateSubscription);
 
+// Test mode: Activate subscription without payment (Vendor only - for testing)
+router.post('/test-activate', authenticateToken, SubscriptionController.testActivateSubscription);
+
 // Get subscription status (Vendor only)
 router.get('/status', authenticateToken, SubscriptionController.getSubscriptionStatus);
 
