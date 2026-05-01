@@ -1,6 +1,6 @@
 /**
  * authApi.ts
- * Real API calls to the backend at localhost:3232
+ * Real API calls to the configured backend.
  * Endpoints: /User/Login, /User/InsertUser, /User/forgot-password
  */
 import apiClient from "@/services/api/client";

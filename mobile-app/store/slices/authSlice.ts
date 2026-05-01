@@ -1,7 +1,7 @@
 /**
  * authSlice.ts
  * Real backend integration — no dummy credentials.
- * Server: localhost:3232 (configured in mobile-app/.env)
+ * Server: configured in mobile-app/.env
  */
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 

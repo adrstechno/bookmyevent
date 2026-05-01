@@ -1,6 +1,6 @@
 /**
  * shiftService.ts
- * Vendor shift CRUD — wired to localhost:3232
+ * Vendor shift CRUD — wired to the configured backend
  *
  * Endpoints (all under /Vendor):
  *   GET  /Vendor/getVendorShiftforVendor   → fetch all shifts for logged-in vendor
