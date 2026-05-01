@@ -217,46 +217,57 @@ const UserDashboard = () => {
             Monthly Activity Overview
           </h2>
 
-          <div className="h-72 ">
-            <ResponsiveContainer width="100%" height="100%">
-              {loadingChart ? (
-                <div className="flex items-center justify-center  h-full">Loading chart...</div>
-              ) : finalChartData.length === 0 ? (
-                <div className="flex items-center justify-center h-full">No chart data for the last 6 months</div>
-              ) : (
+          <div className="h-72">
+            {loadingChart ? (
+              <div className="flex items-center justify-center h-full text-gray-500">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3c6e71] mx-auto mb-4"></div>
+                  <p>Loading chart...</p>
+                </div>
+              </div>
+            ) : finalChartData.length === 0 ? (
+              <div className="flex items-center justify-center h-full text-gray-500">
+                <div className="text-center">
+                  <CalendarDaysIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                  <p className="text-lg font-medium text-gray-600">No chart data available</p>
+                  <p className="text-sm text-gray-500 mt-2">No activity recorded for the last 6 months</p>
+                </div>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={finalChartData} barGap={10}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip />
 
-                <defs>
-                  <linearGradient id="bookingGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#3c6e71" />
-                    <stop offset="100%" stopColor="#84a98c" />
-                  </linearGradient>
+                  <defs>
+                    <linearGradient id="bookingGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#3c6e71" />
+                      <stop offset="100%" stopColor="#84a98c" />
+                    </linearGradient>
 
-                  <linearGradient id="paymentGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#f4a261" />
-                    <stop offset="100%" stopColor="#e76f51" />
-                  </linearGradient>
-                </defs>
+                    <linearGradient id="paymentGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#f4a261" />
+                      <stop offset="100%" stopColor="#e76f51" />
+                    </linearGradient>
+                  </defs>
 
-                <Bar
-                  dataKey="bookings"
-                  fill="url(#bookingGradient)"
-                  radius={[8, 8, 0, 0]}
-                  name="Bookings"
-                />
-                <Bar
-                  dataKey="payments"
-                  fill="url(#paymentGradient)"
-                  radius={[8, 8, 0, 0]}
-                  name="Payments (₹)"
-                />
+                  <Bar
+                    dataKey="bookings"
+                    fill="url(#bookingGradient)"
+                    radius={[8, 8, 0, 0]}
+                    name="Bookings"
+                  />
+                  <Bar
+                    dataKey="payments"
+                    fill="url(#paymentGradient)"
+                    radius={[8, 8, 0, 0]}
+                    name="Payments (₹)"
+                  />
                 </BarChart>
-              )}
-            </ResponsiveContainer>
+              </ResponsiveContainer>
+            )}
           </div>
         </section>
       </main>
