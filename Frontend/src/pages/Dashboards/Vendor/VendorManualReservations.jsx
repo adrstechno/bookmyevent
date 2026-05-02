@@ -1,5 +1,4 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect, useCallback } from "react";
 import {
   FiCalendar,
   FiClock,
@@ -14,15 +13,18 @@ import axios from "axios";
 import { VITE_API_BASE_URL } from "../../../utils/api";
 import toast from "react-hot-toast";
 import Calendar from "react-calendar";
+import { useNavigate } from "react-router-dom";
 import "react-calendar/dist/Calendar.css";
 import "../../../style/Calendar.css";
 
 const VendorManualReservations = () => {
+  const navigate = useNavigate();
   const [vendorId, setVendorId] = useState(null);
-  const [shifts, setShifts] = useState([]);
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileError, setProfileError] = useState("");
 
   // Modal state
   const [selectedDate, setSelectedDate] = useState(null);
@@ -36,11 +38,31 @@ const VendorManualReservations = () => {
     fetchVendorProfile();
   }, []);
 
+  const fetchReservations = useCallback(async () => {
+    if (!vendorId) return;
+
+    try {
+      setLoading(true);
+      const now = new Date();
+      const response = await axios.get(
+        `${VITE_API_BASE_URL}/manual-reservations/vendor/${vendorId}?month=${now.getMonth() + 1}&year=${now.getFullYear()}`,
+        { withCredentials: true }
+      );
+      setReservations(response.data?.data || []);
+    } catch (error) {
+      console.error("Error fetching reservations:", error);
+      setReservations([]);
+      toast.error(error.response?.data?.message || "Failed to load manual reservations");
+    } finally {
+      setLoading(false);
+    }
+  }, [vendorId]);
+
   useEffect(() => {
     if (vendorId) {
       fetchReservations();
     }
-  }, [vendorId]);
+  }, [vendorId, fetchReservations]);
 
   // Fetch available shifts when both vendor and date are selected
   useEffect(() => {
@@ -53,13 +75,29 @@ const VendorManualReservations = () => {
 
   const fetchVendorProfile = async () => {
     try {
+      setProfileLoading(true);
+      setProfileError("");
       const response = await axios.get(`${VITE_API_BASE_URL}/Vendor/GetVendorProfile`, {
         withCredentials: true,
       });
-      setVendorId(response.data?.vendor_id);
+      const resolvedVendorId = response.data?.vendor_id;
+
+      if (!resolvedVendorId) {
+        throw new Error("Vendor profile not found. Please complete your profile setup.");
+      }
+
+      setVendorId(resolvedVendorId);
     } catch (error) {
       console.error("Error fetching vendor profile:", error);
-      toast.error("Failed to load vendor profile");
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to load vendor profile. Please try again.";
+
+      setProfileError(message);
+      toast.error(message);
+    } finally {
+      setProfileLoading(false);
     }
   };
 
@@ -97,23 +135,6 @@ const VendorManualReservations = () => {
       }
     } finally {
       setShiftsLoading(false);
-    }
-  };
-
-  const fetchReservations = async () => {
-    try {
-      setLoading(true);
-      const now = new Date();
-      const response = await axios.get(
-        `${VITE_API_BASE_URL}/manual-reservations/vendor/${vendorId}?month=${now.getMonth() + 1}&year=${now.getFullYear()}`,
-        { withCredentials: true }
-      );
-      setReservations(response.data?.data || []);
-    } catch (error) {
-      console.error("Error fetching reservations:", error);
-      setReservations([]);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -183,12 +204,40 @@ const VendorManualReservations = () => {
     return null;
   };
 
-  if (!vendorId) {
+  if (profileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-[#3c6e71] border-t-transparent mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <p className="text-gray-600">Loading manual reservations...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (profileError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <div className="max-w-lg w-full bg-white rounded-2xl shadow-lg border border-red-100 p-6 text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-red-500">
+            <FiAlertCircle size={26} />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-800 mb-2">Manual Reservations unavailable</h1>
+          <p className="text-gray-600 mb-6">{profileError}</p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <button
+              onClick={fetchVendorProfile}
+              className="px-5 py-3 rounded-xl bg-[#3c6e71] text-white font-medium hover:opacity-95 transition"
+            >
+              Retry
+            </button>
+            <button
+              onClick={() => navigate("/vendor/profile-setup")}
+              className="px-5 py-3 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition"
+            >
+              Complete Profile
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -209,9 +258,7 @@ const VendorManualReservations = () => {
 
         {/* Add Reservation Button */}
         <div className="mb-6">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+          <button
             onClick={() => {
               setShowModal(true);
               setSelectedDate(null);
@@ -221,7 +268,7 @@ const VendorManualReservations = () => {
             className="px-6 py-3 bg-gradient-to-r from-[#284b63] to-[#3c6e71] text-white rounded-lg font-semibold flex items-center gap-2 shadow-md"
           >
             <FiPlus /> Reserve Shift
-          </motion.button>
+          </button>
         </div>
 
         {/* Reservations List */}
@@ -302,9 +349,7 @@ const VendorManualReservations = () => {
             className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
             onClick={() => setShowModal(false)}
           >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
+            <div
               onClick={(e) => e.stopPropagation()}
               className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
             >
@@ -433,7 +478,7 @@ const VendorManualReservations = () => {
                   </button>
                 </div>
               </div>
-            </motion.div>
+            </div>
           </div>
         )}
       </div>

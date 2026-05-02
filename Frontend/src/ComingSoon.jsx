@@ -142,7 +142,7 @@
 //         </h1>
 
 //         <p className="text-sm text-slate-500 tracking-widest uppercase mb-12">
-//           Our Very Usefull Platform
+//           Our Very Useful Platform
 //         </p>
 
 //         {/* Main Banner */}
@@ -244,7 +244,7 @@ const ComingSoon = () => {
         </h1>
 
         <p className="text-sm text-slate-500 tracking-widest uppercase mb-12">
-          Our Very Usefull Platform
+          Our Very Useful Platform
         </p>
 
         <div className="relative bg-white rounded-2xl px-10 py-12 shadow-lg border border-slate-200">

@@ -14,6 +14,7 @@ import {
   FaHome,              // User Dashboard
   FaTicketAlt,         // User Bookings
   FaCog,               // Settings
+  FaBoxOpen,          // Package
   FaHandHoldingUsd,    // Manual Reservations (admin)
   FaCalendarPlus,      // Manual Reservations (vendor)
 } from "react-icons/fa";
@@ -36,7 +37,7 @@ export const menuConfig = {
     { label: "Manual Reservations", path: "/vendor/reservations", icon: <FaCalendarPlus /> },
     { label: "Events", path: "/vendor/myevents", icon: <FaTicketAlt /> },
     { label: "Gallery", path: "/vendor/gallery", icon: <FaShoppingCart /> },
-    { label: "Package", path: "/vendor/mypackege", icon: <FaShoppingCart /> },
+    { label: "Package", path: "/vendor/mypackege", icon: <FaBoxOpen /> },
     { label: "Settings", path: "/vendor/setting", icon: <FaCog /> },
   ],
 

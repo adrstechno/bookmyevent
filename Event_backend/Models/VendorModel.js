@@ -176,6 +176,16 @@ class VendorModel {
     db.query(sql, [vendor_id], callback);
   }
 
+  static getEventImageById(imageID, vendor_id, callback) {
+    const sql = "SELECT * FROM Event_images WHERE imageID = ? AND vendor_id = ?";
+    db.query(sql, [imageID, vendor_id], callback);
+  }
+
+  static deleteEventImage(imageID, vendor_id, callback) {
+    const sql = "DELETE FROM Event_images WHERE imageID = ? AND vendor_id = ?";
+    db.query(sql, [imageID, vendor_id], callback);
+  }
+
   
   static insertVendorPackage(data, callback) {
     const sql = `

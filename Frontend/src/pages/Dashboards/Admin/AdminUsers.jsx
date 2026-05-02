@@ -56,7 +56,7 @@ const AdminUsers = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       setAllUsers(data.users || []);
-    } catch (error) {
+    } catch {
       // console.log("Error fetching users:", error);
     }
   };
@@ -122,7 +122,7 @@ const AdminUsers = () => {
       await navigator.clipboard.writeText(text);
       setSnackMsg(`${label} copied`);
       setSnackOpen(true);
-    } catch (e) {
+    } catch {
       setSnackMsg("Copy failed");
       setSnackOpen(true);
     }
@@ -378,7 +378,7 @@ const AdminUsers = () => {
                         width: 50,
                         height: 50,
                         borderRadius: "12px",
-                        background: `linear-gradient(135deg, ${PRIMARY} 0%, #2d5558 100())`,
+                        background: `linear-gradient(135deg, ${PRIMARY} 0%, #2d5558 100%)`,
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -492,8 +492,9 @@ const AdminUsers = () => {
         </Card>
 
         {/* Vendor Specific Information */}
-        {roleFilter === "vendor" && (
-          <Card
+          {roleFilter === "vendor" && (
+            <>
+              <Card
             sx={{
               mb: 3,
               borderRadius: "16px",
@@ -784,46 +785,46 @@ const AdminUsers = () => {
             </CardContent>
           </Card>
 
-        {/* Recent Activity */}
-        <Card sx={{ mb: 3, borderRadius: "12px", boxShadow: "0 6px 18px rgba(0,0,0,0.06)" }}>
-          <Box sx={{ p: 2.5, display: 'flex', alignItems: 'center', gap: 1.5, bgcolor: '#fff' }}>
-            <Box sx={{ width: 40, height: 40, borderRadius: 1, bgcolor: 'rgba(0,0,0,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <FileText size={20} />
-            </Box>
-            <Typography variant="h6" fontWeight={700}>Recent Activity</Typography>
-          </Box>
-          <CardContent sx={{ p: 2.5, bgcolor: '#fafafa' }}>
-            <List dense>
-              <ListItem>
-                <ListItemIcon>
-                  <Calendar size={18} />
-                </ListItemIcon>
-                <ListItemText primary={selectedUser.last_login ? `Last login: ${new Date(selectedUser.last_login).toLocaleString()}` : 'Last login: -'} />
-              </ListItem>
-              <ListItem>
-                <ListItemIcon>
-                  <Award size={18} />
-                </ListItemIcon>
-                <ListItemText primary={`Total bookings: ${selectedUser.total_bookings ?? 0}`} />
-              </ListItem>
-              {selectedUser.recent_bookings && selectedUser.recent_bookings.length > 0 ? (
-                selectedUser.recent_bookings.slice(0,3).map((b, i) => (
-                  <ListItem key={i}>
+            <Card sx={{ mb: 3, borderRadius: "12px", boxShadow: "0 6px 18px rgba(0,0,0,0.06)" }}>
+              <Box sx={{ p: 2.5, display: 'flex', alignItems: 'center', gap: 1.5, bgcolor: '#fff' }}>
+                <Box sx={{ width: 40, height: 40, borderRadius: 1, bgcolor: 'rgba(0,0,0,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <FileText size={20} />
+                </Box>
+                <Typography variant="h6" fontWeight={700}>Recent Activity</Typography>
+              </Box>
+              <CardContent sx={{ p: 2.5, bgcolor: '#fafafa' }}>
+                <List dense>
+                  <ListItem>
                     <ListItemIcon>
-                      <FileText size={16} />
+                      <Calendar size={18} />
                     </ListItemIcon>
-                    <ListItemText primary={`${b.title || 'Booking'} • ${new Date(b.date).toLocaleDateString()}`} />
+                    <ListItemText primary={selectedUser.last_login ? `Last login: ${new Date(selectedUser.last_login).toLocaleString()}` : 'Last login: -'} />
                   </ListItem>
-                ))
-              ) : (
-                <ListItem>
-                  <ListItemText primary="No recent bookings" />
-                </ListItem>
-              )}
-            </List>
-          </CardContent>
-        </Card>
-        )}
+                  <ListItem>
+                    <ListItemIcon>
+                      <Award size={18} />
+                    </ListItemIcon>
+                    <ListItemText primary={`Total bookings: ${selectedUser.total_bookings ?? 0}`} />
+                  </ListItem>
+                  {selectedUser.recent_bookings && selectedUser.recent_bookings.length > 0 ? (
+                    selectedUser.recent_bookings.slice(0,3).map((b, i) => (
+                      <ListItem key={i}>
+                        <ListItemIcon>
+                          <FileText size={16} />
+                        </ListItemIcon>
+                        <ListItemText primary={`${b.title || 'Booking'} • ${new Date(b.date).toLocaleDateString()}`} />
+                      </ListItem>
+                    ))
+                  ) : (
+                    <ListItem>
+                      <ListItemText primary="No recent bookings" />
+                    </ListItem>
+                  )}
+                </List>
+              </CardContent>
+            </Card>
+            </>
+            )}
       </Box>
     );
   };

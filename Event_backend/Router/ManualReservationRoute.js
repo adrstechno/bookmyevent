@@ -7,8 +7,8 @@ const router = express.Router();
 // Create manual reservation (Admin/Vendor only)
 router.post("/", authenticateToken, ManualReservationController.createReservation);
 
-// Get vendor reservations
-router.get("/vendor/:vendor_id", ManualReservationController.getVendorReservations);
+// Get vendor reservations (requires authentication)
+router.get("/vendor/:vendor_id", authenticateToken, ManualReservationController.getVendorReservations);
 
 // Cancel reservation
 router.delete("/:id", authenticateToken, ManualReservationController.cancelReservation);

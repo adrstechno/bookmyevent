@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { PlusCircleIcon, CalendarDaysIcon } from "@heroicons/react/24/outline";
+import { PlusCircleIcon, CalendarDaysIcon, TrashIcon } from "@heroicons/react/24/outline";
 import axios from "axios";
 import { VITE_API_BASE_URL } from "../../../utils/api";
 import toast from "react-hot-toast";
@@ -9,6 +9,7 @@ const MyEvents = () => {
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState("all");
   const [selectedImage, setSelectedImage] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
   // Fetch vendor events from NEW API
   useEffect(() => {
@@ -21,7 +22,14 @@ const MyEvents = () => {
           { withCredentials: true }
         );
 
+        console.log("📸 API Response:", response.data);
+        console.log("📸 Event Images:", response.data?.eventImages);
+
         if (Array.isArray(response.data?.eventImages)) {
+          console.log("📸 Setting events with count:", response.data.eventImages.length);
+          response.data.eventImages.forEach((img, idx) => {
+            console.log(`  Image ${idx}:`, { imageID: img.imageID, vendor_id: img.vendor_id, url: img.imageUrl });
+          });
           setEvents(response.data.eventImages);
         } else {
           toast.error("No events found!");
@@ -35,8 +43,6 @@ const MyEvents = () => {
             icon: "⚠️",
             duration: 4000,
           });
-          // You can add navigation logic here if needed
-          // window.location.href = "/vendor/profile-setup";
         } else if (error.response?.status === 401) {
           toast.error("Please log in again.");
         } else {
@@ -49,6 +55,52 @@ const MyEvents = () => {
 
     fetchEvents();
   }, []);
+
+  const handleDeletePhoto = async (imageID, e) => {
+    e.stopPropagation();
+    
+    console.log("🗑️ Delete requested for imageID:", imageID, "Type:", typeof imageID);
+    
+    // Show confirmation dialog
+    if (!window.confirm("Are you sure you want to delete this photo?")) {
+      return;
+    }
+
+    setDeletingId(imageID);
+    try {
+      console.log("📤 Sending delete request with:", { imageID });
+      
+      const response = await axios.post(
+        `${VITE_API_BASE_URL}/Vendor/DeleteEventImage`,
+        { imageID },
+        { withCredentials: true }
+      );
+
+      console.log("✅ Delete response:", response.status, response.data);
+
+      if (response.status === 200) {
+        // Remove the deleted image from state
+        setEvents(events.filter((e) => e.imageID !== imageID));
+        toast.success("Photo deleted successfully!");
+      }
+    } catch (error) {
+      console.error("❌ Error deleting photo:", error);
+      console.error("Response data:", error.response?.data);
+      console.error("Status:", error.response?.status);
+      
+      if (error.response?.status === 404) {
+        toast.error(error.response?.data?.message || "Photo not found or already deleted");
+      } else if (error.response?.status === 401) {
+        toast.error("Please log in again.");
+      } else if (error.response?.status === 400) {
+        toast.error(error.response?.data?.message || "Invalid request");
+      } else {
+        toast.error(error.response?.data?.error || "Failed to delete photo.");
+      }
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const filteredEvents =
     filter === "all"
@@ -108,8 +160,7 @@ const MyEvents = () => {
         {filteredEvents.map((event) => (
           <div
             key={event.imageID}
-            onClick={() => setSelectedImage(event.imageUrl)}
-            className="group relative overflow-hidden rounded-lg shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer"
+            className="group relative overflow-hidden rounded-lg shadow-md hover:shadow-xl transition-all duration-300"
           >
             {event.imageUrl && (
               <img
@@ -120,8 +171,20 @@ const MyEvents = () => {
             )}
             
             {/* Overlay on hover */}
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-              <span className="text-white text-sm font-medium">View</span>
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3">
+              <button
+                onClick={() => setSelectedImage(event.imageUrl)}
+                className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded transition"
+              >
+                View
+              </button>
+              <button
+                onClick={(e) => handleDeletePhoto(event.imageID, e)}
+                disabled={deletingId === event.imageID}
+                className="p-1.5 bg-red-500 hover:bg-red-600 text-white rounded transition disabled:opacity-50"
+              >
+                <TrashIcon className="h-5 w-5" />
+              </button>
             </div>
           </div>
         ))}

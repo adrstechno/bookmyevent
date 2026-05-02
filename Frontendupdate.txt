@@ -1,0 +1,14 @@
+Frontend update log compared with main branch
+
+1. Frontend/src/ComingSoon.jsx: fixed the typo "Usefull" to "Useful" in the active UI text and the commented legacy text.
+2. Frontend/src/config/menuconfig.jsx: added FaBoxOpen and changed the vendor "Package" sidebar icon from FaShoppingCart to FaBoxOpen so the icons stay unique.
+3. Frontend/src/pages/Dashboards/Admin/AdminUsers.jsx: fixed the malformed gradient string, cleaned the JSX structure around the vendor-specific section, and removed unused catch variables.
+4. Frontend/src/pages/Dashboards/Vendor/VendorManualReservations.jsx: added proper loading/error states for vendor profile fetch, added toast errors when the page cannot load, and made the booking list fetch more stable.
+5. Frontend/src/pages/Dashboards/Vendor/VendorSettings.jsx: changed the top-bar greeting from "Welcome, Vendor" to "Welcome, {profile.business_name || 'Vendor'}".
+6. Frontend/src/pages/VendorDetail.jsx: added toast messages for blocked Book Now clicks, including loading state, missing vendor data, missing package, missing auth, and empty package list.
+7. Backend data update: added a one-off script earlier to fix service/subservice spelling in live DB, then removed the script after applying the updates.
+8. Backend DB image update: changed subservices_master id 14 (disco light) icon_url to /images/services/fashion/professionallighting.jpg.
+
+Validation:
+- ESLint passed for the updated frontend files after the fixes.
+- Live DB spell-fix audit was rerun after the backend data updates.

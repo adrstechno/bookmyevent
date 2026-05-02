@@ -1,5 +1,5 @@
 import express from 'express';
-import {insertVendor , getAllVendor , AddEventImages , getvendorById , GetVendorProfile , updateVendorProfile  , VendorShift , getVendorShiftforVendor , GetVendorShifts , GetvendorEventImages  , updateVendorShiftbyId  , deleteVendorShiftbyId , insertVendorPackage , updateVendorPackage , deleteVendorPackage , getAllVendorPackages , getvendorsByServiceId, getFreeVendorsByDay, GetVendorKPIs, GetVendorRecentActivities , getvendorsBysubserviceId } from '../Controllers/VendorController.js'; 
+import {insertVendor , getAllVendor , AddEventImages , getvendorById , GetVendorProfile , updateVendorProfile  , VendorShift , getVendorShiftforVendor , GetVendorShifts , GetvendorEventImages , deleteEventImage , updateVendorShiftbyId  , deleteVendorShiftbyId , insertVendorPackage , updateVendorPackage , deleteVendorPackage , getAllVendorPackages , getvendorsByServiceId, getFreeVendorsByDay, GetVendorKPIs, GetVendorRecentActivities , getvendorsBysubserviceId } from '../Controllers/VendorController.js'; 
 import { upload } from '../Utils/Upload.js';
 import { authenticateToken } from '../Utils/auth.js';
 
@@ -28,6 +28,7 @@ router.post('/AddvendorShifts', VendorShift);
 router.get('/getVendorShiftforVendor', getVendorShiftforVendor);
 router.get('/GetVendorShifts', GetVendorShifts);
 router.get('/GetvendorEventImages', GetvendorEventImages);
+router.post('/DeleteEventImage', deleteEventImage);
 
 // Dashboard routes with authentication
 router.get('/GetVendorKPIs', authenticateToken, GetVendorKPIs);
