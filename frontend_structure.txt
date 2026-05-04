@@ -1,0 +1,115 @@
+Frontend Application Structure & Regeneration Guide
+=================================================
+
+1) Short Overview (kya hai)
+- Ye project React + Vite frontend hai jisme Tailwind + MUI use hua hai. App ek event/booking dashboard aur public-facing pages provide karta hai (listing, services, booking flow, reviews, auth/OTP).
+- Entrypoint: `index.html` -> `src/main.jsx` (Vite + React mount). Bundler: Vite. Package scripts in `package.json`.
+
+2) Tech stack
+- Framework: React (with Vite)
+- Styling: Tailwind CSS + MUI (Material UI)
+- Tooling: Vite dev server, ESLint, PostCSS (likely), optionally Vercel config present.
+- Testing: none obvious (no tests folder).
+
+3) High-level src layout (approximate)
+- `src/`
+  - `assets/` - static images/fonts
+  - `components/` - shared UI components (buttons, inputs, layout, header/footer, cards)
+  - `pages/` or `screens/` - top-level pages (Home, Services, Booking, Dashboard, Auth)
+  - `hooks/` - custom hooks (data fetching, auth, form helpers)
+  - `services/` - API wrappers and network logic (calls to backend endpoints)
+  - `store/` - client state (context, Redux, or simple hooks)
+  - `utils/` - helpers and formatters
+  - `routes/` or `App.jsx` - Router setup (React Router or similar)
+  - `main.jsx` - app bootstrap
+
+Note: Exact directories in this repo include `src/components`, `src/hooks`, `src/services`, `src/screens` or `src/pages` (follow those names when regenerating).
+
+4) Key files to keep in mind
+- `index.html` - Vite HTML template
+- `vite.config.js` - Vite config
+- `package.json` - dependencies + dev scripts (`dev`, `build`, `preview`, `lint`)
+- `tailwind.config.js` - Tailwind config (theme customization may live here)
+- `src/main.jsx` - React mount + global providers (theme, router, store)
+- `src/App.jsx` - route definitions and layout wrapper
+- `src/services/*` - API endpoints and auth token handling
+
+5) Data flow and backend integration
+- Frontend talks to backend at endpoints in `Event_backend/Server.js`. Common flows:
+  - Auth & OTP: endpoints under `/api/otp` or `/otp`
+  - Services list: `/api/services`
+  - Booking creation: `/api/bookings` or similar
+  - Reviews, Notifications, Subscriptions endpoints also exist
+- Keep API base URL configurable via `.env` (there is a `.env` in this Frontend folder).
+
+6) How the UI is structured (component responsibilities)
+- Layout: `Header`, `Footer`, responsive container
+- Pages compose smaller components: e.g., `ServicesPage` uses `ServiceCard`, `Filters`, `Pagination`
+- Booking flow: multi-step form (select service -> choose slot -> enter customer details -> confirm)
+- Dashboard: protected routes (check auth token) and shows bookings, revenue, reviews admin actions
+
+7) Build & Run (commands you will need)
+- Install:
+  - `cd Frontend && npm install`
+- Dev server:
+  - `cd Frontend && npm run dev`
+- Build:
+  - `cd Frontend && npm run build`
+- Preview production build:
+  - `cd Frontend && npm run preview`
+
+8) Regeneration goal & constraints
+- Goal: regenerate an identical structure and behavior but "without theme" (i.e., minimal default styling). Provide a reproducible prompt that a generator/AI or scaffolder can use to recreate the app structure and components. Keep all pages, routes and API wiring same, but use neutral styling (no custom Tailwind theme, minimal CSS, optional MUI unthemed components).
+
+9) AI / Generator prompt (paste this to regenerate frontend)
+---
+Task: Generate a React + Vite frontend for an Event Booking application. Produce a repository that matches the structure and features of the existing app (pages, routes, components, API contracts) but use a minimal, unthemed UI (no custom theme colors or visuals). Keep layout and interactions the same.
+
+Requirements:
+- Project scaffold: Vite + React (JS or TS — prefer JS to match repo). Include `package.json`, `vite.config.js`, `index.html`.
+- Styling: Tailwind CSS installed but do NOT customize the Tailwind `theme`; keep default values. Also install MUI but do not apply a custom theme — use default MUI components minimally. Provide plain CSS fallback for small layout needs.
+- File structure (create these folders and representative files):
+  - `src/main.jsx` - mounts React, wraps Router and Providers
+  - `src/App.jsx` - route definitions (Home, Services, ServiceDetail, Booking, Auth (Login/OTP), Dashboard (protected), Reviews)
+  - `src/components/` - `Header.jsx`, `Footer.jsx`, `ServiceCard.jsx`, `BookingForm.jsx`, `ProtectedRoute.jsx`, `Pagination.jsx` (all minimal UI)
+  - `src/pages/` - `Home.jsx`, `Services.jsx`, `ServiceDetail.jsx`, `Booking.jsx`, `Login.jsx`, `OTPVerify.jsx`, `Dashboard.jsx`
+  - `src/services/api.js` - central API client using `fetch` with env-configurable base URL; include methods: `getServices()`, `getService(id)`, `createBooking(data)`, `loginOTP(phone)`, `verifyOTP(token)`, `getDashboardData()`
+  - `src/hooks/useAuth.js` - simple auth hook storing token in localStorage
+  - `src/utils/format.js` - date/time formatting helpers
+  - `src/assets/` - placeholder images
+
+Behavior & API wiring:
+- Use `import.meta.env.VITE_API_BASE` as the API base URL. Example API endpoints to implement in `api.js` (these should match backend):
+  - `GET /api/services` -> `getServices()`
+  - `GET /api/services/:id` -> `getService(id)`
+  - `POST /api/bookings` -> `createBooking(data)`
+  - `POST /api/otp` -> `loginOTP(phone)`
+  - `POST /api/otp/verify` -> `verifyOTP(token)`
+  - `GET /api/dashboard` -> `getDashboardData()` (requires Authorization header)
+
+Accessibility & responsiveness:
+- Make basic responsive layouts (mobile-first). Use semantic HTML and accessible labels.
+
+Deliverables:
+- A zip or repo with the full scaffold and example components implementing the above APIs and pages. Components should be functional and wired to the API client but can show placeholder data if backend is not available.
+
+Extra instructions for the generator:
+- Do NOT include any custom Tailwind color palettes or theme overrides. Keep Tailwind config minimal.
+- Keep MUI usage minimal (buttons, inputs). Do not apply a global theme.
+- Keep UI neutral and simple (shades of gray, default browser fonts). Focus on structure and correct routing and API wiring.
+---
+
+10) Minimal manual steps to verify after regeneration
+- `cd Frontend && npm install`
+- create `.env` with `VITE_API_BASE=http://localhost:3000/api` (or your backend URL)
+- `npm run dev` and open `http://localhost:5173`
+
+11) Notes & tips for fidelity
+- Keep component names and routes identical to facilitate swapping with existing backend controllers.
+- For forms, replicate field names expected by backend (check `Event_backend/Controllers/*` request bodies for exact keys if necessary).
+
+12) Next actions I can do for you
+- I can generate a scaffold repo from this prompt (create files and minimal components) inside `Frontend/`.
+- Or I can open specific frontend files and extract exact APIs/field names from the backend to make the regenerated front-end 1:1.
+
+-- End of file
