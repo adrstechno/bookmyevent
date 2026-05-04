@@ -1,0 +1,103 @@
+GOEVENTIFY - SERVICES & SUBSERVICES DATABASE
+=============================================
+
+TOTAL SERVICES: 5
+TOTAL SUBSERVICES: 20
+
+---
+
+SERVICES:
+---------
+
+1. Wedding Event
+   - ID: 270001
+   - Description: provide all type of wedding event vendors for all services
+
+2. Birthday Party Event
+   - ID: 270002
+   - Description: provide all type of birthday party event vendors for all services
+
+3. Kitty Party Event
+   - ID: 270003
+   - Description: provide all type of kitty party event vendors for all services
+
+4. Bhagwat Katha Event
+   - ID: 270004
+   - Description: provide all type of Bhagwat Katha event vendors for all services
+
+5. Office Seminar and Public Conference
+   - ID: 270005
+   - Description: provide all type of office seminar and public conference vendors for all services
+
+---
+
+SUBSERVICES:
+------------
+
+1. Band party services
+   - Available in: Wedding Event, Birthday Party Event, Bhagwat Katha Event
+
+2. Birthday Cake & Custom Cakes
+   - Available in: Birthday Party Event
+
+3. Caterers
+   - Available in: Wedding Event, Birthday Party Event, Kitty Party Event, Bhagwat Katha Event
+
+4. Clothes services
+   - Available in: (No categories assigned yet)
+
+5. Disco light
+   - Available in: Wedding Event
+
+6. DJ and sound system
+   - Available in: Birthday Party Event, Wedding Event, Kitty Party Event, Bhagwat Katha Event
+
+7. Entry and pyro balloon decoration
+   - Available in: Wedding Event, Birthday Party Event, Bhagwat Katha Event
+
+8. Fireworks
+   - Available in: Wedding Event, Bhagwat Katha Event
+
+9. Flower decoration
+   - Available in: Wedding Event, Birthday Party Event, Bhagwat Katha Event
+
+10. Fun & Entertainment Services
+    - Available in: Birthday Party Event
+
+11. Mehendi Service
+    - Available in: Wedding Event
+
+12. Musical Accompaniment / Arkestra
+    - Available in: Birthday Party Event, Wedding Event, Bhagwat Katha Event
+
+13. Pandit ji
+    - Available in: Wedding Event, Bhagwat Katha Event
+
+14. Parlor service
+    - Available in: Wedding Event, Kitty Party Event, Birthday Party Event, Office Seminar and Public Conference
+
+15. Party Hall and Garden
+    - Available in: Wedding Event, Birthday Party Event, Kitty Party Event, Office Seminar and Public Conference, Bhagwat Katha Event
+
+16. Security & Crowd Management [Volunteer]
+    - Available in: Wedding Event, Office Seminar and Public Conference, Bhagwat Katha Event
+
+17. Tent Agency and light
+    - Available in: Kitty Party Event, Bhagwat Katha Event, Office Seminar and Public Conference, Birthday Party Event, Wedding Event
+
+18. Traditional Turban (Pagdi) Tying Service
+    - Available in: Wedding Event
+
+19. Wedding Carriage (Baggi) Service
+    - Available in: Wedding Event
+
+20. Wedding Photography & Videography
+    - Available in: Wedding Event, Birthday Party Event, Kitty Party Event, Bhagwat Katha Event, Office Seminar and Public Conference
+
+---
+
+SUMMARY:
+--------
+- Most popular service: Wedding Event (14 subservices)
+- Most versatile subservices: Wedding Photography & Videography, Party Hall and Garden, Tent Agency and light (available in 5 categories)
+- Specialized subservices: Birthday Cake, Mehendi Service, Traditional Turban, Wedding Carriage (category-specific)

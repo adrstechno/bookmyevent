@@ -9,6 +9,7 @@ import {
 	View,
 	Pressable,
 } from 'react-native';
+import RazorpayCheckout from 'react-native-razorpay';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import FadeInView from '@/components/common/FadeInView';
@@ -21,8 +22,10 @@ import {
 	fetchVendorRecentActivities,
 } from '@/services/vendor/vendorService';
 import {
+	createSubscriptionOrder,
 	fetchSubscriptionStatus,
 	type SubscriptionStatus,
+	verifySubscriptionPayment,
 } from '@/services/vendor/subscriptionService';
 import { useAppSelector } from '@/store';
 import { useSettingsTheme } from '@/theme/settingsTheme';
@@ -44,7 +47,7 @@ const DEFAULT_SUB: SubscriptionStatus = {
 
 export default function VendorDashboardScreen() {
 	const { palette } = useSettingsTheme();
-	const { showError } = useAppToast();
+	const { showError, showInfo, showSuccess } = useAppToast();
 	const router = useRouter();
 	const name = useAppSelector((s: any) => s.auth.name);
 	const email = useAppSelector((s: any) => s.auth.email);
@@ -55,6 +58,7 @@ export default function VendorDashboardScreen() {
 	const [kpis, setKpis] = useState<VendorKpis>(EMPTY_KPIS);
 	const [activities, setActivities] = useState<VendorActivity[]>([]);
 	const [subscription, setSubscription] = useState<SubscriptionStatus>(DEFAULT_SUB);
+	const [paymentLoading, setPaymentLoading] = useState(false);
 
 	const vendorName = useMemo(() => {
 		if (name?.trim()) return name;
@@ -100,6 +104,58 @@ export default function VendorDashboardScreen() {
 	}, [showError]);
 
 	useEffect(() => { loadDashboard(); }, [loadDashboard]);
+
+	const handleSubscriptionPayment = useCallback(async () => {
+		if (paymentLoading) return;
+
+		setPaymentLoading(true);
+		try {
+			showInfo('Creating secure payment order...');
+			const order = await createSubscriptionOrder();
+
+			if (!order.orderId || !order.keyId || !order.vendorId) {
+				throw new Error('Payment order is incomplete. Please try again.');
+			}
+
+			const payment = await RazorpayCheckout.open({
+				key: order.keyId,
+				amount: order.amount,
+				currency: order.currency,
+				name: 'GoEventify',
+				description: 'Annual Vendor Subscription',
+				order_id: order.orderId,
+				prefill: {
+					name: order.businessName || vendorName,
+					email: email ?? undefined,
+				},
+				theme: {
+					color: '#f9a826',
+				},
+			});
+
+			showInfo('Verifying payment...');
+			await verifySubscriptionPayment({
+				razorpay_order_id: payment.razorpay_order_id,
+				razorpay_payment_id: payment.razorpay_payment_id,
+				razorpay_signature: payment.razorpay_signature,
+				vendor_id: order.vendorId,
+			});
+
+			const nextSub = await fetchSubscriptionStatus().catch(() => ({
+				...DEFAULT_SUB,
+				isActive: true,
+				hasSubscription: true,
+			}));
+			setSubscription(nextSub);
+			showSuccess('Subscription activated successfully.');
+		} catch (err: unknown) {
+			const error = err as { description?: string; message?: string; reason?: string };
+			const message = error.description || error.message || error.reason || 'Payment could not be completed. Please try again.';
+			showError(message);
+		} finally {
+			setPaymentLoading(false);
+		}
+	}, [email, paymentLoading, showError, showInfo, showSuccess, vendorName]);
 
 	// ── Loading ──────────────────────────────────────────────────
 	if (loading) {
@@ -191,7 +247,7 @@ export default function VendorDashboardScreen() {
 				<View style={s.headerCopy}>
 					<ThemedText style={[s.pageTitle, { color: palette.text }]}>Vendor Dashboard</ThemedText>
 					<ThemedText style={[s.pageSubtitle, { color: palette.muted }]}>
-						Welcome back, {vendorName}! Here's your business overview.
+						Welcome back, {vendorName}! Here is your business overview.
 					</ThemedText>
 				</View>
 
@@ -201,6 +257,8 @@ export default function VendorDashboardScreen() {
 						subscription={subscription}
 						isExpiringSoon={isExpiringSoon}
 						palette={palette}
+						paymentLoading={paymentLoading}
+						onPayPress={handleSubscriptionPayment}
 					/>
 				</FadeInView>
 
@@ -286,10 +344,14 @@ function SubscriptionCard({
 	subscription,
 	isExpiringSoon,
 	palette,
+	paymentLoading,
+	onPayPress,
 }: {
 	subscription: SubscriptionStatus;
 	isExpiringSoon: boolean;
 	palette: any;
+	paymentLoading: boolean;
+	onPayPress: () => void;
 }) {
 	const borderColor = subscription.isActive
 		? isExpiringSoon ? '#f9a826' : '#10b981'
@@ -343,13 +405,57 @@ function SubscriptionCard({
 					<ThemedText style={[s.daysText, { color: palette.muted }]}>
 						{subscription.daysRemaining} days remaining
 					</ThemedText>
+
+					{isExpiringSoon ? (
+						<SubscriptionPayButton
+							amountLabel="Renew"
+							loading={paymentLoading}
+							palette={palette}
+							onPress={onPayPress}
+						/>
+					) : null}
 				</>
 			) : (
-				<ThemedText style={[s.subBody, { color: palette.muted }]}>
-					You don't have an active subscription. Subscribe to start accepting bookings.
-				</ThemedText>
+				<>
+					<ThemedText style={[s.subBody, { color: palette.muted }]}>
+						You do not have an active subscription. Subscribe to start accepting bookings.
+					</ThemedText>
+					<SubscriptionPayButton
+						amountLabel="Pay & Activate"
+						loading={paymentLoading}
+						palette={palette}
+						onPress={onPayPress}
+					/>
+				</>
+				)}
+			</View>
+	);
+}
+
+function SubscriptionPayButton({
+	amountLabel,
+	loading,
+	palette,
+	onPress,
+}: {
+	amountLabel: string;
+	loading: boolean;
+	palette: any;
+	onPress: () => void;
+}) {
+	return (
+		<Pressable
+			style={[s.payBtn, { backgroundColor: palette.primary }, loading ? s.payBtnDisabled : null]}
+			disabled={loading}
+			onPress={onPress}
+		>
+			{loading ? (
+				<ActivityIndicator size="small" color="#fff" />
+			) : (
+				<Ionicons name="card-outline" size={18} color="#fff" />
 			)}
-		</View>
+			<ThemedText style={s.payBtnText}>{loading ? 'Processing...' : amountLabel}</ThemedText>
+		</Pressable>
 	);
 }
 
@@ -393,6 +499,17 @@ const s = StyleSheet.create({
 	expiryWarning: { borderRadius: 8, borderWidth: 1, padding: 10 },
 	daysText: { fontSize: 12 },
 	subBody: { fontSize: 14, lineHeight: 20 },
+	payBtn: {
+		height: 46,
+		borderRadius: 12,
+		alignItems: 'center',
+		justifyContent: 'center',
+		flexDirection: 'row',
+		gap: 8,
+		marginTop: 4,
+	},
+	payBtnDisabled: { opacity: 0.7 },
+	payBtnText: { fontSize: 14, fontWeight: '800', color: '#fff' },
 
 	// KPI
 	kpiRow: { flexDirection: 'row', gap: 10 },

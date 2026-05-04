@@ -270,7 +270,9 @@ const VendorSettings = () => {
         </h1>
         <div className="flex items-center space-x-3">
           <UserCircleIcon className="h-8 w-8 text-white" />
-          <span className="font-medium">Welcome, Vendor</span>
+          <span className="font-medium">
+            Welcome, {profile.business_name || "Vendor"}
+          </span>
         </div>
       </div>
 

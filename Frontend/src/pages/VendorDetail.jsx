@@ -117,9 +117,25 @@ const VendorDetail = () => {
   };
 
   const handleBookNow = (pkg) => {
-    if (!requireAuth('book this service')) {
+    if (loading) {
+      toast.error("Vendor details are still loading. Please try again in a moment.");
       return;
     }
+
+    if (!vendor) {
+      toast.error("Vendor details are unavailable right now.");
+      return;
+    }
+
+    if (!pkg) {
+      toast.error("Please select a package before booking.");
+      return;
+    }
+
+    if (!requireAuth("book this service")) {
+      return;
+    }
+
     setSelectedPackage(pkg);
     setShowBookingModal(true);
   };
@@ -322,7 +338,14 @@ const VendorDetail = () => {
                 )}
               </div>
               <motion.button whileHover={{ scale: 1.02, boxShadow: "0 10px 30px rgba(40, 75, 99, 0.3)" }} whileTap={{ scale: 0.98 }}
-                onClick={() => packages.length > 0 && handleBookNow(packages[0])}
+                onClick={() => {
+                  if (packages.length === 0) {
+                    toast.error("This vendor has no packages available to book yet.");
+                    return;
+                  }
+
+                  handleBookNow(packages[0]);
+                }}
                 className="w-full mt-6 py-4 bg-gradient-to-r from-[#284b63] to-[#3c6e71] text-white rounded-xl hover:from-[#3c6e71] hover:to-[#284b63] transition-all font-bold text-lg shadow-lg flex items-center justify-center gap-2">
                 <FiShoppingCart />Book Now
               </motion.button>

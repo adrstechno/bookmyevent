@@ -7,7 +7,7 @@ import App from "./App";
 import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
+  // <React.StrictMode>
     <BrowserRouter>
     <Toaster
         position="top-right"
@@ -23,7 +23,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       />
       <App />
     </BrowserRouter>
-  </React.StrictMode>
+  // </React.StrictMode>
 );
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {

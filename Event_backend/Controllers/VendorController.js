@@ -461,6 +461,85 @@ export const GetvendorEventImages = async (req, res) => {
   }
 };
 
+export const deleteEventImage = async (req, res) => {
+  try {
+    // Verify token
+    const token = req.cookies.auth_token;
+    if (!token) {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: No token provided" });
+    }
+
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return res.status(401).json({ message: "Unauthorized: Invalid token" });
+    }
+
+    // Get vendor_id
+    const vendor_id = await new Promise((resolve, reject) => {
+      VendorModel.findVendorID(decoded.userId, (err, result) => {
+        if (err) return reject(err);
+        resolve(result && result.length > 0 ? result[0].vendor_id : null);
+      });
+    });
+
+    if (!vendor_id) {
+      return res.status(404).json({ message: "Vendor not found" });
+    }
+
+    // Get imageID from request
+    const { imageID } = req.body;
+    if (!imageID) {
+      return res.status(400).json({ message: "imageID is required" });
+    }
+
+    console.log(`🔍 Attempting to delete image ${imageID} for vendor ${vendor_id}`);
+
+    // First, verify the image exists
+    const imageExists = await new Promise((resolve, reject) => {
+      VendorModel.getEventImageById(imageID, vendor_id, (err, result) => {
+        if (err) return reject(err);
+        resolve(result && result.length > 0 ? result[0] : null);
+      });
+    });
+
+    console.log(`📸 Image exists:`, imageExists);
+
+    if (!imageExists) {
+      console.log(`❌ Image ${imageID} not found for vendor ${vendor_id}`);
+      return res.status(404).json({ message: "Image not found" });
+    }
+
+    // Delete the image
+    const result = await new Promise((resolve, reject) => {
+      VendorModel.deleteEventImage(imageID, vendor_id, (err, result) => {
+        if (err) return reject(err);
+        resolve(result);
+      });
+    });
+
+    console.log("🗑️ Delete result:", result);
+    console.log("🗑️ Affected rows:", result?.affectedRows);
+
+    if (!result || result.affectedRows === 0) {
+      console.log(`❌ Failed to delete image ${imageID}`);
+      return res.status(500).json({ message: "Failed to delete image" });
+    }
+
+    console.log(`✅ Image ${imageID} deleted successfully for vendor ${vendor_id}`);
+    return res.status(200).json({
+      message: "Event image deleted successfully",
+      imageID,
+    });
+  } catch (err) {
+    console.error("Error deleting event image:", err);
+    return res
+      .status(500)
+      .json({ error: "Server error", details: err.message });
+  }
+};
+
 export const updateVendorShiftbyId = async (req, res) => {
   try {
     const token = req.cookies.auth_token;
