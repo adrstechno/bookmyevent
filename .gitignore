@@ -1,0 +1,2 @@
+# Ignore all markdown documentation/debug files at root level
+*.md
