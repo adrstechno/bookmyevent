@@ -28,7 +28,7 @@ export const authenticateToken = (req, res, next) => {
         }
         
         // Get full user info from database
-        const userId = decoded.userId;
+        const userId = decoded.uuid ?? decoded.userId; // support both old and new tokens
         
         // Query to get user info and vendor_id if exists
         // Note: vendor_profiles.user_id might store uuid (string) or user_id (int) depending on how vendor was created

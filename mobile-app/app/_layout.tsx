@@ -151,32 +151,34 @@ const dispatch = useAppDispatch();
 const { isHydrated, token } = useAppSelector((state) => state.auth);
 const { palette } = useSettingsTheme();
 
+// Step 1: Pehle callback register karo, phir bootstrap karo
+// Taaki bootstrap ke dauran bhi token invalid callback available ho
 useEffect(() => {
-dispatch(bootstrapAuth());
+	setOnTokenInvalidCallback(() => {
+		console.log('[RootNavigator] Token invalid/expired. Logging out...');
+		void dispatch(handleSessionExpired());
+	});
+
+	// Bootstrap tab karo jab callback set ho chuka ho
+	void dispatch(bootstrapAuth());
+
+	return () => {
+		setOnTokenInvalidCallback(null);
+	};
 }, [dispatch]);
 
-useEffect(() => {
-// Register callback for when API detects invalid/expired token (401/403)
-// This will automatically log out the user and clear their session
-setOnTokenInvalidCallback(() => {
-console.log('[RootNavigator] Token invalid/expired. Logging out...');
-void dispatch(handleSessionExpired());
-});
-
-return () => {
-setOnTokenInvalidCallback(null);
-};
-}, [dispatch]);
-
+// Step 2: Token change hone par API client update karo
 useEffect(() => {
 if (token) {
-setApiAuthToken(token);
-return;
+	// Naya valid token mila — API client mein set karo (flag bhi reset hoga)
+	setApiAuthToken(token);
+	return;
 }
-
+// Token null hua (logout) — clear karo
 clearApiAuthToken();
 }, [token]);
 
+// Step 3: Token expiry timer set karo
 useEffect(() => {
 if (!token) {
 return;

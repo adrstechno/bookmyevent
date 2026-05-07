@@ -27,6 +27,10 @@ export const API_ENDPOINTS = {
 		resendVerification: `${ROOT.USER}/resend-verification`,
 		changePassword: `${ROOT.USER}/changePassword`,
 	},
+	profile: {
+		get: `${ROOT.USER}/profile`,
+		update: `${ROOT.USER}/profile`,
+	},
 	service: {
 		all: `${ROOT.SERVICE}/GetAllServices`,
 		byId: (serviceId: number | string) => `${ROOT.SERVICE}/GetServiceById/${serviceId}`,

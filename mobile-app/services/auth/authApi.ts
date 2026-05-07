@@ -181,14 +181,12 @@ export const validateToken = async (): Promise<AuthenticatedUserProfile> => {
 };
 
 export const changePassword = async (payload: {
-  email: string;
   oldPassword: string;
   newPassword: string;
 }): Promise<string> => {
   const response = await apiClient.post<{ message?: string }>(
     API_ENDPOINTS.auth.changePassword,
     {
-      email: payload.email,
       oldPassword: payload.oldPassword,
       newPassword: payload.newPassword,
     },
