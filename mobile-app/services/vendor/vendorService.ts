@@ -407,13 +407,13 @@ export type VendorEventImage = {
 };
 
 export const fetchVendorEventImages = async (): Promise<VendorEventImage[]> => {
-	// No vendor_id needed — backend derives it from auth token
 	const response = await apiClient.get(API_ENDPOINTS.vendor.eventImages);
 	const payload = toObject(response.data);
 	const rows = toRows(payload.eventImages ?? payload.data ?? payload);
 
 	return rows.map((row) => ({
-		imageId: row.image_id ?? row.id ?? '',
+		// Backend returns imageID (capital ID) from Event_images table
+		imageId: row.imageID ?? row.image_id ?? row.id ?? '',
 		imageUrl: toText(row.imageUrl ?? row.event_profiles_url ?? row.url),
 	})).filter((img) => img.imageUrl);
 };
@@ -434,5 +434,15 @@ export const uploadVendorEventImages = async (imageUris: string[]): Promise<void
 
 	await apiClient.post(API_ENDPOINTS.vendor.uploadEventImages, formData, {
 		headers: { 'Content-Type': 'multipart/form-data' },
+	});
+};
+
+/**
+ * Delete a vendor event image by imageID.
+ * Backend: POST /Vendor/DeleteEventImage  { imageID }
+ */
+export const deleteVendorEventImage = async (imageId: number | string): Promise<void> => {
+	await apiClient.post(API_ENDPOINTS.vendor.deleteEventImage, {
+		imageID: imageId,
 	});
 };

@@ -2,13 +2,16 @@ import mysql from 'mysql2';
 
 // Note: dotenv is configured in Server.js before this module is loaded
 
-// LOCAL DATABASE CONFIGURATION (ACTIVE)
+// CLOUD DATABASE CONFIGURATION (TiDB) - ACTIVE
 const pool = mysql.createPool({
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 3306,
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'goeventifydb',
+    host: process.env.DB_HOST,
+    port: Number(process.env.DB_PORT) || 4000,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    ssl: {
+        rejectUnauthorized: false
+    },
     connectionLimit: 10,
     waitForConnections: true,
     queueLimit: 0,
@@ -18,18 +21,13 @@ const pool = mysql.createPool({
     multipleStatements: true
 });
 
-// CLOUD DATABASE CONFIGURATION (COMMENTED OUT FOR LOCAL TESTING)
-// import { URL } from 'url';
-// const mysqlUrl = new URL('mysql://7BwYZV8pqsv5d1i.root:JcdhlSC3TEcYfndd@gateway01.ap-southeast-1.prod.aws.tidbcloud.com:4000/Event_Managment?ssl={"rejectUnauthorized":true}');
+// LOCAL DATABASE CONFIGURATION (COMMENTED OUT)
 // const pool = mysql.createPool({
-//     host: mysqlUrl.hostname,
-//     port: mysqlUrl.port || 3306,
-//     user: mysqlUrl.username,
-//     password: mysqlUrl.password,
-//     database: mysqlUrl.pathname.slice(1),
-//     ssl: {
-//         rejectUnauthorized: false
-//     },
+//     host: 'localhost',
+//     port: 3306,
+//     user: 'root',
+//     password: 'Nayan@1234',
+//     database: 'goeventifydb',
 //     connectionLimit: 10,
 //     waitForConnections: true,
 //     queueLimit: 0,
@@ -44,7 +42,7 @@ pool.getConnection((err, connection) => {
     if (err) {
         console.error('❌ Error connecting to database:', err.message);
     } else {
-        console.log('✅ Connected to LOCAL database successfully!');
+        console.log('✅ Connected to CLOUD database (TiDB) successfully!');
         connection.release();
     }
 });

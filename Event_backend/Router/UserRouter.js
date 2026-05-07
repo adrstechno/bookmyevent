@@ -24,6 +24,10 @@ router.get('/profile', authenticateToken, getUserProfile);
 router.put('/profile', authenticateToken, updateUserProfile);
 router.post('/validate-token', authenticateToken, validateToken);
 
+// ── Mobile app profile routes (same logic, dedicated path for mobile) ──
+router.get('/mobile-profile', authenticateToken, getUserProfile);
+router.put('/mobile-profile', authenticateToken, updateUserProfile);
+
 // Test / debug routes
 router.post('/test-email', testEmail);
 router.get('/debug-vendor/:vendor_id', debugVendorData);

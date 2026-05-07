@@ -8,27 +8,59 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAppSelector } from '@/store';
 import { AppTopBar } from '@/components/layout/AppTopBar';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { useSettingsTheme } from '@/theme/settingsTheme';
 
-const DUMMY_FAQ = [
-	'How to reschedule a booking?',
-	'When will refund be processed?',
-	'How to contact event manager?',
-	'How can I update my profile details?',
-	'Where can I check my booking status?',
-	'Can I cancel my booking from the app?',
-	'How do I download payment invoice?',
-	'What if event venue is changed by vendor?',
-	'How do I raise a complaint for service quality?',
-	'Can I get support on weekends?',
+// ─── Data ────────────────────────────────────────────────────
+
+const SUPPORT_CHANNELS = [
+	{
+		key: 'call' as const,
+		icon: 'call-outline' as const,
+		label: 'Call Support',
+		value: '+91 98765 00000',
+	},
+	{
+		key: 'mail' as const,
+		icon: 'mail-outline' as const,
+		label: 'Email',
+		value: 'goeventify@adrstechno.com',
+	},
+	{
+		key: 'whatsapp' as const,
+		icon: 'logo-whatsapp' as const,
+		label: 'WhatsApp',
+		value: '+91 98765 00000',
+	},
 ];
 
-const SUPPORT_OPTIONS = [
-	{ key: 'call', label: 'Call Support', value: '+91 98765 00000', icon: 'call-outline', color: '#10B981' },
-	{ key: 'mail', label: 'Email', value: 'support@goeventify.demo', icon: 'mail-outline', color: '#3B82F6' },
-	{ key: 'whatsapp', label: 'WhatsApp', value: '+91 98765 00000', icon: 'logo-whatsapp', color: '#22C55E' },
+const FAQS = [
+	{
+		q: 'How do I reschedule a booking?',
+		a: 'Go to My Bookings, select the booking you want to reschedule, and tap "Reschedule". Choose a new date and confirm. Note that rescheduling is subject to vendor availability.',
+	},
+	{
+		q: 'When will my refund be processed?',
+		a: 'Refunds are processed within 5–7 business days after cancellation approval. The amount will be credited back to your original payment method.',
+	},
+	{
+		q: 'How do I contact the event manager?',
+		a: 'After a booking is confirmed, you can find the vendor\'s contact details on the booking detail page under "Vendor Info".',
+	},
+	{
+		q: 'How can I update my profile details?',
+		a: 'Tap on your profile picture or go to Profile tab → Edit Profile. You can update your name, phone number, and profile photo.',
+	},
+	{
+		q: 'Can I cancel my booking from the app?',
+		a: 'Yes. Go to My Bookings, select the booking, and tap "Cancel Booking". Cancellation charges may apply depending on the vendor\'s policy.',
+	},
+	{
+		q: 'Can I get support on weekends?',
+		a: 'Yes, our support team is available 7 days a week. Response time may be slightly longer on weekends (4–6 hours).',
+	},
 ];
+
+// ─── Component ───────────────────────────────────────────────
 
 export default function SupportScreen() {
 	const router = useRouter();
@@ -36,222 +68,182 @@ export default function SupportScreen() {
 	const { isAuthenticated, isHydrated } = useAppSelector((state) => state.auth);
 	const { mode, palette } = useSettingsTheme();
 	const isDark = mode === 'dark';
-	const screenBg = palette.screenBg;
-	const surfaceBg = palette.surfaceBg;
-	const border = palette.border;
-	const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null);
-	
-	const supportEmail = 'support@goeventify.demo';
-	const supportPhone = '+91 98765 00000';
 
-	const goToProfile = useCallback(() => {
+	const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null);
+
+	const supportPhone = '+91 98765 00000';
+	const supportEmail = 'goeventify@adrstechno.com';
+
+	const goBack = useCallback(() => {
 		router.replace('/(tabs)/profile');
 	}, [router]);
 
-	const handleSupportOptionPress = useCallback(async (key: 'call' | 'mail' | 'whatsapp') => {
-		try {
-			if (key === 'call') {
-				const callUrl = `tel:${supportPhone.replace(/\s+/g, '')}`;
-				await Linking.openURL(callUrl);
-				return;
-			}
-
-			if (key === 'whatsapp') {
-				const whatsappUrl = `whatsapp://send?phone=${supportPhone.replace(/\s+/g, '')}&text=Hi, I need help with GoEventify`;
-				const canOpen = await Linking.canOpenURL(whatsappUrl);
-				if (canOpen) {
-					await Linking.openURL(whatsappUrl);
-				} else {
-					Alert.alert('WhatsApp not installed', 'Please install WhatsApp to use this feature.');
-				}
-				return;
-			}
-
-			const subject = encodeURIComponent('Support Request - GoEventify');
-			const gmailUrl = `googlegmail://co?to=${supportEmail}&subject=${subject}`;
-			const mailtoUrl = `mailto:${supportEmail}?subject=${subject}`;
-
-			const canOpenGmail = await Linking.canOpenURL(gmailUrl);
-			if (canOpenGmail) {
-				await Linking.openURL(gmailUrl);
-				return;
-			}
-
-			await Linking.openURL(mailtoUrl);
-		} catch {
-			Alert.alert('Unable to open', key === 'call' ? 'Calling is not available on this device.' : key === 'whatsapp' ? 'WhatsApp is not available.' : 'Email app is not available on this device.');
-		}
-	}, [supportEmail, supportPhone]);
-
-	const toggleFAQ = (index: number) => {
-		setExpandedFAQ(expandedFAQ === index ? null : index);
-	};
-
 	useEffect(() => {
-		const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
-			goToProfile();
+		const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+			goBack();
 			return true;
 		});
+		return () => sub.remove();
+	}, [goBack]);
 
-		return () => subscription.remove();
-	}, [goToProfile]);
+	const handleChannel = useCallback(
+		async (key: 'call' | 'mail' | 'whatsapp') => {
+			try {
+				if (key === 'call') {
+					await Linking.openURL(`tel:${supportPhone.replace(/\s+/g, '')}`);
+					return;
+				}
+				if (key === 'whatsapp') {
+					const url = `whatsapp://send?phone=${supportPhone.replace(/\s+/g, '')}&text=Hi, I need help with GoEventify`;
+					const canOpen = await Linking.canOpenURL(url);
+					if (canOpen) {
+						await Linking.openURL(url);
+					} else {
+						Alert.alert('WhatsApp not installed', 'Please install WhatsApp to use this feature.');
+					}
+					return;
+				}
+				const subject = encodeURIComponent('Support Request - GoEventify');
+				const gmail = `googlegmail://co?to=${supportEmail}&subject=${subject}`;
+				const mailto = `mailto:${supportEmail}?subject=${subject}`;
+				const canGmail = await Linking.canOpenURL(gmail);
+				await Linking.openURL(canGmail ? gmail : mailto);
+			} catch {
+				Alert.alert(
+					'Unable to open',
+					key === 'call'
+						? 'Calling is not available on this device.'
+						: key === 'whatsapp'
+						? 'WhatsApp is not available.'
+						: 'Email app is not available on this device.',
+				);
+			}
+		},
+		[supportEmail, supportPhone],
+	);
 
 	if (isHydrated && !isAuthenticated) {
 		return <Redirect href="/(auth)/login" />;
 	}
 
 	return (
-		<SafeAreaView style={[styles.safeArea, { backgroundColor: screenBg }]} edges={['top', 'bottom']}>
+		<SafeAreaView style={[styles.safe, { backgroundColor: palette.screenBg }]} edges={['top', 'bottom']}>
 			<StatusBar style={isDark ? 'light' : 'dark'} />
-			<AppTopBar title="Support" onBackPress={goToProfile} />
+			<AppTopBar title="Support" onBackPress={goBack} />
 
 			<ScrollView
-				style={styles.page}
-				contentContainerStyle={[styles.container, { paddingBottom: insets.bottom + 20 }]}
 				showsVerticalScrollIndicator={false}
+				contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 32 }]}
 			>
-				{/* Enhanced Hero Card */}
-				<ThemedView style={[styles.heroCard, { backgroundColor: surfaceBg, borderColor: border }]}>
-					<View style={styles.heroIconContainer}>
-						<Ionicons name="headset-outline" size={32} color={palette.primary} />
+				{/* ── Hero ── */}
+				<View style={[styles.hero, { backgroundColor: palette.primary }]}>
+					<View style={styles.heroIconWrap}>
+						<Ionicons name="headset-outline" size={28} color="#FFFFFF" />
 					</View>
-					<ThemedText style={[styles.heroTitle, { color: palette.text }]}>Need Help?</ThemedText>
-					<ThemedText style={[styles.heroSubtext, { color: palette.subtext }]}>
-						Our support team is here to help you with bookings and payments.
+					<ThemedText style={styles.heroTitle}>How can we help?</ThemedText>
+					<ThemedText style={styles.heroDesc}>
+						Our support team is available 7 days a week to assist you with bookings, payments, and more.
 					</ThemedText>
-					<Pressable
-						style={({ pressed }) => [
-							styles.primaryBtn,
-							{ backgroundColor: palette.primary, borderColor: palette.primaryStrong, shadowColor: palette.shadow },
-							pressed ? styles.primaryBtnPressed : null,
-						]}
-					>
-						<Ionicons name="add-circle-outline" size={18} color="#FFFFFF" />
-						<ThemedText style={styles.primaryBtnText}>Create New Ticket</ThemedText>
-					</Pressable>
-				</ThemedView>
+				</View>
 
-				{/* Enhanced Support Channels */}
-				<ThemedText style={[styles.sectionTitle, { color: palette.text }]}>Support Channels</ThemedText>
-				{SUPPORT_OPTIONS.map((item) => (
-					<Pressable 
-						key={item.key} 
-						style={({ pressed }) => [
-							styles.optionRow, 
-							{ backgroundColor: surfaceBg, borderColor: border },
-							pressed && styles.optionRowPressed
-						]} 
-						onPress={() => handleSupportOptionPress(item.key as 'call' | 'mail' | 'whatsapp')}
-					>
-						<View style={styles.optionLeft}>
-							<View style={[styles.optionIconWrap, { backgroundColor: item.color + '15' }]}>
-								<Ionicons name={item.icon as any} size={20} color={item.color} />
+				{/* ── Support Channels ── */}
+				<View style={styles.section}>
+					<ThemedText style={[styles.sectionTitle, { color: palette.text }]}>Contact Us</ThemedText>
+					<View style={[styles.card, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
+						{SUPPORT_CHANNELS.map((ch, i) => (
+							<View key={ch.key}>
+								{i > 0 && <View style={[styles.divider, { backgroundColor: palette.border }]} />}
+								<Pressable
+									style={({ pressed }) => [
+										styles.channelRow,
+										pressed && { backgroundColor: palette.pressedBg },
+									]}
+									onPress={() => void handleChannel(ch.key)}
+								>
+									<View style={[styles.channelIcon, { backgroundColor: isDark ? '#1E293B' : '#F1F5F9' }]}>
+										<Ionicons name={ch.icon} size={18} color={palette.primary} />
+									</View>
+									<View style={styles.channelText}>
+										<ThemedText style={[styles.channelLabel, { color: palette.subtext }]}>{ch.label}</ThemedText>
+										<ThemedText style={[styles.channelValue, { color: palette.text }]}>{ch.value}</ThemedText>
+									</View>
+									<Ionicons name="chevron-forward" size={16} color={palette.subtext} />
+								</Pressable>
 							</View>
-							<View style={styles.optionTextContainer}>
-								<ThemedText style={[styles.optionLabel, { color: palette.text }]}>{item.label}</ThemedText>
-								<ThemedText style={[styles.optionValue, { color: palette.subtext }]}>{item.value}</ThemedText>
-							</View>
-						</View>
-						<Ionicons name="chevron-forward" size={18} color={palette.subtext} />
-					</Pressable>
-				))}
+						))}
+					</View>
+				</View>
 
-				{/* Enhanced FAQs */}
-				<ThemedText style={[styles.sectionTitle, { color: palette.text }]}>Popular FAQs</ThemedText>
-				<ThemedText style={[styles.sectionSubtitle, { color: palette.subtext }]}>
-					Find quick answers to common questions
+				{/* ── Response Time ── */}
+				<View style={[styles.infoRow, { backgroundColor: isDark ? '#1E293B' : '#F0FDF4', borderColor: isDark ? '#334155' : '#BBF7D0' }]}>
+					<Ionicons name="time-outline" size={16} color={isDark ? '#86EFAC' : '#16A34A'} />
+					<ThemedText style={[styles.infoText, { color: isDark ? '#86EFAC' : '#166534' }]}>
+						We typically respond within 2–4 hours. Urgent? Call us directly.
+					</ThemedText>
+				</View>
+
+				{/* ── FAQs ── */}
+				<View style={styles.section}>
+					<ThemedText style={[styles.sectionTitle, { color: palette.text }]}>Frequently Asked Questions</ThemedText>
+					<View style={[styles.card, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
+						{FAQS.map((faq, i) => (
+							<View key={i}>
+								{i > 0 && <View style={[styles.divider, { backgroundColor: palette.border }]} />}
+								<Pressable
+									style={({ pressed }) => [
+										styles.faqRow,
+										pressed && { backgroundColor: palette.pressedBg },
+									]}
+									onPress={() => setExpandedFAQ(expandedFAQ === i ? null : i)}
+								>
+									<ThemedText style={[styles.faqQ, { color: palette.text }]}>{faq.q}</ThemedText>
+									<Ionicons
+										name={expandedFAQ === i ? 'chevron-up' : 'chevron-down'}
+										size={16}
+										color={palette.subtext}
+									/>
+								</Pressable>
+								{expandedFAQ === i && (
+									<View style={[styles.faqAnswer, { backgroundColor: isDark ? '#0F172A' : '#F8FAFC' }]}>
+										<ThemedText style={[styles.faqA, { color: palette.subtext }]}>{faq.a}</ThemedText>
+									</View>
+								)}
+							</View>
+						))}
+					</View>
+				</View>
+
+				{/* ── Footer ── */}
+				<ThemedText style={[styles.footer, { color: palette.subtext }]}>
+					GoEventify Support · Available 7 days a week
 				</ThemedText>
-				{DUMMY_FAQ.map((faq, index) => (
-					<View key={faq}>
-						<Pressable
-							style={({ pressed }) => [
-								styles.faqRow,
-								{ backgroundColor: surfaceBg, borderColor: border },
-								pressed && styles.faqRowPressed
-							]}
-							onPress={() => toggleFAQ(index)}
-						>
-							<View style={styles.faqLeft}>
-								<View style={[styles.faqIconContainer, { backgroundColor: palette.headerBtnBg }]}>
-									<Ionicons name="help-circle-outline" size={18} color={palette.tint} />
-								</View>
-								<ThemedText style={[styles.faqText, { color: palette.text }]}>{faq}</ThemedText>
-							</View>
-							<Ionicons 
-								name={expandedFAQ === index ? "chevron-up" : "chevron-down"} 
-								size={18} 
-								color={palette.subtext} 
-							/>
-						</Pressable>
-						{expandedFAQ === index && (
-							<ThemedView style={[styles.faqAnswer, { backgroundColor: isDark ? '#1E293B' : '#F8FAFC', borderColor: border }]}>
-								<ThemedText style={[styles.faqAnswerText, { color: palette.subtext }]}>
-									This is a sample answer for the FAQ. In production, this would contain detailed information to help users resolve their queries.
-								</ThemedText>
-							</ThemedView>
-						)}
-					</View>
-				))}
-
-				{/* Emergency Support Card */}
-				<ThemedView style={[styles.emergencyCard, { backgroundColor: isDark ? '#7F1D1D' : '#FEE2E2', borderColor: isDark ? '#991B1B' : '#FCA5A5' }]}>
-					<View style={styles.emergencyHeader}>
-						<Ionicons name="alert-circle" size={24} color={isDark ? '#FCA5A5' : '#DC2626'} />
-						<ThemedText style={[styles.emergencyTitle, { color: isDark ? '#FCA5A5' : '#DC2626' }]}>
-							Emergency Support
-						</ThemedText>
-					</View>
-					<ThemedText style={[styles.emergencyText, { color: isDark ? '#FCA5A5' : '#991B1B' }]}>
-						For urgent issues, call us immediately
-					</ThemedText>
-					<Pressable
-						style={[styles.emergencyButton, { backgroundColor: isDark ? '#991B1B' : '#DC2626' }]}
-						onPress={() => handleSupportOptionPress('call')}
-					>
-						<Ionicons name="call" size={18} color="#FFFFFF" />
-						<ThemedText style={styles.emergencyButtonText}>Call Now: {supportPhone}</ThemedText>
-					</Pressable>
-				</ThemedView>
-
-				{/* Footer Note */}
-				<ThemedView style={[styles.footerCard, { backgroundColor: surfaceBg, borderColor: border }]}>
-					<Ionicons name="information-circle-outline" size={18} color={palette.tint} />
-					<ThemedText style={[styles.footerNote, { color: palette.subtext }]}>
-						We typically respond within 2-4 hours. For urgent matters, please call us directly.
-					</ThemedText>
-				</ThemedView>
 			</ScrollView>
 		</SafeAreaView>
 	);
 }
 
+// ─── Styles ──────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
-	safeArea: {
-		flex: 1,
-		backgroundColor: '#F4F7F9',
+	safe: { flex: 1 },
+	scroll: {
+		paddingHorizontal: 16,
+		paddingTop: 16,
+		gap: 20,
 	},
-	page: {
-		flex: 1,
-	},
-	container: {
-		padding: 16,
-		gap: 12,
-	},
-	// Enhanced Hero Card
-	heroCard: {
-		borderRadius: 16,
-		padding: 18,
-		backgroundColor: '#FFFFFF',
-		borderWidth: 1,
-		borderColor: '#E2E8F0',
-		gap: 10,
+
+	// Hero
+	hero: {
+		borderRadius: 18,
+		padding: 24,
 		alignItems: 'center',
+		gap: 8,
 	},
-	heroIconContainer: {
-		width: 60,
-		height: 60,
-		borderRadius: 30,
-		backgroundColor: '#ECFEFF',
+	heroIconWrap: {
+		width: 56,
+		height: 56,
+		borderRadius: 28,
+		backgroundColor: 'rgba(255,255,255,0.18)',
 		alignItems: 'center',
 		justifyContent: 'center',
 		marginBottom: 4,
@@ -259,189 +251,113 @@ const styles = StyleSheet.create({
 	heroTitle: {
 		fontSize: 22,
 		fontWeight: '800',
-		color: '#0F172A',
-		textAlign: 'center',
-	},
-	heroSubtext: {
-		fontSize: 13,
-		color: '#64748B',
-		textAlign: 'center',
-		lineHeight: 18,
-	},
-	primaryBtn: {
-		marginTop: 6,
-		backgroundColor: '#0F766E',
-		paddingVertical: 12,
-		paddingHorizontal: 24,
-		borderRadius: 12,
-		alignItems: 'center',
-		flexDirection: 'row',
-		gap: 8,
-		borderWidth: 1,
-		shadowOpacity: 0.2,
-		shadowOffset: { width: 0, height: 4 },
-		shadowRadius: 8,
-		elevation: 4,
-	},
-	primaryBtnPressed: {
-		opacity: 0.9,
-		transform: [{ scale: 0.98 }],
-	},
-	primaryBtnText: {
 		color: '#FFFFFF',
-		fontSize: 14,
-		fontWeight: '700',
 	},
-	// Section Headers
-	sectionTitle: {
-		fontSize: 17,
-		fontWeight: '800',
-		color: '#0F172A',
-		marginTop: 4,
-	},
-	sectionSubtitle: {
-		fontSize: 12,
-		color: '#64748B',
-		marginTop: -8,
-		marginBottom: 4,
-	},
-	// Enhanced Support Options
-	optionRow: {
-		borderRadius: 14,
-		paddingHorizontal: 14,
-		paddingVertical: 14,
-		backgroundColor: '#FFFFFF',
-		borderWidth: 1,
-		borderColor: '#E2E8F0',
-		flexDirection: 'row',
-		alignItems: 'center',
-		justifyContent: 'space-between',
-	},
-	optionRowPressed: {
-		opacity: 0.7,
-		transform: [{ scale: 0.98 }],
-	},
-	optionLeft: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		gap: 12,
-		flex: 1,
-	},
-	optionIconWrap: {
-		width: 44,
-		height: 44,
-		borderRadius: 12,
-		alignItems: 'center',
-		justifyContent: 'center',
-	},
-	optionTextContainer: {
-		flex: 1,
-		gap: 2,
-	},
-	optionLabel: {
-		fontSize: 14,
-		fontWeight: '700',
-		color: '#1F2937',
-	},
-	optionValue: {
-		fontSize: 12,
-		color: '#64748B',
-		fontWeight: '500',
-	},
-	// Enhanced FAQ
-	faqRow: {
-		borderRadius: 12,
-		paddingHorizontal: 14,
-		paddingVertical: 12,
-		backgroundColor: '#FFFFFF',
-		borderWidth: 1,
-		borderColor: '#E2E8F0',
-		flexDirection: 'row',
-		alignItems: 'center',
-		justifyContent: 'space-between',
-	},
-	faqRowPressed: {
-		opacity: 0.7,
-	},
-	faqLeft: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		gap: 10,
-		flex: 1,
-	},
-	faqIconContainer: {
-		width: 32,
-		height: 32,
-		borderRadius: 8,
-		alignItems: 'center',
-		justifyContent: 'center',
-	},
-	faqText: {
+	heroDesc: {
 		fontSize: 13,
-		fontWeight: '600',
-		color: '#334155',
-		flex: 1,
+		color: 'rgba(255,255,255,0.75)',
+		textAlign: 'center',
+		lineHeight: 20,
+		paddingHorizontal: 8,
 	},
-	faqAnswer: {
-		marginTop: 4,
-		marginBottom: 8,
-		borderRadius: 12,
-		padding: 14,
-		borderWidth: 1,
-	},
-	faqAnswerText: {
-		fontSize: 12,
-		lineHeight: 18,
-		color: '#64748B',
-	},
-	// Emergency Card
-	emergencyCard: {
-		borderRadius: 14,
-		padding: 16,
-		borderWidth: 1,
+
+	// Section
+	section: {
 		gap: 10,
 	},
-	emergencyHeader: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		gap: 8,
-	},
-	emergencyTitle: {
+	sectionTitle: {
 		fontSize: 16,
 		fontWeight: '800',
 	},
-	emergencyText: {
-		fontSize: 13,
-		fontWeight: '600',
+
+	// Card
+	card: {
+		borderRadius: 14,
+		borderWidth: 1,
+		overflow: 'hidden',
 	},
-	emergencyButton: {
-		marginTop: 4,
-		paddingVertical: 12,
-		paddingHorizontal: 16,
-		borderRadius: 10,
+	divider: {
+		height: 1,
+		marginHorizontal: 14,
+	},
+
+	// Channel rows
+	channelRow: {
 		flexDirection: 'row',
 		alignItems: 'center',
+		gap: 12,
+		paddingHorizontal: 14,
+		paddingVertical: 13,
+		borderRadius: 0,
+	},
+	channelIcon: {
+		width: 36,
+		height: 36,
+		borderRadius: 9,
+		alignItems: 'center',
 		justifyContent: 'center',
-		gap: 8,
+		flexShrink: 0,
 	},
-	emergencyButtonText: {
-		color: '#FFFFFF',
+	channelText: {
+		flex: 1,
+		gap: 2,
+	},
+	channelLabel: {
+		fontSize: 11,
+		fontWeight: '600',
+		textTransform: 'uppercase',
+		letterSpacing: 0.4,
+	},
+	channelValue: {
 		fontSize: 14,
-		fontWeight: '700',
+		fontWeight: '600',
 	},
-	// Footer
-	footerCard: {
-		borderRadius: 12,
-		padding: 14,
-		borderWidth: 1,
+
+	// Info row
+	infoRow: {
 		flexDirection: 'row',
-		alignItems: 'flex-start',
+		alignItems: 'center',
+		gap: 8,
+		borderRadius: 10,
+		borderWidth: 1,
+		paddingHorizontal: 14,
+		paddingVertical: 10,
+	},
+	infoText: {
+		flex: 1,
+		fontSize: 12,
+		fontWeight: '600',
+		lineHeight: 18,
+	},
+
+	// FAQ
+	faqRow: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'space-between',
+		paddingHorizontal: 14,
+		paddingVertical: 13,
 		gap: 10,
 	},
-	footerNote: {
+	faqQ: {
 		flex: 1,
+		fontSize: 14,
+		fontWeight: '600',
+		lineHeight: 20,
+	},
+	faqAnswer: {
+		paddingHorizontal: 14,
+		paddingVertical: 12,
+	},
+	faqA: {
+		fontSize: 13,
+		lineHeight: 20,
+	},
+
+	// Footer
+	footer: {
 		fontSize: 11,
-		lineHeight: 16,
-		color: '#94A3B8',
+		textAlign: 'center',
+		paddingBottom: 4,
 	},
 });

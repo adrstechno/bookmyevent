@@ -83,11 +83,13 @@ export const login = async (input: LoginRequest): Promise<LoginResponse> => {
 
   const payload = response.data;
   const firstName = payload.first_name || toNameFromEmail(input.email);
+  const lastName = payload.last_name || '';
+  const fullName = lastName ? `${firstName} ${lastName}`.trim() : firstName;
 
   return {
     token: extractToken(payload),
     role: normalizeRole(payload.user_type ?? payload.role),
-    name: firstName,
+    name: fullName,
     email: input.email,
     userId: payload.user_id,
     uuid: payload.uuid,

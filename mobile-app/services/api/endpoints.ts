@@ -28,8 +28,8 @@ export const API_ENDPOINTS = {
 		changePassword: `${ROOT.USER}/changePassword`,
 	},
 	profile: {
-		get: `${ROOT.USER}/profile`,
-		update: `${ROOT.USER}/profile`,
+		get: `${ROOT.USER}/mobile-profile`,
+		update: `${ROOT.USER}/mobile-profile`,
 	},
 	service: {
 		all: `${ROOT.SERVICE}/GetAllServices`,
@@ -57,6 +57,7 @@ export const API_ENDPOINTS = {
 		deletePackage: `${ROOT.VENDOR}/deleteVendorPackage`,
 		eventImages: `${ROOT.VENDOR}/GetvendorEventImages`,
 		uploadEventImages: `${ROOT.VENDOR}/AddEventImages`,
+		deleteEventImage: `${ROOT.VENDOR}/DeleteEventImage`,
 	},
 	booking: {
 		create: `${ROOT.BOOKING}/InsertBooking`,

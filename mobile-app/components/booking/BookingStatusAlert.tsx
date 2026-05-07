@@ -46,8 +46,8 @@ export function BookingStatusAlert({ status, adminApproval }: BookingStatusAlert
 		);
 	}
 
-	// Awaiting review
-	if (status === 'completed') {
+	// Awaiting review — matches website's 'awaiting_review' status exactly
+	if (status === 'awaiting_review') {
 		return (
 			<ThemedView style={[styles.container, { backgroundColor: '#FEF3C7', borderColor: '#FDE68A' }]}>
 				<View style={styles.content}>

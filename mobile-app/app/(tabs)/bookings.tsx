@@ -19,29 +19,41 @@ import { useAppSelector } from '@/store';
 import { useSettingsTheme } from '@/theme/settingsTheme';
 import type { BookingItem, BookingStatus } from '@/types/booking';
 
-const STATUS_META: Record<BookingStatus, { label: string; chipLabel: string }> = {
-	pending: { label: 'Pending Vendor Response', chipLabel: 'Pending' },
-	confirmed: { label: 'Confirmed', chipLabel: 'Confirmed' },
-	completed: { label: 'Completed', chipLabel: 'Completed' },
-	cancelled: { label: 'Cancelled', chipLabel: 'Cancelled' },
-};
+// Filter tabs matching the website exactly
+type FilterKey = 'all' | 'pending' | 'otp' | 'completed' | 'cancelled';
+
+const FILTER_TABS: { key: FilterKey; label: string }[] = [
+	{ key: 'all', label: 'All Bookings' },
+	{ key: 'pending', label: 'Pending' },
+	{ key: 'otp', label: 'Share OTP' },
+	{ key: 'completed', label: 'Completed' },
+	{ key: 'cancelled', label: 'Cancelled' },
+];
 
 const FALLBACK_BOOKINGS: BookingItem[] = [
 	{
 		id: 'BK-1001',
-		eventName: 'Wedding Event',
+		eventName: 'Wedding Package',
 		date: '12 Apr 2026',
 		venue: 'Silver Oak Lawn, Indore',
 		amount: 'Rs 45,000',
 		status: 'confirmed',
+		adminApproval: 'approved',
+		vendorName: 'Royal Events Co.',
+		eventTime: '07:00 PM',
+		packageName: 'Wedding Package',
 	},
 	{
 		id: 'BK-1002',
-		eventName: 'Office Seminar',
+		eventName: 'Corporate Seminar',
 		date: '22 Apr 2026',
 		venue: 'Metro Convention Hall, Bhopal',
 		amount: 'Rs 18,500',
-		status: 'pending',
+		status: 'confirmed',
+		adminApproval: 'pending',
+		vendorName: 'Elite Planners',
+		eventTime: '10:00 AM',
+		packageName: 'Corporate Seminar',
 	},
 	{
 		id: 'BK-1003',
@@ -50,10 +62,51 @@ const FALLBACK_BOOKINGS: BookingItem[] = [
 		venue: 'Sunrise Banquet, Dewas',
 		amount: 'Rs 12,000',
 		status: 'completed',
+		vendorName: 'Fun Events',
+		eventTime: '06:00 PM',
+		packageName: 'Birthday Party',
 	},
 ];
 
-const STATUS_CHIPS: ('all' | BookingStatus)[] = ['all', 'pending', 'confirmed', 'completed', 'cancelled'];
+const getStatusConfig = (status: BookingStatus, adminApproval?: string) => {
+	if (status === 'pending') {
+		return { label: 'Pending Vendor Response', bg: '#FEF3C7', text: '#B45309', border: '#FDE68A' };
+	}
+	if (status === 'confirmed' && adminApproval === 'pending') {
+		return { label: 'Awaiting Admin Approval', bg: '#DBEAFE', text: '#1D4ED8', border: '#93C5FD' };
+	}
+	if (status === 'confirmed' && adminApproval === 'approved') {
+		return { label: 'Share OTP with Vendor', bg: '#F3E8FF', text: '#7C3AED', border: '#D8B4FE' };
+	}
+	if (status === 'awaiting_review') {
+		return { label: 'Awaiting Review', bg: '#FEF3C7', text: '#B45309', border: '#FDE68A' };
+	}
+	if (status === 'completed') {
+		return { label: 'Completed', bg: '#DCFCE7', text: '#166534', border: '#86EFAC' };
+	}
+	if (status === 'cancelled') {
+		return { label: 'Cancelled', bg: '#FEE2E2', text: '#991B1B', border: '#FCA5A5' };
+	}
+	return { label: 'Confirmed', bg: '#DBEAFE', text: '#1D4ED8', border: '#93C5FD' };
+};
+
+const matchesFilter = (booking: BookingItem, filter: FilterKey): boolean => {
+	if (filter === 'all') return true;
+	if (filter === 'pending') {
+		return booking.status === 'pending' || (booking.status === 'confirmed' && booking.adminApproval === 'pending');
+	}
+	if (filter === 'otp') {
+		return booking.status === 'confirmed' && booking.adminApproval === 'approved';
+	}
+	if (filter === 'completed') {
+		// Match website: completed tab includes both 'completed' and 'awaiting_review'
+		return booking.status === 'completed' || booking.status === 'awaiting_review';
+	}
+	if (filter === 'cancelled') {
+		return booking.status === 'cancelled';
+	}
+	return true;
+};
 
 const BookingCard = memo(function BookingCard({
 	booking,
@@ -72,119 +125,152 @@ const BookingCard = memo(function BookingCard({
 		primaryStrong: string;
 		onPrimary: string;
 		shadow: string;
+		screenBg: string;
+		warningSoft: string;
+		warningBorder: string;
 	};
 	onCancel: (bookingId: string) => void;
 	onReview: (booking: BookingItem) => void;
 }) {
-	const isPending = booking.status === 'pending';
-	const isCompleted = booking.status === 'completed';
-	const isCancelled = booking.status === 'cancelled';
 	const isApproved = booking.status === 'confirmed' && booking.adminApproval === 'approved';
-	
-	const canCancel = isPending || (booking.status === 'confirmed' && booking.adminApproval === 'pending');
-	const canReview = isCompleted;
+	const canCancel = booking.status === 'pending' || (booking.status === 'confirmed' && booking.adminApproval === 'pending');
+	// Match website exactly: canWriteReview = status === 'awaiting_review'
+	const canReview = booking.status === 'awaiting_review';
+
+	const statusConfig = getStatusConfig(booking.status, booking.adminApproval);
 
 	return (
-		<ThemedView style={[styles.bookingCard, { backgroundColor: palette.surfaceBg, borderColor: palette.border }, isApproved && styles.bookingCardApproved]}>
-			<View style={styles.rowTop}>
-				<View style={styles.eventMeta}>
-					<ThemedText type="defaultSemiBold" style={[styles.eventName, { color: palette.text }]}>{booking.eventName}</ThemedText>
-					<ThemedText style={[styles.bookingId, { color: palette.subtext }]}>Booking ID: {booking.id}</ThemedText>
-				</View>
-				<ThemedView
-					style={[
-						styles.statusPill,
-						isPending ? styles.statusPending : null,
-						isCompleted ? styles.statusCompleted : null,
-						isCancelled ? styles.statusCancelled : null,
-						isApproved ? styles.statusApproved : null,
-					]}
-				>
-					<ThemedText
-						style={[
-							styles.statusText,
-							isPending ? styles.statusTextPending : null,
-							isCompleted ? styles.statusTextCompleted : null,
-							isCancelled ? styles.statusTextCancelled : null,
-							isApproved ? styles.statusTextApproved : null,
-						]}
-					>
-						{STATUS_META[booking.status].label}
+		<ThemedView
+			style={[
+				styles.bookingCard,
+				{ backgroundColor: palette.surfaceBg, borderColor: palette.border },
+				isApproved && styles.bookingCardOTP,
+			]}
+		>
+			{/* Header: Booking ID + Status Badge */}
+			<View style={styles.cardHeader}>
+				<View style={styles.cardHeaderLeft}>
+					<ThemedText type="defaultSemiBold" style={[styles.bookingTitle, { color: palette.text }]}>
+						Booking #{booking.id}
 					</ThemedText>
-				</ThemedView>
-			</View>
-
-			{booking.vendorName && (
-				<View style={styles.detailRow}>
-					<Ionicons name="person-outline" size={15} color={palette.subtext} />
-					<ThemedText style={[styles.detailText, { color: palette.subtext }]}>{booking.vendorName}</ThemedText>
+					<View style={[styles.statusBadge, { backgroundColor: statusConfig.bg, borderColor: statusConfig.border }]}>
+						{booking.status === 'pending' && <Ionicons name="time-outline" size={12} color={statusConfig.text} />}
+						{booking.status === 'confirmed' && booking.adminApproval === 'pending' && <Ionicons name="time-outline" size={12} color={statusConfig.text} />}
+						{booking.status === 'confirmed' && booking.adminApproval === 'approved' && <Ionicons name="key-outline" size={12} color={statusConfig.text} />}
+						{booking.status === 'awaiting_review' && <Ionicons name="star-outline" size={12} color={statusConfig.text} />}
+						{booking.status === 'completed' && <Ionicons name="checkmark-circle-outline" size={12} color={statusConfig.text} />}
+						{booking.status === 'cancelled' && <Ionicons name="close-circle-outline" size={12} color={statusConfig.text} />}
+						<ThemedText style={[styles.statusBadgeText, { color: statusConfig.text }]}>
+							{statusConfig.label}
+						</ThemedText>
+					</View>
 				</View>
-			)}
-			<View style={styles.detailRow}>
-				<Ionicons name="calendar-outline" size={15} color={palette.subtext} />
-				<ThemedText style={[styles.detailText, { color: palette.subtext }]}>{booking.date}</ThemedText>
-			</View>
-			<View style={styles.detailRow}>
-				<Ionicons name="location-outline" size={15} color={palette.subtext} />
-				<ThemedText style={[styles.detailText, { color: palette.subtext }]}>{booking.venue}</ThemedText>
-			</View>
-			<View style={styles.detailRow}>
-				<Ionicons name="wallet-outline" size={15} color={palette.subtext} />
-				<ThemedText style={[styles.detailText, { color: palette.subtext }]}>{booking.amount}</ThemedText>
+
+				{/* Action buttons top-right (matches website layout) */}
+				<View style={styles.cardActions}>
+					{canReview && (
+						<Pressable
+							onPress={() => onReview(booking)}
+							style={({ pressed }) => [styles.actionBtn, styles.actionBtnReview, pressed && { opacity: 0.8 }]}
+						>
+							<Ionicons name="star" size={14} color="#FFFFFF" />
+							<ThemedText style={styles.actionBtnText}>Write Review</ThemedText>
+						</Pressable>
+					)}
+					{canCancel && (
+						<Pressable
+							onPress={() => onCancel(booking.id)}
+							style={({ pressed }) => [styles.actionBtn, styles.actionBtnCancel, pressed && { opacity: 0.8 }]}
+						>
+							<Ionicons name="close-circle-outline" size={14} color="#DC2626" />
+							<ThemedText style={[styles.actionBtnText, { color: '#DC2626' }]}>Cancel</ThemedText>
+						</Pressable>
+					)}
+				</View>
 			</View>
 
-			{booking.specialRequirement && (
+			{/* Detail rows — matching website fields */}
+			<View style={styles.detailsGrid}>
+				{booking.vendorName ? (
+					<View style={styles.detailItem}>
+						<View style={[styles.detailIcon, { backgroundColor: '#E0F2F1' }]}>
+							<Ionicons name="person-outline" size={18} color="#3C6E71" />
+						</View>
+						<View style={styles.detailContent}>
+							<ThemedText style={[styles.detailLabel, { color: palette.subtext }]}>Vendor</ThemedText>
+							<ThemedText style={[styles.detailValue, { color: palette.text }]}>{booking.vendorName}</ThemedText>
+						</View>
+					</View>
+				) : null}
+
+				<View style={styles.detailItem}>
+					<View style={[styles.detailIcon, { backgroundColor: '#E0F2F1' }]}>
+						<Ionicons name="calendar-outline" size={18} color="#3C6E71" />
+					</View>
+					<View style={styles.detailContent}>
+						<ThemedText style={[styles.detailLabel, { color: palette.subtext }]}>Event Date</ThemedText>
+						<ThemedText style={[styles.detailValue, { color: palette.text }]}>{booking.date}</ThemedText>
+					</View>
+				</View>
+
+				{booking.eventTime ? (
+					<View style={styles.detailItem}>
+						<View style={[styles.detailIcon, { backgroundColor: '#E0F2F1' }]}>
+							<Ionicons name="time-outline" size={18} color="#3C6E71" />
+						</View>
+						<View style={styles.detailContent}>
+							<ThemedText style={[styles.detailLabel, { color: palette.subtext }]}>Event Time</ThemedText>
+							<ThemedText style={[styles.detailValue, { color: palette.text }]}>{booking.eventTime}</ThemedText>
+						</View>
+					</View>
+				) : null}
+
+				{booking.packageName ? (
+					<View style={styles.detailItem}>
+						<View style={[styles.detailIcon, { backgroundColor: '#E0F2F1' }]}>
+							<Ionicons name="cube-outline" size={18} color="#3C6E71" />
+						</View>
+						<View style={styles.detailContent}>
+							<ThemedText style={[styles.detailLabel, { color: palette.subtext }]}>Package</ThemedText>
+							<ThemedText style={[styles.detailValue, { color: palette.text }]}>{booking.packageName}</ThemedText>
+						</View>
+					</View>
+				) : null}
+
+				<View style={[styles.detailItem, styles.detailItemFull]}>
+					<View style={[styles.detailIcon, { backgroundColor: '#E0F2F1' }]}>
+						<Ionicons name="location-outline" size={18} color="#3C6E71" />
+					</View>
+					<View style={styles.detailContent}>
+						<ThemedText style={[styles.detailLabel, { color: palette.subtext }]}>Event Address</ThemedText>
+						<ThemedText style={[styles.detailValue, { color: palette.text }]}>{booking.venue}</ThemedText>
+					</View>
+				</View>
+
+				<View style={styles.detailItem}>
+					<View style={[styles.detailIcon, { backgroundColor: '#E0F2F1' }]}>
+						<Ionicons name="wallet-outline" size={18} color="#3C6E71" />
+					</View>
+					<View style={styles.detailContent}>
+						<ThemedText style={[styles.detailLabel, { color: palette.subtext }]}>Amount</ThemedText>
+						<ThemedText style={[styles.detailValue, { color: palette.text }]}>{booking.amount}</ThemedText>
+					</View>
+				</View>
+			</View>
+
+			{/* Special Requirements */}
+			{booking.specialRequirement ? (
 				<View style={[styles.specialReq, { backgroundColor: palette.screenBg }]}>
 					<ThemedText style={[styles.specialReqLabel, { color: palette.subtext }]}>Special Requirements</ThemedText>
 					<ThemedText style={[styles.specialReqText, { color: palette.text }]}>{booking.specialRequirement}</ThemedText>
 				</View>
-			)}
+			) : null}
 
-			{/* OTP Section for approved bookings */}
+			{/* OTP Section for admin-approved bookings */}
 			{isApproved && <BookingOTPSection bookingId={booking.id} />}
 
 			{/* Status Alerts */}
 			<BookingStatusAlert status={booking.status} adminApproval={booking.adminApproval} />
-
-			{/* Action Buttons */}
-			<View style={styles.actionButtons}>
-				{canReview && (
-					<Pressable
-						onPress={() => onReview(booking)}
-						style={({ pressed }) => [
-							styles.actionBtn,
-							styles.actionBtnReview,
-							pressed && styles.actionBtnPressed,
-						]}
-					>
-						<Ionicons name="star" size={16} color="#FFFFFF" />
-						<ThemedText style={[styles.actionBtnText, { color: '#FFFFFF' }]}>Write Review</ThemedText>
-					</Pressable>
-				)}
-				{canCancel && (
-					<Pressable
-						onPress={() => onCancel(booking.id)}
-						style={({ pressed }) => [
-							styles.actionBtn,
-							styles.actionBtnCancel,
-							{ borderColor: palette.border },
-							pressed && styles.actionBtnPressed,
-						]}
-					>
-						<Ionicons name="close-circle-outline" size={16} color="#DC2626" />
-						<ThemedText style={[styles.actionBtnText, { color: '#DC2626' }]}>Cancel</ThemedText>
-					</Pressable>
-				)}
-			</View>
-
-			<ThemedView
-				style={[
-					styles.ctaBtn,
-					{ backgroundColor: palette.primary, borderColor: palette.primaryStrong, shadowColor: palette.shadow },
-				]}
-			>
-				<ThemedText style={[styles.ctaText, { color: palette.onPrimary }]}>View Details</ThemedText>
-			</ThemedView>
 		</ThemedView>
 	);
 });
@@ -197,12 +283,13 @@ export default function BookingsTabScreen() {
 	const { showError, showInfo, showSuccess } = useAppToast();
 	const hasShownDevInfoRef = useRef(false);
 	const isDummyToken = typeof token === 'string' && token.startsWith('dummy-token-');
+
 	const [bookings, setBookings] = useState<BookingItem[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [isRefreshing, setIsRefreshing] = useState(false);
 	const [loadError, setLoadError] = useState<string | null>(null);
-	const [activeStatus, setActiveStatus] = useState<'all' | BookingStatus>('all');
-	
+	const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
+
 	// Modal states
 	const [showCancelModal, setShowCancelModal] = useState(false);
 	const [selectedBookingForCancel, setSelectedBookingForCancel] = useState<string | null>(null);
@@ -220,23 +307,15 @@ export default function BookingsTabScreen() {
 			if (isDummyToken) {
 				setBookings(FALLBACK_BOOKINGS);
 				setLoadError(null);
-
 				if (!hasShownDevInfoRef.current) {
-					showInfo('Demo login active. Showing sample bookings until backend auth token is available.');
+					showInfo('Demo login active. Showing sample bookings.');
 					hasShownDevInfoRef.current = true;
 				}
-
-				if (isManualRefresh) {
-					setIsRefreshing(false);
-				} else {
-					setIsLoading(false);
-				}
-
+				isManualRefresh ? setIsRefreshing(false) : setIsLoading(false);
 				return;
 			}
 
 			const response = await fetchUserBookings();
-
 			if (response.success) {
 				setBookings(response.data);
 				setLoadError(null);
@@ -246,11 +325,7 @@ export default function BookingsTabScreen() {
 				setBookings((prev) => (prev.length > 0 ? prev : FALLBACK_BOOKINGS));
 			}
 
-			if (isManualRefresh) {
-				setIsRefreshing(false);
-			} else {
-				setIsLoading(false);
-			}
+			isManualRefresh ? setIsRefreshing(false) : setIsLoading(false);
 		},
 		[isDummyToken, showError, showInfo]
 	);
@@ -297,27 +372,26 @@ export default function BookingsTabScreen() {
 		setShowReviewModal(true);
 	}, []);
 
-	const filteredBookings = useMemo(() => {
-		if (activeStatus === 'all') {
-			return bookings;
-		}
-
-		return bookings.filter((booking) => booking.status === activeStatus);
-	}, [activeStatus, bookings]);
-
-	const stats = useMemo(() => {
-		const total = bookings.length;
-		const upcoming = bookings.filter((booking) => booking.status === 'confirmed').length;
-		const pending = bookings.filter((booking) => booking.status === 'pending').length;
-
-		return { total, upcoming, pending };
+	const filterCounts = useMemo(() => {
+		return {
+			all: bookings.length,
+			pending: bookings.filter((b) => b.status === 'pending' || (b.status === 'confirmed' && b.adminApproval === 'pending')).length,
+			otp: bookings.filter((b) => b.status === 'confirmed' && b.adminApproval === 'approved').length,
+			completed: bookings.filter((b) => b.status === 'completed' || b.status === 'awaiting_review').length,
+			cancelled: bookings.filter((b) => b.status === 'cancelled').length,
+		};
 	}, [bookings]);
+
+	const filteredBookings = useMemo(
+		() => bookings.filter((b) => matchesFilter(b, activeFilter)),
+		[activeFilter, bookings]
+	);
 
 	if (isLoading) {
 		return (
 			<SafeAreaView style={[styles.safeArea, { backgroundColor: palette.screenBg }]} edges={['top']}>
 				<StatusBar style={isDark ? 'light' : 'dark'} />
-				<TabsTopBar title="Bookings" />
+				<TabsTopBar title="My Bookings" />
 				<PageLoadingState text="Loading your bookings..." />
 			</SafeAreaView>
 		);
@@ -326,107 +400,115 @@ export default function BookingsTabScreen() {
 	return (
 		<SafeAreaView style={[styles.safeArea, { backgroundColor: palette.screenBg }]} edges={['top']}>
 			<StatusBar style={isDark ? 'light' : 'dark'} />
-			<TabsTopBar title="Bookings" />
+			<TabsTopBar title="My Bookings" />
 
 			<ScrollView
-				style={[styles.page, { backgroundColor: palette.screenBg }]}
+				style={{ flex: 1, backgroundColor: palette.screenBg }}
 				showsVerticalScrollIndicator={false}
 				contentContainerStyle={[styles.container, { paddingBottom: tabBarHeight + 16 }]}
 				refreshControl={
 					<RefreshControl
 						refreshing={isRefreshing}
-						onRefresh={() => {
-							void loadBookings(true);
-						}}
+						onRefresh={() => void loadBookings(true)}
 						tintColor={palette.primary}
 					/>
 				}
 			>
-				<View style={[styles.introCard, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
-					<ThemedText style={[styles.introTitle, { color: palette.text }]}>My Bookings</ThemedText>
-					<ThemedText style={[styles.introSubtitle, { color: palette.subtext }]}>Manage and track all your event bookings</ThemedText>
+				{/* Page Header */}
+				<View style={[styles.pageHeader, { backgroundColor: palette.primary }]}>
+					<ThemedText style={styles.pageHeaderTitle}>My Bookings</ThemedText>
+					<ThemedText style={styles.pageHeaderSubtitle}>Track and manage all your event bookings</ThemedText>
 				</View>
 
-				<View style={styles.statsRow}>
-					<ThemedView style={[styles.statPill, styles.statTotal, { backgroundColor: palette.surfaceBg, borderColor: palette.tint }]}>
-						<ThemedText style={[styles.statValue, { color: palette.tint }]}>{String(stats.total).padStart(2, '0')}</ThemedText>
-						<ThemedText style={[styles.statLabel, { color: palette.subtext }]}>Total</ThemedText>
-					</ThemedView>
-					<ThemedView style={[styles.statPill, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
-						<ThemedText style={[styles.statValue, { color: palette.tint }]}>{String(stats.upcoming).padStart(2, '0')}</ThemedText>
-						<ThemedText style={[styles.statLabel, { color: palette.subtext }]}>Upcoming</ThemedText>
-					</ThemedView>
-					<ThemedView style={[styles.statPill, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
-						<ThemedText style={[styles.statValue, { color: palette.tint }]}>{String(stats.pending).padStart(2, '0')}</ThemedText>
-						<ThemedText style={[styles.statLabel, { color: palette.subtext }]}>Pending</ThemedText>
-					</ThemedView>
-				</View>
-
-				<ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRow}>
-					{STATUS_CHIPS.map((chip) => {
-						const isActive = activeStatus === chip;
-						const label = chip === 'all' ? 'All' : STATUS_META[chip].chipLabel;
-
+				{/* Filter Tabs */}
+				<ScrollView
+					horizontal
+					showsHorizontalScrollIndicator={false}
+					contentContainerStyle={styles.filterRow}
+					style={styles.filterScroll}
+				>
+					{FILTER_TABS.map((tab) => {
+						const isActive = activeFilter === tab.key;
+						const count = filterCounts[tab.key];
 						return (
-							<Pressable key={chip} onPress={() => setActiveStatus(chip)}>
-								<ThemedView
+							<Pressable key={tab.key} onPress={() => setActiveFilter(tab.key)}>
+								<View
 									style={[
-										styles.chip,
+										styles.filterChip,
 										{ backgroundColor: palette.surfaceBg, borderColor: palette.border },
-										isActive ? [styles.activeChip, { backgroundColor: palette.tint, borderColor: palette.tint }] : null,
+										isActive && { backgroundColor: palette.primary, borderColor: palette.primary },
 									]}
 								>
-									<ThemedText style={[styles.chipText, { color: palette.subtext }, isActive ? styles.activeChipText : null]}>{label}</ThemedText>
-								</ThemedView>
+									<ThemedText
+										style={[
+											styles.filterChipText,
+											{ color: palette.subtext },
+											isActive && { color: '#FFFFFF' },
+										]}
+									>
+										{tab.label}
+									</ThemedText>
+									{count > 0 && (
+										<View
+											style={[
+												styles.filterBadge,
+												{ backgroundColor: isActive ? 'rgba(255,255,255,0.25)' : palette.screenBg },
+											]}
+										>
+											<ThemedText
+												style={[
+													styles.filterBadgeText,
+													{ color: isActive ? '#FFFFFF' : palette.subtext },
+												]}
+											>
+												{count}
+											</ThemedText>
+										</View>
+									)}
+								</View>
 							</Pressable>
 						);
 					})}
+
+					{/* Refresh button */}
+					<Pressable onPress={() => void loadBookings(true)}>
+						<View style={[styles.filterChip, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
+							<Ionicons name="refresh-outline" size={14} color={palette.primary} />
+							<ThemedText style={[styles.filterChipText, { color: palette.primary }]}>Refresh</ThemedText>
+						</View>
+					</Pressable>
 				</ScrollView>
 
+				{/* Error Banner */}
 				{loadError ? (
-					<ThemedView style={[styles.feedbackCard, { backgroundColor: palette.surfaceBg, borderColor: palette.dangerBorder }]}>
-						<ThemedText style={[styles.feedbackTitle, { color: palette.text }]}>Could not refresh bookings</ThemedText>
-						<ThemedText style={[styles.feedbackSubtext, { color: palette.subtext }]}>
-							{loadError}
-						</ThemedText>
-						<Pressable
-							onPress={() => {
-								void loadBookings(true);
-							}}
-							style={({ pressed }) => [
-								styles.retryBtn,
-								{ backgroundColor: palette.primary, borderColor: palette.primaryStrong },
-								pressed ? styles.retryBtnPressed : null,
-							]}
-						>
-							<ThemedText style={[styles.retryBtnText, { color: palette.onPrimary }]}>Retry</ThemedText>
-						</Pressable>
-					</ThemedView>
+					<View style={[styles.errorBanner, { backgroundColor: '#FEE2E2', borderColor: '#FCA5A5' }]}>
+						<Ionicons name="alert-circle-outline" size={16} color="#DC2626" />
+						<ThemedText style={[styles.errorText, { color: '#991B1B' }]}>{loadError}</ThemedText>
+					</View>
 				) : null}
 
+				{/* Bookings List */}
 				{filteredBookings.length === 0 ? (
-					<ThemedView style={[styles.feedbackCard, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
-						<ThemedText style={[styles.feedbackTitle, { color: palette.text }]}>No bookings yet</ThemedText>
-						<ThemedText style={[styles.feedbackSubtext, { color: palette.subtext }]}>
-							Once you confirm an event, it will appear here.
+					<View style={[styles.emptyState, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
+						<Ionicons name="calendar-outline" size={56} color={palette.muted ?? '#94A3B8'} />
+						<ThemedText style={[styles.emptyTitle, { color: palette.text }]}>No Bookings Found</ThemedText>
+						<ThemedText style={[styles.emptySubtext, { color: palette.subtext }]}>
+							{activeFilter === 'all'
+								? 'Start exploring vendors and book your first event!'
+								: `No ${activeFilter} bookings found.`}
 						</ThemedText>
-					</ThemedView>
+					</View>
 				) : (
 					filteredBookings.map((booking) => (
-						<BookingCard 
-							key={booking.id} 
-							booking={booking} 
-							palette={palette}
+						<BookingCard
+							key={booking.id}
+							booking={booking}
+							palette={palette as any}
 							onCancel={handleOpenCancelModal}
 							onReview={handleOpenReviewModal}
 						/>
 					))
 				)}
-
-				<ThemedView style={[styles.helpCard, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
-					<ThemedText style={[styles.helpTitle, { color: palette.text }]}>Need help with a booking?</ThemedText>
-					<ThemedText style={[styles.helpSubtext, { color: palette.subtext }]}>Go to Support from profile quick actions for instant dummy help options.</ThemedText>
-				</ThemedView>
 			</ScrollView>
 
 			{/* Cancel Booking Modal */}
@@ -457,182 +539,151 @@ export default function BookingsTabScreen() {
 const styles = StyleSheet.create({
 	safeArea: {
 		flex: 1,
-		backgroundColor: '#F4F7F9',
-	},
-	page: {
-		flex: 1,
-		backgroundColor: '#F4F7F9',
 	},
 	container: {
-		padding: 16,
-		gap: 12,
+		gap: 0,
 	},
-	introCard: {
-		borderWidth: 1,
-		borderRadius: 14,
-		paddingHorizontal: 12,
-		paddingVertical: 10,
+	// Page header — matches website's gradient header
+	pageHeader: {
+		paddingHorizontal: 20,
+		paddingVertical: 20,
 	},
-	introTitle: {
-		fontSize: 18,
+	pageHeaderTitle: {
+		fontSize: 26,
 		fontWeight: '800',
-	},
-	introSubtitle: {
-		marginTop: 2,
-		fontSize: 12,
-		fontWeight: '600',
-	},
-	statsRow: {
-		flexDirection: 'row',
-		gap: 8,
-	},
-	statPill: {
-		flex: 1,
-		borderRadius: 14,
-		paddingVertical: 10,
-		alignItems: 'center',
-		backgroundColor: '#FFFFFF',
-		borderWidth: 1,
-		borderColor: '#E2E8F0',
-	},
-	statTotal: {
-		backgroundColor: '#FFFFFF',
-		borderColor: '#9BD2CB',
-	},
-	statValue: {
-		fontSize: 16,
-		fontWeight: '800',
-		color: '#0F766E',
-	},
-	statLabel: {
-		fontSize: 11,
-		color: '#64748B',
-	},
-	chipsRow: {
-		gap: 8,
-		paddingRight: 6,
-	},
-	chip: {
-		paddingHorizontal: 12,
-		paddingVertical: 7,
-		borderRadius: 999,
-		borderWidth: 1,
-		borderColor: '#D0DCE3',
-		backgroundColor: '#FFFFFF',
-	},
-	activeChip: {
-		backgroundColor: '#3C6E71',
-		borderColor: '#3C6E71',
-	},
-	chipText: {
-		fontSize: 12,
-		fontWeight: '700',
-		color: '#475569',
-	},
-	activeChipText: {
 		color: '#FFFFFF',
+		marginBottom: 4,
 	},
-	bookingCard: {
-		borderWidth: 1,
-		borderColor: '#E2E8F0',
-		borderRadius: 16,
-		padding: 12,
-		gap: 8,
-		backgroundColor: '#FFFFFF',
-		boxShadow: '0px 3px 8px rgba(15, 23, 42, 0.04)',
+	pageHeaderSubtitle: {
+		fontSize: 14,
+		color: 'rgba(255,255,255,0.85)',
+		fontWeight: '500',
 	},
-	bookingCardApproved: {
-		borderLeftWidth: 4,
-		borderLeftColor: '#7C3AED',
+	// Filter tabs
+	filterScroll: {
+		flexGrow: 0,
 	},
-	rowTop: {
-		flexDirection: 'row',
-		justifyContent: 'space-between',
-		alignItems: 'flex-start',
+	filterRow: {
+		paddingHorizontal: 16,
+		paddingVertical: 14,
 		gap: 8,
 	},
-	eventMeta: {
-		flex: 1,
-	},
-	eventName: {
-		fontSize: 16,
-		color: '#0F172A',
-	},
-	bookingId: {
-		fontSize: 12,
-		color: '#64748B',
-		marginTop: 2,
-	},
-	detailRow: {
+	filterChip: {
 		flexDirection: 'row',
 		alignItems: 'center',
 		gap: 6,
-	},
-	detailText: {
-		fontSize: 13,
-		color: '#334155',
-	},
-	statusPill: {
-		backgroundColor: '#DBEAFE',
+		paddingHorizontal: 14,
+		paddingVertical: 8,
 		borderRadius: 999,
-		paddingHorizontal: 10,
-		paddingVertical: 4,
+		borderWidth: 1,
 	},
-	statusPending: {
-		backgroundColor: '#FEF3C7',
-	},
-	statusCompleted: {
-		backgroundColor: '#DCFCE7',
-	},
-	statusCancelled: {
-		backgroundColor: '#FEE2E2',
-	},
-	statusApproved: {
-		backgroundColor: '#F3E8FF',
-	},
-	statusText: {
-		color: '#1D4ED8',
-		fontWeight: '700',
-		fontSize: 12,
-	},
-	statusTextPending: {
-		color: '#B45309',
-	},
-	statusTextCompleted: {
-		color: '#166534',
-	},
-	statusTextCancelled: {
-		color: '#991B1B',
-	},
-	statusTextApproved: {
-		color: '#7C3AED',
-	},
-	specialReq: {
-		borderRadius: 8,
-		padding: 8,
-		marginTop: 4,
-	},
-	specialReqLabel: {
-		fontSize: 11,
+	filterChipText: {
+		fontSize: 13,
 		fontWeight: '600',
-		marginBottom: 2,
 	},
-	specialReqText: {
-		fontSize: 12,
-		lineHeight: 16,
+	filterBadge: {
+		borderRadius: 999,
+		paddingHorizontal: 6,
+		paddingVertical: 1,
+		minWidth: 20,
+		alignItems: 'center',
 	},
-	actionButtons: {
-		flexDirection: 'row',
-		gap: 8,
-		marginTop: 4,
+	filterBadgeText: {
+		fontSize: 11,
+		fontWeight: '700',
 	},
-	actionBtn: {
-		flex: 1,
+	// Error banner
+	errorBanner: {
 		flexDirection: 'row',
 		alignItems: 'center',
-		justifyContent: 'center',
+		gap: 8,
+		marginHorizontal: 16,
+		marginBottom: 12,
+		padding: 12,
+		borderRadius: 10,
+		borderWidth: 1,
+	},
+	errorText: {
+		fontSize: 13,
+		flex: 1,
+		fontWeight: '500',
+	},
+	// Empty state
+	emptyState: {
+		margin: 16,
+		borderRadius: 16,
+		borderWidth: 1,
+		padding: 40,
+		alignItems: 'center',
+		gap: 10,
+	},
+	emptyTitle: {
+		fontSize: 18,
+		fontWeight: '700',
+	},
+	emptySubtext: {
+		fontSize: 13,
+		textAlign: 'center',
+		lineHeight: 20,
+	},
+	// Booking card
+	bookingCard: {
+		marginHorizontal: 16,
+		marginBottom: 16,
+		borderRadius: 16,
+		borderWidth: 1,
+		padding: 16,
+		gap: 14,
+		shadowColor: '#0F172A',
+		shadowOffset: { width: 0, height: 2 },
+		shadowOpacity: 0.06,
+		shadowRadius: 8,
+		elevation: 3,
+	},
+	bookingCardOTP: {
+		borderLeftWidth: 4,
+		borderLeftColor: '#7C3AED',
+	},
+	// Card header
+	cardHeader: {
+		flexDirection: 'row',
+		justifyContent: 'space-between',
+		alignItems: 'flex-start',
+		gap: 10,
+	},
+	cardHeaderLeft: {
+		flex: 1,
+		gap: 8,
+	},
+	bookingTitle: {
+		fontSize: 18,
+		fontWeight: '700',
+	},
+	statusBadge: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 5,
+		alignSelf: 'flex-start',
+		paddingHorizontal: 10,
+		paddingVertical: 5,
+		borderRadius: 999,
+		borderWidth: 1,
+	},
+	statusBadgeText: {
+		fontSize: 12,
+		fontWeight: '700',
+	},
+	// Action buttons
+	cardActions: {
+		gap: 6,
+		alignItems: 'flex-end',
+	},
+	actionBtn: {
+		flexDirection: 'row',
+		alignItems: 'center',
 		gap: 4,
-		paddingVertical: 8,
+		paddingHorizontal: 10,
+		paddingVertical: 7,
 		borderRadius: 8,
 	},
 	actionBtnReview: {
@@ -641,73 +692,61 @@ const styles = StyleSheet.create({
 	actionBtnCancel: {
 		backgroundColor: '#FEE2E2',
 		borderWidth: 1,
-	},
-	actionBtnPressed: {
-		opacity: 0.8,
+		borderColor: '#FCA5A5',
 	},
 	actionBtnText: {
 		fontSize: 12,
 		fontWeight: '700',
-	},
-	ctaBtn: {
-		marginTop: 2,
-		paddingVertical: 10,
-		borderRadius: 10,
-		alignItems: 'center',
-		backgroundColor: '#ECFEFF',
-		borderWidth: 1,
-		borderColor: '#CCFBF1',
-		boxShadow: '0px 5px 9px rgba(15, 23, 42, 0.18)',
-	},
-	ctaText: {
-		fontSize: 13,
-		fontWeight: '700',
 		color: '#FFFFFF',
 	},
-	helpCard: {
-		borderRadius: 12,
-		padding: 12,
-		backgroundColor: '#FFFFFF',
-		borderWidth: 1,
-		borderColor: '#E2E8F0',
-		gap: 4,
+	// Details grid — 2-column layout matching website
+	detailsGrid: {
+		flexDirection: 'row',
+		flexWrap: 'wrap',
+		gap: 12,
 	},
-	helpTitle: {
-		fontSize: 14,
-		fontWeight: '800',
-		color: '#1E293B',
+	detailItem: {
+		flexDirection: 'row',
+		alignItems: 'flex-start',
+		gap: 10,
+		width: '46%',
 	},
-	helpSubtext: {
-		fontSize: 12,
-		color: '#64748B',
+	detailItemFull: {
+		width: '100%',
 	},
-	feedbackCard: {
-		borderRadius: 12,
-		padding: 12,
-		borderWidth: 1,
-		gap: 6,
+	detailIcon: {
+		width: 40,
+		height: 40,
+		borderRadius: 10,
+		alignItems: 'center',
+		justifyContent: 'center',
+		flexShrink: 0,
 	},
-	feedbackTitle: {
-		fontSize: 14,
-		fontWeight: '800',
+	detailContent: {
+		flex: 1,
+		gap: 2,
 	},
-	feedbackSubtext: {
-		fontSize: 12,
+	detailLabel: {
+		fontSize: 11,
+		fontWeight: '500',
+	},
+	detailValue: {
+		fontSize: 13,
+		fontWeight: '600',
 		lineHeight: 18,
 	},
-	retryBtn: {
-		marginTop: 4,
-		alignSelf: 'flex-start',
-		paddingHorizontal: 12,
-		paddingVertical: 8,
-		borderRadius: 8,
-		borderWidth: 1,
+	// Special requirements
+	specialReq: {
+		borderRadius: 10,
+		padding: 12,
+		gap: 4,
 	},
-	retryBtnPressed: {
-		opacity: 0.86,
+	specialReqLabel: {
+		fontSize: 11,
+		fontWeight: '600',
 	},
-	retryBtnText: {
-		fontSize: 12,
-		fontWeight: '700',
+	specialReqText: {
+		fontSize: 13,
+		lineHeight: 18,
 	},
 });

@@ -222,6 +222,7 @@ return (
 <Stack.Screen name="favorites" options={{ headerShown: false }} />
 <Stack.Screen name="settings" options={{ headerShown: false }} />
 <Stack.Screen name="support" options={{ headerShown: false }} />
+<Stack.Screen name="privacy-policy" options={{ headerShown: false }} />
 </Stack>
 );
 }

@@ -1,74 +1,54 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Redirect, useRouter } from 'expo-router';
 import { useCallback, useEffect } from 'react';
-import { BackHandler, ScrollView, StyleSheet, View, Dimensions } from 'react-native';
+import { BackHandler, ScrollView, StyleSheet, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppTopBar } from '@/components/layout/AppTopBar';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { useAppSelector } from '@/store';
 import { useSettingsTheme } from '@/theme/settingsTheme';
 
-const { width } = Dimensions.get('window');
+// ─── Data ────────────────────────────────────────────────────
 
 const STATS = [
-	{ icon: 'people-outline', value: '500+', label: 'Happy Clients', color: '#3B82F6' },
-	{ icon: 'trophy-outline', value: '1000+', label: 'Events Completed', color: '#A855F7' },
-	{ icon: 'trending-up-outline', value: '15+', label: 'Years Experience', color: '#10B981' },
-	{ icon: 'heart-outline', value: '98%', label: 'Satisfaction Rate', color: '#EF4444' },
-];
-
-const VALUES = [
-	{
-		icon: 'flag-outline',
-		title: 'Excellence',
-		description: 'We strive for perfection in every event we manage, ensuring exceptional quality.',
-		color: '#3B82F6',
-	},
-	{
-		icon: 'flash-outline',
-		title: 'Innovation',
-		description: 'Bringing creative and modern solutions to make your events unique and memorable.',
-		color: '#A855F7',
-	},
-	{
-		icon: 'heart-outline',
-		title: 'Passion',
-		description: 'Our team is passionate about creating unforgettable experiences that exceed expectations.',
-		color: '#EF4444',
-	},
-	{
-		icon: 'people-outline',
-		title: 'Collaboration',
-		description: 'Working closely with clients and vendors to ensure seamless event execution.',
-		color: '#10B981',
-	},
+	{ value: '500+', label: 'Happy Clients' },
+	{ value: '1K+', label: 'Events Done' },
+	{ value: '50+', label: 'Vendors' },
+	{ value: '98%', label: 'Satisfaction' },
 ];
 
 const FEATURES = [
 	{
-		icon: 'calendar-outline',
+		icon: 'calendar-outline' as const,
 		title: 'Easy Booking',
-		description: 'Book your favorite vendors with just a few taps',
+		desc: 'Book verified vendors in just a few taps — anytime, anywhere.',
 	},
 	{
-		icon: 'shield-checkmark-outline',
+		icon: 'shield-checkmark-outline' as const,
 		title: 'Verified Vendors',
-		description: 'All vendors are verified and trusted professionals',
+		desc: 'Every vendor is background-checked and trusted by our team.',
 	},
 	{
-		icon: 'pricetag-outline',
+		icon: 'pricetag-outline' as const,
 		title: 'Transparent Pricing',
-		description: 'No hidden charges, clear pricing for all services',
+		desc: 'No hidden charges. What you see is exactly what you pay.',
 	},
 	{
-		icon: 'chatbubbles-outline',
+		icon: 'headset-outline' as const,
 		title: '24/7 Support',
-		description: 'Round-the-clock customer support for your queries',
+		desc: 'Our support team is always available to help you out.',
 	},
 ];
+
+const CONTACT_ITEMS = [
+	{ icon: 'call-outline' as const, label: 'Phone', value: '+91 98765 00000' },
+	{ icon: 'mail-outline' as const, label: 'Email', value: 'goeventify@adrstechno.com' },
+	{ icon: 'location-outline' as const, label: 'Location', value: 'Jabalpur, Madhya Pradesh, India' },
+];
+
+// ─── Component ───────────────────────────────────────────────
 
 export default function AboutUsScreen() {
 	const router = useRouter();
@@ -76,371 +56,355 @@ export default function AboutUsScreen() {
 	const { isAuthenticated, isHydrated } = useAppSelector((state) => state.auth);
 	const { mode, palette } = useSettingsTheme();
 	const isDark = mode === 'dark';
-	const screenBg = palette.screenBg;
-	const surfaceBg = palette.surfaceBg;
-	const border = palette.border;
 
-	const goToProfile = useCallback(() => {
+	const goBack = useCallback(() => {
 		router.replace('/(tabs)/profile');
 	}, [router]);
 
 	useEffect(() => {
-		const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
-			goToProfile();
+		const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+			goBack();
 			return true;
 		});
-
-		return () => subscription.remove();
-	}, [goToProfile]);
+		return () => sub.remove();
+	}, [goBack]);
 
 	if (isHydrated && !isAuthenticated) {
 		return <Redirect href="/(auth)/login" />;
 	}
 
 	return (
-		<SafeAreaView style={[styles.safeArea, { backgroundColor: screenBg }]} edges={['top', 'bottom']}>
+		<SafeAreaView style={[styles.safe, { backgroundColor: palette.screenBg }]} edges={['top', 'bottom']}>
 			<StatusBar style={isDark ? 'light' : 'dark'} />
-			<AppTopBar title="About Us" onBackPress={goToProfile} />
+			<AppTopBar title="About Us" onBackPress={goBack} />
 
 			<ScrollView
-				style={styles.page}
-				contentContainerStyle={[styles.container, { paddingBottom: insets.bottom + 20 }]}
 				showsVerticalScrollIndicator={false}
+				contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 32 }]}
 			>
-				{/* Hero Section */}
-				<ThemedView style={[styles.heroCard, { backgroundColor: '#3C6E71' }]}>
-					<View style={styles.heroContent}>
-						<Ionicons name="sparkles" size={40} color="#F9A826" />
-						<ThemedText style={styles.heroTitle}>GoEventify</ThemedText>
-						<ThemedText style={styles.heroSubtitle}>Creating Unforgettable Moments</ThemedText>
-						<ThemedText style={styles.heroText}>
-							Your one-stop destination for event management. From intimate gatherings to grand celebrations, we handle every detail with precision and care.
+				{/* ── Hero Banner ─────────────────────────────── */}
+				<View style={[styles.hero, { backgroundColor: palette.primary }]}>
+					<View style={styles.heroLogoWrap}>
+						<Ionicons name="sparkles" size={28} color="#FFFFFF" />
+					</View>
+					<ThemedText style={styles.heroName}>GoEventify</ThemedText>
+					<ThemedText style={styles.heroTagline}>Creating Unforgettable Moments</ThemedText>
+					<ThemedText style={styles.heroDesc}>
+						Your one-stop platform for event management — from intimate gatherings to grand celebrations, handled with precision and care.
+					</ThemedText>
+				</View>
+
+				{/* ── Stats Strip ─────────────────────────────── */}
+				<View style={[styles.statsStrip, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
+					{STATS.map((s, i) => (
+						<View
+							key={s.label}
+							style={[
+								styles.statCell,
+								i < STATS.length - 1 && { borderRightWidth: 1, borderRightColor: palette.border },
+							]}
+						>
+							<ThemedText style={[styles.statVal, { color: palette.primary }]}>{s.value}</ThemedText>
+							<ThemedText style={[styles.statLbl, { color: palette.subtext }]}>{s.label}</ThemedText>
+						</View>
+					))}
+				</View>
+
+				{/* ── Our Story ───────────────────────────────── */}
+				<View style={styles.section}>
+					<SectionHeading icon="book-outline" title="Our Story" palette={palette} isDark={isDark} />
+					<View style={[styles.card, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
+						<ThemedText style={[styles.bodyText, { color: palette.text }]}>
+							GoEventify was born from a simple belief — every event deserves to be extraordinary. We started as a small team of event enthusiasts and have grown into a trusted platform connecting clients with the best vendors across the country.
+						</ThemedText>
+						<View style={[styles.divider, { backgroundColor: palette.border }]} />
+						<ThemedText style={[styles.bodyText, { color: palette.text }]}>
+							Today, we power hundreds of events every year — weddings, corporate gatherings, concerts, and more — with the same passion and attention to detail we started with.
 						</ThemedText>
 					</View>
-				</ThemedView>
+				</View>
 
-				{/* Our Story Section */}
-				<ThemedView style={[styles.sectionCard, { backgroundColor: surfaceBg, borderColor: border }]}>
-					<View style={styles.sectionHeader}>
-						<Ionicons name="book-outline" size={24} color="#3C6E71" />
-						<ThemedText style={[styles.sectionTitle, { color: palette.text }]}>Our Story</ThemedText>
-					</View>
-					<ThemedText style={[styles.storyText, { color: palette.text }]}>
-						We started with a simple vision: to transform ordinary events into extraordinary experiences. Over the years, we've grown into a leading event management platform, trusted by hundreds of clients across the country.
-					</ThemedText>
-					<ThemedText style={[styles.storyText, { color: palette.text }]}>
-						Our team of passionate professionals brings creativity, expertise, and dedication to every project. From weddings to corporate events, we make your dreams come true.
-					</ThemedText>
-				</ThemedView>
-
-				{/* Stats Section */}
-				<ThemedView style={[styles.statsContainer, { backgroundColor: surfaceBg, borderColor: border }]}>
-					<ThemedText style={[styles.statsHeader, { color: palette.text }]}>Our Achievements</ThemedText>
-					<View style={styles.statsGrid}>
-						{STATS.map((stat, index) => (
-							<View
-								key={index}
-								style={[styles.statCard, { backgroundColor: stat.color }]}
-							>
-								<Ionicons name={stat.icon as any} size={32} color="#FFFFFF" />
-								<ThemedText style={styles.statValue}>{stat.value}</ThemedText>
-								<ThemedText style={styles.statLabel}>{stat.label}</ThemedText>
-							</View>
-						))}
-					</View>
-				</ThemedView>
-
-				{/* Features Section */}
-				<ThemedView style={[styles.sectionCard, { backgroundColor: surfaceBg, borderColor: border }]}>
-					<View style={styles.sectionHeader}>
-						<Ionicons name="star-outline" size={24} color="#F9A826" />
-						<ThemedText style={[styles.sectionTitle, { color: palette.text }]}>Why Choose Us</ThemedText>
-					</View>
-					<View style={styles.featuresGrid}>
-						{FEATURES.map((feature, index) => (
-							<View key={index} style={[styles.featureCard, { backgroundColor: isDark ? '#1E293B' : '#F8FAFC' }]}>
-								<View style={[styles.featureIconContainer, { backgroundColor: isDark ? '#334155' : '#FFFFFF' }]}>
-									<Ionicons name={feature.icon as any} size={24} color="#3C6E71" />
+				{/* ── Why Choose Us ───────────────────────────── */}
+				<View style={styles.section}>
+					<SectionHeading icon="star-outline" title="Why Choose Us" palette={palette} isDark={isDark} />
+					<View style={[styles.card, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
+						{FEATURES.map((f, i) => (
+							<View key={f.title}>
+								{i > 0 && <View style={[styles.divider, { backgroundColor: palette.border }]} />}
+								<View style={styles.featureRow}>
+									<View style={[styles.featureIcon, { backgroundColor: isDark ? '#1E293B' : '#F1F5F9' }]}>
+										<Ionicons name={f.icon} size={18} color={palette.primary} />
+									</View>
+									<View style={styles.featureText}>
+										<ThemedText style={[styles.featureTitle, { color: palette.text }]}>{f.title}</ThemedText>
+										<ThemedText style={[styles.featureDesc, { color: palette.subtext }]}>{f.desc}</ThemedText>
+									</View>
 								</View>
-								<ThemedText style={[styles.featureTitle, { color: palette.text }]}>{feature.title}</ThemedText>
-								<ThemedText style={[styles.featureDescription, { color: palette.subtext }]}>
-									{feature.description}
-								</ThemedText>
 							</View>
 						))}
 					</View>
-				</ThemedView>
+				</View>
 
-				{/* Our Values Section */}
-				<ThemedView style={[styles.sectionCard, { backgroundColor: surfaceBg, borderColor: border }]}>
-					<View style={styles.sectionHeader}>
-						<Ionicons name="diamond-outline" size={24} color="#3C6E71" />
-						<ThemedText style={[styles.sectionTitle, { color: palette.text }]}>Our Core Values</ThemedText>
+				{/* ── Mission ─────────────────────────────────── */}
+				<View style={styles.section}>
+					<SectionHeading icon="rocket-outline" title="Our Mission" palette={palette} isDark={isDark} />
+					<View style={[styles.missionCard, { backgroundColor: palette.primary }]}>
+						<Ionicons name="chatbubble-ellipses-outline" size={28} color="rgba(255,255,255,0.3)" style={styles.quoteIcon} />
+						<ThemedText style={styles.missionText}>
+							To make event planning effortless, transparent, and memorable for every client — by connecting them with the right vendors at the right time.
+						</ThemedText>
+						<ThemedText style={styles.missionAttrib}>— GoEventify Team</ThemedText>
 					</View>
-					<ThemedText style={[styles.sectionSubtitle, { color: palette.subtext }]}>
-						Our core values guide everything we do, ensuring exceptional service and memorable experiences
-					</ThemedText>
-					<View style={styles.valuesContainer}>
-						{VALUES.map((value, index) => (
-							<View key={index} style={[styles.valueCard, { backgroundColor: isDark ? '#1E293B' : '#FFFFFF', borderColor: border }]}>
-								<View
-									style={[styles.valueIconContainer, { backgroundColor: value.color }]}
-								>
-									<Ionicons name={value.icon as any} size={24} color="#FFFFFF" />
+				</View>
+
+				{/* ── Contact ─────────────────────────────────── */}
+				<View style={styles.section}>
+					<SectionHeading icon="call-outline" title="Get In Touch" palette={palette} isDark={isDark} />
+					<View style={[styles.card, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
+						{CONTACT_ITEMS.map((c, i) => (
+							<View key={c.label}>
+								{i > 0 && <View style={[styles.divider, { backgroundColor: palette.border }]} />}
+								<View style={styles.contactRow}>
+									<View style={[styles.contactIconWrap, { backgroundColor: isDark ? '#1E293B' : '#F1F5F9' }]}>
+										<Ionicons name={c.icon} size={16} color={palette.primary} />
+									</View>
+									<View style={styles.contactText}>
+										<ThemedText style={[styles.contactLabel, { color: palette.subtext }]}>{c.label}</ThemedText>
+										<ThemedText style={[styles.contactValue, { color: palette.text }]}>{c.value}</ThemedText>
+									</View>
 								</View>
-								<ThemedText style={[styles.valueTitle, { color: palette.text }]}>{value.title}</ThemedText>
-								<ThemedText style={[styles.valueDescription, { color: palette.subtext }]}>
-									{value.description}
-								</ThemedText>
 							</View>
 						))}
 					</View>
-				</ThemedView>
+				</View>
 
-				{/* Contact Section */}
-				<ThemedView style={[styles.contactCard, { backgroundColor: '#F9A826' }]}>
-					<Ionicons name="mail-outline" size={40} color="#FFFFFF" />
-					<ThemedText style={styles.contactTitle}>Get In Touch</ThemedText>
-					<ThemedText style={styles.contactText}>
-						Have questions? We're here to help you plan your perfect event!
-					</ThemedText>
-					<View style={styles.contactInfo}>
-						<View style={styles.contactRow}>
-							<Ionicons name="call-outline" size={20} color="#FFFFFF" />
-							<ThemedText style={styles.contactDetail}>+91 9876500000</ThemedText>
-						</View>
-						<View style={styles.contactRow}>
-							<Ionicons name="mail-outline" size={20} color="#FFFFFF" />
-							<ThemedText style={styles.contactDetail}>support@goeventify.com</ThemedText>
-						</View>
-						<View style={styles.contactRow}>
-							<Ionicons name="location-outline" size={20} color="#FFFFFF" />
-							<ThemedText style={styles.contactDetail}>Jabalpur, Madhya Pradesh</ThemedText>
-						</View>
-					</View>
-				</ThemedView>
-
-				{/* Footer Note */}
-				<ThemedView style={[styles.footerCard, { backgroundColor: surfaceBg, borderColor: border }]}>
-					<Ionicons name="heart" size={20} color="#EF4444" />
-					<ThemedText style={[styles.footerText, { color: palette.subtext }]}>
-						Made with love for creating memorable events
-					</ThemedText>
-					<ThemedText style={[styles.footerVersion, { color: palette.subtext }]}>
-						Version 1.0.0 • © 2025 GoEventify
-					</ThemedText>
-				</ThemedView>
+				{/* ── Footer ──────────────────────────────────── */}
+				<ThemedText style={[styles.footer, { color: palette.subtext }]}>
+					Version 1.0.0 · © 2025 GoEventify. All rights reserved.
+				</ThemedText>
 			</ScrollView>
 		</SafeAreaView>
 	);
 }
 
+// ─── Section Heading ─────────────────────────────────────────
+
+function SectionHeading({
+	icon,
+	title,
+	palette,
+	isDark,
+}: {
+	icon: React.ComponentProps<typeof Ionicons>['name'];
+	title: string;
+	palette: any;
+	isDark: boolean;
+}) {
+	return (
+		<View style={styles.sectionHead}>
+			<View style={[styles.sectionIconWrap, { backgroundColor: isDark ? '#1E293B' : '#EEF2FF' }]}>
+				<Ionicons name={icon} size={16} color={palette.primary} />
+			</View>
+			<ThemedText style={[styles.sectionTitle, { color: palette.text }]}>{title}</ThemedText>
+		</View>
+	);
+}
+
+// ─── Styles ──────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
-	safeArea: {
-		flex: 1,
+	safe: { flex: 1 },
+	scroll: {
+		paddingHorizontal: 16,
+		paddingTop: 16,
+		gap: 20,
 	},
-	page: {
-		flex: 1,
-	},
-	container: {
-		padding: 14,
-		gap: 14,
-	},
-	// Hero Section
-	heroCard: {
-		borderRadius: 14,
-		padding: 16,
-		overflow: 'hidden',
-	},
-	heroContent: {
+
+	// Hero
+	hero: {
+		borderRadius: 18,
+		padding: 24,
 		alignItems: 'center',
 		gap: 8,
 	},
-	heroTitle: {
-		fontSize: 24,
+	heroLogoWrap: {
+		width: 56,
+		height: 56,
+		borderRadius: 28,
+		backgroundColor: 'rgba(255,255,255,0.18)',
+		alignItems: 'center',
+		justifyContent: 'center',
+		marginBottom: 4,
+	},
+	heroName: {
+		fontSize: 28,
 		fontWeight: '900',
 		color: '#FFFFFF',
-		textAlign: 'center',
+		letterSpacing: 0.4,
 	},
-	heroSubtitle: {
-		fontSize: 13,
+	heroTagline: {
+		fontSize: 14,
 		fontWeight: '600',
-		color: '#F9A826',
-		textAlign: 'center',
+		color: 'rgba(255,255,255,0.82)',
 	},
-	heroText: {
-		fontSize: 12,
-		lineHeight: 18,
-		color: '#E2E8F0',
+	heroDesc: {
+		fontSize: 13,
+		color: 'rgba(255,255,255,0.7)',
 		textAlign: 'center',
-		marginTop: 2,
+		lineHeight: 20,
+		marginTop: 4,
+		paddingHorizontal: 8,
 	},
-	// Section Card
-	sectionCard: {
-		borderRadius: 12,
-		padding: 14,
+
+	// Stats
+	statsStrip: {
+		flexDirection: 'row',
+		borderRadius: 14,
 		borderWidth: 1,
+		overflow: 'hidden',
+	},
+	statCell: {
+		flex: 1,
+		alignItems: 'center',
+		paddingVertical: 14,
+		gap: 2,
+	},
+	statVal: {
+		fontSize: 18,
+		fontWeight: '800',
+	},
+	statLbl: {
+		fontSize: 11,
+		fontWeight: '500',
+	},
+
+	// Section heading
+	section: {
 		gap: 10,
 	},
-	sectionHeader: {
+	sectionHead: {
 		flexDirection: 'row',
 		alignItems: 'center',
 		gap: 8,
+	},
+	sectionIconWrap: {
+		width: 30,
+		height: 30,
+		borderRadius: 8,
+		alignItems: 'center',
+		justifyContent: 'center',
 	},
 	sectionTitle: {
 		fontSize: 16,
 		fontWeight: '800',
 	},
-	sectionSubtitle: {
-		fontSize: 12,
-		lineHeight: 16,
-		marginTop: -2,
-	},
-	// Story Section
-	storyText: {
-		fontSize: 12,
-		lineHeight: 18,
-	},
-	// Stats Section
-	statsContainer: {
-		borderRadius: 12,
-		padding: 14,
+
+	// Card
+	card: {
+		borderRadius: 14,
 		borderWidth: 1,
-		gap: 10,
+		overflow: 'hidden',
+		paddingVertical: 4,
 	},
-	statsHeader: {
-		fontSize: 16,
-		fontWeight: '800',
-		textAlign: 'center',
-		marginBottom: 2,
+	divider: {
+		height: 1,
+		marginHorizontal: 14,
 	},
-	statsGrid: {
+	bodyText: {
+		fontSize: 14,
+		lineHeight: 22,
+		paddingHorizontal: 14,
+		paddingVertical: 12,
+	},
+
+	// Feature rows
+	featureRow: {
 		flexDirection: 'row',
-		flexWrap: 'wrap',
-		gap: 8,
-		justifyContent: 'space-between',
+		alignItems: 'flex-start',
+		gap: 12,
+		paddingHorizontal: 14,
+		paddingVertical: 12,
 	},
-	statCard: {
-		width: (width - 44) / 2,
-		borderRadius: 12,
-		padding: 14,
-		alignItems: 'center',
-		gap: 4,
-	},
-	statValue: {
-		fontSize: 20,
-		fontWeight: '900',
-		color: '#FFFFFF',
-	},
-	statLabel: {
-		fontSize: 10,
-		fontWeight: '600',
-		color: '#FFFFFF',
-		textAlign: 'center',
-	},
-	// Features Section
-	featuresGrid: {
-		gap: 8,
-	},
-	featureCard: {
-		borderRadius: 10,
-		padding: 12,
-		gap: 6,
-	},
-	featureIconContainer: {
-		width: 40,
-		height: 40,
-		borderRadius: 8,
+	featureIcon: {
+		width: 36,
+		height: 36,
+		borderRadius: 9,
 		alignItems: 'center',
 		justifyContent: 'center',
+		flexShrink: 0,
+		marginTop: 1,
+	},
+	featureText: {
+		flex: 1,
+		gap: 3,
 	},
 	featureTitle: {
 		fontSize: 14,
 		fontWeight: '700',
 	},
-	featureDescription: {
-		fontSize: 11,
-		lineHeight: 16,
+	featureDesc: {
+		fontSize: 13,
+		lineHeight: 19,
 	},
-	// Values Section
-	valuesContainer: {
-		gap: 8,
-	},
-	valueCard: {
-		borderRadius: 12,
-		padding: 12,
-		borderWidth: 1,
-		gap: 8,
-	},
-	valueIconContainer: {
-		width: 40,
-		height: 40,
-		borderRadius: 8,
-		alignItems: 'center',
-		justifyContent: 'center',
-	},
-	valueTitle: {
-		fontSize: 14,
-		fontWeight: '700',
-	},
-	valueDescription: {
-		fontSize: 11,
-		lineHeight: 16,
-	},
-	// Contact Section
-	contactCard: {
+
+	// Mission card
+	missionCard: {
 		borderRadius: 14,
-		padding: 16,
-		alignItems: 'center',
-		gap: 8,
+		padding: 20,
+		gap: 10,
 	},
-	contactTitle: {
-		fontSize: 20,
-		fontWeight: '800',
+	quoteIcon: {
+		alignSelf: 'flex-start',
+	},
+	missionText: {
+		fontSize: 15,
+		fontWeight: '600',
 		color: '#FFFFFF',
-		textAlign: 'center',
+		lineHeight: 24,
+		fontStyle: 'italic',
 	},
-	contactText: {
-		fontSize: 12,
-		lineHeight: 16,
-		color: '#FFFFFF',
-		textAlign: 'center',
-		opacity: 0.95,
+	missionAttrib: {
+		fontSize: 13,
+		color: 'rgba(255,255,255,0.7)',
+		fontWeight: '600',
+		alignSelf: 'flex-end',
 	},
-	contactInfo: {
-		marginTop: 6,
-		gap: 8,
-		width: '100%',
-	},
+
+	// Contact rows
 	contactRow: {
 		flexDirection: 'row',
 		alignItems: 'center',
-		gap: 8,
-		backgroundColor: 'rgba(255, 255, 255, 0.2)',
-		padding: 10,
+		gap: 12,
+		paddingHorizontal: 14,
+		paddingVertical: 12,
+	},
+	contactIconWrap: {
+		width: 34,
+		height: 34,
 		borderRadius: 8,
-	},
-	contactDetail: {
-		fontSize: 12,
-		fontWeight: '600',
-		color: '#FFFFFF',
-		flex: 1,
-	},
-	// Footer
-	footerCard: {
-		borderRadius: 12,
-		padding: 14,
-		borderWidth: 1,
 		alignItems: 'center',
-		gap: 4,
+		justifyContent: 'center',
+		flexShrink: 0,
 	},
-	footerText: {
+	contactText: {
+		flex: 1,
+		gap: 2,
+	},
+	contactLabel: {
+		fontSize: 11,
+		fontWeight: '600',
+		textTransform: 'uppercase',
+		letterSpacing: 0.5,
+	},
+	contactValue: {
+		fontSize: 14,
+		fontWeight: '500',
+	},
+
+	// Footer
+	footer: {
 		fontSize: 11,
 		textAlign: 'center',
-	},
-	footerVersion: {
-		fontSize: 9,
-		textAlign: 'center',
-		marginTop: 2,
+		paddingBottom: 4,
 	},
 });
