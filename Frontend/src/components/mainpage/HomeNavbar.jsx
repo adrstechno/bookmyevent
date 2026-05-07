@@ -158,18 +158,21 @@ const HomeNavbar = () => {
   const handleLogout = async () => {
     if (!window.confirm("Are you sure you want to logout?")) return;
 
+    // Try to call backend logout (to clear any server-side cookies)
+    // but don't block frontend logout if it fails
     try {
       await fetch(`${VITE_API_BASE_URL}/User/Logout`, {
         method: "POST",
         credentials: "include",
       });
     } catch (error) {
-      // console.log("Logout API failed, but proceeding with client-side cleanup");
+      // Silently fail — backend logout is optional since token is in localStorage
+      console.log("Backend logout failed, proceeding with client-side cleanup");
     }
 
-    // Use AuthContext logout which will clean up everything
+    // Always proceed with frontend logout
     authLogout();
-    navigate("/");
+    navigate("/login");
   };
 
   const getDashboardPath = () => {

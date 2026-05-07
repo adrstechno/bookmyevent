@@ -318,7 +318,13 @@ export const login = (req, res) => {
 
 /* ------------------ LOGOUT ------------------ */
 export const logout = (req, res) => {
-  res.clearCookie("auth_token");
+  // Clear the cookie-based token (for cookie auth flow)
+  res.clearCookie("auth_token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+  });
   return res.status(200).json({ message: "Logout successful" });
 };
 
