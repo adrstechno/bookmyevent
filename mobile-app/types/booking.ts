@@ -1,4 +1,4 @@
-export type BookingStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
+export type BookingStatus = 'pending' | 'confirmed' | 'completed' | 'awaiting_review' | 'cancelled';
 
 export type AdminApprovalStatus = 'pending' | 'approved' | 'rejected';
 

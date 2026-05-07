@@ -1,506 +1,638 @@
-import { Redirect, useRouter, useLocalSearchParams } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
-import { Animated, BackHandler, Pressable, ScrollView, StyleSheet, TextInput, View, useWindowDimensions } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { Redirect, useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
+import {
+	ActivityIndicator,
+	BackHandler,
+	Pressable,
+	ScrollView,
+	StyleSheet,
+	TextInput,
+	View,
+} from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppTopBar } from '@/components/layout/AppTopBar';
-import { changePassword } from '@/services/auth/authApi';
 import { ThemedText } from '@/components/themed-text';
-import { useAppSelector } from '@/store';
+import { changePassword } from '@/services/auth/authApi';
+import { getUserProfile, updateUserProfile } from '@/services/auth/profileApi';
+import { useAppDispatch, useAppSelector } from '@/store';
+import { updateProfile } from '@/store/slices/authSlice';
 import { useSettingsTheme } from '@/theme/settingsTheme';
 
-type EditProfileForm = {
+// ─── Types ───────────────────────────────────────────────────
+
+type ProfileForm = {
 	firstName: string;
 	lastName: string;
 	email: string;
 	phone: string;
 };
 
-type ChangePasswordForm = {
+type PasswordForm = {
 	currentPassword: string;
 	newPassword: string;
 	confirmPassword: string;
 };
 
+type FeedbackState = {
+	message: string;
+	type: 'success' | 'error';
+} | null;
+
+// ─── Helpers ─────────────────────────────────────────────────
+
+const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+const isValidPhone = (v: string) => v.replace(/\D/g, '').length === 10;
+
+// ─── Component ───────────────────────────────────────────────
+
 export default function ProfileEditScreen() {
 	const router = useRouter();
 	const insets = useSafeAreaInsets();
-	const { isAuthenticated, isHydrated } = useAppSelector((state) => state.auth);
-	const authName = useAppSelector((state) => state.auth.name);
-	const authEmail = useAppSelector((state) => state.auth.email);
+	const dispatch = useAppDispatch();
+	const { isAuthenticated, isHydrated, name: authName, email: authEmail } = useAppSelector((s) => s.auth);
 	const { mode, palette } = useSettingsTheme();
 	const isDark = mode === 'dark';
-	const { height: screenHeight } = useWindowDimensions();
-	const params = useLocalSearchParams<EditProfileForm>();
-	const [form, setForm] = useState<EditProfileForm>({
-		firstName: params.firstName ?? (authName || 'Guest').split(' ')[0] ?? 'Guest',
-		lastName: params.lastName ?? (authName || '').split(' ').slice(1).join(' '),
-		email: params.email ?? authEmail ?? 'guest@example.com',
-		phone: params.phone ?? '',
+
+	// ── State ──
+	const [profileForm, setProfileForm] = useState<ProfileForm>({
+		firstName: (authName || 'Guest').split(' ')[0] ?? 'Guest',
+		lastName: (authName || '').split(' ').slice(1).join(' '),
+		email: authEmail ?? '',
+		phone: '',
 	});
-	const [passwordForm, setPasswordForm] = useState<ChangePasswordForm>({
+	const [passwordForm, setPasswordForm] = useState<PasswordForm>({
 		currentPassword: '',
 		newPassword: '',
 		confirmPassword: '',
 	});
-	const [profileMessage, setProfileMessage] = useState('');
-	const [passwordMessage, setPasswordMessage] = useState('');
+
+	const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+	const [isEditMode, setIsEditMode] = useState(false);
 	const [isSavingProfile, setIsSavingProfile] = useState(false);
 	const [isChangingPassword, setIsChangingPassword] = useState(false);
-	const [isEditMode, setIsEditMode] = useState(false);
-	const headerAnim = useRef(new Animated.Value(0)).current;
-	const cardAnim = useRef(new Animated.Value(0)).current;
+	const [profileFeedback, setProfileFeedback] = useState<FeedbackState>(null);
+	const [passwordFeedback, setPasswordFeedback] = useState<FeedbackState>(null);
 
-	useEffect(() => {
-		Animated.parallel([
-			Animated.timing(headerAnim, {
-				toValue: 1,
-				duration: 280,
-				useNativeDriver: true,
-			}),
-			Animated.timing(cardAnim, {
-				toValue: 1,
-				duration: 420,
-				delay: 90,
-				useNativeDriver: true,
-			}),
-		]).start();
-	}, [cardAnim, headerAnim]);
-
-	useEffect(() => {
-		const fallbackFirstName = (authName || params.firstName || 'Guest').split(' ')[0] || 'Guest';
-		const fallbackLastName = (authName || params.lastName || '').split(' ').slice(1).join(' ');
-
-		setForm((prev) => ({
-			...prev,
-			firstName: params.firstName ?? fallbackFirstName,
-			lastName: params.lastName ?? (fallbackLastName || prev.lastName),
-			email: params.email ?? authEmail ?? prev.email,
-			phone: params.phone ?? prev.phone,
-		}));
-	}, [authEmail, authName, params.email, params.firstName, params.lastName, params.phone]);
-
-	useEffect(() => {
-		const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
-			router.replace('/(tabs)/profile');
-			return true;
-		});
-
-		return () => subscription.remove();
+	// ── Navigation ──
+	const goBack = useCallback(() => {
+		router.replace('/(tabs)/profile');
 	}, [router]);
 
-	const goBack = () => {
-		router.replace('/(tabs)/profile');
-	};
+	useEffect(() => {
+		const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+			goBack();
+			return true;
+		});
+		return () => sub.remove();
+	}, [goBack]);
 
-	const isValidEmail = (value: string) => {
-		return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-	};
+	// ── Load profile ──
+	useEffect(() => {
+		if (!isAuthenticated) return;
 
-	const isValidPhone = (value: string) => {
-		const digitsOnly = value.replace(/\D/g, '');
-		return digitsOnly.length === 10;
-	};
+		let cancelled = false;
 
-	const onSave = () => {
-		void (async () => {
-			const payload = {
-				firstName: form.firstName.trim(),
-				lastName: form.lastName.trim(),
-				email: form.email.trim().toLowerCase(),
-				phone: form.phone.trim(),
-			};
-
-			if (!payload.firstName || !payload.lastName || !payload.email || !payload.phone) {
-				setProfileMessage('Please fill all profile fields.');
-				return;
-			}
-
-			if (!isValidEmail(payload.email)) {
-				setProfileMessage('Please enter a valid email address.');
-				return;
-			}
-
-			if (!isValidPhone(payload.phone)) {
-				setProfileMessage('Please enter a valid 10-digit phone number.');
-				return;
-			}
-
-			setIsSavingProfile(true);
-			setProfileMessage('');
-			setProfileMessage('Profile update API is not available yet. This form is validated and ready for backend wiring.');
-			setIsSavingProfile(false);
-		})();
-	};
-
-	const onChangePassword = () => {
-		void (async () => {
-			const currentPassword = passwordForm.currentPassword.trim();
-			const newPassword = passwordForm.newPassword.trim();
-			const confirmPassword = passwordForm.confirmPassword.trim();
-
-			if (!currentPassword || !newPassword || !confirmPassword) {
-				setPasswordMessage('Please fill all password fields.');
-				return;
-			}
-
-			if (newPassword.length < 6) {
-				setPasswordMessage('New password must be at least 6 characters.');
-				return;
-			}
-
-			if (newPassword !== confirmPassword) {
-				setPasswordMessage('New password and confirm password must match.');
-				return;
-			}
-
-			setIsChangingPassword(true);
-			setPasswordMessage('');
+		const load = async () => {
+			setIsLoadingProfile(true);
 			try {
-				const message = await changePassword({
-					email: form.email.trim().toLowerCase(),
-					oldPassword: currentPassword,
-					newPassword,
-				});
-				setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-				setPasswordMessage(message || 'Password changed successfully.');
+				const profile = await getUserProfile();
+				if (!cancelled) {
+					setProfileForm({
+						firstName: profile.first_name || '',
+						lastName: profile.last_name || '',
+						email: profile.email || '',
+						phone: profile.phone || '',
+					});
+				}
 			} catch {
-				setPasswordMessage('Unable to change password. Please try again.');
+				if (!cancelled) {
+					// Fallback to Redux store data silently
+					setProfileForm({
+						firstName: (authName || 'Guest').split(' ')[0] ?? 'Guest',
+						lastName: (authName || '').split(' ').slice(1).join(' '),
+						email: authEmail ?? '',
+						phone: '',
+					});
+				}
 			} finally {
-				setIsChangingPassword(false);
+				if (!cancelled) setIsLoadingProfile(false);
 			}
-		})();
-	};
+		};
+
+		void load();
+		return () => { cancelled = true; };
+	}, [isAuthenticated, authName, authEmail]);
+
+	// ── Save profile ──
+	const onSaveProfile = useCallback(async () => {
+		const payload = {
+			first_name: profileForm.firstName.trim(),
+			last_name: profileForm.lastName.trim(),
+			email: profileForm.email.trim().toLowerCase(),
+			phone: profileForm.phone.trim(),
+		};
+
+		if (!payload.first_name || !payload.last_name || !payload.email || !payload.phone) {
+			setProfileFeedback({ message: 'Please fill all fields.', type: 'error' });
+			return;
+		}
+		if (!isValidEmail(payload.email)) {
+			setProfileFeedback({ message: 'Please enter a valid email address.', type: 'error' });
+			return;
+		}
+		if (!isValidPhone(payload.phone)) {
+			setProfileFeedback({ message: 'Please enter a valid 10-digit phone number.', type: 'error' });
+			return;
+		}
+
+		setIsSavingProfile(true);
+		setProfileFeedback(null);
+
+		try {
+			const updated = await updateUserProfile(payload);
+			dispatch(updateProfile({
+				name: `${updated.first_name} ${updated.last_name}`.trim(),
+				email: updated.email,
+			}));
+			setProfileForm({
+				firstName: updated.first_name || '',
+				lastName: updated.last_name || '',
+				email: updated.email || '',
+				phone: updated.phone || '',
+			});
+			setProfileFeedback({ message: 'Profile updated successfully.', type: 'success' });
+			setIsEditMode(false);
+			setTimeout(() => setProfileFeedback(null), 3000);
+		} catch (err: unknown) {
+			const e = err as { message?: string };
+			setProfileFeedback({ message: e?.message || 'Failed to update profile. Please try again.', type: 'error' });
+		} finally {
+			setIsSavingProfile(false);
+		}
+	}, [profileForm, dispatch]);
+
+	// ── Change password ──
+	const onChangePassword = useCallback(async () => {
+		const { currentPassword, newPassword, confirmPassword } = passwordForm;
+
+		if (!currentPassword || !newPassword || !confirmPassword) {
+			setPasswordFeedback({ message: 'Please fill all password fields.', type: 'error' });
+			return;
+		}
+		if (newPassword.length < 6) {
+			setPasswordFeedback({ message: 'New password must be at least 6 characters.', type: 'error' });
+			return;
+		}
+		if (newPassword !== confirmPassword) {
+			setPasswordFeedback({ message: 'Passwords do not match.', type: 'error' });
+			return;
+		}
+
+		setIsChangingPassword(true);
+		setPasswordFeedback(null);
+
+		try {
+			const msg = await changePassword({ oldPassword: currentPassword, newPassword });
+			setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+			setPasswordFeedback({ message: msg || 'Password changed successfully.', type: 'success' });
+			setTimeout(() => setPasswordFeedback(null), 3000);
+		} catch (err: unknown) {
+			const e = err as { message?: string };
+			setPasswordFeedback({ message: e?.message || 'Failed to change password. Please try again.', type: 'error' });
+		} finally {
+			setIsChangingPassword(false);
+		}
+	}, [passwordForm]);
 
 	if (isHydrated && !isAuthenticated) {
 		return <Redirect href="/(auth)/login" />;
 	}
 
 	return (
-		<SafeAreaView style={[styles.safeArea, { backgroundColor: palette.screenBg }]} edges={['top', 'bottom']}>
+		<SafeAreaView style={[styles.safe, { backgroundColor: palette.screenBg }]} edges={['top', 'bottom']}>
 			<StatusBar style={isDark ? 'light' : 'dark'} />
-			<Animated.View
-				style={[
-					styles.header,
-					{ backgroundColor: palette.surfaceBg, borderBottomColor: palette.border },
-					{
-						opacity: headerAnim,
-						transform: [
-							{
-								translateY: headerAnim.interpolate({
-									inputRange: [0, 1],
-									outputRange: [-14, 0],
-								}),
-							},
-						],
-					},
-				]}
-			>
-				<AppTopBar title={isEditMode ? 'Edit Profile' : 'Profile Details'} onBackPress={goBack} />
-			</Animated.View>
+			<AppTopBar title="Edit Profile" onBackPress={goBack} />
 
 			<ScrollView
-				style={[styles.page, { backgroundColor: palette.screenBg }]}
-				contentContainerStyle={[styles.container, { paddingBottom: insets.bottom + 20 }]}
+				style={styles.page}
+				contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 28 }]}
 				showsVerticalScrollIndicator={false}
+				keyboardShouldPersistTaps="handled"
 			>
-				<Animated.View
-					style={[
-						styles.card,
-						{ backgroundColor: palette.surfaceBg, borderColor: palette.border, borderTopColor: palette.tint },
-						{ minHeight: Math.max(screenHeight * 0.5, 360) },
-						{
-							opacity: cardAnim,
-							transform: [
-								{
-									translateY: cardAnim.interpolate({
-										inputRange: [0, 1],
-										outputRange: [20, 0],
-									}),
-								},
-							],
-						},
-					]}
-				>
-					<ThemedText style={[styles.cardTitle, { color: palette.text }]}>Profile Information</ThemedText>
+				{/* ── Profile Card ── */}
+				<View style={[styles.card, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
+					{/* Card header */}
+					<View style={[styles.cardHeader, { borderBottomColor: palette.border }]}>
+						<View style={[styles.cardIconWrap, { backgroundColor: isDark ? '#1E293B' : '#EEF2FF' }]}>
+							<Ionicons name="person-outline" size={16} color={palette.primary} />
+						</View>
+						<ThemedText style={[styles.cardTitle, { color: palette.text }]}>Profile Information</ThemedText>
+						{!isLoadingProfile && !isEditMode && (
+							<Pressable
+								style={[styles.editChip, { backgroundColor: isDark ? '#1E293B' : '#EEF2FF' }]}
+								onPress={() => { setProfileFeedback(null); setIsEditMode(true); }}
+							>
+								<Ionicons name="pencil-outline" size={13} color={palette.primary} />
+								<ThemedText style={[styles.editChipText, { color: palette.primary }]}>Edit</ThemedText>
+							</Pressable>
+						)}
+					</View>
 
-					{isEditMode ? (
-						<>
-							<TextInput
-								style={[styles.input, { backgroundColor: palette.headerBtnBg, borderColor: palette.border, color: palette.text }]}
-								value={form.firstName}
-								onChangeText={(value) => setForm((prev) => ({ ...prev, firstName: value }))}
+					{/* Loading */}
+					{isLoadingProfile ? (
+						<View style={styles.loadingWrap}>
+							<ActivityIndicator size="small" color={palette.primary} />
+							<ThemedText style={[styles.loadingText, { color: palette.subtext }]}>Loading profile...</ThemedText>
+						</View>
+					) : isEditMode ? (
+						/* ── Edit Mode ── */
+						<View style={styles.formBody}>
+							<FormField
+								label="First Name"
+								value={profileForm.firstName}
+								onChangeText={(v) => setProfileForm((p) => ({ ...p, firstName: v }))}
 								placeholder="First Name"
-								placeholderTextColor={palette.subtext}
+								autoCapitalize="words"
+								palette={palette}
 							/>
-							<TextInput
-								style={[styles.input, { backgroundColor: palette.headerBtnBg, borderColor: palette.border, color: palette.text }]}
-								value={form.lastName}
-								onChangeText={(value) => setForm((prev) => ({ ...prev, lastName: value }))}
+							<FormField
+								label="Last Name"
+								value={profileForm.lastName}
+								onChangeText={(v) => setProfileForm((p) => ({ ...p, lastName: v }))}
 								placeholder="Last Name"
-								placeholderTextColor={palette.subtext}
+								autoCapitalize="words"
+								palette={palette}
 							/>
-							<TextInput
-								style={[styles.input, { backgroundColor: palette.headerBtnBg, borderColor: palette.border, color: palette.text }]}
-								value={form.email}
-								onChangeText={(value) => setForm((prev) => ({ ...prev, email: value }))}
-								placeholder="Email"
-								placeholderTextColor={palette.subtext}
+							<FormField
+								label="Email"
+								value={profileForm.email}
+								onChangeText={(v) => setProfileForm((p) => ({ ...p, email: v }))}
+								placeholder="Email address"
 								keyboardType="email-address"
+								autoCapitalize="none"
+								palette={palette}
 							/>
-							<TextInput
-								style={[styles.input, { backgroundColor: palette.headerBtnBg, borderColor: palette.border, color: palette.text }]}
-								value={form.phone}
-								onChangeText={(value) => setForm((prev) => ({ ...prev, phone: value }))}
-								placeholder="Phone"
-								placeholderTextColor={palette.subtext}
+							<FormField
+								label="Phone"
+								value={profileForm.phone}
+								onChangeText={(v) => setProfileForm((p) => ({ ...p, phone: v }))}
+								placeholder="10-digit phone number"
 								keyboardType="phone-pad"
+								maxLength={10}
+								palette={palette}
 							/>
 
-							<Pressable
-								style={({ pressed }) => [
-									styles.saveBtn,
-									{ backgroundColor: palette.primary, borderColor: palette.primaryStrong, shadowColor: palette.shadow },
-									isSavingProfile ? styles.saveBtnDisabled : null,
-									pressed ? styles.btnPressed : null,
-								]}
-								onPress={onSave}
-								disabled={isSavingProfile}
-							>
-								<ThemedText style={styles.saveBtnText}>{isSavingProfile ? 'Saving...' : 'Save Profile'}</ThemedText>
-							</Pressable>
+							{profileFeedback && (
+								<Feedback message={profileFeedback.message} type={profileFeedback.type} />
+							)}
 
-							<Pressable
-								style={({ pressed }) => [
-									styles.secondaryBtn,
-									{ backgroundColor: palette.elevatedBg, borderColor: palette.primaryStrong, shadowColor: palette.shadow },
-									pressed ? styles.btnPressed : null,
-								]}
-								onPress={() => {
-									setIsEditMode(false);
-									setProfileMessage('');
-								}}
-							>
-								<ThemedText style={[styles.secondaryBtnText, { color: palette.primaryStrong }]}>Cancel</ThemedText>
-							</Pressable>
-						</>
+							<View style={styles.btnRow}>
+								<Pressable
+									style={({ pressed }) => [
+										styles.btnSecondary,
+										{ borderColor: palette.border, backgroundColor: palette.elevatedBg },
+										pressed && styles.btnPressed,
+									]}
+									onPress={() => { setIsEditMode(false); setProfileFeedback(null); }}
+								>
+									<ThemedText style={[styles.btnSecondaryText, { color: palette.subtext }]}>Cancel</ThemedText>
+								</Pressable>
+								<Pressable
+									style={({ pressed }) => [
+										styles.btnPrimary,
+										{ backgroundColor: palette.primary },
+										isSavingProfile && styles.btnDisabled,
+										pressed && styles.btnPressed,
+									]}
+									onPress={() => void onSaveProfile()}
+									disabled={isSavingProfile}
+								>
+									{isSavingProfile
+										? <ActivityIndicator size="small" color="#FFFFFF" />
+										: <ThemedText style={styles.btnPrimaryText}>Save Changes</ThemedText>
+									}
+								</Pressable>
+							</View>
+						</View>
 					) : (
-						<>
-							<View style={[styles.detailRow, { borderBottomColor: palette.border }]}> 
-								<ThemedText style={[styles.detailLabel, { color: palette.subtext }]}>First Name</ThemedText>
-								<ThemedText style={[styles.detailValue, { color: palette.text }]}>{form.firstName}</ThemedText>
-							</View>
-							<View style={[styles.detailRow, { borderBottomColor: palette.border }]}> 
-								<ThemedText style={[styles.detailLabel, { color: palette.subtext }]}>Last Name</ThemedText>
-								<ThemedText style={[styles.detailValue, { color: palette.text }]}>{form.lastName}</ThemedText>
-							</View>
-							<View style={[styles.detailRow, { borderBottomColor: palette.border }]}> 
-								<ThemedText style={[styles.detailLabel, { color: palette.subtext }]}>Email</ThemedText>
-								<ThemedText style={[styles.detailValue, { color: palette.text }]}>{form.email}</ThemedText>
-							</View>
-							<View style={[styles.detailRow, { borderBottomColor: palette.border }]}> 
-								<ThemedText style={[styles.detailLabel, { color: palette.subtext }]}>Phone</ThemedText>
-								<ThemedText style={[styles.detailValue, { color: palette.text }]}>{form.phone}</ThemedText>
-							</View>
-							<Pressable
-								style={({ pressed }) => [
-									styles.saveBtn,
-									{ backgroundColor: palette.primary, borderColor: palette.primaryStrong, shadowColor: palette.shadow },
-									pressed ? styles.btnPressed : null,
-								]}
-								onPress={() => setIsEditMode(true)}
-							>
-								<ThemedText style={styles.saveBtnText}>Edit Profile</ThemedText>
-							</Pressable>
-						</>
+						/* ── View Mode ── */
+						<View style={styles.viewBody}>
+							<ProfileRow label="First Name" value={profileForm.firstName} palette={palette} />
+							<ProfileRow label="Last Name" value={profileForm.lastName} palette={palette} />
+							<ProfileRow label="Email" value={profileForm.email} palette={palette} />
+							<ProfileRow label="Phone" value={profileForm.phone} palette={palette} isLast />
+
+							{profileFeedback && (
+								<Feedback message={profileFeedback.message} type={profileFeedback.type} />
+							)}
+						</View>
 					)}
+				</View>
 
-					{profileMessage ? <ThemedText style={[styles.messageText, { color: palette.tint }]}>{profileMessage}</ThemedText> : null}
-				</Animated.View>
+				{/* ── Change Password Card ── */}
+				<View style={[styles.card, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
+					<View style={[styles.cardHeader, { borderBottomColor: palette.border }]}>
+						<View style={[styles.cardIconWrap, { backgroundColor: isDark ? '#1E293B' : '#EEF2FF' }]}>
+							<Ionicons name="lock-closed-outline" size={16} color={palette.primary} />
+						</View>
+						<ThemedText style={[styles.cardTitle, { color: palette.text }]}>Change Password</ThemedText>
+					</View>
 
-				{isEditMode ? (
-					<Animated.View
-						style={[
-							styles.card,
-							{ backgroundColor: palette.surfaceBg, borderColor: palette.border, borderTopColor: palette.tint },
-							{
-								opacity: cardAnim,
-								transform: [
-									{
-										translateY: cardAnim.interpolate({
-											inputRange: [0, 1],
-											outputRange: [20, 0],
-										}),
-									},
-								],
-							},
-						]}
-					>
-					<ThemedText style={[styles.cardTitle, { color: palette.text }]}>Change Password</ThemedText>
-					<ThemedText style={[styles.helperText, { color: palette.subtext }]}>Use your current password and set a new secure password.</ThemedText>
+					<View style={styles.formBody}>
+						<FormField
+							label="Current Password"
+							value={passwordForm.currentPassword}
+							onChangeText={(v) => setPasswordForm((p) => ({ ...p, currentPassword: v }))}
+							placeholder="Enter current password"
+							secureTextEntry
+							palette={palette}
+						/>
+						<FormField
+							label="New Password"
+							value={passwordForm.newPassword}
+							onChangeText={(v) => setPasswordForm((p) => ({ ...p, newPassword: v }))}
+							placeholder="Min. 6 characters"
+							secureTextEntry
+							palette={palette}
+						/>
+						<FormField
+							label="Confirm New Password"
+							value={passwordForm.confirmPassword}
+							onChangeText={(v) => setPasswordForm((p) => ({ ...p, confirmPassword: v }))}
+							placeholder="Re-enter new password"
+							secureTextEntry
+							palette={palette}
+						/>
 
-					<TextInput
-						style={[styles.input, { backgroundColor: palette.headerBtnBg, borderColor: palette.border, color: palette.text }]}
-						value={passwordForm.currentPassword}
-						onChangeText={(value) => setPasswordForm((prev) => ({ ...prev, currentPassword: value }))}
-						placeholder="Current Password"
-						placeholderTextColor={palette.subtext}
-						secureTextEntry
-					/>
-					<TextInput
-						style={[styles.input, { backgroundColor: palette.headerBtnBg, borderColor: palette.border, color: palette.text }]}
-						value={passwordForm.newPassword}
-						onChangeText={(value) => setPasswordForm((prev) => ({ ...prev, newPassword: value }))}
-						placeholder="New Password"
-						placeholderTextColor={palette.subtext}
-						secureTextEntry
-					/>
-					<TextInput
-						style={[styles.input, { backgroundColor: palette.headerBtnBg, borderColor: palette.border, color: palette.text }]}
-						value={passwordForm.confirmPassword}
-						onChangeText={(value) => setPasswordForm((prev) => ({ ...prev, confirmPassword: value }))}
-						placeholder="Confirm New Password"
-						placeholderTextColor={palette.subtext}
-						secureTextEntry
-					/>
+						{passwordFeedback && (
+							<Feedback message={passwordFeedback.message} type={passwordFeedback.type} />
+						)}
 
-					<Pressable
-						style={({ pressed }) => [
-							styles.secondaryBtn,
-							{ backgroundColor: palette.elevatedBg, borderColor: palette.primaryStrong, shadowColor: palette.shadow },
-							isChangingPassword ? styles.saveBtnDisabled : null,
-							pressed ? styles.btnPressed : null,
-						]}
-						onPress={onChangePassword}
-						disabled={isChangingPassword}
-					>
-						<ThemedText style={[styles.secondaryBtnText, { color: palette.primaryStrong }]}>{isChangingPassword ? 'Updating...' : 'Update Password'}</ThemedText>
-					</Pressable>
-
-					{passwordMessage ? <ThemedText style={[styles.messageText, { color: palette.tint }]}>{passwordMessage}</ThemedText> : null}
-					</Animated.View>
-				) : null}
+						<Pressable
+							style={({ pressed }) => [
+								styles.btnFull,
+								{ backgroundColor: palette.primary },
+								isChangingPassword && styles.btnDisabled,
+								pressed && styles.btnPressed,
+							]}
+							onPress={() => void onChangePassword()}
+							disabled={isChangingPassword}
+						>
+							{isChangingPassword
+								? <ActivityIndicator size="small" color="#FFFFFF" />
+								: <ThemedText style={styles.btnPrimaryText}>Update Password</ThemedText>
+							}
+						</Pressable>
+					</View>
+				</View>
 			</ScrollView>
 		</SafeAreaView>
 	);
 }
 
+// ─── Sub-components ──────────────────────────────────────────
+
+function FormField({
+	label,
+	value,
+	onChangeText,
+	placeholder,
+	secureTextEntry,
+	keyboardType,
+	autoCapitalize,
+	maxLength,
+	palette,
+}: {
+	label: string;
+	value: string;
+	onChangeText: (v: string) => void;
+	placeholder?: string;
+	secureTextEntry?: boolean;
+	keyboardType?: React.ComponentProps<typeof TextInput>['keyboardType'];
+	autoCapitalize?: React.ComponentProps<typeof TextInput>['autoCapitalize'];
+	maxLength?: number;
+	palette: any;
+}) {
+	return (
+		<View style={styles.fieldWrap}>
+			<ThemedText style={[styles.fieldLabel, { color: palette.subtext }]}>{label}</ThemedText>
+			<TextInput
+				style={[styles.input, { backgroundColor: palette.screenBg, borderColor: palette.border, color: palette.text }]}
+				value={value}
+				onChangeText={onChangeText}
+				placeholder={placeholder}
+				placeholderTextColor={palette.subtext}
+				secureTextEntry={secureTextEntry}
+				keyboardType={keyboardType}
+				autoCapitalize={autoCapitalize ?? 'none'}
+				maxLength={maxLength}
+			/>
+		</View>
+	);
+}
+
+function ProfileRow({
+	label,
+	value,
+	palette,
+	isLast,
+}: {
+	label: string;
+	value: string;
+	palette: any;
+	isLast?: boolean;
+}) {
+	return (
+		<View style={[styles.profileRow, !isLast && { borderBottomWidth: 1, borderBottomColor: palette.border }]}>
+			<ThemedText style={[styles.profileRowLabel, { color: palette.subtext }]}>{label}</ThemedText>
+			<ThemedText style={[styles.profileRowValue, { color: palette.text }]}>{value || '—'}</ThemedText>
+		</View>
+	);
+}
+
+function Feedback({ message, type }: { message: string; type: 'success' | 'error' }) {
+	return (
+		<View style={[styles.feedbackWrap, { backgroundColor: type === 'success' ? '#F0FDF4' : '#FEF2F2', borderColor: type === 'success' ? '#BBF7D0' : '#FECACA' }]}>
+			<Ionicons
+				name={type === 'success' ? 'checkmark-circle-outline' : 'alert-circle-outline'}
+				size={15}
+				color={type === 'success' ? '#16A34A' : '#DC2626'}
+			/>
+			<ThemedText style={[styles.feedbackText, { color: type === 'success' ? '#166534' : '#991B1B' }]}>
+				{message}
+			</ThemedText>
+		</View>
+	);
+}
+
+// ─── Styles ──────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
-	safeArea: {
-		flex: 1,
-		backgroundColor: '#F3F7F6',
+	safe: { flex: 1 },
+	page: { flex: 1 },
+	scroll: {
+		paddingHorizontal: 16,
+		paddingTop: 16,
+		gap: 14,
 	},
-	header: {
+
+	// Card
+	card: {
+		borderRadius: 14,
+		borderWidth: 1,
+		overflow: 'hidden',
+		marginBottom: 14,
+	},
+	cardHeader: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 10,
+		paddingHorizontal: 14,
+		paddingVertical: 14,
 		borderBottomWidth: 1,
 	},
-	page: {
-		flex: 1,
-	},
-	container: {
-		padding: 16,
-	},
-	card: {
-		backgroundColor: '#FFFFFF',
-		borderRadius: 20,
-		borderTopWidth: 4,
-		borderTopColor: '#3C6E71',
-		borderWidth: 1,
-		borderColor: '#DCE5E8',
-		padding: 18,
-		gap: 12,
-		shadowColor: '#0F172A',
-		shadowOpacity: 0.08,
-		shadowOffset: { width: 0, height: 8 },
-		shadowRadius: 16,
-		elevation: 6,
-		marginBottom: 12,
+	cardIconWrap: {
+		width: 30,
+		height: 30,
+		borderRadius: 8,
+		alignItems: 'center',
+		justifyContent: 'center',
 	},
 	cardTitle: {
-		fontSize: 18,
+		flex: 1,
+		fontSize: 15,
 		fontWeight: '800',
-		color: '#1E293B',
-		marginBottom: 8,
 	},
-	detailRow: {
+	editChip: {
+		flexDirection: 'row',
+		alignItems: 'center',
 		gap: 4,
-		paddingBottom: 12,
-		marginBottom: 2,
-		borderBottomWidth: 1,
+		paddingHorizontal: 10,
+		paddingVertical: 5,
+		borderRadius: 20,
 	},
-	detailLabel: {
+	editChipText: {
 		fontSize: 12,
 		fontWeight: '700',
 	},
-	detailValue: {
+
+	// Loading
+	loadingWrap: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 10,
+		padding: 20,
+	},
+	loadingText: {
+		fontSize: 13,
+		fontWeight: '500',
+	},
+
+	// View mode rows
+	viewBody: {
+		paddingHorizontal: 14,
+		paddingVertical: 4,
+	},
+	profileRow: {
+		paddingVertical: 13,
+		gap: 3,
+	},
+	profileRowLabel: {
+		fontSize: 11,
+		fontWeight: '600',
+		textTransform: 'uppercase',
+		letterSpacing: 0.4,
+	},
+	profileRowValue: {
 		fontSize: 15,
+		fontWeight: '500',
+	},
+
+	// Form
+	formBody: {
+		padding: 14,
+		gap: 12,
+	},
+	fieldWrap: {
+		gap: 6,
+	},
+	fieldLabel: {
+		fontSize: 12,
 		fontWeight: '700',
 	},
 	input: {
 		borderWidth: 1,
-		borderColor: '#CBD5E1',
-		borderRadius: 12,
-		paddingHorizontal: 12,
+		borderRadius: 10,
+		paddingHorizontal: 13,
 		paddingVertical: 12,
-		fontSize: 15,
-		color: '#1F2937',
-		backgroundColor: '#F8FAFC',
+		fontSize: 14,
 	},
-	helperText: {
-		fontSize: 12,
-		fontWeight: '600',
-		color: '#64748B',
-		marginTop: -4,
-		marginBottom: 2,
-	},
-	saveBtn: {
-		marginTop: 10,
-		backgroundColor: '#0F766E',
-		borderWidth: 1,
-		borderColor: '#0F5B56',
-		paddingVertical: 14,
-		borderRadius: 12,
+
+	// Feedback
+	feedbackWrap: {
+		flexDirection: 'row',
 		alignItems: 'center',
-		shadowColor: '#0F766E',
-		shadowOpacity: 0.24,
-		shadowOffset: { width: 0, height: 6 },
-		shadowRadius: 10,
-		elevation: 4,
+		gap: 8,
+		borderWidth: 1,
+		borderRadius: 8,
+		paddingHorizontal: 12,
+		paddingVertical: 9,
 	},
-	saveBtnDisabled: {
-		opacity: 0.7,
+	feedbackText: {
+		flex: 1,
+		fontSize: 13,
+		fontWeight: '600',
+		lineHeight: 18,
+	},
+
+	// Buttons
+	btnRow: {
+		flexDirection: 'row',
+		gap: 10,
+		marginTop: 4,
+	},
+	btnPrimary: {
+		flex: 1,
+		paddingVertical: 13,
+		borderRadius: 10,
+		alignItems: 'center',
+		justifyContent: 'center',
+		minHeight: 46,
+	},
+	btnPrimaryText: {
+		fontSize: 14,
+		fontWeight: '700',
+		color: '#FFFFFF',
+	},
+	btnSecondary: {
+		flex: 1,
+		paddingVertical: 13,
+		borderRadius: 10,
+		borderWidth: 1,
+		alignItems: 'center',
+		justifyContent: 'center',
+		minHeight: 46,
+	},
+	btnSecondaryText: {
+		fontSize: 14,
+		fontWeight: '700',
+	},
+	btnFull: {
+		paddingVertical: 13,
+		borderRadius: 10,
+		alignItems: 'center',
+		justifyContent: 'center',
+		minHeight: 46,
+		marginTop: 4,
+	},
+	btnDisabled: {
+		opacity: 0.6,
 	},
 	btnPressed: {
-		opacity: 0.9,
+		opacity: 0.85,
 		transform: [{ scale: 0.98 }],
-	},
-	saveBtnText: {
-		fontSize: 16,
-		fontWeight: '800',
-		color: '#FFFFFF',
-	},
-	secondaryBtn: {
-		marginTop: 10,
-		backgroundColor: '#1E293B',
-		borderWidth: 1,
-		borderColor: '#334155',
-		paddingVertical: 14,
-		borderRadius: 12,
-		alignItems: 'center',
-		shadowOpacity: 0.16,
-		shadowOffset: { width: 0, height: 5 },
-		shadowRadius: 8,
-		elevation: 3,
-	},
-	secondaryBtnText: {
-		fontSize: 15,
-		fontWeight: '800',
-		color: '#FFFFFF',
-	},
-	messageText: {
-		marginTop: 4,
-		fontSize: 13,
-		fontWeight: '700',
-		color: '#0F766E',
 	},
 });

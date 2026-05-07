@@ -18,7 +18,11 @@ const toBookingStatus = (status: unknown): BookingStatus => {
 		return 'cancelled';
 	}
 
-	if (normalized.includes('complete') || normalized.includes('review')) {
+	if (normalized.includes('review') || normalized === 'awaiting_review') {
+		return 'awaiting_review';
+	}
+
+	if (normalized.includes('complete')) {
 		return 'completed';
 	}
 

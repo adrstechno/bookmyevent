@@ -1,6 +1,6 @@
 /**
  * authApi.ts
- * Real API calls to the backend at localhost:3232
+ * Real API calls to the configured backend.
  * Endpoints: /User/Login, /User/InsertUser, /User/forgot-password
  */
 import apiClient from "@/services/api/client";
@@ -83,11 +83,13 @@ export const login = async (input: LoginRequest): Promise<LoginResponse> => {
 
   const payload = response.data;
   const firstName = payload.first_name || toNameFromEmail(input.email);
+  const lastName = payload.last_name || '';
+  const fullName = lastName ? `${firstName} ${lastName}`.trim() : firstName;
 
   return {
     token: extractToken(payload),
     role: normalizeRole(payload.user_type ?? payload.role),
-    name: firstName,
+    name: fullName,
     email: input.email,
     userId: payload.user_id,
     uuid: payload.uuid,
@@ -181,14 +183,12 @@ export const validateToken = async (): Promise<AuthenticatedUserProfile> => {
 };
 
 export const changePassword = async (payload: {
-  email: string;
   oldPassword: string;
   newPassword: string;
 }): Promise<string> => {
   const response = await apiClient.post<{ message?: string }>(
     API_ENDPOINTS.auth.changePassword,
     {
-      email: payload.email,
       oldPassword: payload.oldPassword,
       newPassword: payload.newPassword,
     },

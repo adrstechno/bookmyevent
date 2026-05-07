@@ -12,6 +12,7 @@ import {
 import { StatusBar } from "expo-status-bar";
 import { Redirect, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 
 import { ThemedText } from "@/components/themed-text";
 import { useAppToast } from "@/components/common/AppToastProvider";
@@ -56,6 +57,7 @@ export default function LoginScreen() {
   const [lastName, setLastName] = useState("");
   const [role, setRole] = useState<RoleType>("user");
   const [localError, setLocalError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const transition = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -90,6 +92,7 @@ export default function LoginScreen() {
     setPhone("");
     setEmail("");
     setPassword("");
+    setShowPassword(false);
     dispatch(clearAuthError());
   };
 
@@ -436,22 +439,38 @@ export default function LoginScreen() {
           )}
 
           {/* Password Input */}
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: palette.elevatedBg,
-                borderColor: palette.border,
-                color: palette.text,
-              },
-            ]}
-            value={password}
-            onChangeText={setPassword}
-            placeholder="Password"
-            placeholderTextColor={palette.muted}
-            secureTextEntry
-            editable={!isLoading}
-          />
+          <View style={[
+            styles.passwordWrapper,
+            {
+              backgroundColor: palette.elevatedBg,
+              borderColor: palette.border,
+            },
+          ]}>
+            <TextInput
+              style={[
+                styles.passwordInput,
+                { color: palette.text },
+              ]}
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Password"
+              placeholderTextColor={palette.muted}
+              secureTextEntry={!showPassword}
+              editable={!isLoading}
+              autoCapitalize="none"
+            />
+            <Pressable
+              onPress={() => setShowPassword((prev) => !prev)}
+              style={styles.eyeBtn}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons
+                name={showPassword ? "eye-off-outline" : "eye-outline"}
+                size={20}
+                color={palette.muted}
+              />
+            </Pressable>
+          </View>
 
           {/* Forgot Password Link (Login only) */}
           {mode === "login" && (
@@ -484,7 +503,7 @@ export default function LoginScreen() {
               { backgroundColor: palette.primary },
               isLoading && styles.submitButtonDisabled,
             ]}
-            onPress={onSubmit}
+            onPress={() => { void onSubmit(); }}
             disabled={isLoading}
           >
             <ThemedText
@@ -619,6 +638,24 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
     minHeight: 48,
     fontSize: 15,
+  },
+  passwordWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderRadius: 10,
+    minHeight: 48,
+    paddingHorizontal: 14,
+  },
+  passwordInput: {
+    flex: 1,
+    paddingVertical: 13,
+    fontSize: 15,
+  },
+  eyeBtn: {
+    paddingLeft: 8,
+    justifyContent: "center",
+    alignItems: "center",
   },
   forgotPasswordBtn: {
     alignSelf: "flex-end",

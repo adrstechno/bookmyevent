@@ -184,8 +184,9 @@ export default function VendorReservationsScreen() {
 			try {
 				const id = await fetchVendorId();
 				setVendorId(id);
-			} catch {
-				showError('Failed to load vendor profile.');
+			} catch (err: unknown) {
+				const apiErr = err as { message?: string };
+				showError(apiErr?.message ?? 'Failed to load vendor profile.');
 				setIsLoading(false);
 			}
 		};
@@ -198,8 +199,9 @@ export default function VendorReservationsScreen() {
 		try {
 			const data = await apiFetchReservations(vendorId);
 			setReservations(data);
-		} catch {
-			showError('Failed to load reservations.');
+		} catch (err: unknown) {
+			const apiErr = err as { message?: string };
+			showError(apiErr?.message ?? 'Failed to load reservations.');
 		} finally {
 			setIsLoading(false);
 			setIsRefreshing(false);

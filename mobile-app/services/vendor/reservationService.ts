@@ -44,11 +44,16 @@ export const formatDateParam = (date: Date): string => {
 
 /**
  * Fetch vendor profile to get vendor_id.
+ * Backend returns: { vendor: { vendor_id, ... } }
  * Returns the vendor_id string or throws.
  */
 export const fetchVendorId = async (): Promise<string> => {
 	const res = await apiClient.get(API_ENDPOINTS.vendor.profile);
-	const vendorId = res.data?.vendor_id ?? res.data?.data?.vendor_id;
+	// Backend: { vendor: { vendor_id } }
+	const vendorId =
+		res.data?.vendor?.vendor_id ??
+		res.data?.vendor_id ??
+		res.data?.data?.vendor_id;
 	if (!vendorId) throw new Error('Could not retrieve vendor profile.');
 	return String(vendorId);
 };
@@ -85,6 +90,7 @@ export const fetchAvailableShifts = async (
 
 /**
  * Create a manual reservation.
+ * Backend expects: vendor_id (int), shift_id (int), event_date (YYYY-MM-DD), reason
  */
 export const createReservation = async (params: {
 	vendorId: string;
@@ -93,11 +99,10 @@ export const createReservation = async (params: {
 	reason?: string;
 }): Promise<void> => {
 	await apiClient.post(API_ENDPOINTS.manualReservations.create, {
-		vendor_id: params.vendorId,
-		shift_id: params.shiftId,
+		vendor_id: Number(params.vendorId),
+		shift_id: Number(params.shiftId),
 		event_date: formatDateParam(params.date),
 		reason: params.reason?.trim() || 'Manual reservation by vendor',
-		reserved_by_type: 'vendor',
 	});
 };
 

@@ -1,17 +1,14 @@
 import mysql from 'mysql2';
-import { URL } from 'url';
 
 // Note: dotenv is configured in Server.js before this module is loaded
 
-const mysqlUrl = new URL('mysql://7BwYZV8pqsv5d1i.root:JcdhlSC3TEcYfndd@gateway01.ap-southeast-1.prod.aws.tidbcloud.com:4000/Event_Managment?ssl={"rejectUnauthorized":true}');
-
-// Create connection pool for better connection management
+// CLOUD DATABASE CONFIGURATION (TiDB) - ACTIVE
 const pool = mysql.createPool({
-    host: mysqlUrl.hostname,
-    port: mysqlUrl.port || 3306,
-    user: mysqlUrl.username,
-    password: mysqlUrl.password,
-    database: mysqlUrl.pathname.slice(1),
+    host: process.env.DB_HOST,
+    port: Number(process.env.DB_PORT) || 4000,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
     ssl: {
         rejectUnauthorized: false
     },
@@ -24,12 +21,28 @@ const pool = mysql.createPool({
     multipleStatements: true
 });
 
+// LOCAL DATABASE CONFIGURATION (COMMENTED OUT)
+// const pool = mysql.createPool({
+//     host: 'localhost',
+//     port: 3306,
+//     user: 'root',
+//     password: 'Nayan@1234',
+//     database: 'goeventifydb',
+//     connectionLimit: 10,
+//     waitForConnections: true,
+//     queueLimit: 0,
+//     enableKeepAlive: true,
+//     keepAliveInitialDelay: 0,
+//     connectTimeout: 60000,
+//     multipleStatements: true
+// });
+
 // Test the connection
 pool.getConnection((err, connection) => {
     if (err) {
-        console.error('Error connecting to database:', err.message);
+        console.error('❌ Error connecting to database:', err.message);
     } else {
-        // console.log('Connected to database successfully!');
+        console.log('✅ Connected to CLOUD database (TiDB) successfully!');
         connection.release();
     }
 });
@@ -38,7 +51,7 @@ pool.getConnection((err, connection) => {
 pool.on('error', err => {
     console.error('Database pool error:', err);
     if (err.code === 'PROTOCOL_CONNECTION_LOST') {
-        // console.log('Database connection lost, pool will reconnect automatically');
+        console.log('Database connection lost, pool will reconnect automatically');
     }
 });
 

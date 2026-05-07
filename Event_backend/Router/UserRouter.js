@@ -1,15 +1,13 @@
 import express from 'express';
-import {insertUser , login , logout , ChangePassword, verifyEmail, resendEmailVerification, testEmail, debugVendorData, validateToken, forgotPassword, resetPassword, verifyResetToken } from '../Controllers/UserController.js';
+import {insertUser , login , logout , ChangePassword, verifyEmail, resendEmailVerification, testEmail, debugVendorData, validateToken, forgotPassword, resetPassword, verifyResetToken, getUserProfile, updateUserProfile } from '../Controllers/UserController.js';
+import { authenticateToken } from '../Utils/auth.js';
 
 const router = express.Router();
 
-// Route to insert a new user
+// ── Public routes (no auth required) ──
 router.post('/InsertUser', insertUser);
-// Route for user login
 router.post('/Login', login);
-// Route for user logout
 router.post('/Logout', logout);
-router.post('/changePassword' , ChangePassword );
 
 // Email verification routes
 router.get('/verify-email', verifyEmail);
@@ -20,13 +18,18 @@ router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
 router.get('/verify-reset-token', verifyResetToken);
 
-// Test email functionality
+// ── Protected routes (auth required) ──
+router.post('/changePassword', authenticateToken, ChangePassword);
+router.get('/profile', authenticateToken, getUserProfile);
+router.put('/profile', authenticateToken, updateUserProfile);
+router.post('/validate-token', authenticateToken, validateToken);
+
+// ── Mobile app profile routes (same logic, dedicated path for mobile) ──
+router.get('/mobile-profile', authenticateToken, getUserProfile);
+router.put('/mobile-profile', authenticateToken, updateUserProfile);
+
+// Test / debug routes
 router.post('/test-email', testEmail);
-
-// Debug vendor data
 router.get('/debug-vendor/:vendor_id', debugVendorData);
-
-// Validate token
-router.post('/validate-token', validateToken);
 
 export default router;

@@ -27,6 +27,10 @@ export const API_ENDPOINTS = {
 		resendVerification: `${ROOT.USER}/resend-verification`,
 		changePassword: `${ROOT.USER}/changePassword`,
 	},
+	profile: {
+		get: `${ROOT.USER}/mobile-profile`,
+		update: `${ROOT.USER}/mobile-profile`,
+	},
 	service: {
 		all: `${ROOT.SERVICE}/GetAllServices`,
 		byId: (serviceId: number | string) => `${ROOT.SERVICE}/GetServiceById/${serviceId}`,
@@ -53,6 +57,7 @@ export const API_ENDPOINTS = {
 		deletePackage: `${ROOT.VENDOR}/deleteVendorPackage`,
 		eventImages: `${ROOT.VENDOR}/GetvendorEventImages`,
 		uploadEventImages: `${ROOT.VENDOR}/AddEventImages`,
+		deleteEventImage: `${ROOT.VENDOR}/DeleteEventImage`,
 	},
 	booking: {
 		create: `${ROOT.BOOKING}/InsertBooking`,

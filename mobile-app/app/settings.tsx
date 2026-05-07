@@ -11,11 +11,8 @@ import { ThemedView } from '@/components/themed-view';
 import { useAppSelector } from '@/store';
 import { useSettingsTheme, type SettingsThemeMode } from '@/theme/settingsTheme';
 
-const PREFERENCE_ITEMS = [
-	{ key: 'language', label: 'Language', value: 'English' },
-	{ key: 'currency', label: 'Currency', value: 'INR (₹)' },
-	{ key: 'privacy', label: 'Privacy Policy', value: 'View' },
-	{ key: 'terms', label: 'Terms and Conditions', value: 'View' },
+const PREFERENCE_ITEMS: { key: string; label: string; value: string; route?: string }[] = [
+	{ key: 'terms', label: 'Terms & Conditions', value: 'View', route: '/terms-and-conditions' },
 ];
 
 const THEME_OPTIONS: { key: SettingsThemeMode; label: string }[] = [
@@ -30,9 +27,7 @@ export default function SettingsScreen() {
 	const { mode, palette, setMode } = useSettingsTheme();
 	const isDark = mode === 'dark';
 
-	const [pushNotifications, setPushNotifications] = useState(true);
 	const [emailNotifications, setEmailNotifications] = useState(true);
-	const [biometricLogin, setBiometricLogin] = useState(false);
 	const [marketingUpdates, setMarketingUpdates] = useState(false);
 	const [showComingSoon, setShowComingSoon] = useState(false);
 
@@ -91,7 +86,13 @@ export default function SettingsScreen() {
 										styles.themeChip,
 										{ borderColor: active ? palette.tint : palette.border, backgroundColor: active ? palette.pressedBg : palette.surfaceBg },
 									]}
-									onPress={() => setMode(option.key)}
+									onPress={() => {
+										if (option.key === 'dark') {
+											setShowComingSoon(true);
+										} else {
+											setMode(option.key);
+										}
+									}}
 								>
 									<ThemedText style={[styles.themeChipText, { color: active ? palette.tint : palette.text }]}>{option.label}</ThemedText>
 								</Pressable>
@@ -102,32 +103,53 @@ export default function SettingsScreen() {
 
 				<ThemedView style={[styles.card, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
 					<ThemedText style={[styles.cardTitle, { color: palette.text }]}>Notifications</ThemedText>
-					<Pressable style={({ pressed }) => [styles.switchRow, pressed ? [styles.rowPressed, { backgroundColor: palette.pressedBg }] : null]} onPress={() => setShowComingSoon(true)}>
-						<ThemedText style={[styles.switchLabel, { color: palette.text }]}>Push Notifications</ThemedText>
-						<Switch value={pushNotifications} onValueChange={() => setShowComingSoon(true)} trackColor={{ false: palette.switchOff, true: palette.switchOn }} thumbColor="#FFFFFF" />
-					</Pressable>
-					<Pressable style={({ pressed }) => [styles.switchRow, [styles.switchDivider, { borderTopColor: palette.border }], pressed ? [styles.rowPressed, { backgroundColor: palette.pressedBg }] : null]} onPress={() => setShowComingSoon(true)}>
+					<View style={[styles.switchRow]}>
 						<ThemedText style={[styles.switchLabel, { color: palette.text }]}>Email Notifications</ThemedText>
-						<Switch value={emailNotifications} onValueChange={() => setShowComingSoon(true)} trackColor={{ false: palette.switchOff, true: palette.switchOn }} thumbColor="#FFFFFF" />
-					</Pressable>
-					<Pressable style={({ pressed }) => [styles.switchRow, [styles.switchDivider, { borderTopColor: palette.border }], pressed ? [styles.rowPressed, { backgroundColor: palette.pressedBg }] : null]} onPress={() => setShowComingSoon(true)}>
+						<Switch
+							value={emailNotifications}
+							onValueChange={(val) => setEmailNotifications(val)}
+							trackColor={{ false: palette.switchOff, true: palette.switchOn }}
+							thumbColor="#FFFFFF"
+						/>
+					</View>
+					<View style={[styles.switchRow, styles.switchDivider, { borderTopColor: palette.border }]}>
 						<ThemedText style={[styles.switchLabel, { color: palette.text }]}>Marketing Updates</ThemedText>
-						<Switch value={marketingUpdates} onValueChange={() => setShowComingSoon(true)} trackColor={{ false: palette.switchOff, true: palette.switchOn }} thumbColor="#FFFFFF" />
-					</Pressable>
-				</ThemedView>
-
-				<ThemedView style={[styles.card, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
-					<ThemedText style={[styles.cardTitle, { color: palette.text }]}>Security</ThemedText>
-					<Pressable style={({ pressed }) => [styles.switchRow, pressed ? [styles.rowPressed, { backgroundColor: palette.pressedBg }] : null]} onPress={() => setShowComingSoon(true)}>
-						<ThemedText style={[styles.switchLabel, { color: palette.text }]}>Biometric Login</ThemedText>
-						<Switch value={biometricLogin} onValueChange={() => setShowComingSoon(true)} trackColor={{ false: palette.switchOff, true: palette.switchOn }} thumbColor="#FFFFFF" />
-					</Pressable>
+						<Switch
+							value={marketingUpdates}
+							onValueChange={(val) => setMarketingUpdates(val)}
+							trackColor={{ false: palette.switchOff, true: palette.switchOn }}
+							thumbColor="#FFFFFF"
+						/>
+					</View>
 				</ThemedView>
 
 				<ThemedView style={[styles.card, { backgroundColor: palette.surfaceBg, borderColor: palette.border }]}>
 					<ThemedText style={[styles.cardTitle, { color: palette.text }]}>Preferences</ThemedText>
+					<Pressable
+						onPress={() => router.push('/privacy-policy')}
+						style={({ pressed }) => [
+							styles.optionRow,
+							styles.optionDivider,
+							{ borderBottomColor: palette.border },
+							pressed ? [styles.rowPressed, { backgroundColor: palette.pressedBg }] : null,
+						]}
+					>
+						<ThemedText style={[styles.optionLabel, { color: palette.text }]}>Privacy Policy</ThemedText>
+						<View style={styles.optionRight}>
+							<ThemedText style={[styles.optionValue, { color: palette.subtext }]}>View</ThemedText>
+							<Ionicons name="chevron-forward" size={16} color={palette.subtext} />
+						</View>
+					</Pressable>
 					{PREFERENCE_ITEMS.map((item, index) => (
-						<Pressable key={item.key} onPress={() => setShowComingSoon(true)} style={({ pressed }) => [styles.optionRow, index !== PREFERENCE_ITEMS.length - 1 ? [styles.optionDivider, { borderBottomColor: palette.border }] : null, pressed ? [styles.rowPressed, { backgroundColor: palette.pressedBg }] : null]}>
+						<Pressable
+							key={item.key}
+							onPress={() => item.route ? router.push(item.route as any) : setShowComingSoon(true)}
+							style={({ pressed }) => [
+								styles.optionRow,
+								index !== PREFERENCE_ITEMS.length - 1 ? [styles.optionDivider, { borderBottomColor: palette.border }] : null,
+								pressed ? [styles.rowPressed, { backgroundColor: palette.pressedBg }] : null,
+							]}
+						>
 							<ThemedText style={[styles.optionLabel, { color: palette.text }]}>{item.label}</ThemedText>
 							<View style={styles.optionRight}>
 								<ThemedText style={[styles.optionValue, { color: palette.subtext }]}>{item.value}</ThemedText>

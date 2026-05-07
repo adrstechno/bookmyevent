@@ -1,7 +1,7 @@
 /**
  * authSlice.ts
  * Real backend integration — no dummy credentials.
- * Server: localhost:3232 (configured in mobile-app/.env)
+ * Server: configured in mobile-app/.env
  */
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 
@@ -79,22 +79,26 @@ const toLoginErrorPayload = (
 ): LoginErrorPayload => {
   const message = toErrorMessage(error, fallback);
 
-  if (error && typeof error === "object" && "details" in error) {
-    const details = (error as { details?: unknown }).details;
-    if (details && typeof details === "object") {
-      const requiresVerification = Boolean(
-        (details as { requiresVerification?: unknown }).requiresVerification,
-      );
-      const email =
-        typeof (details as { email?: unknown }).email === "string"
-          ? (details as { email: string }).email
-          : undefined;
+  if (error && typeof error === "object") {
+    const e = error as Record<string, unknown>;
 
-      return {
-        message,
-        requiresVerification,
-        email,
-      };
+    // Case 1: requiresVerification is directly on the error object
+    // (from normalizeApiError where details = full response body)
+    if ("details" in e) {
+      const details = e["details"];
+      if (details && typeof details === "object") {
+        const d = details as Record<string, unknown>;
+        const requiresVerification = Boolean(d["requiresVerification"]);
+        const email = typeof d["email"] === "string" ? d["email"] : undefined;
+        return { message, requiresVerification, email };
+      }
+    }
+
+    // Case 2: requiresVerification is directly on the error (fallback)
+    if ("requiresVerification" in e) {
+      const requiresVerification = Boolean(e["requiresVerification"]);
+      const email = typeof e["email"] === "string" ? e["email"] : undefined;
+      return { message, requiresVerification, email };
     }
   }
 
@@ -254,6 +258,13 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.error = "Session expired. Please log in again.";
     },
+    updateProfile(
+      state,
+      action: PayloadAction<{ name?: string; email?: string }>,
+    ) {
+      if (action.payload.name !== undefined) state.name = action.payload.name;
+      if (action.payload.email !== undefined) state.email = action.payload.email;
+    },
   },
   extraReducers: (builder) => {
     // ── Bootstrap ──
@@ -297,17 +308,21 @@ const authSlice = createSlice({
       })
       .addCase(loginWithCredentials.rejected, (state, action) => {
         state.isLoading = false;
-        state.error =
-          typeof action.payload === "string"
-            ? action.payload
-            : typeof action.payload === "object" &&
-                action.payload &&
-                "message" in action.payload
-              ? String(
-                  (action.payload as { message?: unknown }).message ??
-                    "Login failed. Please verify your credentials.",
-                )
-              : "Login failed. Please verify your credentials.";
+
+        // Extract message from payload
+        const payload = action.payload as LoginErrorPayload | string | undefined;
+        if (typeof payload === "string") {
+          state.error = payload;
+        } else if (payload && typeof payload === "object" && "message" in payload) {
+          state.error = String(payload.message ?? "Login failed. Please verify your credentials.");
+          // Store verification state so UI can show resend option
+          if (payload.requiresVerification) {
+            state.requiresVerification = true;
+            state.pendingVerificationEmail = payload.email ?? null;
+          }
+        } else {
+          state.error = "Login failed. Please verify your credentials.";
+        }
       })
       .addCase(registerWithCredentials.pending, (state) => {
         state.isLoading = true;
@@ -367,6 +382,6 @@ export const signIn = createAsyncThunk(
   },
 );
 
-export const { setSignedIn, clearAuthError, clearVerificationState, sessionExpired } =
+export const { setSignedIn, clearAuthError, clearVerificationState, sessionExpired, updateProfile } =
   authSlice.actions;
 export default authSlice.reducer;

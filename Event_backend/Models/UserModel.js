@@ -57,6 +57,43 @@ static async findonebyphone(phone, callback) {
         const sql = 'DELETE FROM password_reset_tokens WHERE expires_at < NOW()';
         db.query(sql, [], callback);
     }
+
+    // Get user profile by UUID
+    static async getUserProfile(uuid, callback) {
+        const sql = `SELECT uuid, email, phone, first_name, last_name, user_type, is_verified, is_active, created_at FROM users WHERE uuid = ?`;
+        db.query(sql, [uuid], callback);
+    }
+
+    // Update user profile
+    static async updateUserProfile(uuid, data, callback) {
+        const fields = [];
+        const values = [];
+
+        if (data.first_name !== undefined) {
+            fields.push('first_name = ?');
+            values.push(data.first_name);
+        }
+        if (data.last_name !== undefined) {
+            fields.push('last_name = ?');
+            values.push(data.last_name);
+        }
+        if (data.phone !== undefined) {
+            fields.push('phone = ?');
+            values.push(data.phone);
+        }
+        if (data.email !== undefined) {
+            fields.push('email = ?');
+            values.push(data.email);
+        }
+
+        if (fields.length === 0) {
+            return callback(new Error('No fields to update'), null);
+        }
+
+        values.push(uuid);
+        const sql = `UPDATE users SET ${fields.join(', ')} WHERE uuid = ?`;
+        db.query(sql, values, callback);
+    }
 }
 
 

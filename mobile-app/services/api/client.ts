@@ -19,12 +19,16 @@ let authExpiredHandler: (() => void) | null = null;
 
 export const setApiAuthToken = (token: string | null) => {
 	bearerToken = token;
-	tokenInvalidNotified = false;
+	// Sirf naya valid token aane par flag reset karo
+	if (token) {
+		tokenInvalidNotified = false;
+	}
 };
 
 export const clearApiAuthToken = () => {
 	bearerToken = null;
-	tokenInvalidNotified = false;
+	// Flag reset mat karo — logout ke baad bhi protect karo
+	// tokenInvalidNotified intentionally nahi reset ho raha
 };
 
 /**
@@ -73,6 +77,22 @@ const onRequest = (config: InternalAxiosRequestConfig) => {
 	}
 
 	return nextConfig;
+};
+
+// Routes jahan 401/403 pe logout NAHI hona chahiye
+const PUBLIC_ROUTES = [
+	'/User/Login',
+	'/User/InsertUser',
+	'/User/forgot-password',
+	'/User/reset-password',
+	'/User/verify-email',
+	'/User/resend-verification',
+	'/User/verify-reset-token',
+];
+
+const isPublicRoute = (url: string | undefined): boolean => {
+	if (!url) return false;
+	return PUBLIC_ROUTES.some((route) => url.includes(route));
 };
 
 const normalizeApiError = (error: AxiosError): ApiError => {
@@ -170,12 +190,24 @@ apiClient.interceptors.response.use(
 	},
 	(error: AxiosError) => {
 		const status = error.response?.status ?? 0;
+		const url = error.config?.url;
+		const responseData = error.response?.data as
+			| { message?: string; requiresVerification?: boolean }
+			| undefined;
 
-		// Token is invalid or expired (401) or forbidden (403)
-		// Trigger logout and redirect to login
-		if ((status === 401 || status === 403) && onTokenInvalid && !tokenInvalidNotified) {
+		// Public routes (login/register) pe 401/403 se logout kabhi nahi hona chahiye
+		const isVerificationRequired = Boolean(responseData?.requiresVerification);
+		const isPublic = isPublicRoute(url);
+
+		if (
+			(status === 401 || status === 403) &&
+			!isPublic &&
+			!isVerificationRequired &&
+			onTokenInvalid &&
+			!tokenInvalidNotified
+		) {
 			tokenInvalidNotified = true;
-			console.warn('[api] Token invalid/expired (status', status, '). Logging out.');
+			console.warn('[api] Token invalid/expired (status', status, 'url:', url, '). Logging out.');
 			onTokenInvalid();
 		}
 

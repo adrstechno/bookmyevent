@@ -331,24 +331,27 @@ export const logout = (req, res) => {
 /* ------------------ CHANGE PASSWORD ------------------ */
 export const ChangePassword = async (req, res) => {
   try {
-    const { email, oldPassword, newPassword } = req.body;
-    const token = req.cookies.auth_token;
+    // authenticateToken middleware already verified token and set req.user
+    const uuid = req.user?.uuid;
+    const userEmail = req.user?.email;
 
-    if (!email || !oldPassword || !newPassword) {
-      return res.status(400).json({ message: "Email, old password, and new password are required" });
+    if (!uuid) {
+      return res.status(401).json({ message: "Unauthorized" });
     }
 
-    if (!token) {
-      return res.status(401).json({ message: "Access denied. No token provided." });
+    const { oldPassword, newPassword } = req.body;
+
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ message: "Old password and new password are required" });
     }
 
-    const decoded = verifyToken(token);
-    if (!decoded) {
-      return res.status(401).json({ message: "Invalid or expired token." });
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: "New password must be at least 6 characters" });
     }
 
+    // Fetch user by uuid to get password_hash
     const user = await new Promise((resolve, reject) => {
-      UserModel.findonebyemail(email, (err, result) => {
+      UserModel.findByUuid(uuid, (err, result) => {
         if (err) return reject(err);
         resolve(result && result.length > 0 ? result[0] : null);
       });
@@ -366,7 +369,7 @@ export const ChangePassword = async (req, res) => {
     const hashedPassword = bcrypt.hashSync(newPassword, 10);
 
     await new Promise((resolve, reject) => {
-      UserModel.updatepassword(email, hashedPassword, (err, result) => {
+      UserModel.updatepassword(user.email, hashedPassword, (err, result) => {
         if (err) reject(err);
         else resolve(result);
       });
@@ -667,37 +670,22 @@ export const debugVendorData = async (req, res) => {
 /* ------------------ VALIDATE TOKEN ------------------ */
 export const validateToken = async (req, res) => {
   try {
-    const token = req.cookies.auth_token || req.headers.authorization?.replace('Bearer ', '');
+    // authenticateToken middleware already verified token and set req.user
+    const uuid = req.user?.uuid;
 
-    if (!token) {
-      return res.status(401).json({ 
-        success: false, 
-        message: "No token provided" 
-      });
+    if (!uuid) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
     }
 
-    // Verify the token
-    const decoded = verifyToken(token);
-    if (!decoded) {
-      return res.status(401).json({ 
-        success: false, 
-        message: "Invalid or expired token" 
-      });
-    }
-
-    // Get user data to ensure user still exists
     const user = await new Promise((resolve, reject) => {
-      UserModel.findByUuid(decoded.uuid, (err, result) => {
+      UserModel.findByUuid(uuid, (err, result) => {
         if (err) return reject(err);
         resolve(result && result.length > 0 ? result[0] : null);
       });
     });
 
     if (!user) {
-      return res.status(401).json({ 
-        success: false, 
-        message: "User not found" 
-      });
+      return res.status(401).json({ success: false, message: "User not found" });
     }
 
     return res.status(200).json({
@@ -715,11 +703,7 @@ export const validateToken = async (req, res) => {
 
   } catch (err) {
     console.error("Token validation error:", err);
-    return res.status(401).json({ 
-      success: false, 
-      message: "Token validation failed", 
-      details: err.message 
-    });
+    return res.status(401).json({ success: false, message: "Token validation failed", details: err.message });
   }
 };
 
@@ -977,6 +961,136 @@ export const verifyResetToken = async (req, res) => {
     return res.status(400).json({ 
       success: false, 
       message: "Invalid or expired reset token", 
+      details: err.message 
+    });
+  }
+};
+
+/* ------------------ GET USER PROFILE ------------------ */
+export const getUserProfile = async (req, res) => {
+  try {
+    // authenticateToken middleware already verified token and set req.user
+    const uuid = req.user?.uuid;
+
+    if (!uuid) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const user = await new Promise((resolve, reject) => {
+      UserModel.getUserProfile(uuid, (err, result) => {
+        if (err) return reject(err);
+        resolve(result && result.length > 0 ? result[0] : null);
+      });
+    });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "User profile retrieved successfully",
+      user: {
+        uuid: user.uuid,
+        email: user.email,
+        phone: user.phone,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        user_type: user.user_type,
+        is_verified: user.is_verified,
+        is_active: user.is_active,
+        created_at: user.created_at
+      }
+    });
+
+  } catch (err) {
+    console.error("Get user profile error:", err);
+    return res.status(500).json({ success: false, message: "Server error", details: err.message });
+  }
+};
+
+/* ------------------ UPDATE USER PROFILE ------------------ */
+export const updateUserProfile = async (req, res) => {
+  try {
+    // authenticateToken middleware already verified token and set req.user
+    const uuid = req.user?.uuid;
+
+    if (!uuid) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const { first_name, last_name, phone, email } = req.body;
+
+    if (!first_name && !last_name && !phone && !email) {
+      return res.status(400).json({ success: false, message: "At least one field is required to update" });
+    }
+
+    // Check email uniqueness (only if changing email)
+    if (email && email !== '') {
+      const existingEmail = await new Promise((resolve, reject) => {
+        UserModel.findonebyemail(email, (err, result) => {
+          if (err) return reject(err);
+          resolve(result && result.length > 0 ? result[0] : null);
+        });
+      });
+      if (existingEmail && existingEmail.uuid !== uuid) {
+        return res.status(400).json({ success: false, message: "Email already exists" });
+      }
+    }
+
+    // Check phone uniqueness (only if changing phone)
+    if (phone && phone !== '') {
+      const existingPhone = await new Promise((resolve, reject) => {
+        UserModel.findonebyphone(phone, (err, result) => {
+          if (err) return reject(err);
+          resolve(result && result.length > 0 ? result[0] : null);
+        });
+      });
+      if (existingPhone && existingPhone.uuid !== uuid) {
+        return res.status(400).json({ success: false, message: "Phone number already exists" });
+      }
+    }
+
+    const updateData = {};
+    if (first_name) updateData.first_name = first_name;
+    if (last_name) updateData.last_name = last_name;
+    if (phone) updateData.phone = phone;
+    if (email) updateData.email = email;
+
+    await new Promise((resolve, reject) => {
+      UserModel.updateUserProfile(uuid, updateData, (err, result) => {
+        if (err) reject(err);
+        else resolve(result);
+      });
+    });
+
+    const updatedUser = await new Promise((resolve, reject) => {
+      UserModel.getUserProfile(uuid, (err, result) => {
+        if (err) return reject(err);
+        resolve(result && result.length > 0 ? result[0] : null);
+      });
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      user: {
+        uuid: updatedUser.uuid,
+        email: updatedUser.email,
+        phone: updatedUser.phone,
+        first_name: updatedUser.first_name,
+        last_name: updatedUser.last_name,
+        user_type: updatedUser.user_type,
+        is_verified: updatedUser.is_verified,
+        is_active: updatedUser.is_active
+      }
+    });
+
+  } catch (err) {
+    console.error("Update user profile error:", err);
+    return res.status(500).json({ 
+      success: false, 
+      message: "Server error", 
       details: err.message 
     });
   }

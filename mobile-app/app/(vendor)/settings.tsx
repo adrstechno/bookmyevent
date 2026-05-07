@@ -345,7 +345,7 @@ export default function VendorSettingsScreen() {
 						<ThemedText style={styles.headerTitle}>Vendor Settings</ThemedText>
 						<View style={styles.headerBadge}>
 							<Ionicons name="person-circle" size={24} color="#fff" />
-							<ThemedText style={styles.headerBadgeText}>Welcome, Vendor</ThemedText>
+							<ThemedText style={styles.headerBadgeText}>Welcome</ThemedText>
 						</View>
 					</View>
 				</FadeInView>
