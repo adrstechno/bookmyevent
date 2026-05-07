@@ -915,6 +915,104 @@ export const resetPassword = async (req, res) => {
   }
 };
 
+/* ------------------ GET USER PROFILE ------------------ */
+export const getUserProfile = async (req, res) => {
+  try {
+    const uuid = req.user?.uuid;
+
+    if (!uuid) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized. No user identity found.",
+      });
+    }
+
+    const user = await new Promise((resolve, reject) => {
+      UserModel.getUserProfile(uuid, (err, results) => {
+        if (err) return reject(err);
+        resolve(results && results.length > 0 ? results[0] : null);
+      });
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile fetched successfully.",
+      data: user,
+    });
+  } catch (err) {
+    console.error("getUserProfile error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Server error.",
+      details: err.message,
+    });
+  }
+};
+
+/* ------------------ UPDATE USER PROFILE ------------------ */
+export const updateUserProfile = async (req, res) => {
+  try {
+    const uuid = req.user?.uuid;
+
+    if (!uuid) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized. No user identity found.",
+      });
+    }
+
+    const { first_name, last_name, phone, email } = req.body;
+    const updateData = {};
+
+    if (first_name !== undefined) updateData.first_name = first_name;
+    if (last_name !== undefined) updateData.last_name = last_name;
+    if (phone !== undefined) updateData.phone = phone;
+    if (email !== undefined) updateData.email = email;
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No valid fields provided for update.",
+      });
+    }
+
+    await new Promise((resolve, reject) => {
+      UserModel.updateUserProfile(uuid, updateData, (err, result) => {
+        if (err) return reject(err);
+        resolve(result);
+      });
+    });
+
+    // Return the updated profile
+    const updatedUser = await new Promise((resolve, reject) => {
+      UserModel.getUserProfile(uuid, (err, results) => {
+        if (err) return reject(err);
+        resolve(results && results.length > 0 ? results[0] : null);
+      });
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile updated successfully.",
+      data: updatedUser,
+    });
+  } catch (err) {
+    console.error("updateUserProfile error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Server error.",
+      details: err.message,
+    });
+  }
+};
+
 /* ------------------ VERIFY RESET TOKEN ------------------ */
 export const verifyResetToken = async (req, res) => {
   try {
