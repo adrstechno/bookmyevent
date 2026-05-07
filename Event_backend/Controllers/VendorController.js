@@ -204,8 +204,37 @@ export const getvendorById = async (req, res) => {
   }
 };
 
-// Alias for GetVendorProfile (same functionality)
-export const GetVendorProfile = getvendorById;
+// GetVendorProfile — uses authenticateToken middleware (req.user already populated)
+// Reads req.user.uuid set by the middleware instead of re-reading the cookie,
+// so it works with both Bearer token and cookie auth.
+export const GetVendorProfile = async (req, res) => {
+  try {
+    const userId = req.user?.uuid;
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized: No token provided" });
+    }
+
+    const vendor = await new Promise((resolve, reject) => {
+      VendorModel.findVendor(userId, (err, result) => {
+        if (err) {
+          console.error("Database error fetching vendor:", err);
+          reject(err);
+        } else {
+          resolve(result && result.length > 0 ? result[0] : null);
+        }
+      });
+    });
+
+    if (!vendor) {
+      return res.status(404).json({ message: "Vendor not found" });
+    }
+
+    res.status(200).json({ vendor: vendor });
+  } catch (error) {
+    console.error("Error in GetVendorProfile:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
 
 export const updateVendorProfile = async (req, res) => {
   try {

@@ -32,6 +32,12 @@ const ManualReservations = () => {
   const [shiftsLoading, setShiftsLoading] = useState(false);
   const [availableShifts, setAvailableShifts] = useState([]);
 
+  // Helper to get auth headers from localStorage
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem("token");
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
+
   useEffect(() => {
     fetchVendors();
   }, []);
@@ -106,7 +112,7 @@ const ManualReservations = () => {
       const now = new Date();
       const response = await axios.get(
         `${VITE_API_BASE_URL}/manual-reservations/vendor/${selectedVendor}?month=${now.getMonth() + 1}&year=${now.getFullYear()}`,
-        { withCredentials: true }
+        { headers: getAuthHeaders(), withCredentials: true }
       );
       setReservations(response.data?.data || []);
     } catch (error) {
@@ -137,9 +143,8 @@ const ManualReservations = () => {
           shift_id: selectedShift,
           event_date: formattedDate,
           reason: reason || "Manual reservation by admin",
-          reserved_by_type: "admin",
         },
-        { withCredentials: true }
+        { headers: getAuthHeaders(), withCredentials: true }
       );
 
       toast.success("Shift reserved successfully!");
@@ -160,6 +165,7 @@ const ManualReservations = () => {
 
     try {
       await axios.delete(`${VITE_API_BASE_URL}/manual-reservations/${reservationId}`, {
+        headers: getAuthHeaders(),
         withCredentials: true,
       });
       toast.success("Reservation cancelled");
@@ -171,9 +177,12 @@ const ManualReservations = () => {
 
   const tileClassName = ({ date, view }) => {
     if (view === "month") {
-      const dateStr = date.toISOString().split("T")[0];
+      // Use local date parts to avoid UTC timezone offset shifting the date
+      const pad = (n) => String(n).padStart(2, "0");
+      const dateStr = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
       const hasReservation = reservations.some((r) => {
-        const rDate = new Date(r.event_date).toISOString().split("T")[0];
+        const d = new Date(r.event_date);
+        const rDate = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
         return rDate === dateStr;
       });
       if (hasReservation) {

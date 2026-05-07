@@ -34,6 +34,12 @@ const VendorManualReservations = () => {
   const [shiftsLoading, setShiftsLoading] = useState(false);
   const [availableShifts, setAvailableShifts] = useState([]);
 
+  // Helper to get auth headers from localStorage
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem("token");
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
+
   useEffect(() => {
     fetchVendorProfile();
   }, []);
@@ -46,7 +52,7 @@ const VendorManualReservations = () => {
       const now = new Date();
       const response = await axios.get(
         `${VITE_API_BASE_URL}/manual-reservations/vendor/${vendorId}?month=${now.getMonth() + 1}&year=${now.getFullYear()}`,
-        { withCredentials: true }
+        { headers: getAuthHeaders(), withCredentials: true }
       );
       setReservations(response.data?.data || []);
     } catch (error) {
@@ -78,9 +84,11 @@ const VendorManualReservations = () => {
       setProfileLoading(true);
       setProfileError("");
       const response = await axios.get(`${VITE_API_BASE_URL}/Vendor/GetVendorProfile`, {
+        headers: getAuthHeaders(),
         withCredentials: true,
       });
-      const resolvedVendorId = response.data?.vendor_id;
+      // Backend returns { vendor: { vendor_id, ... } }
+      const resolvedVendorId = response.data?.vendor?.vendor_id;
 
       if (!resolvedVendorId) {
         throw new Error("Vendor profile not found. Please complete your profile setup.");
@@ -158,9 +166,8 @@ const VendorManualReservations = () => {
           shift_id: selectedShift,
           event_date: formattedDate,
           reason: reason || "Manual reservation by vendor",
-          reserved_by_type: "vendor",
         },
-        { withCredentials: true }
+        { headers: getAuthHeaders(), withCredentials: true }
       );
 
       toast.success("Shift reserved successfully!");
@@ -181,6 +188,7 @@ const VendorManualReservations = () => {
 
     try {
       await axios.delete(`${VITE_API_BASE_URL}/manual-reservations/${reservationId}`, {
+        headers: getAuthHeaders(),
         withCredentials: true,
       });
       toast.success("Reservation cancelled");
@@ -192,9 +200,12 @@ const VendorManualReservations = () => {
 
   const tileClassName = ({ date, view }) => {
     if (view === "month") {
-      const dateStr = date.toISOString().split("T")[0];
+      // Use local date parts to avoid UTC timezone offset shifting the date
+      const pad = (n) => String(n).padStart(2, "0");
+      const dateStr = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
       const hasReservation = reservations.some((r) => {
-        const rDate = new Date(r.event_date).toISOString().split("T")[0];
+        const d = new Date(r.event_date);
+        const rDate = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
         return rDate === dateStr;
       });
       if (hasReservation) {
