@@ -21,7 +21,7 @@ export type UserProfile = {
 type BackendProfileResponse = {
   success: boolean;
   message: string;
-  user: UserProfile;
+  data: UserProfile;   // backend returns `data`, not `user`
 };
 
 type UpdateProfileRequest = {
@@ -38,11 +38,11 @@ export const getUserProfile = async (): Promise<UserProfile> => {
     API_ENDPOINTS.profile.get
   );
 
-  if (!response.data.success || !response.data.user) {
+  if (!response.data.success || !response.data.data) {
     throw new Error(response.data.message ?? "Failed to fetch profile");
   }
 
-  return response.data.user;
+  return response.data.data;
 };
 
 // ─── Update User Profile ─────────────────────────────────────
@@ -55,9 +55,9 @@ export const updateUserProfile = async (
     data
   );
 
-  if (!response.data.success || !response.data.user) {
+  if (!response.data.success || !response.data.data) {
     throw new Error(response.data.message ?? "Failed to update profile");
   }
 
-  return response.data.user;
+  return response.data.data;
 };
