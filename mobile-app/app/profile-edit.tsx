@@ -26,7 +26,6 @@ import { useSettingsTheme } from '@/theme/settingsTheme';
 type ProfileForm = {
 	firstName: string;
 	lastName: string;
-	email: string;
 	phone: string;
 };
 
@@ -43,7 +42,6 @@ type FeedbackState = {
 
 // ─── Helpers ─────────────────────────────────────────────────
 
-const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 const isValidPhone = (v: string) => v.replace(/\D/g, '').length === 10;
 
 // ─── Component ───────────────────────────────────────────────
@@ -60,9 +58,9 @@ export default function ProfileEditScreen() {
 	const [profileForm, setProfileForm] = useState<ProfileForm>({
 		firstName: (authName || 'Guest').split(' ')[0] ?? 'Guest',
 		lastName: (authName || '').split(' ').slice(1).join(' '),
-		email: authEmail ?? '',
 		phone: '',
 	});
+	const [displayEmail, setDisplayEmail] = useState(authEmail ?? '');
 	const [passwordForm, setPasswordForm] = useState<PasswordForm>({
 		currentPassword: '',
 		newPassword: '',
@@ -103,9 +101,9 @@ export default function ProfileEditScreen() {
 					setProfileForm({
 						firstName: profile.first_name || '',
 						lastName: profile.last_name || '',
-						email: profile.email || '',
 						phone: profile.phone || '',
 					});
+					setDisplayEmail(profile.email || '');
 				}
 			} catch {
 				if (!cancelled) {
@@ -113,9 +111,9 @@ export default function ProfileEditScreen() {
 					setProfileForm({
 						firstName: (authName || 'Guest').split(' ')[0] ?? 'Guest',
 						lastName: (authName || '').split(' ').slice(1).join(' '),
-						email: authEmail ?? '',
 						phone: '',
 					});
+					setDisplayEmail(authEmail ?? '');
 				}
 			} finally {
 				if (!cancelled) setIsLoadingProfile(false);
@@ -131,16 +129,11 @@ export default function ProfileEditScreen() {
 		const payload = {
 			first_name: profileForm.firstName.trim(),
 			last_name: profileForm.lastName.trim(),
-			email: profileForm.email.trim().toLowerCase(),
 			phone: profileForm.phone.trim(),
 		};
 
-		if (!payload.first_name || !payload.last_name || !payload.email || !payload.phone) {
+		if (!payload.first_name || !payload.last_name || !payload.phone) {
 			setProfileFeedback({ message: 'Please fill all fields.', type: 'error' });
-			return;
-		}
-		if (!isValidEmail(payload.email)) {
-			setProfileFeedback({ message: 'Please enter a valid email address.', type: 'error' });
 			return;
 		}
 		if (!isValidPhone(payload.phone)) {
@@ -160,9 +153,9 @@ export default function ProfileEditScreen() {
 			setProfileForm({
 				firstName: updated.first_name || '',
 				lastName: updated.last_name || '',
-				email: updated.email || '',
 				phone: updated.phone || '',
 			});
+			setDisplayEmail(updated.email || '');
 			setProfileFeedback({ message: 'Profile updated successfully.', type: 'success' });
 			setIsEditMode(false);
 			setTimeout(() => setProfileFeedback(null), 3000);
@@ -195,7 +188,7 @@ export default function ProfileEditScreen() {
 		setPasswordFeedback(null);
 
 		try {
-			const msg = await changePassword({ oldPassword: currentPassword, newPassword });
+			const msg = await changePassword({ email: authEmail ?? '', oldPassword: currentPassword, newPassword });
 			setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
 			setPasswordFeedback({ message: msg || 'Password changed successfully.', type: 'success' });
 			setTimeout(() => setPasswordFeedback(null), 3000);
@@ -268,11 +261,12 @@ export default function ProfileEditScreen() {
 							/>
 							<FormField
 								label="Email"
-								value={profileForm.email}
-								onChangeText={(v) => setProfileForm((p) => ({ ...p, email: v }))}
+								value={displayEmail}
+								onChangeText={() => {}}
 								placeholder="Email address"
 								keyboardType="email-address"
 								autoCapitalize="none"
+								editable={false}
 								palette={palette}
 							/>
 							<FormField
@@ -322,7 +316,7 @@ export default function ProfileEditScreen() {
 						<View style={styles.viewBody}>
 							<ProfileRow label="First Name" value={profileForm.firstName} palette={palette} />
 							<ProfileRow label="Last Name" value={profileForm.lastName} palette={palette} />
-							<ProfileRow label="Email" value={profileForm.email} palette={palette} />
+							<ProfileRow label="Email" value={displayEmail} palette={palette} />
 							<ProfileRow label="Phone" value={profileForm.phone} palette={palette} isLast />
 
 							{profileFeedback && (
@@ -404,6 +398,7 @@ function FormField({
 	keyboardType,
 	autoCapitalize,
 	maxLength,
+	editable = true,
 	palette,
 }: {
 	label: string;
@@ -414,13 +409,18 @@ function FormField({
 	keyboardType?: React.ComponentProps<typeof TextInput>['keyboardType'];
 	autoCapitalize?: React.ComponentProps<typeof TextInput>['autoCapitalize'];
 	maxLength?: number;
+	editable?: boolean;
 	palette: any;
 }) {
 	return (
 		<View style={styles.fieldWrap}>
 			<ThemedText style={[styles.fieldLabel, { color: palette.subtext }]}>{label}</ThemedText>
 			<TextInput
-				style={[styles.input, { backgroundColor: palette.screenBg, borderColor: palette.border, color: palette.text }]}
+				style={[
+					styles.input,
+					{ backgroundColor: palette.screenBg, borderColor: palette.border, color: palette.text },
+					!editable && { opacity: 0.5 },
+				]}
 				value={value}
 				onChangeText={onChangeText}
 				placeholder={placeholder}
@@ -429,6 +429,7 @@ function FormField({
 				keyboardType={keyboardType}
 				autoCapitalize={autoCapitalize ?? 'none'}
 				maxLength={maxLength}
+				editable={editable}
 			/>
 		</View>
 	);

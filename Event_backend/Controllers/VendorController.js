@@ -31,7 +31,7 @@ export const insertVendor = (req, res) => {
       return res.status(401).json({ message: "Unauthorized: Invalid token" });
     }
 
-    const userId = decoded.userId;
+    const userId = decoded.uuid ?? decoded.userId;
     console.log('✅ User ID:', userId);
 
     const profile_url = req.file.path;
@@ -111,8 +111,10 @@ export const AddEventImages = async (req, res) => {
       return res.status(401).json({ message: "Unauthorized: Invalid token" });
     }
 
+    const userId = decoded.uuid ?? decoded.userId;
+
     // 2️⃣ Get vendor_id using a promisified helper
-    const vendor_id = await promisifyFindVendorID(decoded.userId);
+    const vendor_id = await promisifyFindVendorID(userId);
     if (!vendor_id) {
       return res.status(404).json({ message: "Vendor not found" });
     }
@@ -169,7 +171,12 @@ const promisifyAddEventImages = (vendor_id, url) => {
 
 export const getvendorById = async (req, res) => {
   try {
-    const token = req.cookies.auth_token;
+    // Support both Bearer token (mobile) and cookie-based (web) auth
+    const authHeader = req.headers['authorization'];
+    let token = authHeader && authHeader.split(' ')[1];
+    if (!token && req.cookies) {
+      token = req.cookies.auth_token;
+    }
 
     if (!token) {
       return res
@@ -182,8 +189,11 @@ export const getvendorById = async (req, res) => {
       return res.status(401).json({ message: "Unauthorized: Invalid token" });
     }
 
+    // JWT stores uuid (not userId) — support both for compatibility
+    const userId = decoded.uuid ?? decoded.userId;
+
     const vendor = await new Promise((resolve, reject) => {
-      VendorModel.findVendor(decoded.userId, (err, result) => {
+      VendorModel.findVendor(userId, (err, result) => {
         if (err) {
           console.error("Database error fetching vendor:", err);
           reject(err);
@@ -254,9 +264,11 @@ export const updateVendorProfile = async (req, res) => {
       return res.status(401).json({ message: "Unauthorized: Invalid token" });
     }
 
+    const userId = decoded.uuid ?? decoded.userId;
+
     // Find vendor ID
     const vendor_id = await new Promise((resolve, reject) => {
-      VendorModel.findVendorID(decoded.userId, (err, result) => {
+      VendorModel.findVendorID(userId, (err, result) => {
         if (err) {
           reject(err);
         } else if (!result || result.length === 0) {
@@ -325,8 +337,10 @@ export const VendorShift = async (req, res) => {
       });
     }
 
+    const userId = decoded.uuid ?? decoded.userId;
+
     const vendor_id = await new Promise((resolve, reject) => {
-      VendorModel.findVendorID(decoded.userId, (err, result) => {
+      VendorModel.findVendorID(userId, (err, result) => {
         if (err) reject(err);
         else resolve(result?.[0]?.vendor_id || null);
       });
@@ -384,8 +398,9 @@ export const getVendorShiftforVendor = async (req, res) => {
       // console.log('Using vendor_id from query parameter:', vendor_id);
     } else {
       // Get vendor_id from logged-in user's token (vendor use case)
+      const userId = decoded.uuid ?? decoded.userId;
       const vendorResult = await new Promise((resolve, reject) => {
-        VendorModel.findVendorID(decoded.userId, (err, result) => {
+        VendorModel.findVendorID(userId, (err, result) => {
           if (err) reject(err);
           else resolve(result);
         });
@@ -453,7 +468,7 @@ export const GetvendorEventImages = async (req, res) => {
       }
 
       const foundVendorId = await new Promise((resolve, reject) => {
-        VendorModel.findVendorID(decoded.userId, (err, result) => {
+        VendorModel.findVendorID(decoded.uuid ?? decoded.userId, (err, result) => {
           if (err) return reject(err);
           resolve(result && result.length > 0 ? result[0].vendor_id : null);
         });
@@ -507,7 +522,7 @@ export const deleteEventImage = async (req, res) => {
 
     // Get vendor_id
     const vendor_id = await new Promise((resolve, reject) => {
-      VendorModel.findVendorID(decoded.userId, (err, result) => {
+      VendorModel.findVendorID(decoded.uuid ?? decoded.userId, (err, result) => {
         if (err) return reject(err);
         resolve(result && result.length > 0 ? result[0].vendor_id : null);
       });
@@ -670,7 +685,7 @@ export const insertVendorPackage = (req, res) => {
       return res.status(401).json({ message: "Unauthorized: Invalid token" });
     }
 
-    const userId = decoded.userId;
+    const userId = decoded.uuid ?? decoded.userId;
 
     // Find vendor ID and handle insertion in callback
     VendorModel.findVendorID(userId, (err, result) => {

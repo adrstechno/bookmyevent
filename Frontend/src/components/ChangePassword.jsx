@@ -32,20 +32,15 @@ const ChangePassword = ({ visible, onClose }) => {
     try {
       setLoading(true);
 
-      // Create form data for x-www-form-urlencoded
-      const params = new URLSearchParams();
-      params.append("email", form.email);
-      params.append("oldPassword", form.oldPassword);
-      params.append("newPassword", form.newPassword);
-
       const response = await axios.post(
         `${VITE_API_BASE_URL}/User/changePassword`,
-        params,
         {
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          withCredentials: true, // allows cookies to be sent if needed
+          email: form.email,
+          oldPassword: form.oldPassword,
+          newPassword: form.newPassword,
+        },
+        {
+          withCredentials: true,
         }
       );
 
