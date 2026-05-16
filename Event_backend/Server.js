@@ -47,6 +47,7 @@ const { default: ManualReservationRouter } = await import('./Router/ManualReserv
 const { default: SubscriptionRouter } = await import('./Router/SubscriptionRoute.js');
 const { default: SubscriptionCronJobs } = await import('./Utils/subscriptionCronJobs.js');
 const { default: TestRouter } = await import('./Router/TestRouter.js');
+const { default: ContactRouter } = await import('./Router/ContactRouter.js');
 
 const app = express();
 
@@ -120,6 +121,9 @@ app.use('/subscription', SubscriptionRouter);
 
 // 🟢 Test routes
 app.use('/test', TestRouter);
+
+// 🟢 Contact form
+app.use('/contact', ContactRouter);
 
 app.get('/', (req, res) => {
   res.send('Welcome to the Event Management API');

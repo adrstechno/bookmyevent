@@ -3,6 +3,8 @@ import {
   Animated,
   Alert,
   Image,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -236,10 +238,15 @@ export default function LoginScreen() {
       edges={["top", "bottom"]}
     >
       <StatusBar style={isDark ? "light" : "dark"} />
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
       <ScrollView
         style={[styles.page, { backgroundColor: palette.screenBg }]}
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         {/* Header Section */}
         <View style={styles.headerSection}>
@@ -420,22 +427,30 @@ export default function LoginScreen() {
 
           {/* Phone Input (Register only) */}
           {mode === "register" && (
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: palette.elevatedBg,
-                  borderColor: palette.border,
-                  color: palette.text,
-                },
-              ]}
-              value={phone}
-              onChangeText={setPhone}
-              placeholder="Phone Number"
-              placeholderTextColor={palette.muted}
-              keyboardType="phone-pad"
-              editable={!isLoading}
-            />
+            <>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: palette.elevatedBg,
+                    borderColor: palette.border,
+                    color: palette.text,
+                  },
+                ]}
+                value={phone}
+                onChangeText={(t) => setPhone(t.replace(/\D/g, "").slice(0, 10))}
+                placeholder="Phone Number (10 digits)"
+                placeholderTextColor={palette.muted}
+                keyboardType="phone-pad"
+                maxLength={10}
+                editable={!isLoading}
+              />
+              {phone.length > 0 && phone.length < 10 && (
+                <ThemedText style={[styles.phoneHint, { color: palette.subtext }]}>
+                  {10 - phone.length} more digit{10 - phone.length !== 1 ? "s" : ""} needed
+                </ThemedText>
+              )}
+            </>
           )}
 
           {/* Password Input */}
@@ -519,6 +534,7 @@ export default function LoginScreen() {
 
         </Animated.View>
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -656,6 +672,11 @@ const styles = StyleSheet.create({
     paddingLeft: 8,
     justifyContent: "center",
     alignItems: "center",
+  },
+  phoneHint: {
+    fontSize: 11,
+    marginTop: -8,
+    paddingHorizontal: 4,
   },
   forgotPasswordBtn: {
     alignSelf: "flex-end",

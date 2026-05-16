@@ -1,4 +1,4 @@
-import BookingModel from "../Models/BookingModel.js";
+﻿import BookingModel from "../Models/BookingModel.js";
 import OTPModel from "../Models/OTPModel.js";
 import NotificationService from "../Services/NotificationService.js";
 import EmailService from "../Services/emailService.js";
@@ -70,7 +70,7 @@ class EnhancedBookingController {
                 const vendorQuery = `
                     SELECT u.first_name, u.last_name, u.email, vp.vendor_id, vp.business_name
                     FROM vendor_profiles vp 
-                    JOIN users u ON vp.user_id = u.user_id 
+                    JOIN users u ON vp.user_id = u.uuid
                     WHERE vp.vendor_id = ?
                 `;
                 const vendorResult = await new Promise((resolve, reject) => {
@@ -133,7 +133,7 @@ class EnhancedBookingController {
                         bookingId: result.booking_id,
                         bookingUuid: booking_uuid
                     });
-                    console.log('✅ Vendor booking notification email sent to:', vendor.email);
+                    console.log('âœ… Vendor booking notification email sent to:', vendor.email);
                 }
 
                 // 4. Send confirmation email to user
@@ -149,7 +149,7 @@ class EnhancedBookingController {
                         bookingId: result.booking_id,
                         bookingUuid: booking_uuid
                     });
-                    console.log('✅ User booking confirmation email sent to:', user.email);
+                    console.log('âœ… User booking confirmation email sent to:', user.email);
                 }
 
                 // 5. Send notification email to admin
@@ -165,10 +165,10 @@ class EnhancedBookingController {
                     bookingId: result.booking_id,
                     bookingUuid: booking_uuid
                 });
-                console.log('✅ Admin booking notification email sent');
+                console.log('âœ… Admin booking notification email sent');
 
             } catch (notificationError) {
-                console.error('❌ Error sending booking notifications:', notificationError);
+                console.error('âŒ Error sending booking notifications:', notificationError);
                 // Don't fail the booking if notification fails
             }
 
@@ -288,7 +288,7 @@ class EnhancedBookingController {
                             eventDate: booking.event_date,
                             bookingId: id
                         });
-                        console.log('✅ User booking accepted email sent to:', booking.user_email);
+                        console.log('âœ… User booking accepted email sent to:', booking.user_email);
                     }
 
                     // Send admin notification email
@@ -300,11 +300,11 @@ class EnhancedBookingController {
                         amount: booking.amount || 'N/A',
                         bookingId: id
                     });
-                    console.log('✅ Admin booking accepted notification sent');
+                    console.log('âœ… Admin booking accepted notification sent');
                 }
 
             } catch (notificationError) {
-                console.error('❌ Error sending booking acceptance notifications:', notificationError);
+                console.error('âŒ Error sending booking acceptance notifications:', notificationError);
             }
 
             res.json({
@@ -402,7 +402,7 @@ class EnhancedBookingController {
                             amount: booking.amount || 'N/A',
                             bookingId: id
                         });
-                        console.log('✅ User booking approved email sent to:', booking.user_email);
+                        console.log('âœ… User booking approved email sent to:', booking.user_email);
                     }
 
                     // Send email notification to vendor
@@ -417,12 +417,12 @@ class EnhancedBookingController {
                             amount: booking.amount || 'N/A',
                             bookingId: id
                         });
-                        console.log('✅ Vendor booking approved email sent to:', booking.vendor_email);
+                        console.log('âœ… Vendor booking approved email sent to:', booking.vendor_email);
                     }
                 }
 
             } catch (notificationError) {
-                console.error('❌ Error sending booking approval notifications:', notificationError);
+                console.error('âŒ Error sending booking approval notifications:', notificationError);
             }
 
             res.json({

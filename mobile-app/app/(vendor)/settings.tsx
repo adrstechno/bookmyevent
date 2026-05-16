@@ -65,6 +65,7 @@ export default function VendorSettingsScreen() {
 
 	const [pageLoading, setPageLoading] = useState(true);
 	const [isSaving, setIsSaving] = useState(false);
+	const [isNewProfile, setIsNewProfile] = useState(true);
 	const [showPasswordModal, setShowPasswordModal] = useState(false);
 	const [passwordData, setPasswordData] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' });
 	const [passwordErrors, setPasswordErrors] = useState<FormErrors>({});
@@ -85,11 +86,12 @@ export default function VendorSettingsScreen() {
 		const load = async () => {
 			try {
 				const [profile, cats] = await Promise.all([
-					fetchVendorProfile(),
+					fetchVendorProfile().catch(() => null),
 					fetchVendorServiceCategories(),
 				]);
 
 				setCategories(cats);
+				setIsNewProfile(!profile);
 
 				if (profile) {
 					setFormData({
@@ -120,7 +122,7 @@ export default function VendorSettingsScreen() {
 					}
 				}
 			} catch {
-				showError('Failed to load profile');
+				showError('Failed to load service categories. Please check your connection.');
 			} finally {
 				setPageLoading(false);
 			}
@@ -224,9 +226,10 @@ export default function VendorSettingsScreen() {
 					eventProfilesUrl: formData.event_profiles_url,
 					profileImageUri: profileImageUri ?? undefined,
 				},
-				{ isNewProfile: false }
+				{ isNewProfile }
 			);
-			showSuccess('Profile updated successfully!');
+			if (isNewProfile) setIsNewProfile(false);
+			showSuccess(isNewProfile ? 'Profile created successfully!' : 'Profile updated successfully!');
 		} catch (err: unknown) {
 			const msg = (err as { message?: string })?.message ?? 'Failed to save profile';
 			showError(msg);

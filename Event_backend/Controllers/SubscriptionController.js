@@ -26,7 +26,7 @@ class SubscriptionController {
             const vendorQuery = `
                 SELECT vp.vendor_id, vp.business_name, u.email, u.first_name, u.last_name
                 FROM vendor_profiles vp
-                JOIN users u ON (vp.user_id = u.user_id OR vp.user_id = u.uuid)
+                JOIN users u ON vp.user_id = u.uuid
                 WHERE u.uuid = ?
             `;
 
@@ -228,7 +228,7 @@ class SubscriptionController {
             const vendorQuery = `
                 SELECT vp.business_name, u.email, u.first_name, u.last_name
                 FROM vendor_profiles vp
-                JOIN users u ON vp.user_id = u.user_id
+                JOIN users u ON vp.user_id = u.uuid
                 WHERE vp.vendor_id = ?
             `;
 
@@ -295,7 +295,7 @@ class SubscriptionController {
             const vendorQuery = `
                 SELECT vp.vendor_id, vp.business_name, u.email, u.first_name, u.last_name
                 FROM vendor_profiles vp
-                JOIN users u ON (vp.user_id = u.user_id OR vp.user_id = u.uuid)
+                JOIN users u ON vp.user_id = u.uuid
                 WHERE u.uuid = ?
             `;
 
@@ -414,7 +414,7 @@ class SubscriptionController {
             // Note: vendor_profiles.user_id can be either users.user_id (int) or users.uuid (string)
             const vendorQuery = `
                 SELECT vendor_id FROM vendor_profiles vp
-                JOIN users u ON (vp.user_id = u.user_id OR vp.user_id = u.uuid)
+                JOIN users u ON vp.user_id = u.uuid
                 WHERE u.uuid = ?
             `;
 
@@ -487,7 +487,7 @@ class SubscriptionController {
                 SELECT vs.*, vp.business_name, u.email, u.first_name, u.last_name
                 FROM vendor_subscriptions vs
                 JOIN vendor_profiles vp ON vs.vendor_id = vp.vendor_id
-                JOIN users u ON vp.user_id = u.user_id
+                JOIN users u ON vp.user_id = u.uuid
                 ORDER BY vs.created_at DESC
             `;
 

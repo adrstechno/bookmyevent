@@ -23,12 +23,16 @@ export type VendorShift = {
 
 // ─── Helpers ─────────────────────────────────────────────────
 
-/** Backend stores days_of_week as JSON string OR comma-separated OR array */
+/** Backend stores days_of_week as JSON array string, double-stringified string, or comma-separated */
 const parseDays = (value: unknown): string[] => {
 	if (Array.isArray(value)) return value.filter((v): v is string => typeof v === 'string');
 	if (typeof value === 'string') {
-		const t = value.trim();
+		let t = value.trim();
 		if (!t) return [];
+		// Handle double-stringified: outer quotes wrapping an inner JSON array
+		if (t.startsWith('"') && t.endsWith('"')) {
+			try { t = JSON.parse(t) as string; } catch { /* fall through */ }
+		}
 		if (t.startsWith('[')) {
 			try { return JSON.parse(t); } catch { /* fall through */ }
 		}

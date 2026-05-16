@@ -56,21 +56,24 @@ const toString = (value: unknown, fallback = ''): string => {
 export const fetchSubscriptionStatus = async (): Promise<SubscriptionStatus> => {
 	const response = await apiClient.get(API_ENDPOINTS.subscription.status);
 	const payload = toObject(response.data);
-	const data = toObject(payload.data ?? payload);
 
-	const isActive = Boolean(data.isActive ?? data.is_active ?? false);
-	const endDate = typeof data.expiresAt === 'string'
-		? data.expiresAt
-		: typeof data.end_date === 'string'
-		? data.end_date
+	// Backend returns: { success, hasSubscription, subscription: { is_active, end_date, days_remaining, ... } }
+	// OR:             { success, hasSubscription: false, message }
+	const sub = toObject(payload.subscription ?? payload.data ?? {});
+
+	const isActive = Boolean(sub.is_active ?? sub.isActive ?? false);
+	const endDate = typeof sub.end_date === 'string'
+		? sub.end_date
+		: typeof sub.expiresAt === 'string'
+		? sub.expiresAt
 		: null;
-	const daysRemaining = toNumber(data.daysRemaining ?? data.days_remaining, 0);
+	const daysRemaining = toNumber(sub.days_remaining ?? sub.daysRemaining, 0);
 
 	return {
 		isActive,
 		endDate,
 		daysRemaining,
-		hasSubscription: isActive || daysRemaining > 0,
+		hasSubscription: Boolean(payload.hasSubscription) || isActive || daysRemaining > 0,
 	};
 };
 
@@ -87,6 +90,10 @@ export const createSubscriptionOrder = async (): Promise<SubscriptionOrder> => {
 		vendorId: toString(data.vendor_id),
 		businessName: toString(data.business_name, 'GoEventify Vendor'),
 	};
+};
+
+export const testActivateSubscription = async (): Promise<void> => {
+	await apiClient.post(API_ENDPOINTS.subscription.testActivate);
 };
 
 export const verifySubscriptionPayment = async (

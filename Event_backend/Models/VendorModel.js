@@ -118,12 +118,17 @@ class VendorModel {
     const sql =
       "INSERT INTO vendor_shifts (vendor_id, shift_name, start_time, end_time, days_of_week, is_active) VALUES (?,?,?,?,?,?)";
 
+    // days_of_week may arrive pre-stringified from the mobile app — don't double-stringify
+    const daysJson = Array.isArray(shiftData.days_of_week)
+      ? JSON.stringify(shiftData.days_of_week)
+      : shiftData.days_of_week;
+
     const values = [
       shiftData.vendor_id,
       shiftData.shift_name,
       shiftData.start_time,
       shiftData.end_time,
-      JSON.stringify(shiftData.days_of_week), // Convert array to JSON string
+      daysJson,
       shiftData.is_active || true,
     ];
 

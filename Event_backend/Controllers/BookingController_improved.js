@@ -1,4 +1,4 @@
-import BookingModel from "../Models/BookingModel.js";
+﻿import BookingModel from "../Models/BookingModel.js";
 import OTPModel from "../Models/OTPModel.js";
 import NotificationService from "../Services/NotificationService.js";
 import EmailService from "../Services/emailService.js";
@@ -71,7 +71,7 @@ class BookingController {
                 const vendorQuery = `
                     SELECT u.first_name, u.last_name, u.email, u.phone, vp.vendor_id, vp.business_name, vp.contact
                     FROM vendor_profiles vp 
-                    JOIN users u ON vp.user_id = u.user_id 
+                    JOIN users u ON vp.user_id = u.uuid
                     WHERE vp.vendor_id = ? AND u.is_active = 1
                 `;
                 const vendorResult = await new Promise((resolve, reject) => {
@@ -81,8 +81,8 @@ class BookingController {
                     });
                 });
 
-                // console.log('🔍 Vendor lookup for vendor_id:', vendor_id);
-                // console.log('📧 Vendor query result:', vendorResult);
+                // console.log('ðŸ” Vendor lookup for vendor_id:', vendor_id);
+                // console.log('ðŸ“§ Vendor query result:', vendorResult);
 
                 // Get package details
                 const packageQuery = `SELECT package_name, amount FROM vendor_packages WHERE package_id = ?`;
@@ -128,9 +128,9 @@ class BookingController {
                             bookingUuid: booking_uuid,
                             eventAddress: finalAddress
                         });
-                        // console.log('✅ Vendor booking notification email sent to:', vendor.email);
+                        // console.log('âœ… Vendor booking notification email sent to:', vendor.email);
                     } catch (emailError) {
-                        console.error('❌ Failed to send vendor booking notification email:', emailError);
+                        console.error('âŒ Failed to send vendor booking notification email:', emailError);
                         // Log more details for debugging
                         console.error('Email service error details:', {
                             vendorEmail: vendor.email,
@@ -138,7 +138,7 @@ class BookingController {
                         });
                     }
                 } else {
-                    // console.log('⚠️ Vendor email notification skipped:', {
+                    // console.log('âš ï¸ Vendor email notification skipped:', {
                     //     vendorFound: !!vendor,
                     //     vendorEmail: vendor?.email,
                     //     vendor_id: vendor_id,
@@ -147,7 +147,7 @@ class BookingController {
                 }
 
             } catch (notificationError) {
-                console.error('❌ Error sending booking notification:', notificationError);
+                console.error('âŒ Error sending booking notification:', notificationError);
                 // Don't fail the booking if notification fails
             }
 
@@ -163,7 +163,7 @@ class BookingController {
             });
 
         } catch (error) {
-            console.error('❌ Create booking error:', error);
+            console.error('âŒ Create booking error:', error);
             res.status(500).json({
                 success: false,
                 message: 'Failed to create booking',
@@ -180,7 +180,7 @@ class BookingController {
             const vendorQuery = `
                 SELECT u.first_name, u.last_name, u.email, u.phone, vp.vendor_id, vp.business_name, vp.contact
                 FROM vendor_profiles vp 
-                JOIN users u ON vp.user_id = u.user_id 
+                JOIN users u ON vp.user_id = u.uuid
                 WHERE vp.vendor_id = ? AND u.is_active = 1
             `;
             

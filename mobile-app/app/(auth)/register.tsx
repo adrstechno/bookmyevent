@@ -30,7 +30,7 @@ type FormErrors = {
 export default function RegisterScreen() {
 	const dispatch = useAppDispatch();
 	const router = useRouter();
-	const { showSuccess } = useAppToast();
+	const { showSuccess, showError } = useAppToast();
 	const { isLoading, error, requiresVerification, pendingVerificationEmail } = useAppSelector((s) => s.auth);
 	const { palette, isDark } = useAppTheme();
 
@@ -90,7 +90,7 @@ export default function RegisterScreen() {
 			showSuccess('Registration successful! Check your email.');
 		} catch (err) {
 			const message = typeof err === 'string' ? err : 'Registration failed. Please try again.';
-			setErrors((prev) => ({ ...prev, api: message }));
+			showError(message);
 		}
 	};
 
@@ -148,7 +148,7 @@ export default function RegisterScreen() {
 	return (
 		<SafeAreaView style={[s.safe, { backgroundColor: c.screenBg }]} edges={['top', 'bottom']}>
 			<StatusBar style={isDark ? 'light' : 'dark'} />
-			<KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+			<KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
 				<ScrollView
 					contentContainerStyle={s.scroll}
 					showsVerticalScrollIndicator={false}

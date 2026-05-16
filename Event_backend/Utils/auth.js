@@ -29,18 +29,17 @@ export const authenticateToken = (req, res, next) => {
         
         // Get full user info from database
         const userId = decoded.uuid ?? decoded.userId; // support both old and new tokens
-        
-        // Query to get user info and vendor_id if exists
-        // Note: vendor_profiles.user_id might store uuid (string) or user_id (int) depending on how vendor was created
+
+        // vendor_profiles.user_id always stores the user's UUID (set by insertVendor)
         const sql = `
-            SELECT u.user_id, u.uuid, u.email, u.first_name, u.last_name, u.user_type,
+            SELECT u.uuid, u.email, u.first_name, u.last_name, u.user_type,
                    vp.vendor_id
             FROM users u
-            LEFT JOIN vendor_profiles vp ON (u.user_id = vp.user_id OR u.uuid = vp.user_id)
+            LEFT JOIN vendor_profiles vp ON u.uuid = vp.user_id
             WHERE u.uuid = ?
             LIMIT 1
         `;
-        
+
         db.query(sql, [userId], (dbErr, results) => {
             if (dbErr) {
                 console.error('Auth DB error:', dbErr);
@@ -49,23 +48,20 @@ export const authenticateToken = (req, res, next) => {
                     message: 'Authentication error'
                 });
             }
-            
+
             if (!results || results.length === 0) {
-                // console.log('User not found for uuid:', userId);
                 return res.status(401).json({
                     success: false,
                     message: 'User not found'
                 });
             }
-            
+
             const user = results[0];
-            // console.log('Auth successful for user:', user.uuid, 'type:', user.user_type, 'vendor_id:', user.vendor_id);
-            
+
             // Set user info on request
             req.user = {
                 uuid: user.uuid,
                 user_id: user.uuid, // Use uuid as user_id for bookings (matches event_booking.user_id which is VARCHAR)
-                db_user_id: user.user_id,
                 email: user.email,
                 first_name: user.first_name,
                 last_name: user.last_name,

@@ -7,6 +7,7 @@ import { AppToastProvider } from '@/components/common/AppToastProvider';
 // import { OfflineBanner } from '@/components/common/OfflineBanner';
 import { AppPalettes } from '@/constants/theme';
 import { clearApiAuthToken, setApiAuthToken, setOnTokenInvalidCallback } from '@/services/api/client';
+import { warmupServer } from '@/services/auth/authApi';
 import { useAppDispatch, useAppSelector, store } from '@/store';
 import { bootstrapAuth, handleSessionExpired } from '@/store/slices/authSlice';
 import { useSettingsTheme } from '@/theme/settingsTheme';
@@ -158,6 +159,10 @@ useEffect(() => {
 		console.log('[RootNavigator] Token invalid/expired. Logging out...');
 		void dispatch(handleSessionExpired());
 	});
+
+	// Wake up Render server immediately so it is ready by the time the user
+	// reaches the login/register screen (Render free tier cold-start fix).
+	void warmupServer();
 
 	// Bootstrap tab karo jab callback set ho chuka ho
 	void dispatch(bootstrapAuth());

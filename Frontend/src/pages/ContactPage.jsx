@@ -5,6 +5,8 @@ import { FaFacebook, FaInstagram, FaLinkedin, FaWhatsapp } from "react-icons/fa"
 import Footer from "../components/mainpage/Footer";
 import HomeNavbar from "../components/mainpage/HomeNavbar";
 import toast from "react-hot-toast";
+import axios from "axios";
+import { VITE_API_BASE_URL } from "../utils/api";
 const phoneRegex = /^[6-9]\d{9}$/;
 
 const ContactPage = () => {
@@ -45,7 +47,7 @@ const ContactPage = () => {
     // },
   ];
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
   e.preventDefault();
   
   if (!formData.name || !formData.email || !formData.message) {
@@ -60,19 +62,16 @@ const ContactPage = () => {
   }
 
   setLoading(true);
-  
-  // Simulate API call
-  setTimeout(() => {
+
+  try {
+    await axios.post(`${VITE_API_BASE_URL}/contact`, formData);
     toast.success("Message sent successfully! We'll get back to you soon.");
-    setFormData({
-      name: "",
-      email: "",
-      phone: "",
-      subject: "",
-      message: "",
-    });
+    setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
+  } catch (error) {
+    toast.error("Failed to send message. Please try again later.");
+  } finally {
     setLoading(false);
-  }, 1500);
+  }
 };
 
 

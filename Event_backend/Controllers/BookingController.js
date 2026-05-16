@@ -1,4 +1,4 @@
-import BookingModel from "../Models/BookingModel.js";
+﻿import BookingModel from "../Models/BookingModel.js";
 import OTPModel from "../Models/OTPModel.js";
 import NotificationService from "../Services/NotificationService.js";
 import EmailService from "../Services/emailService.js";
@@ -70,7 +70,7 @@ class BookingController {
                 const vendorQuery = `
                     SELECT u.first_name, u.last_name, u.email, vp.vendor_id, vp.business_name
                     FROM vendor_profiles vp 
-                    JOIN users u ON vp.user_id = u.user_id 
+                    JOIN users u ON vp.user_id = u.uuid
                     WHERE vp.vendor_id = ?
                 `;
                 const vendorResult = await new Promise((resolve, reject) => {
@@ -405,7 +405,7 @@ class BookingController {
                     const vendorQuery = `
                         SELECT u.first_name, u.last_name, u.email, vp.vendor_id, vp.business_name
                         FROM vendor_profiles vp 
-                        JOIN users u ON vp.user_id = u.user_id 
+                        JOIN users u ON vp.user_id = u.uuid
                         WHERE vp.vendor_id = ?
                     `;
                     const vendorResult = await new Promise((resolve, reject) => {
@@ -429,12 +429,12 @@ class BookingController {
                             customerName: booking.user_name || 'Customer'
                         });
                         
-                        // console.log('✅ Vendor approval notification email sent to:', vendor.email);
+                        // console.log('âœ… Vendor approval notification email sent to:', vendor.email);
                     } else {
-                        // console.log('❌ No vendor found for vendor_id:', booking.vendor_id);
+                        // console.log('âŒ No vendor found for vendor_id:', booking.vendor_id);
                     }
                 } catch (vendorEmailError) {
-                    console.error('❌ Failed to send vendor approval notification:', vendorEmailError);
+                    console.error('âŒ Failed to send vendor approval notification:', vendorEmailError);
                 }
 
             } catch (notificationError) {
@@ -1059,7 +1059,7 @@ class BookingController {
                 const vendorQuery = `
                     SELECT u.first_name, u.last_name, u.email, vp.vendor_id, vp.business_name
                     FROM vendor_profiles vp 
-                    JOIN users u ON vp.user_id = u.user_id 
+                    JOIN users u ON vp.user_id = u.uuid
                     WHERE vp.vendor_id = ?
                 `;
                 const vendorResult = await new Promise((resolve, reject) => {
