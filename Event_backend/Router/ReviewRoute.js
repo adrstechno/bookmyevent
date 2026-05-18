@@ -23,18 +23,18 @@ router.get("/vendor/:vendorId", ReviewController.getVendorReviews);
 // Get vendor rating average and statistics
 router.get("/vendor/:vendorId/rating/average", ReviewController.getVendorRatingStats);
 
+// Public routes (must be before /:id to avoid being swallowed by the param route)
+router.get("/recent", ReviewController.getRecentReviews);
+router.get("/top-vendors", ReviewController.getTopRatedVendors);
+
+// Get review by ID
+router.get("/:id", ReviewController.getReviewById);
+
 // Update review (user only)
 router.put("/:id", authenticateToken, ReviewController.updateReview);
 
 // Delete review (user only)
 router.delete("/:id", authenticateToken, ReviewController.deleteReview);
-
-// Get review by ID
-router.get("/:id", ReviewController.getReviewById);
-
-// Public routes
-router.get("/recent", ReviewController.getRecentReviews);
-router.get("/top-vendors", ReviewController.getTopRatedVendors);
 
 // Admin routes
 router.get("/admin/all", authenticateToken, ReviewController.getAllReviews);
