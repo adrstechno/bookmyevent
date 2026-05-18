@@ -81,7 +81,7 @@ const HomeNavbar = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch(`${VITE_API_BASE_URL}/service/GetAllServices`, {
+        const response = await fetch(`${VITE_API_BASE_URL}/Service/GetAllServices`, {
           method: "GET",
           credentials: "include",
           headers: {

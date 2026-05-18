@@ -22,7 +22,7 @@ const SubServicesPage = () => {
     try {
       await execute(async () => {
         const response = await fetch(
-          `${VITE_API_BASE_URL}/service/GetSubservicesByServiceCategoryId/${categoryId}`,
+          `${VITE_API_BASE_URL}/Service/GetSubservicesByServiceCategoryId/${categoryId}`,
           {
             method: "GET",
             credentials: "include",

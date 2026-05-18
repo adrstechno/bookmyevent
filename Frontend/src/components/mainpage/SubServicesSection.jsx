@@ -30,7 +30,7 @@ const SubServicesSection = () => {
 
   const loadCategories = async () => {
     try {
-      const response = await fetch(`${VITE_API_BASE_URL}/service/GetAllServices`, {
+      const response = await fetch(`${VITE_API_BASE_URL}/Service/GetAllServices`, {
         method: "GET",
         credentials: "include",
         headers: {
@@ -60,7 +60,7 @@ const SubServicesSection = () => {
           const allSubServiceGroups = await Promise.all(
             categories.map(async (category) => {
               const response = await fetch(
-                `${VITE_API_BASE_URL}/service/GetSubservicesByServiceCategoryId/${category.category_id}`,
+                `${VITE_API_BASE_URL}/Service/GetSubservicesByServiceCategoryId/${category.category_id}`,
                 {
                   method: "GET",
                   credentials: "include",
@@ -89,7 +89,7 @@ const SubServicesSection = () => {
         }
 
         const response = await fetch(
-          `${VITE_API_BASE_URL}/service/GetSubservicesByServiceCategoryId/${categoryId}`,
+          `${VITE_API_BASE_URL}/Service/GetSubservicesByServiceCategoryId/${categoryId}`,
           {
             method: "GET",
             credentials: "include",

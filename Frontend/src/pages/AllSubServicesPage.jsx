@@ -26,10 +26,10 @@ const AllSubServicesPage = () => {
 
   const loadCategoriesAndSubServices = async () => {
     try {
-      console.log("Fetching categories from:", `${VITE_API_BASE_URL}/service/GetAllServices`);
+      console.log("Fetching categories from:", `${VITE_API_BASE_URL}/Service/GetAllServices`);
       
       // Load categories first
-      const categoriesResponse = await fetch(`${VITE_API_BASE_URL}/service/GetAllServices`, {
+      const categoriesResponse = await fetch(`${VITE_API_BASE_URL}/Service/GetAllServices`, {
         method: "GET",
         credentials: "include",
         headers: {
@@ -47,7 +47,7 @@ const AllSubServicesPage = () => {
 
         // Load all sub-services
         const allSubServicesPromises = activeCategories.map(category =>
-          fetch(`${VITE_API_BASE_URL}/service/GetSubservicesByServiceCategoryId/${category.category_id}`, {
+          fetch(`${VITE_API_BASE_URL}/Service/GetSubservicesByServiceCategoryId/${category.category_id}`, {
             method: "GET",
             credentials: "include",
             headers: {

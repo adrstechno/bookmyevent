@@ -24,7 +24,7 @@ export const useApiCall = (initialState = null) => {
 
             if (result.isEmpty) {
                 setLoading(LOADING_STATES.EMPTY);
-                setData(null);
+                setData(initialState);
             } else {
                 setLoading(LOADING_STATES.SUCCESS);
                 setData(result.data);
@@ -39,7 +39,7 @@ export const useApiCall = (initialState = null) => {
             const errorInfo = handleApiError(err, null, showToast);
             setError(errorInfo);
             setLoading(LOADING_STATES.ERROR);
-            setData(null);
+            setData(initialState);
 
             if (onError) {
                 onError(errorInfo);
