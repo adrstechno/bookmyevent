@@ -23,12 +23,12 @@ router.get("/vendor/:vendorId", ReviewController.getVendorReviews);
 // Get vendor rating average and statistics
 router.get("/vendor/:vendorId/rating/average", ReviewController.getVendorRatingStats);
 
-// Public routes (must be before /:id to avoid being swallowed by the param route)
+// Public routes (MUST BE BEFORE parameterized /:id route)
 router.get("/recent", ReviewController.getRecentReviews);
 router.get("/top-vendors", ReviewController.getTopRatedVendors);
 
-// Get review by ID
-router.get("/:id", ReviewController.getReviewById);
+// Admin routes (MUST BE BEFORE parameterized /:id route)
+router.get("/admin/all", authenticateToken, ReviewController.getAllReviews);
 
 // Update review (user only)
 router.put("/:id", authenticateToken, ReviewController.updateReview);
@@ -36,8 +36,10 @@ router.put("/:id", authenticateToken, ReviewController.updateReview);
 // Delete review (user only)
 router.delete("/:id", authenticateToken, ReviewController.deleteReview);
 
-// Admin routes
-router.get("/admin/all", authenticateToken, ReviewController.getAllReviews);
+// Verify review (MUST BE BEFORE generic /:id)
 router.put("/:id/verify", authenticateToken, ReviewController.updateReviewVerification);
+
+// Get review by ID (LAST - catches everything)
+router.get("/:id", ReviewController.getReviewById);
 
 export default router;

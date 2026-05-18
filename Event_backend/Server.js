@@ -102,7 +102,7 @@ app.options(/.*/, cors(corsOptions));
 
 // 🟢 Mount routers
 app.use('/User', UserRouter);
-app.use('/Service', ServiceRouter);
+app.use('/service', ServiceRouter);
 app.use('/Subservice', SubserviceRouter);
 app.use('/Vendor', VendorRouter);
 app.use('/Booking', BookingRouter);
