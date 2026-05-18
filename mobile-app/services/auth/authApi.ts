@@ -77,7 +77,7 @@ const toNameFromEmail = (email: string): string => {
 export const warmupServer = async (): Promise<void> => {
 	try {
 		// GET / returns 200 "Welcome to the Event Management API" — confirmed in Server.js
-		await apiClient.get('/', { timeout: 10000 });
+		await apiClient.get('/', { timeout: 35000 });
 	} catch {
 		// Any response means the server is awake — ignore errors.
 	}

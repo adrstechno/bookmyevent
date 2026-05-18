@@ -8,6 +8,12 @@ import { NoDataFound, ErrorDisplay, CardSkeleton } from "../components/common/St
 import HomeNavbar from "../components/mainpage/HomeNavbar";
 import Footer from "../components/mainpage/Footer";
 
+const toTitleCase = (value) =>
+  String(value || "")
+    .toLowerCase()
+    .replace(/\b\w/g, (char) => char.toUpperCase())
+    .trim();
+
 const AllSubServicesPage = () => {
   const navigate = useNavigate();
   const { data: allSubServices, isLoading, isError, isEmpty, error, execute } = useApiCall([]);
@@ -83,8 +89,8 @@ const AllSubServicesPage = () => {
     
     navigate(`/vendors/${subService.categoryId}/${subServiceId}`, {
       state: {
-        serviceName: subService.categoryName,
-        subServiceName: subService.subservice_name,
+        serviceName: toTitleCase(subService.categoryName),
+        subServiceName: toTitleCase(subService.subservice_name),
         subServiceDescription: subService.description
       }
     });
@@ -145,13 +151,13 @@ const AllSubServicesPage = () => {
               <button
                 key={category.category_id}
                 onClick={() => setSelectedCategory(category.category_id)}
-                className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
+              className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
                   selectedCategory === category.category_id
                     ? "bg-gradient-to-r from-[#284b63] to-[#3c6e71] text-white shadow-lg"
                     : "bg-white text-gray-700 hover:bg-gray-100 border-2 border-gray-200"
                 }`}
               >
-                {category.category_name} ({count})
+                {toTitleCase(category.category_name)} ({count})
               </button>
             );
           })}
@@ -218,14 +224,14 @@ const AllSubServicesPage = () => {
                     
                     {/* Category Badge */}
                     <div className="absolute top-4 left-4 bg-[#f9a826] text-white px-3 py-1 rounded-full text-sm font-semibold">
-                      {subService.categoryName}
+                      {toTitleCase(subService.categoryName)}
                     </div>
                   </div>
 
                   {/* Content Section */}
                   <div className="p-6 flex flex-col flex-grow">
-                    <h3 className="text-2xl font-bold text-gray-800 mb-3 group-hover:text-[#284b63] transition-colors line-clamp-1">
-                      {subService.subservice_name}
+                    <h3 className="text-2xl font-bold text-gray-800 mb-3 group-hover:text-[#284b63] transition-colors break-words">
+                      {toTitleCase(subService.subservice_name)}
                     </h3>
                     
                     <div className="w-16 h-1 bg-gradient-to-r from-[#f9a826] to-[#f7b733] rounded-full mb-4" />

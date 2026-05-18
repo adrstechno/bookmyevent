@@ -32,15 +32,15 @@ export const authenticateToken = (req, res, next) => {
 
         // vendor_profiles.user_id always stores the user's UUID (set by insertVendor)
         const sql = `
-            SELECT u.uuid, u.email, u.first_name, u.last_name, u.user_type,
+            SELECT u.user_id, u.uuid, u.email, u.first_name, u.last_name, u.user_type,
                    vp.vendor_id
             FROM users u
-            LEFT JOIN vendor_profiles vp ON u.uuid = vp.user_id
-            WHERE u.uuid = ?
+            LEFT JOIN vendor_profiles vp ON (u.uuid = vp.user_id OR CAST(u.user_id AS CHAR) = vp.user_id)
+            WHERE (u.uuid = ? OR CAST(u.user_id AS CHAR) = ?)
             LIMIT 1
         `;
 
-        db.query(sql, [userId], (dbErr, results) => {
+        db.query(sql, [userId, userId], (dbErr, results) => {
             if (dbErr) {
                 console.error('Auth DB error:', dbErr);
                 return res.status(500).json({
@@ -61,7 +61,7 @@ export const authenticateToken = (req, res, next) => {
             // Set user info on request
             req.user = {
                 uuid: user.uuid,
-                user_id: user.uuid, // Use uuid as user_id for bookings (matches event_booking.user_id which is VARCHAR)
+                user_id: String(user.user_id ?? user.uuid),
                 email: user.email,
                 first_name: user.first_name,
                 last_name: user.last_name,

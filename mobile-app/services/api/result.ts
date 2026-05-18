@@ -19,14 +19,14 @@ const toApiError = (error: unknown, fallbackMessage: string): ApiError => {
 		return {
 			status: 0,
 			message: error.message || fallbackMessage,
-			isNetworkError: true,
+			isNetworkError: false,
 		};
 	}
 
 	return {
 		status: 0,
 		message: fallbackMessage,
-		isNetworkError: true,
+		isNetworkError: false,
 	};
 };
 

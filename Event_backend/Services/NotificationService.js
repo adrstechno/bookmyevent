@@ -136,9 +136,9 @@ class NotificationService {
         // Send booking confirmation email
         try {
             // Get user email from database
-            const userQuery = `SELECT email, first_name, last_name FROM users WHERE uuid = ?`;
+            const userQuery = `SELECT email, first_name, last_name FROM users WHERE (uuid = ? OR CAST(user_id AS CHAR) = ?)`;
             const userResult = await new Promise((resolve, reject) => {
-                db.query(userQuery, [user_id], (err, results) => {
+                db.query(userQuery, [user_id, user_id], (err, results) => {
                     if (err) reject(err);
                     else resolve(results);
                 });
@@ -267,9 +267,9 @@ class NotificationService {
         // Send email with OTP
         try {
             // Get user email from database
-            const userQuery = `SELECT email, first_name, last_name FROM users WHERE uuid = ?`;
+            const userQuery = `SELECT email, first_name, last_name FROM users WHERE (uuid = ? OR CAST(user_id AS CHAR) = ?)`;
             const userResult = await new Promise((resolve, reject) => {
-                db.query(userQuery, [user_id], (err, results) => {
+                db.query(userQuery, [user_id, user_id], (err, results) => {
                     if (err) reject(err);
                     else resolve(results);
                 });
@@ -338,9 +338,9 @@ class NotificationService {
         // Send work completion email with review link
         try {
             // Get user email from database
-            const userQuery = `SELECT email, first_name, last_name FROM users WHERE uuid = ?`;
+            const userQuery = `SELECT email, first_name, last_name FROM users WHERE (uuid = ? OR CAST(user_id AS CHAR) = ?)`;
             const userResult = await new Promise((resolve, reject) => {
-                db.query(userQuery, [user_id], (err, results) => {
+                db.query(userQuery, [user_id, user_id], (err, results) => {
                     if (err) reject(err);
                     else resolve(results);
                 });
@@ -449,9 +449,9 @@ class NotificationService {
         // Send review reminder email
         try {
             // Get user email from database
-            const userQuery = `SELECT email, first_name, last_name FROM users WHERE uuid = ?`;
+            const userQuery = `SELECT email, first_name, last_name FROM users WHERE (uuid = ? OR CAST(user_id AS CHAR) = ?)`;
             const userResult = await new Promise((resolve, reject) => {
-                db.query(userQuery, [user_id], (err, results) => {
+                db.query(userQuery, [user_id, user_id], (err, results) => {
                     if (err) reject(err);
                     else resolve(results);
                 });

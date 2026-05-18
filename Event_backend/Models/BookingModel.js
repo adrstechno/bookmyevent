@@ -60,7 +60,7 @@ class BookingModel {
             LEFT JOIN vendor_profiles vp ON eb.vendor_id = vp.vendor_id
             LEFT JOIN vendor_shifts vs ON eb.shift_id = vs.shift_id
             LEFT JOIN vendor_packages vpack ON eb.package_id = vpack.package_id
-            LEFT JOIN users u ON eb.user_id = u.uuid
+            LEFT JOIN users u ON (eb.user_id = u.uuid OR eb.user_id = CAST(u.user_id AS CHAR))
             WHERE eb.booking_id = ? AND eb.removed_at IS NULL
         `;
 
@@ -83,7 +83,7 @@ class BookingModel {
             LEFT JOIN vendor_profiles vp ON eb.vendor_id = vp.vendor_id
             LEFT JOIN vendor_shifts vs ON eb.shift_id = vs.shift_id
             LEFT JOIN vendor_packages vpack ON eb.package_id = vpack.package_id
-            LEFT JOIN users u ON eb.user_id = u.uuid
+            LEFT JOIN users u ON (eb.user_id = u.uuid OR eb.user_id = CAST(u.user_id AS CHAR))
             WHERE eb.booking_uuid = ? AND eb.removed_at IS NULL
         `;
 
@@ -334,7 +334,7 @@ class BookingModel {
             SELECT eb.*, u.first_name, u.last_name, u.email, u.phone,
                    vs.shift_name, vpack.package_name, vpack.amount
             FROM event_booking eb
-            LEFT JOIN users u ON eb.user_id = u.uuid
+            LEFT JOIN users u ON (eb.user_id = u.uuid OR eb.user_id = CAST(u.user_id AS CHAR))
             LEFT JOIN vendor_shifts vs ON eb.shift_id = vs.shift_id
             LEFT JOIN vendor_packages vpack ON eb.package_id = vpack.package_id
             WHERE ${whereClause}
@@ -377,7 +377,7 @@ class BookingModel {
                    vp.business_name, vp.contact as vendor_contact,
                    vs.shift_name, vpack.package_name, vpack.amount
             FROM event_booking eb
-            LEFT JOIN users u ON eb.user_id = u.uuid
+            LEFT JOIN users u ON (eb.user_id = u.uuid OR eb.user_id = CAST(u.user_id AS CHAR))
             LEFT JOIN vendor_profiles vp ON eb.vendor_id = vp.vendor_id
             LEFT JOIN vendor_shifts vs ON eb.shift_id = vs.shift_id
             LEFT JOIN vendor_packages vpack ON eb.package_id = vpack.package_id

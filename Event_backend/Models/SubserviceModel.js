@@ -104,7 +104,7 @@ class SubserviceModel {
   static getSubservicesByCategory(service_category_id, callback) {
     const categoryIdNumber = parseInt(service_category_id, 10);
 
-    // Use normalized join table — works with MySQL 5.7 and 8.0
+    // Use the JSON-backed master table, which matches the current schema.
     const sql = `
       SELECT
         sm.id           AS subservice_id,
@@ -114,9 +114,8 @@ class SubserviceModel {
         sm.is_active,
         sm.created_at,
         sm.updated_at
-      FROM service_subservice_map ssm
-      JOIN subservices_master sm ON ssm.subservice_id = sm.id
-      WHERE ssm.service_category_id = ?
+      FROM subservices_master sm
+      WHERE JSON_CONTAINS(sm.category_ids, JSON_ARRAY(?))
         AND sm.is_active = 1
       ORDER BY sm.subservice_name ASC
     `;

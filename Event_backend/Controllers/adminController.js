@@ -182,7 +182,7 @@ class AdminController {
           pkg.package_name,
           pkg.amount
         FROM event_booking eb
-        LEFT JOIN users u ON eb.user_id = u.uuid
+        LEFT JOIN users u ON (eb.user_id = u.uuid OR eb.user_id = CAST(u.user_id AS CHAR))
         LEFT JOIN vendor_profiles vp ON eb.vendor_id = vp.vendor_id
         LEFT JOIN vendor_packages pkg ON eb.package_id = pkg.package_id
         WHERE eb.removed_at IS NULL
@@ -437,3 +437,4 @@ class AdminController {
 
 
 export default AdminController;
+

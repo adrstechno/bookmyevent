@@ -108,12 +108,31 @@ const toLoginErrorPayload = (
 export const bootstrapAuth = createAsyncThunk("auth/bootstrap", async () => {
   const session = await restoreSession();
 
-  if (session?.token && isTokenExpired(session.token)) {
+  if (!session?.token) return null;
+
+  if (isTokenExpired(session.token)) {
     await clearSession();
     return null;
   }
 
-  return session;
+  // Always re-validate role from backend so a stale cached role (e.g. 'user')
+  // doesn't block a user whose DB role was updated to 'vendor'.
+  try {
+    const profile = await authApi.validateToken();
+    const freshSession: AuthSession = {
+      token: session.token,
+      role: profile.role,
+      name: profile.firstName
+        ? `${profile.firstName} ${profile.lastName}`.trim()
+        : session.name,
+      email: profile.email,
+    };
+    await persistSession(freshSession);
+    return freshSession;
+  } catch {
+    // Network unavailable — fall back to cached session
+    return session;
+  }
 });
 
 /** Sign out — clear token from store + SecureStore */

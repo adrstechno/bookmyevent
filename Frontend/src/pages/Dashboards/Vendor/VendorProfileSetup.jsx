@@ -13,13 +13,9 @@ import {
   MenuItem,
 } from "@mui/material";
 import { PhotoCamera, Save } from "@mui/icons-material";
-import axios from "axios";
-import { VITE_API_BASE_URL } from "../../../utils/api";
+import api from "../../../services/axiosConfig";
 import toast from "react-hot-toast";
 import { useAuth } from "../../../context/AuthContext";
-
-// Configure axios to include credentials (cookies) with requests
-axios.defaults.withCredentials = true;
 
 const VendorProfileSetup = () => {
   const { user } = useAuth();
@@ -45,9 +41,7 @@ const VendorProfileSetup = () => {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const res = await axios.get(`${VITE_API_BASE_URL}/Service/GetAllServices`, {
-          withCredentials: true
-        });
+        const res = await api.get('/Service/GetAllServices');
         const data = res.data?.data || res.data;
         if (Array.isArray(data)) {
           const formatted = data.map((item) => ({
@@ -122,20 +116,9 @@ const VendorProfileSetup = () => {
         }
       });
 
-      // Get token from localStorage and add as Authorization header
-      const token = localStorage.getItem("token");
-      
-      const response = await axios.post(
-        `${VITE_API_BASE_URL}/Vendor/InsertVendor`,
-        payload,
-        {
-          withCredentials: true,
-          headers: { 
-            "Content-Type": "multipart/form-data",
-            ...(token && { "Authorization": `Bearer ${token}` })
-          },
-        }
-      );
+      const response = await api.post('/Vendor/InsertVendor', payload, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
       toast.success(response.data.message || "Vendor profile created successfully!");
       

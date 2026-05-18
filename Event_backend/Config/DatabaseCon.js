@@ -28,9 +28,9 @@ const pool = mysql.createPool(poolConfig);
 pool.getConnection((err, connection) => {
     if (err) {
         console.error('❌ Database connection error:', err.message);
-        console.error('   Host:', process.env.DB_HOST, '| DB:', process.env.DB_NAME);
+        console.error('   Host:', poolConfig.host, '| DB:', poolConfig.database);
     } else {
-        console.log('✅ Database connected:', process.env.DB_HOST, '/', process.env.DB_NAME);
+        console.log('✅ Database connected:', poolConfig.host, '/', poolConfig.database);
         connection.release();
     }
 });

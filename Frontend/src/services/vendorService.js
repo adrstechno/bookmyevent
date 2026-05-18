@@ -1,13 +1,10 @@
-import axios from 'axios';
-import { VITE_API_BASE_URL } from '../utils/api';
+import api from './axiosConfig';
 
 const vendorService = {
   // Get vendor KPIs
   getVendorKPIs: async () => {
     try {
-      const response = await axios.get(`${VITE_API_BASE_URL}/Vendor/GetVendorKPIs`, {
-        withCredentials: true
-      });
+      const response = await api.get('/Vendor/GetVendorKPIs');
       return response.data;
     } catch (error) {
       console.error('Error fetching vendor KPIs:', error);
@@ -18,9 +15,7 @@ const vendorService = {
   // Get vendor recent activities
   getVendorRecentActivities: async (limit = 5) => {
     try {
-      const response = await axios.get(`${VITE_API_BASE_URL}/Vendor/GetVendorRecentActivities?limit=${limit}`, {
-        withCredentials: true
-      });
+      const response = await api.get(`/Vendor/GetVendorRecentActivities?limit=${limit}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching vendor activities:', error);
@@ -31,9 +26,7 @@ const vendorService = {
   // Get vendor profile
   getVendorProfile: async () => {
     try {
-      const response = await axios.get(`${VITE_API_BASE_URL}/Vendor/GetVendorProfile`, {
-        withCredentials: true
-      });
+      const response = await api.get('/Vendor/GetVendorProfile');
       return response.data;
     } catch (error) {
       console.error('Error fetching vendor profile:', error);

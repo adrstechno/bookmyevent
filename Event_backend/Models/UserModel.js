@@ -24,14 +24,14 @@ static async findonebyphone(phone, callback) {
 
     // Update email verification status
     static async updateVerificationStatus(userId, isVerified, callback) {
-        const sql = 'UPDATE users SET is_verified = ? WHERE uuid = ?';
-        db.query(sql, [isVerified, userId], callback);
+        const sql = 'UPDATE users SET is_verified = ? WHERE (uuid = ? OR CAST(user_id AS CHAR) = ?)';
+        db.query(sql, [isVerified, userId, userId], callback);
     }
 
     // Find user by UUID
     static async findByUuid(uuid, callback) {
-        const sql = 'SELECT * FROM users WHERE uuid = ?';
-        db.query(sql, [uuid], callback);
+        const sql = 'SELECT * FROM users WHERE (uuid = ? OR CAST(user_id AS CHAR) = ?)';
+        db.query(sql, [uuid, uuid], callback);
     }
 
     // Store password reset token
@@ -60,8 +60,8 @@ static async findonebyphone(phone, callback) {
 
     // Get user profile by UUID
     static async getUserProfile(uuid, callback) {
-        const sql = `SELECT uuid, email, phone, first_name, last_name, user_type, is_verified, is_active, created_at FROM users WHERE uuid = ?`;
-        db.query(sql, [uuid], callback);
+        const sql = `SELECT user_id, uuid, email, phone, first_name, last_name, user_type, is_verified, is_active, created_at FROM users WHERE (uuid = ? OR CAST(user_id AS CHAR) = ?)`;
+        db.query(sql, [uuid, uuid], callback);
     }
 
     // Update user profile
@@ -90,8 +90,8 @@ static async findonebyphone(phone, callback) {
             return callback(new Error('No fields to update'), null);
         }
 
-        values.push(uuid);
-        const sql = `UPDATE users SET ${fields.join(', ')} WHERE uuid = ?`;
+        values.push(uuid, uuid);
+        const sql = `UPDATE users SET ${fields.join(', ')} WHERE (uuid = ? OR CAST(user_id AS CHAR) = ?)`;
         db.query(sql, values, callback);
     }
 }

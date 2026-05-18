@@ -26,14 +26,14 @@ class SubscriptionController {
             const vendorQuery = `
                 SELECT vp.vendor_id, vp.business_name, u.email, u.first_name, u.last_name
                 FROM vendor_profiles vp
-                JOIN users u ON vp.user_id = u.uuid
-                WHERE u.uuid = ?
+                JOIN users u ON (vp.user_id = u.uuid OR vp.user_id = CAST(u.user_id AS CHAR))
+                WHERE (u.uuid = ? OR CAST(u.user_id AS CHAR) = ?)
             `;
 
             // console.log('🔍 Querying vendor with UUID:', user_id);
 
             const vendorResult = await new Promise((resolve, reject) => {
-                db.query(vendorQuery, [user_id], (err, results) => {
+                db.query(vendorQuery, [user_id, user_id], (err, results) => {
                     if (err) {
                         console.error('❌ Database error:', err);
                         reject(err);
@@ -228,7 +228,7 @@ class SubscriptionController {
             const vendorQuery = `
                 SELECT vp.business_name, u.email, u.first_name, u.last_name
                 FROM vendor_profiles vp
-                JOIN users u ON vp.user_id = u.uuid
+                JOIN users u ON (vp.user_id = u.uuid OR vp.user_id = CAST(u.user_id AS CHAR))
                 WHERE vp.vendor_id = ?
             `;
 
@@ -295,12 +295,12 @@ class SubscriptionController {
             const vendorQuery = `
                 SELECT vp.vendor_id, vp.business_name, u.email, u.first_name, u.last_name
                 FROM vendor_profiles vp
-                JOIN users u ON vp.user_id = u.uuid
-                WHERE u.uuid = ?
+                JOIN users u ON (vp.user_id = u.uuid OR vp.user_id = CAST(u.user_id AS CHAR))
+                WHERE (u.uuid = ? OR CAST(u.user_id AS CHAR) = ?)
             `;
 
             const vendorResult = await new Promise((resolve, reject) => {
-                db.query(vendorQuery, [user_id], (err, results) => {
+                db.query(vendorQuery, [user_id, user_id], (err, results) => {
                     if (err) reject(err);
                     else resolve(results);
                 });
@@ -414,12 +414,12 @@ class SubscriptionController {
             // Note: vendor_profiles.user_id can be either users.user_id (int) or users.uuid (string)
             const vendorQuery = `
                 SELECT vendor_id FROM vendor_profiles vp
-                JOIN users u ON vp.user_id = u.uuid
-                WHERE u.uuid = ?
+                JOIN users u ON (vp.user_id = u.uuid OR vp.user_id = CAST(u.user_id AS CHAR))
+                WHERE (u.uuid = ? OR CAST(u.user_id AS CHAR) = ?)
             `;
 
             const vendorResult = await new Promise((resolve, reject) => {
-                db.query(vendorQuery, [user_id], (err, results) => {
+                db.query(vendorQuery, [user_id, user_id], (err, results) => {
                     if (err) reject(err);
                     else resolve(results);
                 });
@@ -487,7 +487,7 @@ class SubscriptionController {
                 SELECT vs.*, vp.business_name, u.email, u.first_name, u.last_name
                 FROM vendor_subscriptions vs
                 JOIN vendor_profiles vp ON vs.vendor_id = vp.vendor_id
-                JOIN users u ON vp.user_id = u.uuid
+                JOIN users u ON (vp.user_id = u.uuid OR vp.user_id = CAST(u.user_id AS CHAR))
                 ORDER BY vs.created_at DESC
             `;
 

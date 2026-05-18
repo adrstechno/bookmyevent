@@ -17,11 +17,11 @@ export const checkVendorSubscription = async (req, res, next) => {
         const vendorQuery = `
             SELECT vendor_id FROM vendor_profiles vp
             JOIN users u ON (vp.user_id = u.user_id OR vp.user_id = u.uuid)
-            WHERE u.uuid = ?
+            WHERE (u.uuid = ? OR CAST(u.user_id AS CHAR) = ?)
         `;
 
         const vendorResult = await new Promise((resolve, reject) => {
-            db.query(vendorQuery, [user_id], (err, results) => {
+            db.query(vendorQuery, [user_id, user_id], (err, results) => {
                 if (err) reject(err);
                 else resolve(results);
             });

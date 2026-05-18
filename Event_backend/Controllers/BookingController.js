@@ -1,4 +1,4 @@
-﻿import BookingModel from "../Models/BookingModel.js";
+import BookingModel from "../Models/BookingModel.js";
 import OTPModel from "../Models/OTPModel.js";
 import NotificationService from "../Services/NotificationService.js";
 import EmailService from "../Services/emailService.js";
@@ -58,9 +58,9 @@ class BookingController {
             // Send notification to vendor about new booking
             try {
                 // Get user details for notification
-                const userQuery = `SELECT first_name, last_name, email, phone FROM users WHERE uuid = ?`;
+                const userQuery = `SELECT first_name, last_name, email, phone FROM users WHERE (uuid = ? OR CAST(user_id AS CHAR) = ?)`;
                 const userResult = await new Promise((resolve, reject) => {
-                    db.query(userQuery, [user_id], (err, results) => {
+                    db.query(userQuery, [user_id, user_id], (err, results) => {
                         if (err) reject(err);
                         else resolve(results);
                     });
@@ -70,7 +70,7 @@ class BookingController {
                 const vendorQuery = `
                     SELECT u.first_name, u.last_name, u.email, vp.vendor_id, vp.business_name
                     FROM vendor_profiles vp 
-                    JOIN users u ON vp.user_id = u.uuid
+                    JOIN users u ON (vp.user_id = u.uuid OR vp.user_id = CAST(u.user_id AS CHAR))
                     WHERE vp.vendor_id = ?
                 `;
                 const vendorResult = await new Promise((resolve, reject) => {
@@ -405,7 +405,7 @@ class BookingController {
                     const vendorQuery = `
                         SELECT u.first_name, u.last_name, u.email, vp.vendor_id, vp.business_name
                         FROM vendor_profiles vp 
-                        JOIN users u ON vp.user_id = u.uuid
+                        JOIN users u ON (vp.user_id = u.uuid OR vp.user_id = CAST(u.user_id AS CHAR))
                         WHERE vp.vendor_id = ?
                     `;
                     const vendorResult = await new Promise((resolve, reject) => {
@@ -429,12 +429,12 @@ class BookingController {
                             customerName: booking.user_name || 'Customer'
                         });
                         
-                        // console.log('âœ… Vendor approval notification email sent to:', vendor.email);
+                        // console.log('✅ Vendor approval notification email sent to:', vendor.email);
                     } else {
-                        // console.log('âŒ No vendor found for vendor_id:', booking.vendor_id);
+                        // console.log('❌ No vendor found for vendor_id:', booking.vendor_id);
                     }
                 } catch (vendorEmailError) {
-                    console.error('âŒ Failed to send vendor approval notification:', vendorEmailError);
+                    console.error('❌ Failed to send vendor approval notification:', vendorEmailError);
                 }
 
             } catch (notificationError) {
@@ -1047,9 +1047,9 @@ class BookingController {
             // Send notification to vendor about new booking (same as createBooking method)
             try {
                 // Get user details for notification
-                const userQuery = `SELECT first_name, last_name, email, phone FROM users WHERE uuid = ?`;
+                const userQuery = `SELECT first_name, last_name, email, phone FROM users WHERE (uuid = ? OR CAST(user_id AS CHAR) = ?)`;
                 const userResult = await new Promise((resolve, reject) => {
-                    db.query(userQuery, [user_id], (err, results) => {
+                    db.query(userQuery, [user_id, user_id], (err, results) => {
                         if (err) reject(err);
                         else resolve(results);
                     });
@@ -1059,7 +1059,7 @@ class BookingController {
                 const vendorQuery = `
                     SELECT u.first_name, u.last_name, u.email, vp.vendor_id, vp.business_name
                     FROM vendor_profiles vp 
-                    JOIN users u ON vp.user_id = u.uuid
+                    JOIN users u ON (vp.user_id = u.uuid OR vp.user_id = CAST(u.user_id AS CHAR))
                     WHERE vp.vendor_id = ?
                 `;
                 const vendorResult = await new Promise((resolve, reject) => {
@@ -1280,3 +1280,4 @@ export const {
     getBookingForReview,
     approveBooking
 } = BookingController;
+

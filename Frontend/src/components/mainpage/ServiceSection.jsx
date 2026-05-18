@@ -29,6 +29,7 @@ const defaultIcons = [
 const ServicesSection = () => {
   const navigate = useNavigate();
   const { data: services, isLoading, isError, isEmpty, error, execute } = useApiCall([]);
+  const previewServices = services.slice(0, 5);
 
   useEffect(() => {
     loadServices();
@@ -94,6 +95,10 @@ const ServicesSection = () => {
         serviceImage: service.image
       }
     });
+  };
+
+  const handleViewAllClick = () => {
+    navigate("/services");
   };
 
   // Loading state
@@ -196,7 +201,7 @@ const ServicesSection = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 13inch:grid-cols-4 14inch:grid-cols-4 15inch:grid-cols-4 xl:grid-cols-5 gap-6 relative z-10">
-          {services.map((service, index) => (
+          {previewServices.map((service, index) => (
             <motion.div
               key={service.category_id}
               initial={{ opacity: 0, y: 30 }}
@@ -244,6 +249,20 @@ const ServicesSection = () => {
             </motion.div>
           ))}
         </div>
+
+        {services.length > 5 && (
+          <div className="text-center mt-10 relative z-10">
+            <button
+              onClick={handleViewAllClick}
+              className="inline-flex items-center gap-2 bg-white text-[#284b63] border-2 border-[#284b63] px-8 py-3 rounded-xl font-semibold hover:bg-[#284b63] hover:text-white transition-all duration-300 shadow-lg hover:shadow-xl"
+            >
+              View All Categories
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </button>
+          </div>
+        )}
       </div>
     </section>
   );

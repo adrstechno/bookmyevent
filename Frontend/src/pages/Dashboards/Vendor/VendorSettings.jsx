@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import { PhotoIcon, UserCircleIcon } from "@heroicons/react/24/outline";
 import ChangePassword from "../../../components/ChangePassword";
 import toast from "react-hot-toast";
-import { VITE_API_BASE_URL } from "../../../utils/api";
+import api from "../../../services/axiosConfig";
 
 const VendorSettings = () => {
   const [profile, setProfile] = useState({
@@ -32,9 +31,7 @@ const VendorSettings = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await axios.get(`${VITE_API_BASE_URL}/Service/GetAllServices`, {
-          withCredentials: true,
-        });
+        const res = await api.get('/Service/GetAllServices');
         const data = res.data?.data || res.data;
         if (Array.isArray(data)) {
           const formatted = data.map((item) => ({
@@ -62,10 +59,7 @@ const VendorSettings = () => {
       }
 
       try {
-        const res = await axios.get(
-          `${VITE_API_BASE_URL}/Service/GetSubservicesByServiceCategoryId/${profile.service_category_id}`,
-          { withCredentials: true }
-        );
+        const res = await api.get(`/Service/GetSubservicesByServiceCategoryId/${profile.service_category_id}`);
         
         const data = res.data;
         if (Array.isArray(data)) {
@@ -86,9 +80,7 @@ const VendorSettings = () => {
   useEffect(() => {
     const fetchVendorProfile = async () => {
       try {
-        const res = await axios.get(`${VITE_API_BASE_URL}/Vendor/getvendorById`, {
-          withCredentials: true,
-        });
+        const res = await api.get('/Vendor/getvendorById');
 
         if (res.status === 200 && res.data) {
           const vendor = res.data.vendor || res.data;
@@ -209,24 +201,14 @@ const VendorSettings = () => {
       let res;
       if (isNewProfile) {
         // Create new vendor profile
-        res = await axios.post(
-          `${VITE_API_BASE_URL}/Vendor/InsertVendor`,
-          formData,
-          {
-            headers: { "Content-Type": "multipart/form-data" },
-            withCredentials: true,
-          }
-        );
+        res = await api.post('/Vendor/InsertVendor', formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
       } else {
         // Update existing vendor profile
-        res = await axios.post(
-          `${VITE_API_BASE_URL}/Vendor/updateVendorProfile`,
-          formData,
-          {
-            headers: { "Content-Type": "multipart/form-data" },
-            withCredentials: true,
-          }
-        );
+        res = await api.post('/Vendor/updateVendorProfile', formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
       }
 
       if (res.status === 200 || res.status === 201) {
