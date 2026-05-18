@@ -5,6 +5,13 @@ import { VITE_API_BASE_URL } from "../../utils/api";
 import { useApiCall } from "../../hooks/useApiCall";
 import { NoDataFound, ErrorDisplay, CardSkeleton } from "../common/StateComponents";
 
+const ALL_CATEGORY_ID = "all";
+const toTitleCase = (value) =>
+  String(value || "")
+    .toLowerCase()
+    .replace(/\b\w/g, (char) => char.toUpperCase())
+    .trim();
+
 const SubServicesSection = () => {
   const navigate = useNavigate();
   const { data: subServices, isLoading, isError, isEmpty, error, execute } = useApiCall([]);
@@ -36,9 +43,9 @@ const SubServicesSection = () => {
         const activeCategories = data.filter(s => s.is_active === 1);
         setCategories(activeCategories);
         
-        // Auto-select first category
+        // Default to "All Services"
         if (activeCategories.length > 0) {
-          setSelectedCategory(activeCategories[0].category_id);
+          setSelectedCategory(ALL_CATEGORY_ID);
         }
       }
     } catch (err) {
@@ -49,6 +56,38 @@ const SubServicesSection = () => {
   const loadSubServices = async (categoryId) => {
     try {
       await execute(async () => {
+        if (categoryId === ALL_CATEGORY_ID) {
+          const allSubServiceGroups = await Promise.all(
+            categories.map(async (category) => {
+              const response = await fetch(
+                `${VITE_API_BASE_URL}/service/GetSubservicesByServiceCategoryId/${category.category_id}`,
+                {
+                  method: "GET",
+                  credentials: "include",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                }
+              );
+
+              if (!response.ok) {
+                throw new Error("Failed to fetch sub-services");
+              }
+
+              const data = await response.json();
+              return data
+                .filter(s => s.is_active === 1)
+                .map((subService) => ({
+                  ...subService,
+                  service_category_id: subService.service_category_id || category.category_id,
+                  category_name: subService.category_name || category.category_name,
+                }));
+            })
+          );
+
+          return { data: allSubServiceGroups.flat() };
+        }
+
         const response = await fetch(
           `${VITE_API_BASE_URL}/service/GetSubservicesByServiceCategoryId/${categoryId}`,
           {
@@ -65,7 +104,16 @@ const SubServicesSection = () => {
         }
 
         const data = await response.json();
-        return { data: data.filter(s => s.is_active === 1) };
+        const selected = categories.find(c => c.category_id === categoryId);
+        return {
+          data: data
+            .filter(s => s.is_active === 1)
+            .map((subService) => ({
+              ...subService,
+              service_category_id: subService.service_category_id || categoryId,
+              category_name: subService.category_name || selected?.category_name,
+            })),
+        };
       }, {
         emptyMessage: "No sub-services available for this category",
         showEmptyToast: false
@@ -77,12 +125,13 @@ const SubServicesSection = () => {
 
   const handleSubServiceClick = (subService) => {
     const subServiceId = subService.subservice_id || subService.id || subService.subservices_id;
-    
-    const category = categories.find(c => c.category_id === selectedCategory);
-    navigate(`/vendors/${selectedCategory}/${subServiceId}`, {
+    const categoryId = subService.service_category_id || subService.category_id || selectedCategory;
+    const category = categories.find(c => c.category_id === categoryId);
+
+    navigate(`/vendors/${categoryId}/${subServiceId}`, {
       state: {
-        serviceName: category?.category_name,
-        subServiceName: subService.subservice_name,
+        serviceName: toTitleCase(subService.category_name || category?.category_name),
+        subServiceName: toTitleCase(subService.subservice_name),
         subServiceDescription: subService.description
       }
     });
@@ -128,6 +177,17 @@ const SubServicesSection = () => {
 
         {/* Category Tabs */}
         <div className="flex flex-wrap justify-center gap-3 mb-12">
+          <button
+            onClick={() => setSelectedCategory(ALL_CATEGORY_ID)}
+            className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
+              selectedCategory === ALL_CATEGORY_ID
+                ? "bg-gradient-to-r from-[#284b63] to-[#3c6e71] text-white shadow-lg"
+                : "bg-white text-gray-700 hover:bg-gray-100 border-2 border-gray-200"
+            }`}
+          >
+            All Services
+          </button>
+
           {categories.map((category) => (
             <button
               key={category.category_id}
@@ -135,10 +195,10 @@ const SubServicesSection = () => {
               className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
                 selectedCategory === category.category_id
                   ? "bg-gradient-to-r from-[#284b63] to-[#3c6e71] text-white shadow-lg"
-                  : "bg-white text-gray-700 hover:bg-gray-100 border-2 border-gray-200"
+                : "bg-white text-gray-700 hover:bg-gray-100 border-2 border-gray-200"
               }`}
             >
-              {category.category_name}
+              {toTitleCase(category.category_name)}
             </button>
           ))}
         </div>
@@ -166,7 +226,7 @@ const SubServicesSection = () => {
         {/* Sub-Services Grid - Optimized for all screen sizes */}
         {!isLoading && !isEmpty && (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 13inch:grid-cols-4 14inch:grid-cols-4 15inch:grid-cols-4 xl:grid-cols-5 gap-6">
-            {subServices.slice(0, 6).map((subService, index) => {
+            {subServices.slice(0, 5).map((subService, index) => {
               const subServiceId = subService.subservice_id || subService.id || subService.subservices_id;
               return (
               <motion.div
@@ -202,8 +262,8 @@ const SubServicesSection = () => {
 
                   {/* Content Section */}
                   <div className="p-6 flex flex-col flex-grow">
-                    <h3 className="text-2xl font-bold text-gray-800 mb-3 group-hover:text-[#284b63] transition-colors line-clamp-1">
-                      {subService.subservice_name}
+                    <h3 className="text-2xl font-bold text-gray-800 mb-3 group-hover:text-[#284b63] transition-colors break-words">
+                      {toTitleCase(subService.subservice_name)}
                     </h3>
                     
                     <div className="w-16 h-1 bg-gradient-to-r from-[#f9a826] to-[#f7b733] rounded-full mb-4" />
@@ -228,14 +288,19 @@ const SubServicesSection = () => {
         )}
 
         {/* View All Button */}
-        {!isEmpty && subServices.length > 6 && (
+        {!isEmpty && subServices.length > 5 && (
           <div className="text-center mt-12">
             <button
               onClick={() => {
+                if (selectedCategory === ALL_CATEGORY_ID) {
+                  navigate("/services");
+                  return;
+                }
+
                 const category = categories.find(c => c.category_id === selectedCategory);
                 navigate(`/sub-services/${selectedCategory}`, {
                   state: {
-                    serviceName: category?.category_name,
+                    serviceName: toTitleCase(category?.category_name),
                     serviceImage: category?.icon_url
                   }
                 });

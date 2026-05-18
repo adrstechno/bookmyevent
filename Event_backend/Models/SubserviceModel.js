@@ -102,25 +102,24 @@ class SubserviceModel {
    * @param {Function} callback
    */
   static getSubservicesByCategory(service_category_id, callback) {
-    // Convert to number to match JSON array type
     const categoryIdNumber = parseInt(service_category_id, 10);
-    
+
+    // Use the JSON-backed master table, which matches the current schema.
     const sql = `
-      SELECT 
-        id as subservice_id,
-        subservice_name,
-        description,
-        icon_url,
-        is_active,
-        category_ids,
-        created_at,
-        updated_at
-      FROM subservices_master
-      WHERE ? MEMBER OF(category_ids)
-      AND is_active = 1
-      ORDER BY subservice_name ASC
+      SELECT
+        sm.id           AS subservice_id,
+        sm.subservice_name,
+        sm.description,
+        sm.icon_url,
+        sm.is_active,
+        sm.created_at,
+        sm.updated_at
+      FROM subservices_master sm
+      WHERE JSON_CONTAINS(sm.category_ids, JSON_ARRAY(?))
+        AND sm.is_active = 1
+      ORDER BY sm.subservice_name ASC
     `;
-    
+
     db.query(sql, [categoryIdNumber], callback);
   }
   

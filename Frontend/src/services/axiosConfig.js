@@ -4,9 +4,19 @@ import { VITE_API_BASE_URL } from "../utils/api";
 // Create axios instance with default config
 const api = axios.create({
   baseURL: VITE_API_BASE_URL,
-  withCredentials: true, // Send cookies with requests
-  timeout: 10000, // 10 second timeout
+  withCredentials: true,
+  timeout: 10000,
 });
+
+// Module-level logout callback registered by AuthContext.
+// Using a callback avoids a hard window.location redirect (which destroys React state)
+// and lets React Router handle the navigation cleanly.
+let _logoutCallback = null;
+let _isHandling401 = false;
+
+export const setAxiosLogoutCallback = (fn) => {
+  _logoutCallback = fn;
+};
 
 // Request interceptor to add auth token to headers
 api.interceptors.request.use(
@@ -17,31 +27,34 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 // Response interceptor to handle auth errors
 api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
   (error) => {
     const { response } = error;
-    
+
     if (response) {
       switch (response.status) {
         case 401:
-          // console.log("Auth error - 401 Unauthorized");
-          // Clear stored auth data on 401
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          localStorage.removeItem('role');
-          
-          // Redirect to login if not already there
-          if (window.location.pathname !== '/login') {
-            window.location.href = '/login';
+          // Guard against multiple simultaneous 401s all triggering logout
+          if (!_isHandling401) {
+            _isHandling401 = true;
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            localStorage.removeItem('role');
+
+            if (_logoutCallback) {
+              // Let React handle the redirect via ProtectedRoute
+              _logoutCallback();
+            } else if (window.location.pathname !== '/login') {
+              // Fallback if AuthContext hasn't registered yet
+              window.location.href = '/login';
+            }
+
+            setTimeout(() => { _isHandling401 = false; }, 3000);
           }
           break;
         case 403:
@@ -54,7 +67,7 @@ api.interceptors.response.use(
           break;
       }
     }
-    
+
     return Promise.reject(error);
   }
 );

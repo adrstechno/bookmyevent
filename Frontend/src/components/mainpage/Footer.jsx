@@ -136,12 +136,12 @@ const Footer = () => {
                     <div className="w-8 h-8 bg-[#f9a826]/20 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-[#f9a826] transition-colors duration-300">
                       <Mail className="w-4 h-4 text-[#f9a826] group-hover:text-white transition-colors duration-300" />
                     </div>
-                    <a 
-                      href="mailto:goeventify@gmail.com" 
+                    <a
+                      href="mailto:goeventify@adrstechno.com"
                       className="text-gray-300 text-sm hover:text-[#f9a826] transition-colors duration-300"
-                      aria-label="Email GoEventify at goeventify@gmail.com"
+                      aria-label="Email GoEventify at goeventify@adrstechno.com"
                     >
-                      goeventify@gmail.com
+                      goeventify@adrstechno.com
                     </a>
                   </li>
                 </ul>

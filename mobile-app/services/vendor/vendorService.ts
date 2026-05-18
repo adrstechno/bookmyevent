@@ -288,7 +288,9 @@ export const deleteVendorShift = async (shiftId: number | string) => {
 export const fetchVendorBookings = async (): Promise<VendorBooking[]> => {
 	const response = await apiClient.get(API_ENDPOINTS.booking.listByVendor);
 	const payload = toObject(response.data);
-	const rows = toRows(payload.bookings ?? payload.data ?? payload);
+	// Backend returns: { success, data: { bookings: [...], pagination: {...} } }
+	const nested = toObject(payload.data ?? payload);
+	const rows = toRows(nested.bookings ?? payload.bookings ?? payload.data ?? payload);
 
 	return rows.map((row) => ({
 		bookingId: toText(row.booking_id ?? row.id),

@@ -58,9 +58,9 @@ class EnhancedBookingController {
             // Send comprehensive notifications to all parties
             try {
                 // Get user details for notification
-                const userQuery = `SELECT first_name, last_name, email, phone FROM users WHERE uuid = ?`;
+                const userQuery = `SELECT first_name, last_name, email, phone FROM users WHERE (uuid = ? OR CAST(user_id AS CHAR) = ?)`;
                 const userResult = await new Promise((resolve, reject) => {
-                    db.query(userQuery, [user_id], (err, results) => {
+                    db.query(userQuery, [user_id, user_id], (err, results) => {
                         if (err) reject(err);
                         else resolve(results);
                     });
@@ -70,7 +70,7 @@ class EnhancedBookingController {
                 const vendorQuery = `
                     SELECT u.first_name, u.last_name, u.email, vp.vendor_id, vp.business_name
                     FROM vendor_profiles vp 
-                    JOIN users u ON vp.user_id = u.user_id 
+                    JOIN users u ON (vp.user_id = u.uuid OR vp.user_id = CAST(u.user_id AS CHAR))
                     WHERE vp.vendor_id = ?
                 `;
                 const vendorResult = await new Promise((resolve, reject) => {
@@ -249,7 +249,7 @@ class EnhancedBookingController {
                            v.first_name as vendor_first_name, v.last_name as vendor_last_name, v.email as vendor_email,
                            vp.package_name, vp.amount
                     FROM bookings b
-                    JOIN users u ON b.user_id = u.uuid
+                    JOIN users u ON (b.user_id = u.uuid OR b.user_id = CAST(u.user_id AS CHAR))
                     JOIN vendor_profiles vpr ON b.vendor_id = vpr.vendor_id
                     JOIN users v ON vpr.user_id = v.user_id
                     LEFT JOIN vendor_packages vp ON b.package_id = vp.package_id
@@ -361,7 +361,7 @@ class EnhancedBookingController {
                            v.first_name as vendor_first_name, v.last_name as vendor_last_name, v.email as vendor_email,
                            vp.package_name, vp.amount
                     FROM bookings b
-                    JOIN users u ON b.user_id = u.uuid
+                    JOIN users u ON (b.user_id = u.uuid OR b.user_id = CAST(u.user_id AS CHAR))
                     JOIN vendor_profiles vpr ON b.vendor_id = vpr.vendor_id
                     JOIN users v ON vpr.user_id = v.user_id
                     LEFT JOIN vendor_packages vp ON b.package_id = vp.package_id
@@ -443,3 +443,4 @@ class EnhancedBookingController {
 }
 
 export default EnhancedBookingController;
+

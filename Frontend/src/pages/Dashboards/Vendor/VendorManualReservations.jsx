@@ -9,8 +9,7 @@ import {
   FiRefreshCw,
   FiAlertCircle,
 } from "react-icons/fi";
-import axios from "axios";
-import { VITE_API_BASE_URL } from "../../../utils/api";
+import api from "../../../services/axiosConfig";
 import toast from "react-hot-toast";
 import Calendar from "react-calendar";
 import { useNavigate } from "react-router-dom";
@@ -34,12 +33,6 @@ const VendorManualReservations = () => {
   const [shiftsLoading, setShiftsLoading] = useState(false);
   const [availableShifts, setAvailableShifts] = useState([]);
 
-  // Helper to get auth headers from localStorage
-  const getAuthHeaders = () => {
-    const token = localStorage.getItem("token");
-    return token ? { Authorization: `Bearer ${token}` } : {};
-  };
-
   useEffect(() => {
     fetchVendorProfile();
   }, []);
@@ -50,9 +43,8 @@ const VendorManualReservations = () => {
     try {
       setLoading(true);
       const now = new Date();
-      const response = await axios.get(
-        `${VITE_API_BASE_URL}/manual-reservations/vendor/${vendorId}?month=${now.getMonth() + 1}&year=${now.getFullYear()}`,
-        { headers: getAuthHeaders(), withCredentials: true }
+      const response = await api.get(
+        `/manual-reservations/vendor/${vendorId}?month=${now.getMonth() + 1}&year=${now.getFullYear()}`
       );
       setReservations(response.data?.data || []);
     } catch (error) {
@@ -83,10 +75,7 @@ const VendorManualReservations = () => {
     try {
       setProfileLoading(true);
       setProfileError("");
-      const response = await axios.get(`${VITE_API_BASE_URL}/Vendor/GetVendorProfile`, {
-        headers: getAuthHeaders(),
-        withCredentials: true,
-      });
+      const response = await api.get('/Vendor/GetVendorProfile');
       // Backend returns { vendor: { vendor_id, ... } }
       const resolvedVendorId = response.data?.vendor?.vendor_id;
 
@@ -119,9 +108,8 @@ const VendorManualReservations = () => {
       const day = String(date.getDate()).padStart(2, "0");
       const formattedDate = `${year}-${month}-${day}`;
 
-      const response = await axios.get(
-        `${VITE_API_BASE_URL}/shift-availability/available-shifts?vendor_id=${vendorId}&event_date=${formattedDate}`,
-        { withCredentials: true }
+      const response = await api.get(
+        `/shift-availability/available-shifts?vendor_id=${vendorId}&event_date=${formattedDate}`
       );
       
       if (response.data?.success) {
@@ -159,16 +147,12 @@ const VendorManualReservations = () => {
       const day = String(selectedDate.getDate()).padStart(2, "0");
       const formattedDate = `${year}-${month}-${day}`;
 
-      await axios.post(
-        `${VITE_API_BASE_URL}/manual-reservations`,
-        {
-          vendor_id: vendorId,
-          shift_id: selectedShift,
-          event_date: formattedDate,
-          reason: reason || "Manual reservation by vendor",
-        },
-        { headers: getAuthHeaders(), withCredentials: true }
-      );
+      await api.post('/manual-reservations', {
+        vendor_id: vendorId,
+        shift_id: selectedShift,
+        event_date: formattedDate,
+        reason: reason || "Manual reservation by vendor",
+      });
 
       toast.success("Shift reserved successfully!");
       setShowModal(false);
@@ -187,10 +171,7 @@ const VendorManualReservations = () => {
     if (!window.confirm("Cancel this reservation?")) return;
 
     try {
-      await axios.delete(`${VITE_API_BASE_URL}/manual-reservations/${reservationId}`, {
-        headers: getAuthHeaders(),
-        withCredentials: true,
-      });
+      await api.delete(`/manual-reservations/${reservationId}`);
       toast.success("Reservation cancelled");
       fetchReservations();
     } catch (error) {

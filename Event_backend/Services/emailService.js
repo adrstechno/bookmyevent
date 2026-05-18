@@ -2018,6 +2018,220 @@ class EmailService {
         }
     }
 
+    async sendContactEmail({ name, email, phone, subject, message }) {
+        const now = new Date();
+        const timestamp = now.toLocaleString('en-IN', {
+            timeZone: 'Asia/Kolkata',
+            dateStyle: 'full',
+            timeStyle: 'short'
+        });
+
+        const mailOptions = {
+            from: `"GoEventify Contact Form" <${process.env.EMAIL_USER}>`,
+            to: process.env.CONTACT_EMAIL,
+            replyTo: email,
+            subject: subject ? `[GoEventify] ${subject}` : `[GoEventify] New Enquiry from ${name}`,
+            html: `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>New Contact Enquiry – GoEventify</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f0f4f8;font-family:'Segoe UI',Arial,sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0f4f8;padding:40px 0;">
+    <tr>
+      <td align="center">
+        <table width="620" cellpadding="0" cellspacing="0" style="max-width:620px;width:100%;">
+
+          <!-- HEADER -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#1a2e30 0%,#3c6e71 100%);border-radius:16px 16px 0 0;padding:36px 40px;text-align:center;">
+              <img src="https://www.goeventify.com/logo2.png" alt="GoEventify" width="64" height="64" style="display:inline-block;border-radius:50%;background:#ffffff;padding:6px;margin-bottom:14px;object-fit:contain;" />
+              <h1 style="margin:0;color:#ffffff;font-size:26px;font-weight:700;letter-spacing:0.5px;">GoEventify</h1>
+              <p style="margin:6px 0 0;color:#f9a826;font-size:13px;letter-spacing:2px;text-transform:uppercase;font-weight:600;">New Contact Enquiry</p>
+            </td>
+          </tr>
+
+          <!-- ALERT BANNER -->
+          <tr>
+            <td style="background:#f9a826;padding:12px 40px;text-align:center;">
+              <p style="margin:0;color:#1a2e30;font-size:13px;font-weight:700;letter-spacing:0.5px;">
+                You have received a new message from your website contact form
+              </p>
+            </td>
+          </tr>
+
+          <!-- BODY -->
+          <tr>
+            <td style="background:#ffffff;padding:40px;">
+
+              <!-- SENDER DETAILS -->
+              <h2 style="margin:0 0 20px;color:#1a2e30;font-size:16px;font-weight:700;text-transform:uppercase;letter-spacing:1px;border-left:4px solid #f9a826;padding-left:12px;">
+                Sender Details
+              </h2>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
+
+                <!-- Full Name — person icon -->
+                <tr>
+                  <td style="padding:12px 16px;background:#f8fafc;border-radius:10px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td width="46" valign="middle">
+                          <table cellpadding="0" cellspacing="0"><tr>
+                            <td width="42" height="42" align="center" valign="middle" style="background:#3c6e71;border-radius:10px;">
+                              <img src="https://img.icons8.com/ios-filled/50/ffffff/user.png" width="22" height="22" alt="person" style="display:block;margin:0 auto;" />
+                            </td>
+                          </tr></table>
+                        </td>
+                        <td valign="middle" style="padding-left:14px;">
+                          <span style="font-size:11px;color:#999;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:3px;">Full Name</span>
+                          <span style="font-size:15px;color:#1a2e30;font-weight:700;">${name}</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <tr><td height="8"></td></tr>
+
+                <!-- Email Address — envelope icon -->
+                <tr>
+                  <td style="padding:12px 16px;background:#f8fafc;border-radius:10px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td width="46" valign="middle">
+                          <table cellpadding="0" cellspacing="0"><tr>
+                            <td width="42" height="42" align="center" valign="middle" style="background:#3c6e71;border-radius:10px;">
+                              <img src="https://img.icons8.com/ios-filled/50/ffffff/email.png" width="22" height="22" alt="email" style="display:block;margin:0 auto;" />
+                            </td>
+                          </tr></table>
+                        </td>
+                        <td valign="middle" style="padding-left:14px;">
+                          <span style="font-size:11px;color:#999;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:3px;">Email Address</span>
+                          <a href="mailto:${email}" style="font-size:15px;color:#3c6e71;font-weight:700;text-decoration:none;">${email}</a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                ${phone ? `
+                <tr><td height="8"></td></tr>
+
+                <!-- Phone Number — phone icon -->
+                <tr>
+                  <td style="padding:12px 16px;background:#f8fafc;border-radius:10px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td width="46" valign="middle">
+                          <table cellpadding="0" cellspacing="0"><tr>
+                            <td width="42" height="42" align="center" valign="middle" style="background:#3c6e71;border-radius:10px;">
+                              <img src="https://img.icons8.com/ios-filled/50/ffffff/phone.png" width="22" height="22" alt="phone" style="display:block;margin:0 auto;" />
+                            </td>
+                          </tr></table>
+                        </td>
+                        <td valign="middle" style="padding-left:14px;">
+                          <span style="font-size:11px;color:#999;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:3px;">Phone Number</span>
+                          <a href="tel:${phone}" style="font-size:15px;color:#1a2e30;font-weight:700;text-decoration:none;">+91 ${phone}</a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>` : ''}
+
+                ${subject ? `
+                <tr><td height="8"></td></tr>
+
+                <!-- Subject — tag icon -->
+                <tr>
+                  <td style="padding:12px 16px;background:#f8fafc;border-radius:10px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td width="46" valign="middle">
+                          <table cellpadding="0" cellspacing="0"><tr>
+                            <td width="42" height="42" align="center" valign="middle" style="background:#3c6e71;border-radius:10px;">
+                              <img src="https://img.icons8.com/ios-filled/50/ffffff/price-tag.png" width="22" height="22" alt="subject" style="display:block;margin:0 auto;" />
+                            </td>
+                          </tr></table>
+                        </td>
+                        <td valign="middle" style="padding-left:14px;">
+                          <span style="font-size:11px;color:#999;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:3px;">Subject</span>
+                          <span style="font-size:15px;color:#1a2e30;font-weight:700;">${subject}</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>` : ''}
+
+              </table>
+
+              <!-- MESSAGE -->
+              <h2 style="margin:0 0 14px;color:#1a2e30;font-size:16px;font-weight:700;text-transform:uppercase;letter-spacing:1px;border-left:4px solid #f9a826;padding-left:12px;">
+                Message
+              </h2>
+              <div style="background:#f8fafc;border-radius:10px;border-left:4px solid #3c6e71;padding:20px 24px;">
+                <p style="margin:0;font-size:15px;color:#333;line-height:1.8;white-space:pre-wrap;">${message}</p>
+              </div>
+
+              <!-- REPLY CTA -->
+              <div style="margin-top:32px;text-align:center;">
+                <a href="mailto:${email}?subject=Re: ${subject || 'Your GoEventify Enquiry'}"
+                   style="display:inline-block;background:linear-gradient(135deg,#3c6e71,#1a2e30);color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:14px 36px;border-radius:50px;letter-spacing:0.5px;">
+                  Reply to ${name}
+                </a>
+              </div>
+
+            </td>
+          </tr>
+
+          <!-- TIMESTAMP -->
+          <tr>
+            <td style="background:#f8fafc;padding:16px 40px;text-align:center;border-top:1px solid #e8ecf0;">
+              <p style="margin:0;font-size:12px;color:#aaa;">
+                Received on ${timestamp} (IST)
+              </p>
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#1a2e30 0%,#3c6e71 100%);border-radius:0 0 16px 16px;padding:28px 40px;text-align:center;">
+              <p style="margin:0 0 8px;color:#f9a826;font-size:16px;font-weight:700;">GoEventify</p>
+              <p style="margin:0 0 6px;color:#ccc;font-size:12px;">71, Dadda Nagar Near Katangi Highway, Jabalpur, MP 482001</p>
+              <p style="margin:0 0 6px;color:#ccc;font-size:12px;">
+                <a href="tel:+919201976523" style="color:#ccc;text-decoration:none;">+91 9201976523</a>
+                &nbsp;|&nbsp;
+                <a href="https://www.goeventify.com" style="color:#f9a826;text-decoration:none;">www.goeventify.com</a>
+              </p>
+              <p style="margin:16px 0 0;color:#666;font-size:11px;">
+                This email was auto-generated from the GoEventify contact form. Do not reply to this email — use the button above to respond directly to the enquiry.
+              </p>
+              <p style="margin:6px 0 0;color:#555;font-size:11px;">&copy; ${new Date().getFullYear()} GoEventify. All rights reserved.</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
+            `
+        };
+
+        try {
+            return await this.sendMailWithRetry(mailOptions);
+        } catch (error) {
+            console.error('Error sending contact form email:', error);
+            throw error;
+        }
+    }
+
 }
 
 export default new EmailService();

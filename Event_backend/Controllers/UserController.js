@@ -179,6 +179,7 @@ export const insertUser = async (req, res) => {
     // 2️⃣ Check if email already exists
     const existingEmail = await new Promise((resolve, reject) => {
       UserModel.findonebyemail(userData.email, (err, result) => {
+        console.log('[insertUser] email check:', userData.email, '| result:', result, '| err:', err);
         if (err) return reject(err);
         resolve(result && result.length > 0 ? result[0] : null);
       });
@@ -207,7 +208,10 @@ export const insertUser = async (req, res) => {
     userData.password_hash = bcrypt.hashSync(userData.password, 10);
 
     // 6️⃣ Set default flags
-    userData.is_verified = false;
+    // Auto-verify on local dev (DB_HOST=localhost) — verification link points to
+    // production server so it can't verify local accounts via email.
+    const isLocalDev = !process.env.DB_HOST || process.env.DB_HOST === 'localhost' || process.env.DB_HOST === '127.0.0.1';
+    userData.is_verified = isLocalDev ? true : false;
     userData.is_active = true;
 
     // 7️⃣ Insert user into DB
@@ -618,7 +622,7 @@ export const debugVendorData = async (req, res) => {
     const vendorQuery = `
       SELECT u.first_name, u.last_name, u.email, vp.vendor_id, vp.business_name, vp.user_id
       FROM vendor_profiles vp 
-      JOIN users u ON vp.user_id = u.user_id 
+      JOIN users u ON (vp.user_id = u.uuid OR vp.user_id = CAST(u.user_id AS CHAR))
       WHERE vp.vendor_id = ?
     `;
     
@@ -1079,3 +1083,4 @@ export const verifyResetToken = async (req, res) => {
     });
   }
 };
+

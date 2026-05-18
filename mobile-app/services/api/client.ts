@@ -1,4 +1,5 @@
 import axios, { AxiosError, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
+import NetInfo from '@react-native-community/netinfo';
 
 import { APP_CONFIG } from '@/constants/config';
 
@@ -95,7 +96,7 @@ const isPublicRoute = (url: string | undefined): boolean => {
 	return PUBLIC_ROUTES.some((route) => url.includes(route));
 };
 
-const normalizeApiError = (error: AxiosError): ApiError => {
+const normalizeApiError = async (error: AxiosError): Promise<ApiError> => {
 	const status = error.response?.status ?? 0;
 	const responseData = error.response?.data as
 		| { message?: string; error?: string; code?: string; details?: unknown }
@@ -105,20 +106,29 @@ const normalizeApiError = (error: AxiosError): ApiError => {
 	if (!error.response) {
 		const isTimeout = error.code === 'ECONNABORTED';
 		const isNetworkError = error.code === 'ERR_NETWORK' || error.message.includes('Network Error');
-		
-		if (isNetworkError || !error.code) {
+
+		if (isNetworkError) {
+			let deviceHasInternet = false;
+			try {
+				const netState = await NetInfo.fetch();
+				deviceHasInternet = (netState.isConnected ?? false) && netState.isInternetReachable !== false;
+			} catch {
+				// NetInfo unavailable — assume connectivity issue
+			}
 			return {
 				status: 0,
-				message: 'No internet connection. Please check your network and try again.',
+				message: deviceHasInternet
+					? 'Server is temporarily unavailable. Please try again in a moment.'
+					: 'No internet connection. Please check your network and try again.',
 				isNetworkError: true,
 			};
 		}
-		
+
 		return {
 			status: 0,
 			message: isTimeout
 				? 'Request timed out. Please check your connection and try again.'
-				: 'Unable to connect to server. Please check your internet connection.',
+				: 'Unable to connect to server. Please try again.',
 			isNetworkError: true,
 		};
 	}
@@ -188,7 +198,7 @@ apiClient.interceptors.response.use(
 
 		return response;
 	},
-	(error: AxiosError) => {
+	async (error: AxiosError) => {
 		const status = error.response?.status ?? 0;
 		const url = error.config?.url;
 		const responseData = error.response?.data as
@@ -211,7 +221,7 @@ apiClient.interceptors.response.use(
 			onTokenInvalid();
 		}
 
-		return Promise.reject(normalizeApiError(error));
+		return Promise.reject(await normalizeApiError(error));
 	}
 );
 

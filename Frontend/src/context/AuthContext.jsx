@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { checkAndCleanAuth, isTokenExpired } from "../utils/tokenValidation";
 import { VITE_API_BASE_URL } from "../utils/api";
+import { setAxiosLogoutCallback } from "../services/axiosConfig";
 
 export const AuthContext = createContext(null);
 
@@ -17,50 +18,79 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // console.log('AuthProvider initializing...');
-    
-    try {
-      const token = localStorage.getItem("token");
-      const savedUser = localStorage.getItem("user");
-      
-      // If no token, just set loading to false
-      if (!token) {
-        // console.log('No token found, user not authenticated');
-        setUser(null);
-        setLoading(false);
-        return;
-      }
-      
-      // Check if token is expired
-      if (isTokenExpired(token)) {
-        // console.log('Token expired, clearing auth data');
-        checkAndCleanAuth();
-        setUser(null);
-        setLoading(false);
-        return;
-      }
-      
-      // If we have a valid token and saved user, restore session
-      if (savedUser) {
-        try {
-          const parsedUser = JSON.parse(savedUser);
-          // console.log('Restored user session:', parsedUser);
-          setUser(parsedUser);
-        } catch (error) {
-          console.error("Error parsing saved user:", error);
+    const initAuth = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const savedUser = localStorage.getItem("user");
+
+        if (!token) {
+          setUser(null);
+          return;
+        }
+
+        if (isTokenExpired(token)) {
           checkAndCleanAuth();
           setUser(null);
+          return;
         }
+
+        // Restore cached user immediately so the UI doesn't flash unauthenticated
+        if (savedUser) {
+          try {
+            setUser(JSON.parse(savedUser));
+          } catch {
+            // corrupted cache — will be overwritten below
+          }
+        }
+
+        // Always validate the token with the backend to get the fresh role.
+        // This prevents stale localStorage role (e.g. 'user') from blocking
+        // a user whose DB role was changed to 'vendor'.
+        try {
+          const response = await fetch(`${VITE_API_BASE_URL}/User/validate-token`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            credentials: "include",
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.user) {
+              const freshUser = {
+                role: data.user.user_type,
+                email: data.user.email,
+                user_id: data.user.uuid,
+                first_name: data.user.first_name,
+                last_name: data.user.last_name,
+              };
+              setUser(freshUser);
+              localStorage.setItem("user", JSON.stringify(freshUser));
+              localStorage.setItem("role", freshUser.role);
+            } else {
+              checkAndCleanAuth();
+              setUser(null);
+            }
+          } else {
+            checkAndCleanAuth();
+            setUser(null);
+          }
+        } catch {
+          // Network error — fall back to cached user so app still works offline
+        }
+
+      } catch (error) {
+        console.error("Error in AuthProvider initialization:", error);
+        checkAndCleanAuth();
+        setUser(null);
+      } finally {
+        setLoading(false);
       }
-      
-    } catch (error) {
-      console.error("Error in AuthProvider initialization:", error);
-      checkAndCleanAuth();
-      setUser(null);
-    } finally {
-      // console.log('AuthProvider initialization complete');
-      setLoading(false);
-    }
+    };
+
+    void initAuth();
   }, []);
 
   const login = (data) => {
@@ -80,10 +110,17 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem("role", userData.role); // Store role separately for ProtectedRoute
   };
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setUser(null);
-    checkAndCleanAuth(); // Use the utility function for consistent cleanup
-  };
+    checkAndCleanAuth();
+  }, []);
+
+  // Register logout with the axios interceptor so 401 responses
+  // use React Router navigation instead of a hard window.location redirect
+  useEffect(() => {
+    setAxiosLogoutCallback(logout);
+    return () => setAxiosLogoutCallback(null);
+  }, [logout]);
 
   // Method to refresh user session
   const refreshSession = async () => {

@@ -59,9 +59,9 @@ class BookingController {
             // Send notification to vendor about new booking
             try {
                 // Get user details for notification
-                const userQuery = `SELECT first_name, last_name, email, phone FROM users WHERE uuid = ?`;
+                const userQuery = `SELECT first_name, last_name, email, phone FROM users WHERE (uuid = ? OR CAST(user_id AS CHAR) = ?)`;
                 const userResult = await new Promise((resolve, reject) => {
-                    db.query(userQuery, [user_id], (err, results) => {
+                    db.query(userQuery, [user_id, user_id], (err, results) => {
                         if (err) reject(err);
                         else resolve(results);
                     });
@@ -71,7 +71,7 @@ class BookingController {
                 const vendorQuery = `
                     SELECT u.first_name, u.last_name, u.email, u.phone, vp.vendor_id, vp.business_name, vp.contact
                     FROM vendor_profiles vp 
-                    JOIN users u ON vp.user_id = u.user_id 
+                    JOIN users u ON (vp.user_id = u.uuid OR vp.user_id = CAST(u.user_id AS CHAR))
                     WHERE vp.vendor_id = ? AND u.is_active = 1
                 `;
                 const vendorResult = await new Promise((resolve, reject) => {
@@ -180,7 +180,7 @@ class BookingController {
             const vendorQuery = `
                 SELECT u.first_name, u.last_name, u.email, u.phone, vp.vendor_id, vp.business_name, vp.contact
                 FROM vendor_profiles vp 
-                JOIN users u ON vp.user_id = u.user_id 
+                JOIN users u ON (vp.user_id = u.uuid OR vp.user_id = CAST(u.user_id AS CHAR))
                 WHERE vp.vendor_id = ? AND u.is_active = 1
             `;
             
@@ -208,3 +208,4 @@ class BookingController {
 }
 
 export default BookingController;
+

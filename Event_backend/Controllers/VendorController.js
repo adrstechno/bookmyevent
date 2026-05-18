@@ -3,6 +3,85 @@ import VendorModel from "../Models/VendorModel.js";
 import { verifyToken } from "../Utils/Verification.js";
 import { v4 as uuidv4 } from "uuid";
 
+// Read token from Bearer header first, fall back to cookie
+const getToken = (req) => {
+  const authHeader = req.headers['authorization'];
+  return (authHeader && authHeader.split(' ')[1]) || req.cookies?.auth_token || null;
+};
+
+const VALID_WEEKDAYS = new Set([
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+]);
+
+const normalizeTime = (value) => {
+  if (!value) return null;
+  const raw = String(value).trim();
+  if (!raw) return null;
+  const parts = raw.split(":");
+  if (parts.length < 2 || parts.length > 3) return null;
+
+  const h = Number(parts[0]);
+  const m = Number(parts[1]);
+  const s = parts.length === 3 ? Number(parts[2]) : 0;
+
+  if ([h, m, s].some((n) => Number.isNaN(n))) return null;
+  if (h < 0 || h > 23 || m < 0 || m > 59 || s < 0 || s > 59) return null;
+
+  const hh = String(h).padStart(2, "0");
+  const mm = String(m).padStart(2, "0");
+  const ss = String(s).padStart(2, "0");
+  return `${hh}:${mm}:${ss}`;
+};
+
+const normalizeDaysOfWeek = (value) => {
+  let parsed = value;
+
+  for (let i = 0; i < 3; i += 1) {
+    if (Array.isArray(parsed)) break;
+    if (typeof parsed !== "string") break;
+
+    const trimmed = parsed.trim();
+    if (!trimmed) break;
+
+    try {
+      parsed = JSON.parse(trimmed);
+      continue;
+    } catch {
+      // Not JSON; fallback to comma-separated list below.
+      parsed = trimmed;
+      break;
+    }
+  }
+
+  let days;
+  if (Array.isArray(parsed)) {
+    days = parsed;
+  } else if (typeof parsed === "string") {
+    days = parsed.split(",");
+  } else {
+    days = [];
+  }
+
+  const cleaned = days
+    .map((day) => String(day ?? "").trim().replace(/^"+|"+$/g, ""))
+    .filter(Boolean);
+
+  const unique = [...new Set(cleaned)];
+  const hasInvalid = unique.some((day) => !VALID_WEEKDAYS.has(day));
+
+  if (unique.length === 0 || hasInvalid) {
+    return { valid: false, days: [] };
+  }
+
+  return { valid: true, days: unique };
+};
+
 export const insertVendor = (req, res) => {
   try {
     console.log('📝 InsertVendor called');
@@ -18,7 +97,7 @@ export const insertVendor = (req, res) => {
     }
 
     const data = req.body;
-    const token = req.cookies.auth_token;
+    const token = getToken(req);
 
     if (!token) {
       console.log('❌ No auth token');
@@ -99,7 +178,7 @@ export const getAllVendor = (req, res) => {
 export const AddEventImages = async (req, res) => {
   try {
     //  Verify token
-    const token = req.cookies.auth_token;
+    const token = getToken(req);
     if (!token) {
       return res
         .status(401)
@@ -171,12 +250,7 @@ const promisifyAddEventImages = (vendor_id, url) => {
 
 export const getvendorById = async (req, res) => {
   try {
-    // Support both Bearer token (mobile) and cookie-based (web) auth
-    const authHeader = req.headers['authorization'];
-    let token = authHeader && authHeader.split(' ')[1];
-    if (!token && req.cookies) {
-      token = req.cookies.auth_token;
-    }
+    const token = getToken(req);
 
     if (!token) {
       return res
@@ -252,7 +326,7 @@ export const updateVendorProfile = async (req, res) => {
     const profile_url = req.file?.path;
 
     // Validate token
-    const token = req.cookies.auth_token;
+    const token = getToken(req);
     if (!token) {
       return res
         .status(401)
@@ -315,7 +389,7 @@ export const updateVendorProfile = async (req, res) => {
 
 export const VendorShift = async (req, res) => {
   try {
-    const token = req.cookies.auth_token;
+    const token = getToken(req);
 
     if (!token) {
       return res
@@ -329,11 +403,21 @@ export const VendorShift = async (req, res) => {
     }
 
     const { shift_name, start_time, end_time, days_of_week } = req.body;
+    const normalizedStart = normalizeTime(start_time);
+    const normalizedEnd = normalizeTime(end_time);
+    const normalizedDays = normalizeDaysOfWeek(days_of_week);
 
     // Validate input
-    if (!shift_name || !start_time || !end_time || !days_of_week) {
+    if (!shift_name || !normalizedStart || !normalizedEnd || !normalizedDays.valid) {
       return res.status(400).json({
-        message: "All fields required. days_of_week must be an array",
+        message:
+          "All fields required. days_of_week must include valid weekdays and time must be HH:MM or HH:MM:SS",
+      });
+    }
+
+    if (normalizedStart >= normalizedEnd) {
+      return res.status(400).json({
+        message: "Start time must be before end time",
       });
     }
 
@@ -355,9 +439,9 @@ export const VendorShift = async (req, res) => {
         {
           vendor_id,
           shift_name,
-          start_time,
-          end_time,
-          days_of_week,
+          start_time: normalizedStart,
+          end_time: normalizedEnd,
+          days_of_week: normalizedDays.days,
           is_active: true,
         },
         (err, result) => {
@@ -378,7 +462,7 @@ export const VendorShift = async (req, res) => {
 
 export const getVendorShiftforVendor = async (req, res) => {
   try {
-    const token = req.cookies.auth_token;
+    const token = getToken(req);
     if (!token) {
       return res
         .status(401)
@@ -455,7 +539,7 @@ export const GetvendorEventImages = async (req, res) => {
 
     // If vendor_id not provided, try to derive it from auth token
     if (!vendor_id) {
-      const token = req.cookies.auth_token;
+      const token = getToken(req);
       if (!token) {
         return res
           .status(401)
@@ -508,7 +592,7 @@ export const GetvendorEventImages = async (req, res) => {
 export const deleteEventImage = async (req, res) => {
   try {
     // Verify token
-    const token = req.cookies.auth_token;
+    const token = getToken(req);
     if (!token) {
       return res
         .status(401)
@@ -586,7 +670,7 @@ export const deleteEventImage = async (req, res) => {
 
 export const updateVendorShiftbyId = async (req, res) => {
   try {
-    const token = req.cookies.auth_token;
+    const token = getToken(req);
     if (!token) {
       return res
         .status(401)
@@ -600,18 +684,28 @@ export const updateVendorShiftbyId = async (req, res) => {
 
     const { shift_id, shift_name, start_time, end_time, days_of_week } =
       req.body;
+    const normalizedStart = normalizeTime(start_time);
+    const normalizedEnd = normalizeTime(end_time);
+    const normalizedDays = normalizeDaysOfWeek(days_of_week);
 
-    if (!shift_id || !shift_name || !start_time || !end_time || !days_of_week) {
+    if (!shift_id || !shift_name || !normalizedStart || !normalizedEnd || !normalizedDays.valid) {
       return res.status(400).json({
-        message: "All fields required. days_of_week must be an array",
+        message:
+          "All fields required. days_of_week must include valid weekdays and time must be HH:MM or HH:MM:SS",
+      });
+    }
+
+    if (normalizedStart >= normalizedEnd) {
+      return res.status(400).json({
+        message: "Start time must be before end time",
       });
     }
 
     const ShiftData = {
       shift_name,
-      start_time,
-      end_time,
-      days_of_week,
+      start_time: normalizedStart,
+      end_time: normalizedEnd,
+      days_of_week: normalizedDays.days,
       is_active: true,
     };
 
@@ -635,7 +729,7 @@ export const updateVendorShiftbyId = async (req, res) => {
 
 export const deleteVendorShiftbyId = async (req, res) => {
   try {
-    const token = req.cookies.auth_token;
+    const token = getToken(req);
     if (!token) {
       return res
         .status(401)
@@ -674,7 +768,7 @@ export const deleteVendorShiftbyId = async (req, res) => {
 export const insertVendorPackage = (req, res) => {
   try {
     const data = req.body;
-    const token = req.cookies.auth_token;
+    const token = getToken(req);
 
     if (!token) {
       return res.status(401).json({ message: "Unauthorized: No token provided" });
@@ -732,7 +826,7 @@ export const updateVendorPackage = (req, res) => {
     const data = req.body;
    const {package_id} = req.body;
     
-    const token = req.cookies.auth_token;
+    const token = getToken(req);
     if (!token) {
       return res.status(401).json({ message: "Unauthorized: No token provided" });
     }
@@ -762,7 +856,7 @@ export const deleteVendorPackage = (req, res) => {
   try{ 
     const {package_id} = req.query;
     
-    const token = req.cookies.auth_token;
+    const token = getToken(req);
     if (!token) {
       return res.status(401).json({ message: "Unauthorized: No token provided" });
     }

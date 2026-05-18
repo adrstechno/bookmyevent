@@ -53,31 +53,30 @@ class VendorModel {
   }
   
   static addEventImages(data, callback) {
-    const sql = "insert into Event_images (vendor_id , imageUrl) values(?,?)";
+    const sql = "insert into Event_Images (vendor_id , imageUrl) values(?,?)";
     db.query(sql, [data.vendor_id, data.event_profiles_url], callback);
   }
 
   static findVendorID(decodedUserID, callback) {
-    // decodedUserID is the uuid from JWT token
-    // vendor_profiles.user_id stores the uuid (string)
     const sql = `
       SELECT vp.vendor_id
       FROM vendor_profiles vp
-      WHERE vp.user_id = ?
+      LEFT JOIN users u ON (vp.user_id = u.uuid OR vp.user_id = CAST(u.user_id AS CHAR))
+      WHERE (vp.user_id = ? OR u.uuid = ? OR CAST(u.user_id AS CHAR) = ?)
+      LIMIT 1
     `;
-    db.query(sql, [decodedUserID], callback);
+    db.query(sql, [decodedUserID, decodedUserID, decodedUserID], callback);
   }
 
   static findVendor(decodedUserID, callback) {
-    // decodedUserID is the uuid from JWT token
-    // vendor_profiles.user_id stores the uuid (string)
-    // We need to match vendor_profiles.user_id directly with the uuid
     const sql = `
       SELECT vp.*
       FROM vendor_profiles vp
-      WHERE vp.user_id = ?
+      LEFT JOIN users u ON (vp.user_id = u.uuid OR vp.user_id = CAST(u.user_id AS CHAR))
+      WHERE (vp.user_id = ? OR u.uuid = ? OR CAST(u.user_id AS CHAR) = ?)
+      LIMIT 1
     `;
-    db.query(sql, [decodedUserID], callback);
+    db.query(sql, [decodedUserID, decodedUserID, decodedUserID], callback);
   }
 
   static updateVendor(vendor_id, data, callback) {
@@ -118,12 +117,17 @@ class VendorModel {
     const sql =
       "INSERT INTO vendor_shifts (vendor_id, shift_name, start_time, end_time, days_of_week, is_active) VALUES (?,?,?,?,?,?)";
 
+    // days_of_week may arrive pre-stringified from the mobile app — don't double-stringify
+    const daysJson = Array.isArray(shiftData.days_of_week)
+      ? JSON.stringify(shiftData.days_of_week)
+      : shiftData.days_of_week;
+
     const values = [
       shiftData.vendor_id,
       shiftData.shift_name,
       shiftData.start_time,
       shiftData.end_time,
-      JSON.stringify(shiftData.days_of_week), // Convert array to JSON string
+      daysJson,
       shiftData.is_active || true,
     ];
 
@@ -146,11 +150,15 @@ class VendorModel {
     const sql =
       "UPDATE vendor_shifts SET shift_name = ?, start_time = ?, end_time = ?, days_of_week = ?, is_active = ? WHERE shift_id = ?";
 
+    const daysJson = Array.isArray(shiftData.days_of_week)
+      ? JSON.stringify(shiftData.days_of_week)
+      : shiftData.days_of_week;
+
     const values = [
       shiftData.shift_name,
       shiftData.start_time,
       shiftData.end_time,
-      shiftData.days_of_week,
+      daysJson,
       shiftData.is_active,
       shift_id,
     ];
@@ -172,17 +180,17 @@ class VendorModel {
   }
 
   static getEventImages(vendor_id, callback) {
-    const sql = "select * from Event_images where vendor_id = ?";
+    const sql = "select * from Event_Images where vendor_id = ?";
     db.query(sql, [vendor_id], callback);
   }
 
   static getEventImageById(imageID, vendor_id, callback) {
-    const sql = "SELECT * FROM Event_images WHERE imageID = ? AND vendor_id = ?";
+    const sql = "SELECT * FROM Event_Images WHERE imageID = ? AND vendor_id = ?";
     db.query(sql, [imageID, vendor_id], callback);
   }
 
   static deleteEventImage(imageID, vendor_id, callback) {
-    const sql = "DELETE FROM Event_images WHERE imageID = ? AND vendor_id = ?";
+    const sql = "DELETE FROM Event_Images WHERE imageID = ? AND vendor_id = ?";
     db.query(sql, [imageID, vendor_id], callback);
   }
 
@@ -340,7 +348,7 @@ static findVendorsByDayAndSubservice(day, subservice_id, callback) {
       SELECT eb.booking_id, eb.booking_uuid, eb.user_id, eb.event_date, eb.event_time, eb.status, eb.created_at,
              CONCAT(u.first_name, ' ', u.last_name) as user_name, vp.package_name
       FROM event_booking eb
-      LEFT JOIN users u ON eb.user_id = u.uuid
+      LEFT JOIN users u ON (eb.user_id = u.uuid OR eb.user_id = CAST(u.user_id AS CHAR))
       LEFT JOIN vendor_packages vp ON eb.package_id = vp.package_id
       WHERE eb.vendor_id = ?
       ORDER BY eb.created_at DESC

@@ -102,6 +102,7 @@ export const API_ENDPOINTS = {
 		verifyPayment: `${ROOT.SUBSCRIPTION}/verify-payment`,
 		status: `${ROOT.SUBSCRIPTION}/status`,
 		all: `${ROOT.SUBSCRIPTION}/all`,
+		testActivate: `${ROOT.SUBSCRIPTION}/test-activate`,
 	},
 	dashboard: {
 		userKpis: `${ROOT.DASHBOARD}/user/kpis`,
