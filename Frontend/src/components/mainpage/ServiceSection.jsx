@@ -29,7 +29,7 @@ const defaultIcons = [
 const ServicesSection = () => {
   const navigate = useNavigate();
   const { data: services, isLoading, isError, isEmpty, error, execute } = useApiCall([]);
-  const previewServices = services.slice(0, 5);
+  const previewServices = (services ?? []).slice(0, 5);
 
   useEffect(() => {
     loadServices();
@@ -38,7 +38,7 @@ const ServicesSection = () => {
   const loadServices = async () => {
     try {
       await execute(async () => {
-        const response = await fetch(`${VITE_API_BASE_URL}/service/GetAllServices`, {
+        const response = await fetch(`${VITE_API_BASE_URL}/Service/GetAllServices`, {
           method: "GET",
           credentials: "include",
           headers: {
