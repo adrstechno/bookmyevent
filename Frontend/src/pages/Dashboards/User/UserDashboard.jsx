@@ -30,22 +30,17 @@ const UserDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  /* 🔹 Read user email from localStorage */
+  /* 🔹 Display name from AuthContext */
   useEffect(() => {
-    const userStr = localStorage.getItem("user");
+    if (!user) return;
+    const name = user.first_name
+      ? `${user.first_name}${user.last_name ? " " + user.last_name : ""}`
+      : user.email?.split("@")[0] || "User";
+    setUserName(name);
+  }, [user]);
 
-    if (userStr) {
-      try {
-        const userObj = JSON.parse(userStr);
-
-        if (userObj?.email) {
-          const displayName = userObj.email.split("@")[0];
-          setUserName(displayName);
-        }
-      } catch (err) {
-        console.error("Invalid user data in localStorage", err);
-      }
-    }
+  /* 🔹 Dashboard data */
+  useEffect(() => {
     // fetch dashboard data
     (async () => {
       try {
@@ -125,24 +120,13 @@ const UserDashboard = () => {
             <p className="text-gray-600">Hi, {userName}! Manage your bookings and explore services.</p>
           </div>
           
-          {/* Home Button */}
-          <div className="flex gap-3">
-            <button
-              onClick={() => navigate('/')}
-              className="flex items-center gap-2 px-4 py-2 bg-[#3c6e71] hover:bg-[#284b63] text-white rounded-lg font-medium transition-colors duration-200 shadow-md hover:shadow-lg"
-            >
-              <HomeIcon className="h-5 w-5" />
-              <span className="hidden sm:inline">Go to Home</span>
-            </button>
-            
-            <button
-              onClick={() => navigate('/services')}
-              className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 text-[#3c6e71] border-2 border-[#3c6e71] rounded-lg font-medium transition-colors duration-200 shadow-md hover:shadow-lg"
-            >
-              <CalendarDaysIcon className="h-5 w-5" />
-              <span className="hidden sm:inline">Book Services</span>
-            </button>
-          </div>
+          <button
+            onClick={() => navigate('/services')}
+            className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 text-[#3c6e71] border-2 border-[#3c6e71] rounded-lg font-medium transition-colors duration-200 shadow-md hover:shadow-lg"
+          >
+            <CalendarDaysIcon className="h-5 w-5" />
+            <span className="hidden sm:inline">Book Services</span>
+          </button>
         </div>
         
         {/* Quick Navigation */}

@@ -30,7 +30,7 @@ const Sidebar = ({ mobileOpen = false, handleDrawerToggle = () => {}, isMobile =
               <button
                 key={index}
                 onClick={() => navigate(path)}
-                className={`w-full text-left flex items-center gap-3 px-4 py-2 rounded-md mb-1 transition-colors ${active ? "bg-[#3c6e71] text-white" : "text-gray-700 hover:bg-gray-100"}`}
+                className={`w-full text-left flex items-center gap-3 px-4 py-2 rounded-lg mb-1 transition-colors ${active ? "bg-[#3c6e71] text-white" : "text-gray-700 hover:bg-gray-100"}`}
               >
                 <span className={`inline-flex items-center justify-center w-6 h-6 ${active ? "text-white" : "text-[#3c6e71]"}`}>{item.icon}</span>
                 <span className="font-medium">{item.label}</span>
@@ -64,7 +64,7 @@ const Sidebar = ({ mobileOpen = false, handleDrawerToggle = () => {}, isMobile =
                       navigate(path);
                       handleDrawerToggle();
                     }}
-                    className={`w-full text-left flex items-center gap-3 px-4 py-2 rounded-md mb-1 transition-colors ${active ? "bg-[#3c6e71] text-white" : "text-gray-700 hover:bg-gray-100"}`}
+                    className={`w-full text-left flex items-center gap-3 px-4 py-2 rounded-lg mb-1 transition-colors ${active ? "bg-[#3c6e71] text-white" : "text-gray-700 hover:bg-gray-100"}`}
                   >
                     <span className={`inline-flex items-center justify-center w-6 h-6 ${active ? "text-white" : "text-[#3c6e71]"}`}>{item.icon}</span>
                     <span className="font-medium">{item.label}</span>

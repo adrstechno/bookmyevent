@@ -61,7 +61,7 @@ const HomePage = () => {
 
   return (
     <ErrorBoundary>
-      <div className="relative min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
+      <div className={`relative min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100${showInstallPopup ? " pb-24" : ""}`}>
         {/* Subtle Pattern Overlay */}
         <div className="fixed inset-0 opacity-[0.03] pointer-events-none" style={{
           backgroundImage: `radial-gradient(circle at 2px 2px, #284b63 1px, transparent 0)`,

@@ -1034,7 +1034,7 @@ const AdminUsers = () => {
                         <Avatar sx={{ bgcolor: PRIMARY, color: "#fff" }}>
                           {user.first_name?.charAt(0) || "U"}
                         </Avatar>
-                        <Typography fontWeight={600}>
+                        <Typography fontWeight={600} sx={{ textTransform: 'capitalize', whiteSpace: 'nowrap' }}>
                           {(user.first_name || "") + " " + (user.last_name || "")}
                         </Typography>
                       </Stack>
@@ -1042,7 +1042,7 @@ const AdminUsers = () => {
 
                     <TableCell>{user.email}</TableCell>
                     <TableCell>{user.phone}</TableCell>
-                    <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
+                    <TableCell>{new Date(user.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</TableCell>
 
                     <TableCell>
                       <Chip

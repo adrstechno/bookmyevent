@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../../context/AuthContext";
 import vendorService from "../../../services/vendorService";
 import SubscriptionStatus from "../../../components/SubscriptionStatus";
 import {
@@ -13,6 +14,7 @@ import {
 
 const VendorDashboard = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [kpis, setKpis] = useState({ totalSales: 0, newOrders: 0, activeEvents: 0, totalClients: 0 });
   const [activities, setActivities] = useState([]);
   const [vendorName, setVendorName] = useState("Vendor");
@@ -20,22 +22,14 @@ const VendorDashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const userStr = localStorage.getItem("user");
+    if (!user) return;
+    const name = user.first_name
+      ? `${user.first_name}${user.last_name ? " " + user.last_name : ""}`
+      : user.email?.split("@")[0] || "Vendor";
+    setVendorName(name);
+  }, [user]);
 
-    if (userStr) {
-      try {
-        const userObj = JSON.parse(userStr);
-
-        if (userObj?.email) {
-          // email se name part nikaal rahe hain
-          const displayName = userObj.email.split("@")[0];
-          setVendorName(displayName);
-        }
-      } catch (err) {
-        console.error("Invalid user data in localStorage", err);
-      }
-    }
-
+  useEffect(() => {
     // Check vendor profile first
     const checkVendorProfile = async () => {
       try {
@@ -120,7 +114,7 @@ const VendorDashboard = () => {
         <main className="flex-1 p-6 md:p-10">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-[#284b63] mb-2">Vendor Dashboard</h1>
-            <p className="text-gray-600">Welcome, {vendorName}! Complete your profile to start receiving bookings.</p>
+            <p className="text-gray-600">Welcome, "{vendorName}"! Complete your profile to start receiving bookings.</p>
           </div>
 
           {/* Profile Setup Required */}
@@ -141,11 +135,11 @@ const VendorDashboard = () => {
                 <div className="bg-orange-50 rounded-lg p-4 mb-6">
                   <h3 className="font-semibold text-orange-800 mb-2">What you need to provide:</h3>
                   <ul className="text-sm text-orange-700 text-left space-y-1">
-                    <li>• Business name and description</li>
-                    <li>• Service category</li>
-                    <li>• Contact information</li>
-                    <li>• Business address</li>
-                    <li>• Profile picture</li>
+                    <li><span className="inline-block w-2 h-2 rounded-full bg-orange-500 mr-2 align-middle"></span>Business name and description</li>
+                    <li><span className="inline-block w-2 h-2 rounded-full bg-orange-500 mr-2 align-middle"></span>Service category</li>
+                    <li><span className="inline-block w-2 h-2 rounded-full bg-orange-500 mr-2 align-middle"></span>Contact information</li>
+                    <li><span className="inline-block w-2 h-2 rounded-full bg-orange-500 mr-2 align-middle"></span>Business address</li>
+                    <li><span className="inline-block w-2 h-2 rounded-full bg-orange-500 mr-2 align-middle"></span>Profile picture</li>
                   </ul>
                 </div>
 

@@ -23,8 +23,8 @@ export const menuConfig = {
   admin: [
     { label: "Dashboard", path: "/admin/dashboard", icon: <FaTachometerAlt /> },
     { label: "Users", path: "/admin/users", icon: <FaUsers /> },
-    { label: "Services", path: "/admin/addservices", icon: <FaConciergeBell /> },
-    { label: "Main Services", path: "/admin/mainservice", icon: <FaThLarge /> },
+    { label: "Services", path: "/admin/add-services", icon: <FaConciergeBell /> },
+    { label: "Main Services", path: "/admin/main-services", icon: <FaThLarge /> },
     { label: "Bookings", path: "/admin/bookings", icon: <FaCalendarCheck /> },
     { label: "Manual Reservations", path: "/admin/reservations", icon: <FaHandHoldingUsd /> },
   ],

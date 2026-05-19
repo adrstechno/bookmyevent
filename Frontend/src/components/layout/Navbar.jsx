@@ -112,7 +112,7 @@ const Navbar = ({ onMenuClick, isMobile }) => {
         {/* Logout Button */}
         <button
           onClick={handleLogout}
-          className="px-3 md:px-4 py-2 rounded-md bg-[#3c6e71] text-white font-medium text-sm md:text-base hover:bg-[#284b63] transition-colors flex items-center gap-1"
+          className="px-3 md:px-4 py-2 rounded-md border border-[#3c6e71] text-[#3c6e71] font-medium text-sm md:text-base hover:bg-[#3c6e71] hover:text-white transition-colors flex items-center gap-1"
         >
           <span className="hidden sm:inline">Logout</span>
           <ArrowRightOnRectangleIcon className="h-6 w-6 sm:hidden" />

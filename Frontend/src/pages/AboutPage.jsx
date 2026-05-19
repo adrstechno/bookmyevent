@@ -160,7 +160,7 @@ const AboutPage = () => {
               onClick={() => window.scrollTo({ top: document.getElementById('services-section')?.offsetTop || 0, behavior: 'smooth' })}
             >
               <p className="text-sm text-gray-600 font-medium">
-                Click to explore our events →
+                Explore Our Services ↓
               </p>
             </motion.div>
           </motion.div>

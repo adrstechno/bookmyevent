@@ -206,8 +206,8 @@ const ManualReservations = () => {
         </div>
 
         {/* Vendor Selection */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+        <div className="bg-white rounded-xl shadow-md p-6 mb-6 max-w-2xl">
+          <label className="block text-base font-bold text-gray-800 mb-3">
             Select Vendor
           </label>
           <select

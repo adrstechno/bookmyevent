@@ -190,9 +190,8 @@ const HomeNavbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         {/* ---------------- MAIN BAR ---------------- */}
         <motion.div
-          animate={{ 
+          animate={{
             scale: isScrolled ? 0.98 : 1,
-            y: isScrolled ? 4 : 0
           }}
           transition={{ duration: 0.3, ease: "easeOut" }}
           className={`flex items-center justify-between px-6 py-5 rounded-2xl transition-all duration-300

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import {
   Users,
   Calendar,
-  TrendingUp,
+  Building2,
   IndianRupee,
   Clock,
   CheckCircle,
@@ -93,19 +93,20 @@ export default function AdminDashboard() {
       change: "+15.3%", 
       icon: IndianRupee 
     },
-    { 
-      label: "Total Vendors", 
-      value: kpis.totalVendors.toLocaleString(), 
-      change: "+5.1%", 
-      icon: TrendingUp 
+    {
+      label: "Total Vendors",
+      value: kpis.totalVendors.toLocaleString(),
+      change: "+5.1%",
+      icon: Building2
     },
   ];
 
+  const rawGrowth = kpis.monthlyGrowth.percentage;
   const metrics = [
-    { label: "Pending Approvals", value: Math.min((kpis.pendingApprovals / Math.max(kpis.totalBookings, 1)) * 100, 100) },
-    { label: "Active Bookings", value: Math.min((kpis.activeBookings / Math.max(kpis.totalBookings, 1)) * 100, 100) },
-    { label: "User Growth", value: Math.min(Math.abs(kpis.monthlyGrowth.percentage), 100) },
-    { label: "Platform Health", value: 94 },
+    { label: "Pending Approvals", value: Math.min((kpis.pendingApprovals / Math.max(kpis.totalBookings, 1)) * 100, 100), displayValue: null },
+    { label: "Active Bookings", value: Math.min((kpis.activeBookings / Math.max(kpis.totalBookings, 1)) * 100, 100), displayValue: null },
+    { label: "User Growth", value: Math.min(Math.abs(rawGrowth), 100), displayValue: Math.round(Math.abs(rawGrowth)) },
+    { label: "Platform Health", value: 94, displayValue: null },
   ];
 
   if (loading) {
@@ -178,13 +179,13 @@ export default function AdminDashboard() {
 
           <div className="space-y-6">
             {metrics.map((metric, index) => (
-              <div key={index}>
+              <div key={index} title={metric.label}>
                 <div className="flex justify-between items-center mb-1">
                   <span className="text-sm font-medium text-gray-700">
                     {metric.label}
                   </span>
-                  <span className="text-sm text-gray-500">
-                    {Math.round(metric.value)}%
+                  <span className="text-sm font-semibold text-green-700">
+                    {metric.displayValue !== null ? `${metric.displayValue}%` : `${Math.round(metric.value)}%`}
                   </span>
                 </div>
 
@@ -222,14 +223,14 @@ export default function AdminDashboard() {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">
+                    <p className="text-sm font-medium text-gray-900 truncate capitalize">
                       {activity.user_name || 'User'} - {activity.package_name}
                     </p>
                     <p className="text-xs text-gray-500">
-                      {activity.vendor_name} • ₹{activity.amount}
+                      {activity.vendor_name} • ₹{Number(activity.amount).toLocaleString('en-IN')}
                     </p>
                     <p className="text-xs text-gray-400">
-                      {new Date(activity.created_at).toLocaleDateString()}
+                      {new Date(activity.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </p>
                   </div>
                 </div>
@@ -240,11 +241,11 @@ export default function AdminDashboard() {
       </div>
 
       {/* Analytics Section */}
-      {analytics.topVendors.length > 0 && (
-        <div className="mt-6 bg-white border border-gray-200 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Top Performing Vendors
-          </h3>
+      <div className="mt-6 bg-white border border-gray-200 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          Top Performing Vendors
+        </h3>
+        {analytics.topVendors.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {analytics.topVendors.slice(0, 6).map((vendor, index) => (
               <div key={index} className="p-4 bg-gray-50 rounded-lg">
@@ -254,8 +255,10 @@ export default function AdminDashboard() {
               </div>
             ))}
           </div>
-        </div>
-      )}
+        ) : (
+          <p className="text-gray-500 text-sm">No vendor performance data available yet.</p>
+        )}
+      </div>
     </div>
   );
 }

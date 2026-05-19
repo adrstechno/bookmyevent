@@ -146,8 +146,8 @@ export default function App() {
               <Route path="admin">
                 <Route path="dashboard" element={<Admindashboard />} />
                 <Route path="users" element={<AdminUsers />} />
-                <Route path="addservices" element={<AddService />} />
-                <Route path="mainservice" element={<MainService />} />
+                <Route path="add-services" element={<AddService />} />
+                <Route path="main-services" element={<MainService />} />
                 <Route path="bookings" element={<AdminBookings />} />
                 <Route path="reservations" element={<ManualReservations />} />
                 <Route path="subscriptions" element={<AdminSubscriptions />} />

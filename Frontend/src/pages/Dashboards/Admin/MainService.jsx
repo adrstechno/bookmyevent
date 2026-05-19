@@ -196,7 +196,7 @@ export default function MainServices() {
                     : "text-gray-500 hover:text-gray-700"
                 }`}
               >
-                Services Overview
+                Main Services
               </button>
               <button
                 onClick={() => setActiveTab("subservices")}

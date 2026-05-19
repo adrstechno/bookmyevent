@@ -27,8 +27,8 @@ const Footer = () => {
                 <span className="text-2xl font-bold text-[#f9a826]">GoEventify</span>
               </div>
               <p className="text-gray-300 text-sm leading-relaxed mb-6">
-                Leading event management and vendor marketplace in Jabalpur, Madhya Pradesh. 
-                Book wedding planners, shadi planner, birthday party organizers, and all event vendors with verified profiles and transparent pricing.
+                Leading event management and vendor marketplace in Jabalpur, Madhya Pradesh.
+                Book wedding planners, shadi planners, birthday party organizers, and all event vendors with verified profiles and transparent pricing.
               </p>
               <div className="flex gap-4">
                 <a 
@@ -69,7 +69,7 @@ const Footer = () => {
                   { name: "Wedding Planning (Shadi Planner)", path: "/category/weddings" },
                   { name: "Corporate Event Management", path: "/category/corporate-events" },
                   { name: "Birthday Party Planning", path: "/category/birthday-parties" },
-                  { name: "Mehndi & Sangeet Ceremony", path: "/category/weddings" }
+                  { name: "Mehndi & Sangeet Ceremony", path: "/services" }
                 ].map((service) => (
                   <li key={service.name}>
                     <Link 
