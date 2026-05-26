@@ -1,4 +1,5 @@
 import RazorpayService from '../Services/RazorpayService.js';
+import SubscriptionService from '../Services/SubscriptionService.js';
 import db from '../Config/DatabaseCon.js';
 import EmailService from '../Services/emailService.js';
 
@@ -390,6 +391,72 @@ class SubscriptionController {
             res.status(500).json({
                 success: false,
                 message: 'Failed to get subscriptions',
+                error: error.message
+            });
+        }
+    }
+
+    // ===== NEW: Get subscription status with feature flags (May 26, 2026) =====
+    // Enhanced endpoint that includes subscription service details
+    // Only visible if SUBSCRIPTION_STATUS_VISIBLE feature flag is enabled
+    static async getEnhancedSubscriptionStatus(req, res) {
+        try {
+            const user_id = req.user?.uuid || req.user?.user_id;
+
+            if (!user_id) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'User authentication required'
+                });
+            }
+
+            // Get vendor_id
+            const vendorQuery = `
+                SELECT vendor_id FROM vendor_profiles vp
+                JOIN users u ON (vp.user_id = u.user_id OR vp.user_id = u.uuid)
+                WHERE u.uuid = ?
+            `;
+
+            const vendorResult = await new Promise((resolve, reject) => {
+                db.query(vendorQuery, [user_id], (err, results) => {
+                    if (err) reject(err);
+                    else resolve(results);
+                });
+            });
+
+            if (!vendorResult || vendorResult.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Vendor profile not found'
+                });
+            }
+
+            const vendor_id = vendorResult[0].vendor_id;
+            const FEATURE_ENABLED = process.env.SUBSCRIPTION_STATUS_VISIBLE === 'true';
+
+            // Get subscription status using SubscriptionService
+            const subscriptionStatus = await SubscriptionService.getSubscriptionStatus(vendor_id);
+
+            // If feature is disabled, hide some details
+            if (!FEATURE_ENABLED) {
+                return res.status(200).json({
+                    success: true,
+                    is_hidden: true, // Signal to frontend to hide subscription UI
+                    message: 'Subscription features not available'
+                });
+            }
+
+            res.status(200).json({
+                success: true,
+                is_hidden: false,
+                subscription: subscriptionStatus
+            });
+
+        } catch (error) {
+            console.error('Get enhanced subscription status error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to get subscription status',
                 error: error.message
             });
         }

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import vendorService from "../../../services/vendorService";
-import SubscriptionStatus from "../../../components/SubscriptionStatus";
+import SubscriptionStatusCard from "../../../components/subscription/SubscriptionStatusCard";
+import UpgradeModal from "../../../components/subscription/UpgradeModal";
 import {
   ChartPieIcon,
   ClipboardDocumentListIcon,
@@ -18,6 +19,7 @@ const VendorDashboard = () => {
   const [vendorName, setVendorName] = useState("Vendor");
   const [profileIncomplete, setProfileIncomplete] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
 
   useEffect(() => {
     const userStr = localStorage.getItem("user");
@@ -178,10 +180,15 @@ const VendorDashboard = () => {
           <p className="text-gray-600">Welcome back, {vendorName}! Here's your business overview.</p>
         </div>
 
-        {/* Subscription Status - Show prominently at top */}
+        {/* Subscription Status Card - Show prominently at top */}
         <div className="mb-6">
-          <SubscriptionStatus />
+          <SubscriptionStatusCard onUpgradeClick={() => setUpgradeModalOpen(true)} />
         </div>
+
+        {/* Upgrade Modal */}
+        {upgradeModalOpen && (
+          <UpgradeModal onClose={() => setUpgradeModalOpen(false)} />
+        )}
 
         {/* Overview Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

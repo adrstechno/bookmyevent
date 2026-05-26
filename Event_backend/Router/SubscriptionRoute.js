@@ -14,6 +14,9 @@ router.post('/verify-payment', authenticateToken, SubscriptionController.verifyA
 // Get subscription status (Vendor only)
 router.get('/status', authenticateToken, SubscriptionController.getSubscriptionStatus);
 
+// Get enhanced subscription status with feature flag control (Vendor only)
+router.get('/enhanced-status', authenticateToken, SubscriptionController.getEnhancedSubscriptionStatus);
+
 // Get all subscriptions (Admin only)
 router.get('/all', authenticateToken, authorizeAdmin, SubscriptionController.getAllSubscriptions);
 

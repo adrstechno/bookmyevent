@@ -15,6 +15,8 @@ import {
 } from "react-icons/fi";
 import bookingService, { BOOKING_STATUS } from "../../../services/bookingService";
 import otpService from "../../../services/otpService";
+import BookingNotice from "../../../components/subscription/BookingNotice";
+import UpgradeModal from "../../../components/subscription/UpgradeModal";
 import toast from "react-hot-toast";
 
 const VendorBookings = () => {
@@ -22,13 +24,16 @@ const VendorBookings = () => {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
   const [filter, setFilter] = useState("all");
-  
+
   // OTP Modal State
   const [otpModal, setOtpModal] = useState({ open: false, booking: null });
   const [otpCode, setOtpCode] = useState("");
   const [otpLoading, setOtpLoading] = useState(false);
   const [otpError, setOtpError] = useState("");
   const [attemptsRemaining, setAttemptsRemaining] = useState(3);
+
+  // Upgrade Modal State
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
 
   // Fetch bookings on mount
   useEffect(() => {
@@ -236,6 +241,14 @@ const VendorBookings = () => {
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-[#284b63]">Booking Requests</h1>
         <p className="text-gray-500">Manage incoming booking requests from customers</p>
+      </div>
+
+      {/* Booking Notice for Limited Access */}
+      <div className="mb-6">
+        <BookingNotice
+          type="limited_access"
+          onUpgradeClick={() => setUpgradeModalOpen(true)}
+        />
       </div>
 
       {/* Filter Tabs */}
@@ -470,6 +483,11 @@ const VendorBookings = () => {
             </motion.div>
           ))}
         </div>
+      )}
+
+      {/* Upgrade Modal */}
+      {upgradeModalOpen && (
+        <UpgradeModal onClose={() => setUpgradeModalOpen(false)} />
       )}
 
       {/* OTP Verification Modal */}

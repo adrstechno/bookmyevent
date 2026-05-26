@@ -1,5 +1,6 @@
 import BookingModel from "../Models/BookingModel.js";
 import OTPModel from "../Models/OTPModel.js";
+import SubscriptionService from "../Services/SubscriptionService.js";
 import NotificationService from "../Services/NotificationService.js";
 import EmailService from "../Services/emailService.js";
 import db from "../Config/DatabaseCon.js";
@@ -816,10 +817,33 @@ class BookingController {
             const bookings = await BookingModel.getBookingsByVendor(vendor_id, options);
             // console.log('Found', bookings.length, 'bookings for vendor');
 
+            // ===== NEW: Filter booking data based on subscription (Feature Flag Controlled) =====
+            const FILTERING_ENABLED = process.env.SUBSCRIPTION_FILTERING_ENABLED === 'true';
+            let filteredBookings = bookings;
+
+            if (FILTERING_ENABLED) {
+                try {
+                    const planType = await SubscriptionService.getPlanType(vendor_id);
+                    console.log('Filtering bookings for plan type:', planType);
+
+                    // Only filter if vendor is on free plan
+                    if (planType === 'free') {
+                        filteredBookings = bookings.map(booking =>
+                            SubscriptionService.filterBookingData(booking, planType)
+                        );
+                    }
+                } catch (filterError) {
+                    console.error('Error filtering booking data:', filterError);
+                    // Continue without filtering if there's an error
+                }
+            } else {
+                console.log('Booking filtering disabled (SUBSCRIPTION_FILTERING_ENABLED=false)');
+            }
+
             res.status(200).json({
                 success: true,
                 data: {
-                    bookings,
+                    bookings: filteredBookings,
                     pagination: {
                         page: options.page,
                         limit: options.limit,

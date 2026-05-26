@@ -2,6 +2,7 @@ import { resolve } from "url";
 import VendorModel from "../Models/VendorModel.js";
 import { verifyToken } from "../Utils/Verification.js";
 import { v4 as uuidv4 } from "uuid";
+import SubscriptionService from "../Services/SubscriptionService.js";
 
 export const insertVendor = (req, res) => {
   try {
@@ -56,17 +57,37 @@ export const insertVendor = (req, res) => {
 
     console.log('📊 Vendor data prepared:', vendorData);
 
-    VendorModel.insertVendor(vendorData, (err, result) => {
+    VendorModel.insertVendor(vendorData, async (err, result) => {
       if (err) {
         console.error('❌ Database error inserting vendor:', err);
         return res
           .status(500)
           .json({ message: "Error inserting vendor", error: err.message, sqlMessage: err.sqlMessage });
       }
-      
+
       const vendor_id = result.insertId;
       console.log('✅ Vendor created successfully, ID:', vendor_id);
-      
+
+      // ===== NEW: AUTO-CREATE FREE TRIAL (FEATURE FLAG CONTROLLED) =====
+      const AUTO_CREATE_TRIAL = process.env.SUBSCRIPTION_AUTO_CREATE_TRIAL === 'true';
+
+      if (AUTO_CREATE_TRIAL) {
+        try {
+          const trialCreated = await SubscriptionService.createFreeTrial(vendor_id);
+          if (trialCreated) {
+            console.log('✅ Free trial created automatically for vendor:', vendor_id);
+          } else {
+            console.log('⚠️ Free trial creation failed (non-critical), vendor registration continues');
+            // Don't fail the entire vendor registration if trial creation fails
+          }
+        } catch (trialError) {
+          console.error('⚠️ Error creating free trial:', trialError);
+          // Don't fail the vendor registration
+        }
+      } else {
+        console.log('ℹ️ Auto free trial creation disabled (SUBSCRIPTION_AUTO_CREATE_TRIAL=false)');
+      }
+
       return res.status(200).json({
         message: "Vendor profile created successfully! Please subscribe to start accepting bookings.",
         vendorId: vendor_id,

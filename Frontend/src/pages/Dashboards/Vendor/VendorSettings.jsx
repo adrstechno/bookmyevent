@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { PhotoIcon, UserCircleIcon } from "@heroicons/react/24/outline";
 import ChangePassword from "../../../components/ChangePassword";
+import SubscriptionStatusCard from "../../../components/subscription/SubscriptionStatusCard";
+import UpgradeModal from "../../../components/subscription/UpgradeModal";
 import toast from "react-hot-toast";
 import { VITE_API_BASE_URL } from "../../../utils/api";
 
@@ -27,6 +29,7 @@ const VendorSettings = () => {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isNewProfile, setIsNewProfile] = useState(false);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
 
   // ✅ Fetch all service categories
   useEffect(() => {
@@ -275,6 +278,13 @@ const VendorSettings = () => {
           </span>
         </div>
       </div>
+
+      {/* Subscription Status Card */}
+      {!isNewProfile && (
+        <div className="mb-6 max-w-5xl mx-auto">
+          <SubscriptionStatusCard onUpgradeClick={() => setUpgradeModalOpen(true)} />
+        </div>
+      )}
 
       {/* Status Banner for New Profile */}
       {isNewProfile && (
@@ -609,6 +619,11 @@ const VendorSettings = () => {
           visible={showPasswordModal}
           onClose={() => setShowPasswordModal(false)}
         />
+      )}
+
+      {/* Upgrade Modal */}
+      {upgradeModalOpen && (
+        <UpgradeModal onClose={() => setUpgradeModalOpen(false)} />
       )}
     </div>
   );

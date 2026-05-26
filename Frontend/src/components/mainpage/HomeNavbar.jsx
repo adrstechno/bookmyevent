@@ -212,44 +212,24 @@ const HomeNavbar = () => {
           </Link>
 
           {/* -------- DESKTOP NAV -------- */}
-          <div className="hidden lg:flex items-center space-x-1">
+          <div className="hidden lg:flex items-center gap-2 flex-1 justify-center">
             <NavLink to="/" className={({ isActive }) =>
               `px-5 py-3 rounded-xl text-base font-bold transition-all duration-200 ${
-                isActive 
-                  ? "bg-[#3c6e71] text-white shadow-md" 
+                isActive
+                  ? "bg-[#3c6e71] text-white shadow-md"
                   : "text-gray-700 hover:bg-gray-100 hover:text-[#3c6e71]"
               }`
             }>
               Home
             </NavLink>
 
-            <NavLink to="/about" className={({ isActive }) =>
-              `px-5 py-3 rounded-xl text-base font-bold transition-all duration-200 ${
-                isActive 
-                  ? "bg-[#3c6e71] text-white shadow-md" 
-                  : "text-gray-700 hover:bg-gray-100 hover:text-[#3c6e71]"
-              }`
-            }>
-              About
-            </NavLink>
-
-            <NavLink to="/contact" className={({ isActive }) =>
-              `px-5 py-3 rounded-xl text-base font-bold transition-all duration-200 ${
-                isActive 
-                  ? "bg-[#3c6e71] text-white shadow-md" 
-                  : "text-gray-700 hover:bg-gray-100 hover:text-[#3c6e71]"
-              }`
-            }>
-              Contact
-            </NavLink>
-
-            {/* Categories */}
+            {/* Categories - Moved to second position */}
             <div className="relative" ref={categoriesRef}>
               <button
                 onClick={() => setCategoriesOpen(!categoriesOpen)}
-                className="px-5 py-3 rounded-xl text-base font-bold text-gray-700 hover:bg-gray-100 hover:text-[#3c6e71] transition-all duration-200 flex items-center gap-2"
+                className="pl-3 pr-1 py-3 rounded-xl text-base font-bold text-gray-700 hover:bg-gray-100 hover:text-[#3c6e71] transition-all duration-200 flex items-center gap-1"
               >
-                Categories 
+                Categories
                 <FiChevronDown className={`transition-transform duration-200 ${categoriesOpen ? 'rotate-180' : ''}`} />
               </button>
 
@@ -297,6 +277,26 @@ const HomeNavbar = () => {
                 )}
               </AnimatePresence>
             </div>
+
+            <NavLink to="/about" className={({ isActive }) =>
+              `px-5 py-3 rounded-xl text-base font-bold transition-all duration-200 ${
+                isActive
+                  ? "bg-[#3c6e71] text-white shadow-md"
+                  : "text-gray-700 hover:bg-gray-100 hover:text-[#3c6e71]"
+              }`
+            }>
+              About
+            </NavLink>
+
+            <NavLink to="/contact" className={({ isActive }) =>
+              `px-5 py-3 rounded-xl text-base font-bold transition-all duration-200 ${
+                isActive
+                  ? "bg-[#3c6e71] text-white shadow-md"
+                  : "text-gray-700 hover:bg-gray-100 hover:text-[#3c6e71]"
+              }`
+            }>
+              Contact
+            </NavLink>
           </div>
 
           {/* -------- DESKTOP AUTH -------- */}
@@ -392,22 +392,15 @@ const HomeNavbar = () => {
             className="lg:hidden mx-4 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden"
           >
             <div className="p-4 space-y-1">
-              {[
-                { path: "/", label: "Home" },
-                { path: "/about", label: "About" },
-                { path: "/contact", label: "Contact" }
-              ].map(({ path, label }) => (
-                <Link
-                  key={path}
-                  to={path}
-                  onClick={() => setMenuOpen(false)}
-                  className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-[#3c6e71] rounded-xl transition-all duration-200 font-medium"
-                >
-                  {label}
-                </Link>
-              ))}
+              <Link
+                to="/"
+                onClick={() => setMenuOpen(false)}
+                className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-[#3c6e71] rounded-xl transition-all duration-200 font-medium"
+              >
+                Home
+              </Link>
 
-              {/* Mobile Categories */}
+              {/* Mobile Categories - Moved to second position */}
               <div ref={mobileCategoriesRef} className="bg-gray-50 rounded-xl overflow-hidden">
                 <button
                   className="flex justify-between items-center w-full px-4 py-3 font-semibold text-gray-700 hover:bg-gray-100 transition-colors duration-200"
@@ -459,6 +452,21 @@ const HomeNavbar = () => {
                   )}
                 </AnimatePresence>
               </div>
+
+              {/* Mobile About & Contact */}
+              {[
+                { path: "/about", label: "About" },
+                { path: "/contact", label: "Contact" }
+              ].map(({ path, label }) => (
+                <Link
+                  key={path}
+                  to={path}
+                  onClick={() => setMenuOpen(false)}
+                  className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-[#3c6e71] rounded-xl transition-all duration-200 font-medium"
+                >
+                  {label}
+                </Link>
+              ))}
 
               {/* Mobile Auth */}
               <div className="pt-2 space-y-2 border-t border-gray-100">

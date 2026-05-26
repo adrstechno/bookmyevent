@@ -1,5 +1,8 @@
 import NotificationModel from "../Models/NotificationModel.js";
 import NotificationService from "../Services/NotificationService.js";
+import SubscriptionService from "../Services/SubscriptionService.js";
+import VendorModel from "../Models/VendorModel.js";
+import db from "../Config/DatabaseCon.js";
 
 class NotificationController {
     // Get user notifications with pagination
@@ -25,14 +28,48 @@ class NotificationController {
             const notifications = await NotificationModel.getUserNotifications(user_id, options);
             const unreadCount = await NotificationModel.getUnreadCount(user_id);
 
+            // ===== NEW: Filter notification content based on subscription (Feature Flag Controlled) =====
+            const FILTERING_ENABLED = process.env.SUBSCRIPTION_FILTERING_ENABLED === 'true';
+            let filteredNotifications = notifications;
+
+            if (FILTERING_ENABLED) {
+                try {
+                    // Check if this user is a vendor
+                    const vendorResult = await new Promise((resolve, reject) => {
+                        VendorModel.findVendorID(user_id, (err, results) => {
+                            if (err) reject(err);
+                            else resolve(results);
+                        });
+                    });
+
+                    if (vendorResult && vendorResult.length > 0) {
+                        const vendor_id = vendorResult[0].vendor_id;
+                        const planType = await SubscriptionService.getPlanType(vendor_id);
+                        console.log('Filtering notifications for plan type:', planType);
+
+                        // Only filter if vendor is on free plan
+                        if (planType === 'free') {
+                            filteredNotifications = notifications.map(notification =>
+                                SubscriptionService.filterNotificationContent(notification, planType)
+                            );
+                        }
+                    }
+                } catch (filterError) {
+                    console.error('Error filtering notification content:', filterError);
+                    // Continue without filtering if there's an error
+                }
+            } else {
+                console.log('Notification filtering disabled (SUBSCRIPTION_FILTERING_ENABLED=false)');
+            }
+
             res.status(200).json({
                 success: true,
                 data: {
-                    notifications,
+                    notifications: filteredNotifications,
                     pagination: {
                         page: options.page,
                         limit: options.limit,
-                        hasMore: notifications.length === options.limit
+                        hasMore: filteredNotifications.length === options.limit
                     },
                     unreadCount,
                     count: unreadCount
