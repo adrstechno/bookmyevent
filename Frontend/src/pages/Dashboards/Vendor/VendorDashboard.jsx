@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import vendorService from "../../../services/vendorService";
-import SubscriptionStatusCard from "../../../components/subscription/SubscriptionStatusCard";
+import SubscriptionStatusDisplay from "../../../components/subscription/SubscriptionStatusDisplay";
 import UpgradeModal from "../../../components/subscription/UpgradeModal";
 import {
   ChartPieIcon,
@@ -180,9 +180,9 @@ const VendorDashboard = () => {
           <p className="text-gray-600">Welcome back, {vendorName}! Here's your business overview.</p>
         </div>
 
-        {/* Subscription Status Card - Show prominently at top */}
+        {/* Subscription Status Display - Show prominently at top */}
         <div className="mb-6">
-          <SubscriptionStatusCard onUpgradeClick={() => setUpgradeModalOpen(true)} />
+          <SubscriptionStatusDisplay onUpgradeClick={() => setUpgradeModalOpen(true)} />
         </div>
 
         {/* Upgrade Modal */}
