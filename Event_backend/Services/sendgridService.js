@@ -18,7 +18,7 @@ class SendGridService {
 
         const msg = {
             to: mailOptions.to,
-            from: process.env.EMAIL_USER || 'goeventify@gmail.com',
+            from: process.env.EMAIL_USER || 'goeventify@adrstechno.com',
             subject: mailOptions.subject,
             html: mailOptions.html,
         };

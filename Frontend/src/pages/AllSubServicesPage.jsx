@@ -14,6 +14,16 @@ const AllSubServicesPage = () => {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
 
+  // Convert text to title case (capitalize first letter of each word)
+  const toTitleCase = (text) => {
+    if (!text) return '';
+    return text
+      .toLowerCase()
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
   useEffect(() => {
     loadCategoriesAndSubServices();
   }, []);
@@ -151,7 +161,7 @@ const AllSubServicesPage = () => {
                     : "bg-white text-gray-700 hover:bg-gray-100 border-2 border-gray-200"
                 }`}
               >
-                {category.category_name} ({count})
+                {toTitleCase(category.category_name)} ({count})
               </button>
             );
           })}
@@ -179,7 +189,7 @@ const AllSubServicesPage = () => {
 
         {/* Sub-Services Grid - Optimized for all screen sizes */}
         {!isLoading && !isEmpty && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 13inch:grid-cols-4 14inch:grid-cols-4 15inch:grid-cols-4 xl:grid-cols-5 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             {filteredSubServices.map((subService, index) => (
               <motion.div
                 key={`${subService.categoryId}-${subService.subservice_id}`}
@@ -192,52 +202,52 @@ const AllSubServicesPage = () => {
                 onClick={() => handleSubServiceClick(subService)}
                 className="cursor-pointer group h-full"
               >
-                <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-2 border-gray-100 hover:border-[#f9a826] h-full flex flex-col">
+                <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 h-full flex flex-col border border-gray-200 hover:border-[#f9a826]">
                   {/* Image Section */}
-                  <div className="relative h-56 overflow-hidden bg-gray-200 flex-shrink-0">
+                  <div className="relative h-48 overflow-hidden bg-gray-300 flex-shrink-0">
                     {subService.icon_url ? (
                       <img
                         src={subService.icon_url}
                         alt={subService.subservice_name}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                     ) : subService.categoryImage ? (
                       <img
                         src={subService.categoryImage}
                         alt={subService.subservice_name}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-70"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-60"
                       />
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-[#284b63] to-[#3c6e71] flex items-center justify-center">
-                        <span className="text-white text-4xl font-bold">
+                      <div className="w-full h-full bg-gradient-to-br from-[#3c6e71] to-[#284b63] flex items-center justify-center">
+                        <span className="text-white text-5xl font-bold opacity-20">
                           {subService.subservice_name.charAt(0)}
                         </span>
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                    
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+
                     {/* Category Badge */}
-                    <div className="absolute top-4 left-4 bg-[#f9a826] text-white px-3 py-1 rounded-full text-sm font-semibold">
-                      {subService.categoryName}
+                    <div className="absolute top-3 left-3 bg-[#f9a826] text-white px-3 py-1 rounded-lg text-xs font-semibold shadow-md">
+                      {toTitleCase(subService.categoryName)}
                     </div>
                   </div>
 
                   {/* Content Section */}
-                  <div className="p-6 flex flex-col flex-grow">
-                    <h3 className="text-2xl font-bold text-gray-800 mb-3 group-hover:text-[#284b63] transition-colors line-clamp-1">
-                      {subService.subservice_name}
+                  <div className="p-5 flex flex-col flex-grow">
+                    <h3 className="text-lg font-bold text-gray-800 mb-2 group-hover:text-[#f9a826] transition-colors line-clamp-2">
+                      {toTitleCase(subService.subservice_name)}
                     </h3>
-                    
-                    <div className="w-16 h-1 bg-gradient-to-r from-[#f9a826] to-[#f7b733] rounded-full mb-4" />
-                    
-                    <p className="text-gray-600 text-sm leading-relaxed mb-6 line-clamp-2 flex-grow">
+
+                    <div className="w-12 h-0.5 bg-[#f9a826] rounded-full mb-3" />
+
+                    <p className="text-gray-600 text-xs leading-relaxed mb-4 line-clamp-2 flex-grow">
                       {subService.description || "Explore vendors offering this service"}
                     </p>
 
                     {/* View Button */}
-                    <button className="w-full bg-gradient-to-r from-[#284b63] to-[#3c6e71] text-white py-3 px-6 rounded-xl font-semibold hover:from-[#3c6e71] hover:to-[#284b63] transition-all duration-300 flex items-center justify-center gap-2 group-hover:gap-3 shadow-md hover:shadow-lg mt-auto">
+                    <button className="w-full bg-[#3c6e71] hover:bg-[#284b63] text-white py-2 px-4 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center gap-1.5 shadow-sm hover:shadow-md text-sm mt-auto">
                       View Vendors
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                       </svg>
                     </button>

@@ -68,8 +68,8 @@ export const insertVendor = (req, res) => {
       const vendor_id = result.insertId;
       console.log('✅ Vendor created successfully, ID:', vendor_id);
 
-      // ===== NEW: AUTO-CREATE FREE TRIAL (FEATURE FLAG CONTROLLED) =====
-      const AUTO_CREATE_TRIAL = process.env.SUBSCRIPTION_AUTO_CREATE_TRIAL === 'true';
+      // Auto-create the 90-day free trial unless explicitly disabled for rollback.
+      const AUTO_CREATE_TRIAL = process.env.SUBSCRIPTION_AUTO_CREATE_TRIAL !== 'false';
 
       if (AUTO_CREATE_TRIAL) {
         try {
@@ -89,7 +89,7 @@ export const insertVendor = (req, res) => {
       }
 
       return res.status(200).json({
-        message: "Vendor profile created successfully! Please subscribe to start accepting bookings.",
+        message: "Vendor profile created successfully. Your 90-day free trial has started. Upgrade to Premium to unlock dashboard and bookings.",
         vendorId: vendor_id,
         profileUrl: vendorData.profile_url,
         requiresSubscription: true
@@ -1030,4 +1030,3 @@ export const getvendorsBysubserviceId = (req, res) => {
 
 // Aliases for API compatibility - must be at the end after function definitions
 export const GetVendorShifts = getVendorShiftforVendor;
-

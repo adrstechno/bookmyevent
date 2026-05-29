@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { PhotoIcon, UserCircleIcon } from "@heroicons/react/24/outline";
 import ChangePassword from "../../../components/ChangePassword";
-import SubscriptionStatusDisplay from "../../../components/subscription/SubscriptionStatusDisplay";
 import UpgradeModal from "../../../components/subscription/UpgradeModal";
 import toast from "react-hot-toast";
 import { VITE_API_BASE_URL } from "../../../utils/api";
@@ -278,13 +277,6 @@ const VendorSettings = () => {
           </span>
         </div>
       </div>
-
-      {/* Subscription Status Display */}
-      {!isNewProfile && (
-        <div className="mb-6 max-w-5xl mx-auto">
-          <SubscriptionStatusDisplay onUpgradeClick={() => setUpgradeModalOpen(true)} />
-        </div>
-      )}
 
       {/* Status Banner for New Profile */}
       {isNewProfile && (

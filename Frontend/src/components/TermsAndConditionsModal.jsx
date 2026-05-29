@@ -210,7 +210,7 @@ const TermsAndConditionsModal = ({ isOpen, onClose }) => {
                 12. Dispute Resolution
               </h3>
               <div className="space-y-3 text-gray-700">
-                <p><strong>12.1 Customer Support:</strong> Contact our support team at goeventify@gmail.com or +91 9201976523 for assistance.</p>
+                <p><strong>12.1 Customer Support:</strong> Contact our support team at goeventify@adrstechno.com or +91 9201976523 for assistance.</p>
                 <p><strong>12.2 Mediation:</strong> We encourage parties to resolve disputes through good-faith negotiation and mediation.</p>
                 <p><strong>12.3 Jurisdiction:</strong> These Terms are governed by the laws of India. Disputes will be subject to the exclusive jurisdiction of courts in Jabalpur, Madhya Pradesh.</p>
               </div>
@@ -248,7 +248,7 @@ const TermsAndConditionsModal = ({ isOpen, onClose }) => {
                 <p className="text-gray-700">71, Dadda Nagar Near Katangi Highway</p>
                 <p className="text-gray-700">Jabalpur, Madhya Pradesh 482001</p>
                 <p className="text-gray-700 mt-2">
-                  <strong>Email:</strong> goeventify@gmail.com
+                  <strong>Email:</strong> goeventify@adrstechno.com
                 </p>
                 <p className="text-gray-700">
                   <strong>Phone:</strong> +91 9201976523

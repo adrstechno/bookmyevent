@@ -49,11 +49,24 @@ const { default: SubscriptionCronJobs } = await import('./Utils/subscriptionCron
 const { default: TestRouter } = await import('./Router/TestRouter.js');
 
 const app = express();
+const jsonParser = express.json();
+const urlencodedParser = express.urlencoded({ extended: true });
 
 // 🟢 Middleware
 app.use(helmet());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use('/subscription/webhook', express.raw({ type: 'application/json' }));
+app.use((req, res, next) => {
+  if (req.path === '/subscription/webhook') {
+    return next();
+  }
+  return jsonParser(req, res, next);
+});
+app.use((req, res, next) => {
+  if (req.path === '/subscription/webhook') {
+    return next();
+  }
+  return urlencodedParser(req, res, next);
+});
 app.use(cookieParser());
 
 // CORS configuration for production

@@ -39,6 +39,15 @@ class BookingController {
                 });
             }
 
+            const vendorCanReceiveBookings = await SubscriptionService.canAcceptBookings(vendor_id);
+            if (!vendorCanReceiveBookings) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'This vendor is not currently accepting bookings. Premium subscription required.',
+                    vendorSubscriptionRequired: true
+                });
+            }
+
             // Generate booking UUID
             const booking_uuid = uuidv4();
 
@@ -198,6 +207,15 @@ class BookingController {
             }
 
             // console.log('Using vendor_id:', vendor_id);
+
+            const canAcceptBookings = await SubscriptionService.canAcceptBookings(vendor_id);
+            if (!canAcceptBookings) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Premium subscription required to accept bookings.',
+                    requiresSubscription: true
+                });
+            }
 
             // Get booking details before update
             const booking = await BookingModel.getBookingById(id);
@@ -783,24 +801,45 @@ class BookingController {
                 });
             }
 
-            // Get the vendor_id for this user
-            const vendorResult = await new Promise((resolve, reject) => {
-                VendorModel.findVendorID(user_id, (err, results) => {
-                    if (err) reject(err);
-                    else resolve(results);
-                });
-            });
+            let vendor_id = req.user?.vendor_id;
 
-            if (!vendorResult || vendorResult.length === 0) {
-                // console.log('No vendor profile found for user_id:', user_id);
-                return res.status(401).json({
-                    success: false,
-                    message: 'Vendor authentication required. No vendor profile found.'
+            if (!vendor_id) {
+                const vendorResult = await new Promise((resolve, reject) => {
+                    VendorModel.findVendorID(user_id, (err, results) => {
+                        if (err) reject(err);
+                        else resolve(results);
+                    });
+                });
+
+                if (!vendorResult || vendorResult.length === 0) {
+                    // console.log('No vendor profile found for user_id:', user_id);
+                    return res.status(401).json({
+                        success: false,
+                        message: 'Vendor authentication required. No vendor profile found.'
+                    });
+                }
+
+                vendor_id = vendorResult[0].vendor_id;
+            }
+            // console.log('Fetching bookings for vendor_id:', vendor_id);
+
+            const subscription = await SubscriptionService.getSubscriptionStatus(vendor_id);
+            const planType = subscription.plan_type;
+            if (planType === 'expired') {
+                return res.status(200).json({
+                    success: true,
+                    subscription,
+                    data: {
+                        bookings: [],
+                        pagination: {
+                            page: parseInt(req.query.page || 1),
+                            limit: Math.min(parseInt(req.query.limit || 20), 100),
+                            hasMore: false
+                        }
+                    },
+                    message: 'Your free trial has expired. Upgrade to Premium to view bookings.'
                 });
             }
-
-            const vendor_id = vendorResult[0].vendor_id;
-            // console.log('Fetching bookings for vendor_id:', vendor_id);
 
             const {
                 page = 1,
@@ -818,30 +857,25 @@ class BookingController {
             // console.log('Found', bookings.length, 'bookings for vendor');
 
             // ===== NEW: Filter booking data based on subscription (Feature Flag Controlled) =====
-            const FILTERING_ENABLED = process.env.SUBSCRIPTION_FILTERING_ENABLED === 'true';
             let filteredBookings = bookings;
 
-            if (FILTERING_ENABLED) {
-                try {
-                    const planType = await SubscriptionService.getPlanType(vendor_id);
-                    console.log('Filtering bookings for plan type:', planType);
-
-                    // Only filter if vendor is on free plan
-                    if (planType === 'free') {
-                        filteredBookings = bookings.map(booking =>
-                            SubscriptionService.filterBookingData(booking, planType)
-                        );
-                    }
-                } catch (filterError) {
-                    console.error('Error filtering booking data:', filterError);
-                    // Continue without filtering if there's an error
+            try {
+                console.log('Filtering bookings for plan type:', planType);
+                if (planType === 'free') {
+                    filteredBookings = bookings.map(booking =>
+                        SubscriptionService.filterBookingData(booking, planType)
+                    );
                 }
-            } else {
-                console.log('Booking filtering disabled (SUBSCRIPTION_FILTERING_ENABLED=false)');
+            } catch (filterError) {
+                console.error('Error filtering booking data:', filterError);
+                if (planType === 'free') {
+                    filteredBookings = [];
+                }
             }
 
             res.status(200).json({
                 success: true,
+                subscription,
                 data: {
                     bookings: filteredBookings,
                     pagination: {

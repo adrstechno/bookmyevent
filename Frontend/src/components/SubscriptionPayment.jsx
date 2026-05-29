@@ -10,13 +10,14 @@ const SubscriptionPayment = ({ onClose, onSuccess }) => {
   const [couponCode, setCouponCode] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
   const [couponError, setCouponError] = useState("");
+  const COUPONS_ENABLED = false;
 
   const SUBSCRIPTION_DETAILS = {
-    originalAmount: 999,
+    originalAmount: 499,
     discountedAmount: 499,
     currency: "INR",
     period: "Annual",
-    validCoupon: "welcome546goeventify",
+    validCoupon: "",
     features: [
       "Accept unlimited bookings",
       "Manage your calendar and shifts",
@@ -33,6 +34,11 @@ const SubscriptionPayment = ({ onClose, onSuccess }) => {
 
   const applyCoupon = () => {
     setCouponError("");
+
+    if (!COUPONS_ENABLED) {
+      setCouponError("Coupons are not available for this plan.");
+      return;
+    }
     
     if (!couponCode.trim()) {
       setCouponError("Please enter a coupon code");
@@ -203,6 +209,7 @@ const SubscriptionPayment = ({ onClose, onSuccess }) => {
           </div>
 
           {/* Coupon Code Section */}
+          {COUPONS_ENABLED && (
           <div className="mb-6">
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               Have a coupon code?
@@ -250,6 +257,7 @@ const SubscriptionPayment = ({ onClose, onSuccess }) => {
               <p className="text-red-500 text-sm mt-2">{couponError}</p>
             )}
           </div>
+          )}
 
           {/* Features */}
           <div className="mb-6">

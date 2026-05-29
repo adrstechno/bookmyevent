@@ -19,11 +19,15 @@ import BookingNotice from "../../../components/subscription/BookingNotice";
 import UpgradeModal from "../../../components/subscription/UpgradeModal";
 import toast from "react-hot-toast";
 
+const MotionDiv = motion.div;
+const MotionButton = motion.button;
+
 const VendorBookings = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
   const [filter, setFilter] = useState("all");
+  const [subscriptionStatus, setSubscriptionStatus] = useState(null);
 
   // OTP Modal State
   const [otpModal, setOtpModal] = useState({ open: false, booking: null });
@@ -45,6 +49,7 @@ const VendorBookings = () => {
       setLoading(true);
       const response = await bookingService.getVendorBookings();
       setBookings(response.data?.bookings || response.bookings || []);
+      setSubscriptionStatus(response.subscription || null);
     } catch (error) {
       console.error("Error fetching bookings:", error);
       const message = error.response?.data?.message || error.response?.data?.error || "Failed to load bookings";
@@ -112,7 +117,7 @@ const VendorBookings = () => {
       if (response.data) {
         setAttemptsRemaining(response.data.attempts_remaining || 3);
       }
-    } catch (error) {
+    } catch {
       // console.log("Could not fetch OTP status");
     }
   };
@@ -223,6 +228,8 @@ const VendorBookings = () => {
   const canCancel = (status, adminApproval) => 
     (status === "confirmed" && adminApproval === "pending") || 
     (status === "pending");
+  const hasLimitedAccess = subscriptionStatus?.plan_type === "free";
+  const hiddenLabel = "Hidden - Upgrade to Premium";
 
   if (loading) {
     return (
@@ -244,12 +251,14 @@ const VendorBookings = () => {
       </div>
 
       {/* Booking Notice for Limited Access */}
-      <div className="mb-6">
-        <BookingNotice
-          type="limited_access"
-          onUpgradeClick={() => setUpgradeModalOpen(true)}
-        />
-      </div>
+      {hasLimitedAccess && (
+        <div className="mb-6">
+          <BookingNotice
+            type="limited_access"
+            onUpgradeClick={() => setUpgradeModalOpen(true)}
+          />
+        </div>
+      )}
 
       {/* Filter Tabs */}
       <div className="flex flex-wrap gap-2 mb-6">
@@ -294,7 +303,7 @@ const VendorBookings = () => {
       ) : (
         <div className="grid grid-cols-1 gap-6">
           {filteredBookings.map((booking, index) => (
-            <motion.div
+            <MotionDiv
               key={booking.booking_id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -318,9 +327,9 @@ const VendorBookings = () => {
 
                   {/* Action Buttons */}
                   <div className="flex flex-wrap gap-2">
-                    {canAcceptReject(booking.status) && (
+                    {!hasLimitedAccess && canAcceptReject(booking.status) && (
                       <>
-                        <motion.button
+                        <MotionButton
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                           onClick={() => handleAccept(booking.booking_id)}
@@ -333,8 +342,8 @@ const VendorBookings = () => {
                             <FiCheck />
                           )}
                           Accept
-                        </motion.button>
-                        <motion.button
+                        </MotionButton>
+                        <MotionButton
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                           onClick={() => handleReject(booking.booking_id)}
@@ -342,24 +351,24 @@ const VendorBookings = () => {
                           className="px-5 py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg font-semibold flex items-center gap-2 shadow-md hover:shadow-lg disabled:opacity-50"
                         >
                           <FiX /> Reject
-                        </motion.button>
+                        </MotionButton>
                       </>
                     )}
                     
                     {/* OTP Verification Button */}
-                    {canVerifyOTP(booking) && (
-                      <motion.button
+                    {!hasLimitedAccess && canVerifyOTP(booking) && (
+                      <MotionButton
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => openOTPModal(booking)}
                         className="px-5 py-2.5 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg font-semibold flex items-center gap-2 shadow-md hover:shadow-lg"
                       >
                         <FiKey /> Verify OTP
-                      </motion.button>
+                      </MotionButton>
                     )}
                     
-                    {canCancel(booking.status, booking.admin_approval) && (
-                      <motion.button
+                    {!hasLimitedAccess && canCancel(booking.status, booking.admin_approval) && (
+                      <MotionButton
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => handleCancel(booking.booking_id)}
@@ -367,7 +376,7 @@ const VendorBookings = () => {
                         className="px-5 py-2.5 bg-red-50 text-red-600 rounded-lg font-semibold flex items-center gap-2 hover:bg-red-100"
                       >
                         <FiX /> Cancel
-                      </motion.button>
+                      </MotionButton>
                     )}
                   </div>
                 </div>
@@ -382,12 +391,14 @@ const VendorBookings = () => {
                     <div>
                       <p className="text-xs text-gray-500">Customer</p>
                       <p className="font-semibold text-gray-800">
-                        {booking.first_name && booking.last_name 
+                        {booking.details_hidden
+                          ? hiddenLabel
+                          : booking.first_name && booking.last_name
                           ? `${booking.first_name} ${booking.last_name}` 
                           : booking.user_name || "Customer"}
                       </p>
-                      {booking.email && <p className="text-xs text-gray-500">{booking.email}</p>}
-                      {booking.phone && <p className="text-xs text-gray-500">{booking.phone}</p>}
+                      <p className="text-xs text-gray-500">{booking.details_hidden ? hiddenLabel : booking.email || "No email"}</p>
+                      <p className="text-xs text-gray-500">{booking.details_hidden ? hiddenLabel : booking.phone || "No phone"}</p>
                     </div>
                   </div>
 
@@ -423,7 +434,11 @@ const VendorBookings = () => {
                     <div>
                       <p className="text-xs text-gray-500">Package</p>
                       <p className="font-semibold text-gray-800">{booking.package_name || `Package #${booking.package_id}`}</p>
-                      {booking.amount && <p className="text-sm text-[#f9a826] font-semibold">₹{parseFloat(booking.amount).toLocaleString()}</p>}
+                      {booking.details_hidden ? (
+                        <p className="text-sm text-gray-500 font-semibold">{hiddenLabel}</p>
+                      ) : booking.amount && (
+                        <p className="text-sm text-[#f9a826] font-semibold">₹{parseFloat(booking.amount).toLocaleString()}</p>
+                      )}
                     </div>
                   </div>
 
@@ -440,15 +455,27 @@ const VendorBookings = () => {
                 </div>
 
                 {/* Special Requirements */}
-                {booking.special_requirement && (
+                {(booking.special_requirement || booking.details_hidden) && (
                   <div className="mt-4 p-4 bg-gray-50 rounded-xl">
                     <p className="text-xs text-gray-500 mb-1">Special Requirements</p>
-                    <p className="text-gray-700">{booking.special_requirement}</p>
+                    <p className="text-gray-700">{booking.details_hidden ? hiddenLabel : booking.special_requirement}</p>
+                  </div>
+                )}
+
+                {booking.details_hidden && (
+                  <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200 flex items-center gap-3">
+                    <FiShield className="text-blue-600 text-xl flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold text-blue-800">Details hidden on free trial</p>
+                      <p className="text-sm text-blue-600">
+                        Upgrade to Premium to view customer contact, full address, amount, requirements, and booking actions.
+                      </p>
+                    </div>
                   </div>
                 )}
 
                 {/* Pending Action Alert */}
-                {canAcceptReject(booking.status) && (
+                {!hasLimitedAccess && canAcceptReject(booking.status) && (
                   <div className="mt-4 p-4 bg-yellow-50 rounded-xl border border-yellow-200 flex items-center gap-3">
                     <FiAlertCircle className="text-yellow-600 text-xl flex-shrink-0" />
                     <div>
@@ -459,7 +486,7 @@ const VendorBookings = () => {
                 )}
 
                 {/* OTP Verification Alert */}
-                {canVerifyOTP(booking) && (
+                {!hasLimitedAccess && canVerifyOTP(booking) && (
                   <div className="mt-4 p-4 bg-purple-50 rounded-xl border border-purple-200 flex items-center gap-3">
                     <FiShield className="text-purple-600 text-xl flex-shrink-0" />
                     <div>
@@ -480,7 +507,7 @@ const VendorBookings = () => {
                   </div>
                 )}
               </div>
-            </motion.div>
+            </MotionDiv>
           ))}
         </div>
       )}
@@ -493,7 +520,7 @@ const VendorBookings = () => {
       {/* OTP Verification Modal */}
       {otpModal.open && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <motion.div
+          <MotionDiv
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6"
@@ -580,7 +607,7 @@ const VendorBookings = () => {
                 Resend OTP to customer
               </button>
             </div>
-          </motion.div>
+          </MotionDiv>
         </div>
       )}
     </div>

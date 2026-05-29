@@ -1983,7 +1983,7 @@ class EmailService {
                             
                             <div class="warning">
                                 <strong>⚠️ Didn't make this change?</strong>
-                                <p style="margin: 10px 0 0 0;">If you didn't change your password, please contact our support team immediately at <strong>goeventify@gmail.com</strong> or call <strong>+91 9201976523</strong>. Your account security is our top priority.</p>
+                                <p style="margin: 10px 0 0 0;">If you didn't change your password, please contact our support team immediately at <strong>goeventify@adrstechno.com</strong> or call <strong>+91 9201976523</strong>. Your account security is our top priority.</p>
                             </div>
                             
                             <p><strong>Security Tips:</strong></p>

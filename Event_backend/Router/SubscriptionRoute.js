@@ -11,6 +11,9 @@ router.post('/create-order', authenticateToken, SubscriptionController.createSub
 // Verify payment and activate subscription (Vendor only)
 router.post('/verify-payment', authenticateToken, SubscriptionController.verifyAndActivateSubscription);
 
+// Razorpay webhook fallback for captured payments (no auth; signed by Razorpay)
+router.post('/webhook', SubscriptionController.handleRazorpayWebhook);
+
 // Get subscription status (Vendor only)
 router.get('/status', authenticateToken, SubscriptionController.getSubscriptionStatus);
 

@@ -4,7 +4,8 @@ import {
   FaInstagram,
   FaFacebookF,
   FaLinkedinIn,
-  FaComments
+  FaComments,
+  FaYoutube
 } from "react-icons/fa";
 
 const SocialSidebar = () => {
@@ -32,7 +33,7 @@ const SocialSidebar = () => {
       >
         {/* Instagram */}
         <SocialIcon
-          href="https://www.instagram.com/goeventify/"
+          href="https://www.instagram.com/go_eventify/"
           bg="from-pink-500 to-orange-400"
         >
           <FaInstagram />
@@ -40,7 +41,7 @@ const SocialSidebar = () => {
 
         {/* Facebook */}
         <SocialIcon
-          href="https://www.facebook.com/profile.php?id=61585660263887"
+          href="https://www.facebook.com/share/1CjQ32LMye/"
           bg="from-blue-600 to-blue-500"
         >
           <FaFacebookF />
@@ -60,6 +61,14 @@ const SocialSidebar = () => {
           bg="from-emerald-500 to-teal-400"
         >
           <FaWhatsapp />
+        </SocialIcon>
+
+        {/* YouTube */}
+        <SocialIcon
+          href="https://www.youtube.com/@goeventifyadrs"
+          bg="from-red-600 to-red-500"
+        >
+          <FaYoutube />
         </SocialIcon>
       </div>
 

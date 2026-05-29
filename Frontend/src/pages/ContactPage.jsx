@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { FiMail, FiPhone, FiMapPin, FiSend, FiClock } from "react-icons/fi";
-import { FaFacebook, FaInstagram, FaLinkedin, FaWhatsapp } from "react-icons/fa";
+import { FaFacebook, FaInstagram, FaLinkedin, FaWhatsapp, FaYoutube } from "react-icons/fa";
 import Footer from "../components/mainpage/Footer";
 import HomeNavbar from "../components/mainpage/HomeNavbar";
 import toast from "react-hot-toast";
@@ -28,7 +28,7 @@ const ContactPage = () => {
     // {
     //   icon: FiMail,
     //   title: "Email",
-    //   details: ["goeventify@gmail.com"],
+    //   details: ["goeventify@adrstechno.com"],
     //   color: "from-purple-500 to-pink-500",
     // },
     // {
@@ -283,7 +283,7 @@ const ContactPage = () => {
               
               <div className="flex gap-4">
                 <a
-                  href="https://www.facebook.com/profile.php?id=61585660263887"
+                  href="https://www.facebook.com/share/1CjQ32LMye/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110"
@@ -301,7 +301,7 @@ const ContactPage = () => {
                   <FaWhatsapp className="text-2xl" />
                 </a>
                 <a
-                  href="https://www.instagram.com/goeventify/"
+                  href="https://www.instagram.com/go_eventify/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110"
@@ -317,6 +317,15 @@ const ContactPage = () => {
                   aria-label="LinkedIn"
                 >
                   <FaLinkedin className="text-2xl" />
+                </a>
+                <a
+                  href="https://www.youtube.com/@goeventifyadrs"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110"
+                  aria-label="YouTube"
+                >
+                  <FaYoutube className="text-2xl" />
                 </a>
               </div>
             </div>

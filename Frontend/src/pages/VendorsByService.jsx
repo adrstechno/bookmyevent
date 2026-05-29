@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -49,24 +49,8 @@ const VendorsByService = () => {
   const currentVendors = vendors?.slice(indexOfFirstVendor, indexOfLastVendor) || [];
   const totalPages = Math.ceil((vendors?.length || 0) / vendorsPerPage);
 
-  useEffect(() => {
-    if (filterType === "category" && !selectedDate) {
-      if (subServiceId) {
-        fetchVendorsBySubService();
-      } else {
-        fetchVendorsByCategory();
-      }
-    } else if (filterType === "all" && !selectedDate) {
-      fetchAllVendors();
-    }
-  }, [filterType, serviceId, subServiceId]);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [vendors]);
-
   // -------- FETCH VENDORS BY SUB-SERVICE --------
-  const fetchVendorsBySubService = async () => {
+  const fetchVendorsBySubService = useCallback(async () => {
     await fetchVendors(
       () => fetch(
         `${VITE_API_BASE_URL}/Vendor/getvendorsBysubserviceId?subservice_id=${subServiceId}`,
@@ -80,10 +64,10 @@ const VendorsByService = () => {
         showEmptyToast: false
       }
     );
-  };
+  }, [subServiceId, fetchVendors]);
 
   // -------- FETCH CATEGORY VENDORS --------
-  const fetchVendorsByCategory = async () => {
+  const fetchVendorsByCategory = useCallback(async () => {
     await fetchVendors(
       () => fetch(
         `${VITE_API_BASE_URL}/Vendor/getvendorsByServiceId?service_category_id=${serviceId}`,
@@ -97,10 +81,10 @@ const VendorsByService = () => {
         showEmptyToast: false
       }
     );
-  };
+  }, [serviceId, fetchVendors]);
 
   // -------- FETCH ALL VENDORS --------
-  const fetchAllVendors = async () => {
+  const fetchAllVendors = useCallback(async () => {
     await fetchVendors(
       () => fetch(`${VITE_API_BASE_URL}/Vendor/Getallvendors`)
         .then(res => {
@@ -112,19 +96,19 @@ const VendorsByService = () => {
         showEmptyToast: false
       }
     );
-  };
+  }, [fetchVendors]);
 
   // -------- FETCH FREE VENDORS BY DATE --------
-  const fetchFreeVendorsByDate = async (dateObj) => {
+  const fetchFreeVendorsByDate = useCallback(async (dateObj) => {
     const formattedDate = dateObj.toISOString().split("T")[0];
 
     // Build query params based on available context
     let queryParams = `date=${formattedDate}`;
-    
+
     // Add subservice_id if available (most specific)
     if (subServiceId) {
       queryParams += `&subservice_id=${subServiceId}`;
-    } 
+    }
     // Otherwise add service_id (category level)
     else if (serviceId) {
       queryParams += `&service_id=${serviceId}`;
@@ -144,22 +128,37 @@ const VendorsByService = () => {
     );
 
     setShowCalendar(false);
-  };
+  }, [subServiceId, serviceId, fetchVendors]);
+
+  // Main effect for filter/service changes - handles fetching based on filter type
+  useEffect(() => {
+    if (filterType === "category" && !selectedDate) {
+      if (subServiceId) {
+        fetchVendorsBySubService();
+      } else {
+        fetchVendorsByCategory();
+      }
+    } else if (filterType === "all" && !selectedDate) {
+      fetchAllVendors();
+    }
+  }, [filterType, serviceId, subServiceId, selectedDate, fetchVendorsBySubService, fetchVendorsByCategory, fetchAllVendors]);
+
+  // Separate effect for date selection - triggers fetch when date changes
+  useEffect(() => {
+    if (selectedDate) {
+      fetchFreeVendorsByDate(selectedDate);
+    }
+  }, [selectedDate, subServiceId, serviceId, fetchFreeVendorsByDate]);
+
+  // Reset pagination when vendors change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [vendors]);
 
   // Handle date selection
   const handleDateSelect = (date) => {
     setSelectedDate(date);
-    fetchFreeVendorsByDate(date);
-  };
-
-  // Clear date filter
-  const clearDateFilter = () => {
-    setSelectedDate(null);
-    if (filterType === "category") {
-      fetchVendorsByCategory();
-    } else {
-      fetchAllVendors();
-    }
+    setShowCalendar(false);
   };
 
   // -------- Render Vendor Card --------
@@ -332,7 +331,7 @@ const VendorsByService = () => {
         <button
           onClick={() => {
             setFilterType("category");
-            clearDateFilter();
+            setSelectedDate(null);
           }}
           className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-semibold shadow-md transition-all text-sm sm:text-base ${filterType === "category" && !selectedDate
             ? "bg-[#284b63] text-white"
@@ -345,7 +344,7 @@ const VendorsByService = () => {
         <button
           onClick={() => {
             setFilterType("all");
-            clearDateFilter();
+            setSelectedDate(null);
           }}
           className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-semibold shadow-md transition-all text-sm sm:text-base ${filterType === "all" && !selectedDate
             ? "bg-[#284b63] text-white"
@@ -374,7 +373,7 @@ const VendorsByService = () => {
             <span className="hidden sm:inline">{selectedDate.toLocaleDateString()}</span>
             <span className="sm:hidden">{selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
             <button
-              onClick={clearDateFilter}
+              onClick={() => setSelectedDate(null)}
               className="ml-1 sm:ml-2 hover:bg-green-200 rounded-full p-1 transition-colors"
             >
               <FiX className="text-sm sm:text-base" />

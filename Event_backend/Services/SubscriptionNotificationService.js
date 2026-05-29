@@ -104,7 +104,7 @@ class SubscriptionNotificationService {
                 JOIN vendor_profiles vp ON vs.vendor_id = vp.vendor_id
                 JOIN users u ON vp.user_id = u.user_id
                 WHERE vs.status = 'active'
-                AND DATE(vs.end_date) = CURDATE()
+                AND vs.end_date <= NOW()
             `;
 
             const expiredSubscriptions = await new Promise((resolve, reject) => {
@@ -119,8 +119,9 @@ class SubscriptionNotificationService {
             // Update status to expired and send notification
             for (const subscription of expiredSubscriptions) {
                 try {
-                    // Update subscription status
+                    // Update subscription and vendor profile status.
                     await this.updateSubscriptionStatus(subscription.subscription_id, 'expired');
+                    await this.updateVendorProfileStatus(subscription.vendor_id, 'expired');
                     
                     // Send expiry notification
                     await EmailService.sendSubscriptionExpiredNotification({
@@ -161,6 +162,22 @@ class SubscriptionNotificationService {
 
         return new Promise((resolve, reject) => {
             db.query(query, [status, subscriptionId], (err, result) => {
+                if (err) reject(err);
+                else resolve(result);
+            });
+        });
+    }
+
+    static async updateVendorProfileStatus(vendorId, status) {
+        const query = `
+            UPDATE vendor_profiles
+            SET current_subscription_status = ?,
+                is_active = CASE WHEN ? = 'expired' THEN 0 ELSE is_active END
+            WHERE vendor_id = ?
+        `;
+
+        return new Promise((resolve, reject) => {
+            db.query(query, [status, status, vendorId], (err, result) => {
                 if (err) reject(err);
                 else resolve(result);
             });

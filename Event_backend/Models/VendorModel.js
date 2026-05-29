@@ -58,14 +58,15 @@ class VendorModel {
   }
 
   static findVendorID(decodedUserID, callback) {
-    // decodedUserID is the uuid from JWT token
-    // vendor_profiles.user_id stores the uuid (string)
+    // vendor_profiles.user_id may store either users.user_id or users.uuid.
     const sql = `
       SELECT vp.vendor_id
       FROM vendor_profiles vp
-      WHERE vp.user_id = ?
+      LEFT JOIN users u ON (vp.user_id = u.user_id OR vp.user_id = u.uuid)
+      WHERE vp.user_id = ? OR u.uuid = ? OR u.user_id = ?
+      LIMIT 1
     `;
-    db.query(sql, [decodedUserID], callback);
+    db.query(sql, [decodedUserID, decodedUserID, decodedUserID], callback);
   }
 
   static findVendor(decodedUserID, callback) {

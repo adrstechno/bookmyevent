@@ -143,7 +143,7 @@ const VendorProfileSetup = () => {
       if (response.data.requiresSubscription) {
         // Show subscription prompt after a short delay
         setTimeout(() => {
-          toast.success("🎉 Profile created! Now subscribe to start accepting bookings.", {
+          toast.success("Profile created. Upgrade to Premium to unlock dashboard and bookings.", {
             duration: 5000
           });
           // Redirect to dashboard where subscription status will be shown

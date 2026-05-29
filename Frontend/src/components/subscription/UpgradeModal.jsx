@@ -24,79 +24,82 @@ import {
 } from '@mui/material';
 import {
   CheckCircle,
-  Visibility,
-  Person,
-  LocationOn,
-  Dashboard,
-  Schedule
 } from '@mui/icons-material';
+import subscriptionService from '../../services/subscriptionService';
 
-const UpgradeModal = ({ open, onClose, daysRemaining = 0, onUpgradeSuccess }) => {
+const loadRazorpayCheckout = () => {
+  if (window.Razorpay) {
+    return Promise.resolve(true);
+  }
+
+  const existingScript = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+  if (existingScript) {
+    return new Promise((resolve) => {
+      existingScript.addEventListener('load', () => resolve(true), { once: true });
+      existingScript.addEventListener('error', () => resolve(false), { once: true });
+    });
+  }
+
+  return new Promise((resolve) => {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
+
+const UpgradeModal = ({ open = true, onClose, daysRemaining = 0, onUpgradeSuccess }) => {
   const [loading, setLoading] = useState(false);
+  const [paymentError, setPaymentError] = useState('');
 
   const handleUpgradeClick = async () => {
     setLoading(true);
+    setPaymentError('');
     try {
-      // Get token
-      const token = localStorage.getItem('token');
+      const checkoutLoaded = await loadRazorpayCheckout();
 
-      // Create subscription order
-      const response = await fetch('/api/subscription/create-order', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      const data = await response.json();
-
-      if (!data.success) {
-        alert('Failed to initiate payment. Please try again.');
+      if (!checkoutLoaded) {
+        setPaymentError('Failed to load Razorpay checkout. Please check your connection and try again.');
         setLoading(false);
         return;
       }
 
+      const data = await subscriptionService.createSubscriptionOrder();
+
       // Open Razorpay payment gateway
       const options = {
         key: data.data.key_id,
-        amount: data.data.amount * 100, // Convert to paise
+        amount: data.data.amount,
         currency: data.data.currency,
-        name: 'BookMyEvent',
-        description: 'Premium Subscription',
+        name: 'GoEventify',
+        description: 'Premium Subscription - ₹499/year',
         order_id: data.data.order_id,
         handler: async (response) => {
           try {
             // Verify payment
-            const verifyResponse = await fetch(
-              '/api/subscription/verify-payment',
-              {
-                method: 'POST',
-                headers: {
-                  'Authorization': `Bearer ${token}`,
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                  razorpay_order_id: response.razorpay_order_id,
-                  razorpay_payment_id: response.razorpay_payment_id,
-                  razorpay_signature: response.razorpay_signature,
-                  vendor_id: data.data.vendor_id
-                })
-              }
-            );
-
-            const verifyData = await verifyResponse.json();
+            const verifyData = await subscriptionService.verifyPayment({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              vendor_id: data.data.vendor_id
+            });
 
             if (verifyData.success) {
               alert('Upgrade successful! You now have full access.');
               onClose();
-              onUpgradeSuccess && onUpgradeSuccess();
+              if (onUpgradeSuccess) {
+                onUpgradeSuccess();
+              } else {
+                window.location.reload();
+              }
             } else {
-              alert('Payment verification failed. Please contact support.');
+              setPaymentError(verifyData.message || 'Payment verification failed. Please contact support.');
             }
           } catch (error) {
             console.error('Payment verification error:', error);
-            alert('Payment verification failed. Please contact support.');
+            setPaymentError(error.response?.data?.message || 'Payment verification failed. Please contact support.');
           }
           setLoading(false);
         },
@@ -107,27 +110,19 @@ const UpgradeModal = ({ open, onClose, daysRemaining = 0, onUpgradeSuccess }) =>
         },
         theme: {
           color: '#667eea'
+        },
+        modal: {
+          ondismiss: () => {
+            setLoading(false);
+          }
         }
       };
 
-      // Load Razorpay script if not already loaded
-      if (!window.Razorpay) {
-        const script = document.createElement('script');
-        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-        script.async = true;
-        document.body.appendChild(script);
-
-        script.onload = () => {
-          const rzp = new window.Razorpay(options);
-          rzp.open();
-        };
-      } else {
-        const rzp = new window.Razorpay(options);
-        rzp.open();
-      }
+      const rzp = new window.Razorpay(options);
+      rzp.open();
     } catch (error) {
       console.error('Error initiating upgrade:', error);
-      alert('Failed to initiate payment. Please try again.');
+      setPaymentError(error.response?.data?.message || 'Failed to initiate payment. Please try again.');
       setLoading(false);
     }
   };
@@ -150,6 +145,12 @@ const UpgradeModal = ({ open, onClose, daysRemaining = 0, onUpgradeSuccess }) =>
         {daysRemaining === 0 && (
           <Alert severity="warning" sx={{ mb: 3 }}>
             Your free trial has expired. Upgrade now to continue using all features.
+          </Alert>
+        )}
+
+        {paymentError && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {paymentError}
           </Alert>
         )}
 

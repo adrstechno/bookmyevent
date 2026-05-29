@@ -2,6 +2,7 @@ import BookingModel from "../Models/BookingModel.js";
 import OTPModel from "../Models/OTPModel.js";
 import NotificationService from "../Services/NotificationService.js";
 import EmailService from "../Services/emailService.js";
+import SubscriptionService from "../Services/SubscriptionService.js";
 import db from "../Config/DatabaseCon.js";
 import VendorModel from "../Models/VendorModel.js";
 import ReviewTokenService from "../Utils/reviewToken.js";
@@ -35,6 +36,15 @@ class EnhancedBookingController {
                 return res.status(400).json({
                     success: false,
                     message: 'vendor_id, shift_id, package_id, event_address, event_date, and event_time are required'
+                });
+            }
+
+            const vendorCanReceiveBookings = await SubscriptionService.canAcceptBookings(vendor_id);
+            if (!vendorCanReceiveBookings) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'This vendor is not currently accepting bookings. Premium subscription required.',
+                    vendorSubscriptionRequired: true
                 });
             }
 
@@ -229,6 +239,15 @@ class EnhancedBookingController {
                     });
                 }
                 vendor_id = vendorResult[0].vendor_id;
+            }
+
+            const canAcceptBookings = await SubscriptionService.canAcceptBookings(vendor_id);
+            if (!canAcceptBookings) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Premium subscription required to accept bookings.',
+                    requiresSubscription: true
+                });
             }
 
             // Accept the booking

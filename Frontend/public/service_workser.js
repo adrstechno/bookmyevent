@@ -29,13 +29,16 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
+  // Skip caching for API requests and external resources
   if (
     event.request.url.includes("/api") ||
-    event.request.url.includes("onrender.com")
+    event.request.url.includes("onrender.com") ||
+    event.request.method !== "GET"
   ) {
     return;
   }
 
+  // For navigation requests (page loads), try network first, fall back to cache
   if (event.request.mode === "navigate") {
     event.respondWith(
       fetch(event.request).catch(() => caches.match("/index.html"))
@@ -43,14 +46,23 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // For other GET requests, use cache-first strategy
   event.respondWith(
     caches.match(event.request).then((cached) => {
       return (
         cached ||
         fetch(event.request).then((response) => {
+          // Only cache successful responses
+          if (!response || response.status !== 200 || response.type === "error") {
+            return response;
+          }
+
           const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, clone);
+            // Only cache GET requests (method check done earlier but being explicit)
+            if (event.request.method === "GET") {
+              cache.put(event.request, clone);
+            }
           });
           return response;
         })

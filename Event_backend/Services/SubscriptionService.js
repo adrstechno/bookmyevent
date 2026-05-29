@@ -18,14 +18,98 @@ class SubscriptionService {
   static async getActiveSubscription(vendor_id) {
     return new Promise((resolve, reject) => {
       const query = `
-        SELECT * FROM vendor_subscriptions
-        WHERE vendor_id = ? AND status = 'active' AND end_date > NOW()
-        ORDER BY end_date DESC LIMIT 1
+        SELECT *,
+          CASE
+            WHEN plan_type = 'free' THEN LEAST(COALESCE(end_date, DATE_ADD(start_date, INTERVAL 90 DAY)), DATE_ADD(start_date, INTERVAL 90 DAY))
+            ELSE end_date
+          END AS effective_end_date
+        FROM vendor_subscriptions
+        WHERE vendor_id = ?
+          AND status = 'active'
+          AND (
+            (plan_type = 'free' AND LEAST(COALESCE(end_date, DATE_ADD(start_date, INTERVAL 90 DAY)), DATE_ADD(start_date, INTERVAL 90 DAY)) > NOW())
+            OR (plan_type = 'premium' AND end_date > NOW())
+          )
+        ORDER BY effective_end_date DESC LIMIT 1
       `;
 
       db.query(query, [vendor_id], (err, results) => {
         if (err) {
           console.error('Error fetching active subscription:', err);
+          reject(err);
+        } else {
+          resolve(results || []);
+        }
+      });
+    });
+  }
+
+  static getEffectiveEndDate(subscription) {
+    if (!subscription) return null;
+    if (subscription.effective_end_date) return subscription.effective_end_date;
+    if (subscription.plan_type === 'free' && subscription.start_date) {
+      const startDate = new Date(subscription.start_date);
+      const cappedEndDate = new Date(startDate.getTime() + 90 * 24 * 60 * 60 * 1000);
+      const storedEndDate = subscription.end_date ? new Date(subscription.end_date) : null;
+
+      if (storedEndDate && !Number.isNaN(storedEndDate.getTime()) && storedEndDate < cappedEndDate) {
+        return storedEndDate;
+      }
+
+      return cappedEndDate;
+    }
+    return subscription.end_date || null;
+  }
+
+  static getTrialTotalDays(subscription) {
+    if (!subscription?.start_date) return 90;
+
+    const startDate = new Date(subscription.start_date);
+    const endDate = new Date(this.getEffectiveEndDate(subscription));
+
+    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+      return 90;
+    }
+
+    const totalDays = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+    return Math.max(1, totalDays);
+  }
+
+  static buildSubscriptionAnalytics(subscription, planType, daysRemaining, now = new Date()) {
+    const startDate = subscription?.start_date ? new Date(subscription.start_date) : null;
+    const endDate = subscription ? new Date(this.getEffectiveEndDate(subscription)) : null;
+    const isValidRange = startDate
+      && endDate
+      && !Number.isNaN(startDate.getTime())
+      && !Number.isNaN(endDate.getTime());
+    const totalDays = planType === 'premium'
+      ? (isValidRange ? Math.max(1, Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24))) : 365)
+      : this.getTrialTotalDays(subscription);
+    const elapsedMs = isValidRange ? now - startDate : 0;
+    const elapsedDays = Math.floor(elapsedMs / (1000 * 60 * 60 * 24));
+    const daysUsed = Math.min(totalDays, Math.max(0, elapsedDays));
+    const progressPercentage = Math.min(100, Math.max(0, Math.round((daysUsed / totalDays) * 100)));
+
+    return {
+      total_days: totalDays,
+      days_used: daysUsed,
+      days_remaining: Math.min(totalDays, Math.max(0, daysRemaining)),
+      progress_percentage: planType === 'premium' ? 100 : progressPercentage,
+      calculated_at: now.toISOString()
+    };
+  }
+
+  static async getLatestSubscription(vendor_id) {
+    return new Promise((resolve, reject) => {
+      const query = `
+        SELECT * FROM vendor_subscriptions
+        WHERE vendor_id = ?
+        ORDER BY end_date DESC, created_at DESC LIMIT 1
+      `;
+
+      db.query(query, [vendor_id], (err, results) => {
+        if (err) {
+          console.error('Error fetching latest subscription:', err);
           reject(err);
         } else {
           resolve(results || []);
@@ -44,13 +128,13 @@ class SubscriptionService {
       const subscription = await this.getActiveSubscription(vendor_id);
 
       if (!subscription || subscription.length === 0) {
-        return 'free'; // Default to free if no active subscription
+        return 'expired';
       }
 
       return subscription[0].plan_type || 'free';
     } catch (error) {
       console.error('Error getting plan type:', error);
-      return 'free'; // Safe default
+      return 'expired';
     }
   }
 
@@ -102,7 +186,7 @@ class SubscriptionService {
         return 0;
       }
 
-      const endDate = new Date(subscription[0].end_date);
+      const endDate = new Date(this.getEffectiveEndDate(subscription[0]));
       const now = new Date();
       const daysRemaining = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
 
@@ -120,9 +204,25 @@ class SubscriptionService {
    */
   static async getSubscriptionStatus(vendor_id) {
     try {
-      const planType = await this.getPlanType(vendor_id);
-      const daysRemaining = await this.getDaysRemaining(vendor_id);
-      const isInTrial = await this.isInFreeTrial(vendor_id);
+      const activeSubscription = await this.getActiveSubscription(vendor_id);
+      const latestSubscription = activeSubscription.length > 0
+        ? activeSubscription
+        : await this.getLatestSubscription(vendor_id);
+
+      const subscription = latestSubscription[0] || null;
+      const planType = activeSubscription.length > 0
+        ? (subscription.plan_type || 'free')
+        : 'expired';
+      const daysRemaining = activeSubscription.length > 0
+        ? await this.getDaysRemaining(vendor_id)
+        : 0;
+      const isInTrial = activeSubscription.length > 0
+        ? (subscription.is_trial === 1 || subscription.is_trial === true)
+        : false;
+
+      const startDate = subscription?.start_date || null;
+      const endDate = this.getEffectiveEndDate(subscription);
+      const analytics = this.buildSubscriptionAnalytics(subscription, planType, daysRemaining);
 
       let message = '';
       let status = 'unknown';
@@ -132,12 +232,15 @@ class SubscriptionService {
         status = 'premium_active';
       } else if (planType === 'free') {
         if (daysRemaining > 0) {
-          message = `Free trial: ${daysRemaining} days remaining`;
+          message = `Free trial active: ${daysRemaining} days remaining. Upgrade to unlock full booking details and actions.`;
           status = 'trial_active';
         } else {
           message = 'Free trial expired - Please upgrade to continue';
           status = 'trial_expired';
         }
+      } else if (planType === 'expired') {
+        message = 'Free trial expired - Please upgrade to continue';
+        status = 'trial_expired';
       } else {
         message = 'Subscription status unknown';
         status = 'unknown';
@@ -146,7 +249,13 @@ class SubscriptionService {
       return {
         plan_type: planType,
         days_remaining: daysRemaining,
+        trial_total_days: analytics.total_days,
+        trial_days_used: analytics.days_used,
+        trial_progress_percentage: analytics.progress_percentage,
         is_trial: isInTrial,
+        start_date: startDate,
+        end_date: endDate,
+        calculated_at: analytics.calculated_at,
         message: message,
         status: status
       };
@@ -156,6 +265,8 @@ class SubscriptionService {
         plan_type: 'free',
         days_remaining: 0,
         is_trial: false,
+        start_date: null,
+        end_date: null,
         message: 'Error fetching subscription status',
         status: 'error'
       };
@@ -189,8 +300,20 @@ class SubscriptionService {
             console.error('Error creating free trial:', err);
             resolve(false);
           } else {
-            console.log('Free trial created for vendor:', vendor_id);
-            resolve(true);
+            const updateProfileQuery = `
+              UPDATE vendor_profiles
+              SET current_subscription_status = 'free',
+                  free_trial_end_date = ?
+              WHERE vendor_id = ?
+            `;
+
+            db.query(updateProfileQuery, [endDate, vendor_id], (profileErr) => {
+              if (profileErr) {
+                console.error('Error updating vendor trial status:', profileErr);
+              }
+              console.log('Free trial created for vendor:', vendor_id);
+              resolve(true);
+            });
           }
         }
       );
@@ -272,12 +395,12 @@ class SubscriptionService {
         return false; // No active subscription = can't accept
       }
 
-      // Both free (in trial) and premium can accept bookings
-      // Only expired subscriptions block booking acceptance
-      return subscription[0].status === 'active' && subscription[0].end_date > new Date();
+      return subscription[0].plan_type === 'premium'
+        && subscription[0].status === 'active'
+        && new Date(this.getEffectiveEndDate(subscription[0])) > new Date();
     } catch (error) {
       console.error('Error checking booking acceptance:', error);
-      return true; // Safe default - allow
+      return false;
     }
   }
 
@@ -299,15 +422,28 @@ class SubscriptionService {
       // Free users see limited data
       return {
         booking_id: booking.booking_id,
+        booking_uuid: booking.booking_uuid,
+        created_at: booking.created_at,
         event_date: booking.event_date,
         event_time: booking.event_time,
         status: booking.status,
+        admin_approval: booking.admin_approval,
         package_id: booking.package_id,
+        package_name: booking.package_name || `Package #${booking.package_id}`,
+        shift_name: booking.shift_name,
+        details_hidden: true,
+        access_notice: 'Upgrade to Premium to view customer details, address, amount, and requirements.',
         // Hidden fields
+        first_name: 'Hidden',
+        last_name: '',
         user_name: 'Hidden - Upgrade to Premium',
-        user_email: 'hidden@example.com',
-        user_phone: 'Hidden',
+        email: 'Hidden - Upgrade to Premium',
+        user_email: 'Hidden - Upgrade to Premium',
+        phone: 'Hidden - Upgrade to Premium',
+        user_phone: 'Hidden - Upgrade to Premium',
+        event_address: 'Hidden - Upgrade to Premium',
         booking_address: 'Hidden - Upgrade to Premium',
+        special_requirement: 'Hidden - Upgrade to Premium',
         special_requirements: 'Hidden - Upgrade to Premium',
         amount: 'Hidden - Upgrade to Premium'
       };

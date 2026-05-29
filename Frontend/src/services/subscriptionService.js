@@ -19,6 +19,12 @@ const subscriptionService = {
     return response.data;
   },
 
+  // Get computed subscription/trial analytics for vendor dashboard
+  getEnhancedSubscriptionStatus: async () => {
+    const response = await api.get("/subscription/enhanced-status");
+    return response.data;
+  },
+
   // Get all subscriptions (Admin only)
   getAllSubscriptions: async () => {
     const response = await api.get("/subscription/all");
