@@ -23,12 +23,8 @@ import { WarningAmber, LockOutlined, UpgradeOutlined } from '@mui/icons-material
  * Used when free plan vendor tries to access booking details
  */
 const BookingNotice = ({ type = 'limited_access', onUpgradeClick, bookingInfo = {} }) => {
-  // Check if feature is enabled
-  const FEATURE_ENABLED = import.meta.env.VITE_SUBSCRIPTION_BOOKING_FILTER_NOTICE_ENABLED === 'true';
+  // Subscription UI is always enabled now (no env flag).
 
-  if (!FEATURE_ENABLED) {
-    return null;
-  }
 
   const renderNotice = () => {
     switch (type) {

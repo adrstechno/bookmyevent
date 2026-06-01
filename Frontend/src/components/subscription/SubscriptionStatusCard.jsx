@@ -7,7 +7,7 @@ const SubscriptionStatusCard = ({ onUpgradeClick }) => {
   const [loading, setLoading] = useState(true);
   const [animateProgress, setAnimateProgress] = useState(false);
 
-  const FEATURE_ENABLED = import.meta.env.VITE_SUBSCRIPTION_UI_ENABLED === 'true';
+  const FEATURE_ENABLED = true;
 
   useEffect(() => {
     if (!FEATURE_ENABLED) {
