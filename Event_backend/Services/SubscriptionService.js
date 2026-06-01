@@ -94,7 +94,9 @@ class SubscriptionService {
       total_days: totalDays,
       days_used: daysUsed,
       days_remaining: Math.min(totalDays, Math.max(0, daysRemaining)),
-      progress_percentage: planType === 'premium' ? 100 : progressPercentage,
+      // Progress reflects time elapsed for both plans so the bar fills as the
+      // subscription period is consumed (was hardcoded to 100 for premium).
+      progress_percentage: progressPercentage,
       calculated_at: now.toISOString()
     };
   }
@@ -239,8 +241,15 @@ class SubscriptionService {
           status = 'trial_expired';
         }
       } else if (planType === 'expired') {
-        message = 'Free trial expired - Please upgrade to continue';
-        status = 'trial_expired';
+        // Distinguish a lapsed paid plan from a lapsed free trial so the UI
+        // shows the right message (the latest record holds the prior plan_type).
+        if (subscription?.plan_type === 'premium') {
+          message = 'Premium subscription expired - Please renew to continue';
+          status = 'premium_expired';
+        } else {
+          message = 'Free trial expired - Please upgrade to continue';
+          status = 'trial_expired';
+        }
       } else {
         message = 'Subscription status unknown';
         status = 'unknown';

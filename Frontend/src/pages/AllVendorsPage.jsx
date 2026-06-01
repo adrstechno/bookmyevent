@@ -41,6 +41,17 @@ const AllVendorsPage = () => {
     return toSentenceCase(city);
   };
 
+  // Randomize vendor order on the frontend (Fisher-Yates) so the list isn't
+  // shown in a fixed backend order. Backend response is left untouched.
+  const shuffleArray = (array) => {
+    const result = [...array];
+    for (let i = result.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [result[i], result[j]] = [result[j], result[i]];
+    }
+    return result;
+  };
+
   useEffect(() => {
     loadVendors();
   }, []);
@@ -87,7 +98,8 @@ const AllVendorsPage = () => {
         const uniqueCities = Object.values(citiesMap).sort();
         setCities(uniqueCities);
 
-        return { data: normalizedData || [] };
+        // Shuffle so vendors appear in a random order each time the page loads.
+        return { data: shuffleArray(normalizedData || []) };
       }, {
         emptyMessage: "No vendors available",
         showEmptyToast: false

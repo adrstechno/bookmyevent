@@ -135,13 +135,16 @@ const SubscriptionStatusWidget = ({ onUpgradeClick, onStatusChange }) => {
     }
 
     if (daysRemaining <= 0 || planType === "expired") {
+      const wasPremium = subscription?.status === "premium_expired";
       return {
         tone: "red",
         icon: LockKeyhole,
-        title: "Trial expired",
+        title: wasPremium ? "Premium expired" : "Trial expired",
         label: "Access locked",
-        message: "Purchase Premium to restore dashboard access and start accepting bookings.",
-        action: "Upgrade to Premium",
+        message: wasPremium
+          ? "Your premium subscription has ended. Renew to restore full access and keep accepting bookings."
+          : "Purchase Premium to restore dashboard access and start accepting bookings.",
+        action: wasPremium ? "Renew Premium" : "Upgrade to Premium",
         locked: true,
       };
     }
@@ -177,10 +180,9 @@ const SubscriptionStatusWidget = ({ onUpgradeClick, onStatusChange }) => {
   const StatusIcon = viewState.icon;
   const isPremium = subscription.plan_type === "premium";
   const totalDays = getTotalDays(subscription);
-  const daysUsed = isPremium ? null : getDaysUsed(subscription);
-  const progress = isPremium
-    ? 100
-    : Math.min(100, Math.max(0, Number(subscription.trial_progress_percentage ?? (daysUsed / totalDays) * 100)));
+  const daysLeft = getDaysRemaining(subscription);
+  // Reverse bar: starts full and drains as the period is consumed (shows time left).
+  const progress = Math.min(100, Math.max(0, (daysLeft / totalDays) * 100));
   const displayEndDate = isPremium ? subscription.end_date : getFreeTrialEndDate(subscription);
   const updatedLabel = formatUpdatedAt(lastUpdatedAt);
   const toneClasses = {
@@ -241,12 +243,12 @@ const SubscriptionStatusWidget = ({ onUpgradeClick, onStatusChange }) => {
 
         <div className="p-5">
           <div className="flex items-center justify-between text-sm font-medium text-gray-500">
-            <span>{isPremium ? "Access" : "Trial progress"}</span>
-            <span className="font-semibold text-gray-900">{isPremium ? "Unlocked" : `${daysUsed}/${totalDays} days`}</span>
+            <span>{isPremium ? "Time remaining" : "Trial remaining"}</span>
+            <span className="font-semibold text-gray-900">{`${daysLeft}/${totalDays} days left`}</span>
           </div>
-          <div className="mt-3 h-2 rounded-full bg-gray-100">
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-gray-200">
             <div
-              className={`h-2 rounded-full ${isPremium ? "bg-emerald-500" : viewState.tone === "red" ? "bg-red-500" : "bg-amber-500"}`}
+              className={`h-2 rounded-l-full ${progress >= 99.5 ? "rounded-r-full" : ""} transition-all duration-500 ${isPremium ? "bg-emerald-500" : viewState.tone === "red" ? "bg-red-500" : "bg-amber-500"}`}
               style={{ width: `${progress}%` }}
             />
           </div>

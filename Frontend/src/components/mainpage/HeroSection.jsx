@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
@@ -24,12 +24,8 @@ const HeroSection = () => {
     },
   ];
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [slides.length]);
+  // Auto-slide disabled: starts on the first image and only changes via the
+  // left/right arrows or the dot indicators below.
 
   return (
     <section className="relative w-full overflow-hidden" style={{ minHeight: 'clamp(400px, 100vh, 800px)' }} aria-label="Event Management Services in Jabalpur">
