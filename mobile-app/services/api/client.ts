@@ -1,5 +1,4 @@
 import axios, { AxiosError, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
-import NetInfo from '@react-native-community/netinfo';
 
 import { APP_CONFIG } from '@/constants/config';
 
@@ -20,16 +19,12 @@ let authExpiredHandler: (() => void) | null = null;
 
 export const setApiAuthToken = (token: string | null) => {
 	bearerToken = token;
-	// Sirf naya valid token aane par flag reset karo
-	if (token) {
-		tokenInvalidNotified = false;
-	}
+	tokenInvalidNotified = false;
 };
 
 export const clearApiAuthToken = () => {
 	bearerToken = null;
-	// Flag reset mat karo — logout ke baad bhi protect karo
-	// tokenInvalidNotified intentionally nahi reset ho raha
+	tokenInvalidNotified = false;
 };
 
 /**
@@ -80,23 +75,7 @@ const onRequest = (config: InternalAxiosRequestConfig) => {
 	return nextConfig;
 };
 
-// Routes jahan 401/403 pe logout NAHI hona chahiye
-const PUBLIC_ROUTES = [
-	'/User/Login',
-	'/User/InsertUser',
-	'/User/forgot-password',
-	'/User/reset-password',
-	'/User/verify-email',
-	'/User/resend-verification',
-	'/User/verify-reset-token',
-];
-
-const isPublicRoute = (url: string | undefined): boolean => {
-	if (!url) return false;
-	return PUBLIC_ROUTES.some((route) => url.includes(route));
-};
-
-const normalizeApiError = async (error: AxiosError): Promise<ApiError> => {
+const normalizeApiError = (error: AxiosError): ApiError => {
 	const status = error.response?.status ?? 0;
 	const responseData = error.response?.data as
 		| { message?: string; error?: string; code?: string; details?: unknown }
@@ -106,29 +85,20 @@ const normalizeApiError = async (error: AxiosError): Promise<ApiError> => {
 	if (!error.response) {
 		const isTimeout = error.code === 'ECONNABORTED';
 		const isNetworkError = error.code === 'ERR_NETWORK' || error.message.includes('Network Error');
-
-		if (isNetworkError) {
-			let deviceHasInternet = false;
-			try {
-				const netState = await NetInfo.fetch();
-				deviceHasInternet = (netState.isConnected ?? false) && netState.isInternetReachable !== false;
-			} catch {
-				// NetInfo unavailable — assume connectivity issue
-			}
+		
+		if (isNetworkError || !error.code) {
 			return {
 				status: 0,
-				message: deviceHasInternet
-					? 'Server is temporarily unavailable. Please try again in a moment.'
-					: 'No internet connection. Please check your network and try again.',
+				message: 'No internet connection. Please check your network and try again.',
 				isNetworkError: true,
 			};
 		}
-
+		
 		return {
 			status: 0,
 			message: isTimeout
 				? 'Request timed out. Please check your connection and try again.'
-				: 'Unable to connect to server. Please try again.',
+				: 'Unable to connect to server. Please check your internet connection.',
 			isNetworkError: true,
 		};
 	}
@@ -198,30 +168,18 @@ apiClient.interceptors.response.use(
 
 		return response;
 	},
-	async (error: AxiosError) => {
+	(error: AxiosError) => {
 		const status = error.response?.status ?? 0;
-		const url = error.config?.url;
-		const responseData = error.response?.data as
-			| { message?: string; requiresVerification?: boolean }
-			| undefined;
 
-		// Public routes (login/register) pe 401/403 se logout kabhi nahi hona chahiye
-		const isVerificationRequired = Boolean(responseData?.requiresVerification);
-		const isPublic = isPublicRoute(url);
-
-		if (
-			(status === 401 || status === 403) &&
-			!isPublic &&
-			!isVerificationRequired &&
-			onTokenInvalid &&
-			!tokenInvalidNotified
-		) {
+		// Token is invalid or expired (401) or forbidden (403)
+		// Trigger logout and redirect to login
+		if ((status === 401 || status === 403) && onTokenInvalid && !tokenInvalidNotified) {
 			tokenInvalidNotified = true;
-			console.warn('[api] Token invalid/expired (status', status, 'url:', url, '). Logging out.');
+			console.warn('[api] Token invalid/expired (status', status, '). Logging out.');
 			onTokenInvalid();
 		}
 
-		return Promise.reject(await normalizeApiError(error));
+		return Promise.reject(normalizeApiError(error));
 	}
 );
 

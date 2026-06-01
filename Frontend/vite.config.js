@@ -7,9 +7,16 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     port: 5173,
+    host: 'localhost',
     strictPort: false,
     open: false,
     cors: true,
+    hmr: {
+      overlay: true,
+      protocol: 'ws',
+      host: 'localhost',
+      port: 5173,
+    },
     watch: {
       usePolling: false,
       interval: 100,

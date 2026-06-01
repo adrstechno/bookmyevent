@@ -9,9 +9,10 @@ import {
 	View,
 	Pressable,
 } from 'react-native';
+import RazorpayCheckout from 'react-native-razorpay';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
 import FadeInView from '@/components/common/FadeInView';
-import RazorpayWebModal, { type RazorpayPaymentResult } from '@/components/payment/RazorpayWebModal';
 import VendorAppBar from '@/components/vendor/VendorAppBar';
 import { ThemedText } from '@/components/themed-text';
 import { useAppToast } from '@/components/common/AppToastProvider';
@@ -23,7 +24,6 @@ import {
 import {
 	createSubscriptionOrder,
 	fetchSubscriptionStatus,
-	type SubscriptionOrder,
 	type SubscriptionStatus,
 	verifySubscriptionPayment,
 } from '@/services/vendor/subscriptionService';
@@ -59,10 +59,6 @@ export default function VendorDashboardScreen() {
 	const [activities, setActivities] = useState<VendorActivity[]>([]);
 	const [subscription, setSubscription] = useState<SubscriptionStatus>(DEFAULT_SUB);
 	const [paymentLoading, setPaymentLoading] = useState(false);
-	const [razorpayModal, setRazorpayModal] = useState<{
-		visible: boolean;
-		order: SubscriptionOrder | null;
-	}>({ visible: false, order: null });
 
 	const vendorName = useMemo(() => {
 		if (name?.trim()) return name;
@@ -76,6 +72,7 @@ export default function VendorDashboardScreen() {
 		else setLoading(true);
 
 		try {
+			// 1. Check profile first (same as frontend)
 			const profile = await fetchVendorProfile();
 			if (!profile) {
 				setProfileIncomplete(true);
@@ -83,10 +80,11 @@ export default function VendorDashboardScreen() {
 			}
 			setProfileIncomplete(false);
 
+			// 2. Load KPIs, activities, subscription in parallel
 			const [nextKpis, nextActivities, nextSub] = await Promise.all([
 				fetchVendorKpis(),
 				fetchVendorRecentActivities(5),
-				fetchSubscriptionStatus().catch(() => DEFAULT_SUB),
+				fetchSubscriptionStatus().catch(() => DEFAULT_SUB), // non-fatal
 			]);
 
 			setKpis(nextKpis);
@@ -107,64 +105,57 @@ export default function VendorDashboardScreen() {
 
 	useEffect(() => { loadDashboard(); }, [loadDashboard]);
 
-	// ── Step 1: Create order and open WebView checkout ───────────
 	const handleSubscriptionPayment = useCallback(async () => {
 		if (paymentLoading) return;
+
 		setPaymentLoading(true);
 		try {
 			showInfo('Creating secure payment order...');
 			const order = await createSubscriptionOrder();
+
 			if (!order.orderId || !order.keyId || !order.vendorId) {
 				throw new Error('Payment order is incomplete. Please try again.');
 			}
-			setRazorpayModal({ visible: true, order });
-		} catch (err: unknown) {
-			const error = err as { message?: string };
-			showError(error.message ?? 'Could not create payment order. Please try again.');
-		} finally {
-			setPaymentLoading(false);
-		}
-	}, [paymentLoading, showError, showInfo]);
 
-	// ── Step 2: Payment success — verify and activate ─────────────
-	const handlePaymentSuccess = useCallback(async (result: RazorpayPaymentResult) => {
-		const order = razorpayModal.order;
-		setRazorpayModal({ visible: false, order: null });
-		if (!order) return;
+			const payment = await RazorpayCheckout.open({
+				key: order.keyId,
+				amount: order.amount,
+				currency: order.currency,
+				name: 'GoEventify',
+				description: 'Annual Vendor Subscription',
+				order_id: order.orderId,
+				prefill: {
+					name: order.businessName || vendorName,
+					email: email ?? undefined,
+				},
+				theme: {
+					color: '#f9a826',
+				},
+			});
 
-		setPaymentLoading(true);
-		try {
 			showInfo('Verifying payment...');
 			await verifySubscriptionPayment({
-				razorpay_order_id: result.razorpay_order_id,
-				razorpay_payment_id: result.razorpay_payment_id,
-				razorpay_signature: result.razorpay_signature,
+				razorpay_order_id: payment.razorpay_order_id,
+				razorpay_payment_id: payment.razorpay_payment_id,
+				razorpay_signature: payment.razorpay_signature,
 				vendor_id: order.vendorId,
 			});
+
 			const nextSub = await fetchSubscriptionStatus().catch(() => ({
 				...DEFAULT_SUB,
 				isActive: true,
 				hasSubscription: true,
 			}));
 			setSubscription(nextSub);
-			showSuccess('Subscription activated successfully!');
+			showSuccess('Subscription activated successfully.');
 		} catch (err: unknown) {
-			const error = err as { message?: string };
-			showError(error.message ?? 'Payment verification failed. Contact support.');
+			const error = err as { description?: string; message?: string; reason?: string };
+			const message = error.description || error.message || error.reason || 'Payment could not be completed. Please try again.';
+			showError(message);
 		} finally {
 			setPaymentLoading(false);
 		}
-	}, [razorpayModal.order, showError, showInfo, showSuccess]);
-
-	const handlePaymentCancel = useCallback(() => {
-		setRazorpayModal({ visible: false, order: null });
-		showInfo('Payment cancelled.');
-	}, [showInfo]);
-
-	const handlePaymentError = useCallback((message: string) => {
-		setRazorpayModal({ visible: false, order: null });
-		showError(message || 'Payment failed. Please try again.');
-	}, [showError]);
+	}, [email, paymentLoading, showError, showInfo, showSuccess, vendorName]);
 
 	// ── Loading ──────────────────────────────────────────────────
 	if (loading) {
@@ -343,23 +334,6 @@ export default function VendorDashboardScreen() {
 					</View>
 				</FadeInView>
 			</ScrollView>
-
-			{/* ── Razorpay WebView payment modal ── */}
-			{razorpayModal.visible && razorpayModal.order && (
-				<RazorpayWebModal
-					visible={razorpayModal.visible}
-					keyId={razorpayModal.order.keyId}
-					orderId={razorpayModal.order.orderId}
-					amount={razorpayModal.order.amount}
-					currency={razorpayModal.order.currency}
-					businessName={razorpayModal.order.businessName || 'GoEventify'}
-					prefillName={vendorName}
-					prefillEmail={email ?? ''}
-					onSuccess={handlePaymentSuccess}
-					onCancel={handlePaymentCancel}
-					onError={handlePaymentError}
-				/>
-			)}
 		</SafeAreaView>
 	);
 }

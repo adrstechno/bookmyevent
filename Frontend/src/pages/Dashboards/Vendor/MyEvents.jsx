@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { PlusCircleIcon, CalendarDaysIcon, TrashIcon } from "@heroicons/react/24/outline";
-import api from "../../../services/axiosConfig";
+import axios from "axios";
+import { VITE_API_BASE_URL } from "../../../utils/api";
 import toast from "react-hot-toast";
 
 const MyEvents = () => {
@@ -16,7 +17,10 @@ const MyEvents = () => {
       try {
         setLoading(true);
 
-        const response = await api.get('/Vendor/GetvendorEventImages');
+        const response = await axios.get(
+          `${VITE_API_BASE_URL}/Vendor/GetvendorEventImages`,
+          { withCredentials: true }
+        );
 
         console.log("📸 API Response:", response.data);
         console.log("📸 Event Images:", response.data?.eventImages);
@@ -66,7 +70,11 @@ const MyEvents = () => {
     try {
       console.log("📤 Sending delete request with:", { imageID });
       
-      const response = await api.post('/Vendor/DeleteEventImage', { imageID });
+      const response = await axios.post(
+        `${VITE_API_BASE_URL}/Vendor/DeleteEventImage`,
+        { imageID },
+        { withCredentials: true }
+      );
 
       console.log("✅ Delete response:", response.status, response.data);
 

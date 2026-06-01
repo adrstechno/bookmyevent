@@ -378,6 +378,7 @@ const BookingModal = ({ vendor, selectedPackage, shifts, onClose, onSuccess }) =
   const [eventTime, setEventTime] = useState("");
   const [eventAddress, setEventAddress] = useState("");
   const [pincode, setPincode] = useState("");
+  const [pincodeError, setPincodeError] = useState("");
   const [currentLocation, setCurrentLocation] = useState(null);
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [addressSuggestions, setAddressSuggestions] = useState([]);
@@ -436,6 +437,7 @@ const BookingModal = ({ vendor, selectedPackage, shifts, onClose, onSuccess }) =
 
       if (response.success) {
         if (!response.available) {
+          toast.dismiss();
           toast.error(response.message);
           setAvailableShifts([]);
           setSelectedShift(null);
@@ -448,6 +450,7 @@ const BookingModal = ({ vendor, selectedPackage, shifts, onClose, onSuccess }) =
       }
     } catch (error) {
       console.error('Error checking availability:', error);
+      toast.dismiss();
       toast.error('Failed to check shift availability');
       setAvailableShifts(shifts);
     } finally {
@@ -487,11 +490,28 @@ const BookingModal = ({ vendor, selectedPackage, shifts, onClose, onSuccess }) =
     return false;
   };
 
+  // Convert address to English only (remove non-Latin scripts like Hindi, Devanagari, etc.)
+  const cleanAddressToEnglish = (address) => {
+    if (!address) return '';
+    // Keep only alphanumeric, spaces, and common punctuation for English addresses
+    // This regex removes Hindi (Devanagari), Arabic, and other non-Latin scripts
+    return address
+      .replace(/[ऀ-ॿ]/g, '') // Remove Devanagari (Hindi)
+      .replace(/[؀-ۿ]/g, '') // Remove Arabic
+      .replace(/[　-〿]/g, '') // Remove CJK
+      .replace(/,\s*,/g, ',') // Remove double commas
+      .replace(/^\s*,\s*/, '') // Remove leading comma
+      .replace(/\s*,\s*$/, '') // Remove trailing comma
+      .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+      .trim();
+  };
+
   // Location Functions
   const getCurrentLocation = () => {
     setLoadingLocation(true);
-    
+
     if (!navigator.geolocation) {
+      toast.dismiss();
       toast.error("Geolocation is not supported by this browser");
       setLoadingLocation(false);
       return;
@@ -501,8 +521,7 @@ const BookingModal = ({ vendor, selectedPackage, shifts, onClose, onSuccess }) =
       async (position) => {
         try {
           const { latitude, longitude } = position.coords;
-          
-          // Use reverse geocoding to get address (using free Nominatim service)
+
           const response = await fetch(
             `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1`,
             {
@@ -511,28 +530,32 @@ const BookingModal = ({ vendor, selectedPackage, shifts, onClose, onSuccess }) =
               }
             }
           );
-          
+
           if (response.ok) {
             const data = await response.json();
             if (data && data.display_name) {
-              const address = data.display_name;
+              // Clean the address to remove non-English scripts
+              const cleanAddress = cleanAddressToEnglish(data.display_name);
               const postcode = data.address?.postcode;
-              
-              setEventAddress(address);
+
+              setEventAddress(cleanAddress);
               setPincode(postcode || "");
               setCurrentLocation({ latitude, longitude });
+              toast.dismiss();
               toast.success("Location fetched successfully!");
             } else {
+              toast.dismiss();
               toast.error("Could not get address for your location");
             }
           } else {
-            // Fallback: Just set coordinates and let user enter address
             setCurrentLocation({ latitude, longitude });
             setEventAddress(`Lat: ${latitude.toFixed(6)}, Lng: ${longitude.toFixed(6)}`);
+            toast.dismiss();
             toast.success("Location coordinates fetched! Please enter full address.");
           }
         } catch (error) {
           console.error("Error getting address:", error);
+          toast.dismiss();
           toast.error("Error getting address details");
         } finally {
           setLoadingLocation(false);
@@ -541,7 +564,7 @@ const BookingModal = ({ vendor, selectedPackage, shifts, onClose, onSuccess }) =
       (error) => {
         console.error("Geolocation error:", error);
         let errorMessage = "Unable to get location";
-        
+
         switch (error.code) {
           case error.PERMISSION_DENIED:
             errorMessage = "Location access denied. Please enable location permissions.";
@@ -553,7 +576,8 @@ const BookingModal = ({ vendor, selectedPackage, shifts, onClose, onSuccess }) =
             errorMessage = "Location request timed out.";
             break;
         }
-        
+
+        toast.dismiss();
         toast.error(errorMessage);
         setLoadingLocation(false);
       },
@@ -566,51 +590,71 @@ const BookingModal = ({ vendor, selectedPackage, shifts, onClose, onSuccess }) =
   };
 
   const fetchAddressByPincode = async (pincode) => {
-    if (!pincode || pincode.length < 6) return;
-    
+    if (!pincode || pincode.length < 6) {
+      setPincodeError("");
+      setAddressSuggestions([]);
+      return;
+    }
+
+    if (!/^\d{6}$/.test(pincode)) {
+      setPincodeError("Pincode must be exactly 6 digits");
+      setAddressSuggestions([]);
+      return;
+    }
+
     try {
       setLoadingLocation(true);
-      
-      // Using India Post API for pincode lookup
-      const response = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
-      
+      setPincodeError("");
+
+      const response = await fetch(`https://api.zippopotam.us/in/${pincode}`);
+
       if (response.ok) {
         const data = await response.json();
-        
-        if (data && data[0] && data[0].Status === "Success") {
-          const postOffices = data[0].PostOffice;
-          if (postOffices && postOffices.length > 0) {
-            const suggestions = postOffices.map(office => ({
-              name: office.Name,
-              district: office.District,
-              state: office.State,
-              country: office.Country,
-              fullAddress: `${office.Name}, ${office.District}, ${office.State}, ${office.Country} - ${pincode}`
-            }));
-            
-            setAddressSuggestions(suggestions);
-            
-            // Auto-fill with first suggestion if only one result
-            if (suggestions.length === 1) {
-              setEventAddress(suggestions[0].fullAddress);
-              toast.success("Address found for pincode!");
-            } else {
-              toast.success(`Found ${suggestions.length} locations for this pincode`);
-            }
+
+        if (data && data.places && data.places.length > 0) {
+          const suggestions = data.places.map((place) => ({
+            name: place["place name"],
+            state: place.state,
+            stateName: data.state,
+            latitude: place.latitude,
+            longitude: place.longitude,
+            fullAddress: `${place["place name"]}, ${place.state}, ${data.state} - ${pincode}`
+          }));
+
+          setAddressSuggestions(suggestions);
+          setPincodeError("");
+
+          if (suggestions.length === 1) {
+            setEventAddress(suggestions[0].fullAddress);
+            toast.dismiss();
+            toast.success("Address found for pincode!");
           } else {
-            toast.error("No locations found for this pincode");
-            setAddressSuggestions([]);
+            toast.dismiss();
+            toast.success(`Found ${suggestions.length} locations for this pincode`);
           }
         } else {
-          toast.error("Invalid pincode or no data found");
+          setPincodeError("No locations found for this pincode. Please enter address manually.");
           setAddressSuggestions([]);
+          toast.dismiss();
+          toast.error("No locations found for this pincode");
         }
+      } else if (response.status === 404) {
+        setPincodeError("Invalid pincode. Please check and try again.");
+        setAddressSuggestions([]);
+        toast.dismiss();
+        toast.error("Invalid pincode");
       } else {
+        setPincodeError("Error fetching pincode data. Please try again.");
+        setAddressSuggestions([]);
+        toast.dismiss();
         toast.error("Error fetching pincode data");
       }
     } catch (error) {
       console.error("Pincode lookup error:", error);
-      toast.error("Error looking up pincode");
+      setPincodeError("Unable to validate pincode. Please enter address manually.");
+      setAddressSuggestions([]);
+      toast.dismiss();
+      toast.error("Unable to validate pincode");
     } finally {
       setLoadingLocation(false);
     }
@@ -619,14 +663,27 @@ const BookingModal = ({ vendor, selectedPackage, shifts, onClose, onSuccess }) =
   const selectAddressSuggestion = (suggestion) => {
     setEventAddress(suggestion.fullAddress);
     setAddressSuggestions([]);
+    toast.dismiss();
     toast.success("Address selected!");
   };
 
   const handleSubmit = async () => {
-    if (!eventDate) return toast.error("Please select event date");
-    if (!eventTime) return toast.error("Please select event time");
-    if (!eventAddress.trim()) return toast.error("Please enter event address");
-    if (availableShifts.length > 0 && !selectedShift) return toast.error("Please select a shift");
+    if (!eventDate) {
+      toast.dismiss();
+      return toast.error("Please select event date");
+    }
+    if (!eventTime) {
+      toast.dismiss();
+      return toast.error("Please select event time");
+    }
+    if (!eventAddress.trim()) {
+      toast.dismiss();
+      return toast.error("Please enter event address");
+    }
+    if (availableShifts.length > 0 && !selectedShift) {
+      toast.dismiss();
+      return toast.error("Please select a shift");
+    }
 
     try {
       setLoading(true);
@@ -648,9 +705,11 @@ const BookingModal = ({ vendor, selectedPackage, shifts, onClose, onSuccess }) =
         event_longitude: currentLocation?.longitude || null
       };
       await bookingService.createBooking(bookingData);
+      toast.dismiss();
       toast.success("Booking request sent! Waiting for vendor approval.");
       onSuccess();
     } catch (error) {
+      toast.dismiss();
       toast.error(error.response?.data?.message || "Failed to create booking");
     } finally {
       setLoading(false);
@@ -760,12 +819,21 @@ const BookingModal = ({ vendor, selectedPackage, shifts, onClose, onSuccess }) =
                 <input type="time" value={eventTime} onChange={(e) => setEventTime(e.target.value)}
                   className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-[#3c6e71] focus:ring-2 focus:ring-[#3c6e71]/20 outline-none" />
               </div>
-              <button 
-                onClick={() => { 
-                  if (!eventDate) return toast.error("Select date"); 
-                  if (!eventTime) return toast.error("Select time"); 
-                  if (availableShifts.length > 0 && !selectedShift) return toast.error("Select a shift");
-                  setStep(2); 
+              <button
+                onClick={() => {
+                  if (!eventDate) {
+                    toast.dismiss();
+                    return toast.error("Please select event date");
+                  }
+                  if (!eventTime) {
+                    toast.dismiss();
+                    return toast.error("Please select event time");
+                  }
+                  if (availableShifts.length > 0 && !selectedShift) {
+                    toast.dismiss();
+                    return toast.error("Please select a shift");
+                  }
+                  setStep(2);
                 }}
                 disabled={availableShifts.length === 0 && eventDate}
                 className="w-full py-3 bg-gradient-to-r from-[#284b63] to-[#3c6e71] text-white rounded-xl font-semibold hover:from-[#3c6e71] hover:to-[#284b63] transition-all disabled:opacity-50 disabled:cursor-not-allowed">
@@ -782,7 +850,7 @@ const BookingModal = ({ vendor, selectedPackage, shifts, onClose, onSuccess }) =
                 </label>
                 
                 {/* Location Options */}
-                <div className="flex gap-2 mb-3">
+                <div className="space-y-3 mb-3">
                   <button
                     type="button"
                     onClick={getCurrentLocation}
@@ -796,32 +864,44 @@ const BookingModal = ({ vendor, selectedPackage, shifts, onClose, onSuccess }) =
                     )}
                     Current Location
                   </button>
-                  
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      placeholder="Enter pincode"
-                      value={pincode}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, '').slice(0, 6);
-                        setPincode(value);
-                        if (value.length === 6) {
-                          fetchAddressByPincode(value);
-                        } else {
-                          setAddressSuggestions([]);
-                        }
-                      }}
-                      className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3c6e71]/20 focus:border-[#3c6e71] outline-none text-sm w-32"
-                    />
-                    {pincode.length === 6 && (
-                      <button
-                        type="button"
-                        onClick={() => fetchAddressByPincode(pincode)}
-                        disabled={loadingLocation}
-                        className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 text-sm"
-                      >
-                        Search
-                      </button>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Or search by pincode:</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        placeholder="Enter 6-digit pincode"
+                        value={pincode}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                          setPincode(value);
+                          if (value.length === 6) {
+                            fetchAddressByPincode(value);
+                          } else {
+                            setAddressSuggestions([]);
+                            setPincodeError("");
+                          }
+                        }}
+                        className={`px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#3c6e71]/20 focus:border-[#3c6e71] outline-none text-sm flex-1 ${
+                          pincodeError ? "border-red-500 focus:ring-red-200" : "border-gray-300"
+                        }`}
+                      />
+                      {pincode.length === 6 && (
+                        <button
+                          type="button"
+                          onClick={() => fetchAddressByPincode(pincode)}
+                          disabled={loadingLocation}
+                          className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 text-sm whitespace-nowrap"
+                        >
+                          {loadingLocation ? "Searching..." : "Search"}
+                        </button>
+                      )}
+                    </div>
+                    {pincodeError && (
+                      <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+                        <FiAlertCircle className="text-red-600 mt-0.5 flex-shrink-0" />
+                        <p className="text-sm text-red-700">{pincodeError}</p>
+                      </div>
                     )}
                   </div>
                 </div>

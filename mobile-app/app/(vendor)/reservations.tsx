@@ -184,9 +184,8 @@ export default function VendorReservationsScreen() {
 			try {
 				const id = await fetchVendorId();
 				setVendorId(id);
-			} catch (err: unknown) {
-				const apiErr = err as { message?: string };
-				showError(apiErr?.message ?? 'Failed to load vendor profile.');
+			} catch {
+				showError('Failed to load vendor profile.');
 				setIsLoading(false);
 			}
 		};
@@ -199,9 +198,8 @@ export default function VendorReservationsScreen() {
 		try {
 			const data = await apiFetchReservations(vendorId);
 			setReservations(data);
-		} catch (err: unknown) {
-			const apiErr = err as { message?: string };
-			showError(apiErr?.message ?? 'Failed to load reservations.');
+		} catch {
+			showError('Failed to load reservations.');
 		} finally {
 			setIsLoading(false);
 			setIsRefreshing(false);
@@ -452,18 +450,13 @@ export default function VendorReservationsScreen() {
 													]}
 													onPress={() => setSelectedShift(shift.shift_id)}
 												>
-													<View style={s.shiftChipInfo}>
-														<ThemedText style={[s.shiftChipName, { color: active ? '#3c6e71' : palette.text }]}>
-															{shift.shift_name}
-														</ThemedText>
-														<ThemedText style={[s.shiftChipTime, { color: active ? '#3c6e71' : palette.muted }]}>
-															{shift.time_display ?? `${shift.start_time} – ${shift.end_time}`}
-														</ThemedText>
-													</View>
-													{active
-														? <Ionicons name="checkmark-circle" size={20} color="#3c6e71" />
-														: <Ionicons name="radio-button-off" size={20} color={palette.muted} />
-													}
+													<ThemedText style={[s.shiftChipName, { color: active ? '#3c6e71' : palette.text }]}>
+														{shift.shift_name}
+													</ThemedText>
+													<ThemedText style={[s.shiftChipTime, { color: active ? '#3c6e71' : palette.muted }]}>
+														{shift.time_display ?? `${shift.start_time} – ${shift.end_time}`}
+													</ThemedText>
+													{active && <Ionicons name="checkmark-circle" size={16} color="#3c6e71" style={s.shiftCheck} />}
 												</Pressable>
 											);
 										})}
@@ -619,15 +612,14 @@ const s = StyleSheet.create({
 	},
 	hintText: { fontSize: 13 },
 
-	shiftsGrid: { gap: 8 },
+	shiftsGrid: { gap: 10 },
 	shiftChip: {
-		borderWidth: 2, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10,
-		flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+		borderWidth: 2, borderRadius: 12, padding: 14,
+		flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap',
 	},
-	shiftChipInfo: { flex: 1, gap: 2 },
-	shiftChipName: { fontSize: 14, fontWeight: '700' },
-	shiftChipTime: { fontSize: 12 },
-	shiftCheck: { marginLeft: 8 },
+	shiftChipName: { fontSize: 14, fontWeight: '700', flex: 1 },
+	shiftChipTime: { fontSize: 12, marginTop: 2, width: '100%' },
+	shiftCheck: { marginLeft: 'auto' },
 
 	reasonInput: {
 		borderWidth: 1, borderRadius: 10, paddingHorizontal: 12,

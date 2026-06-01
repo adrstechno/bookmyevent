@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import vendorService from "../../../services/vendorService";
-import SubscriptionStatus from "../../../components/SubscriptionStatus";
+import UpgradeModal from "../../../components/subscription/UpgradeModal";
+import SubscriptionStatusWidget from "../../../components/subscription/SubscriptionStatusWidget";
 import {
   ChartPieIcon,
   ClipboardDocumentListIcon,
@@ -18,6 +19,31 @@ const VendorDashboard = () => {
   const [vendorName, setVendorName] = useState("Vendor");
   const [profileIncomplete, setProfileIncomplete] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+
+  const fetchKPIs = async () => {
+    try {
+      const response = await vendorService.getVendorKPIs();
+      if (response?.kpis) {
+        setKpis(response.kpis);
+      }
+    } catch (err) {
+      console.error("Error loading KPIs", err);
+      console.error("Error details:", err.response?.data);
+    }
+  };
+
+  const fetchActivities = async () => {
+    try {
+      const response = await vendorService.getVendorRecentActivities(5);
+      if (Array.isArray(response.activities)) {
+        setActivities(response.activities);
+      }
+    } catch (err) {
+      console.error("Error loading activities", err);
+      console.error("Error details:", err.response?.data);
+    }
+  };
 
   useEffect(() => {
     const userStr = localStorage.getItem("user");
@@ -42,7 +68,6 @@ const VendorDashboard = () => {
         const profile = await vendorService.getVendorProfile();
         
         if (profile) {
-          // Profile exists, proceed with normal dashboard loading
           setProfileIncomplete(false);
           await fetchKPIs();
           await fetchActivities();
@@ -55,42 +80,6 @@ const VendorDashboard = () => {
         }
       } finally {
         setLoading(false);
-      }
-    };
-
-    // Fetch KPIs using service
-    const fetchKPIs = async () => {
-      try {
-        // console.log('Fetching vendor KPIs...');
-        const response = await vendorService.getVendorKPIs();
-        // console.log('KPI response:', response);
-        if (response?.kpis) {
-          // console.log('Setting KPIs:', response.kpis);
-          setKpis(response.kpis);
-        } else {
-          // console.log('No KPIs in response, using defaults');
-        }
-      } catch (err) {
-        console.error("Error loading KPIs", err);
-        console.error("Error details:", err.response?.data);
-      }
-    };
-
-    // Fetch activities using service
-    const fetchActivities = async () => {
-      try {
-        // console.log('Fetching vendor activities...');
-        const response = await vendorService.getVendorRecentActivities(5);
-        // console.log('Activities response:', response);
-        if (Array.isArray(response.activities)) {
-          // console.log('Setting activities:', response.activities);
-          setActivities(response.activities);
-        } else {
-          // console.log('No activities in response or not an array');
-        }
-      } catch (err) {
-        console.error("Error loading activities", err);
-        console.error("Error details:", err.response?.data);
       }
     };
 
@@ -178,10 +167,15 @@ const VendorDashboard = () => {
           <p className="text-gray-600">Welcome back, {vendorName}! Here's your business overview.</p>
         </div>
 
-        {/* Subscription Status - Show prominently at top */}
-        <div className="mb-6">
-          <SubscriptionStatus />
-        </div>
+        {/* Upgrade Modal */}
+        {upgradeModalOpen && (
+          <UpgradeModal onClose={() => setUpgradeModalOpen(false)} />
+        )}
+
+        {/* Subscription Status Widget */}
+        <SubscriptionStatusWidget
+          onUpgradeClick={() => setUpgradeModalOpen(true)}
+        />
 
         {/* Overview Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -251,7 +245,7 @@ const VendorDashboard = () => {
           </h2>
           <div className="w-full h-48 flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-200 rounded-xl">
             <div className="text-center">
-              <span className="text-4xl mb-2 block">📈</span>
+              <ChartPieIcon className="mx-auto mb-2 h-10 w-10 text-gray-300" />
               <span className="text-sm">
                 Analytics visualization coming soon
               </span>

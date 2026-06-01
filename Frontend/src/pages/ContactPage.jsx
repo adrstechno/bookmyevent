@@ -1,12 +1,10 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { FiMail, FiPhone, FiMapPin, FiSend, FiClock } from "react-icons/fi";
-import { FaFacebook, FaInstagram, FaLinkedin, FaWhatsapp } from "react-icons/fa";
+import { FaFacebook, FaInstagram, FaLinkedin, FaWhatsapp, FaYoutube } from "react-icons/fa";
 import Footer from "../components/mainpage/Footer";
 import HomeNavbar from "../components/mainpage/HomeNavbar";
 import toast from "react-hot-toast";
-import axios from "axios";
-import { VITE_API_BASE_URL } from "../utils/api";
 const phoneRegex = /^[6-9]\d{9}$/;
 
 const ContactPage = () => {
@@ -30,7 +28,7 @@ const ContactPage = () => {
     // {
     //   icon: FiMail,
     //   title: "Email",
-    //   details: ["goeventify@gmail.com"],
+    //   details: ["goeventify@adrstechno.com"],
     //   color: "from-purple-500 to-pink-500",
     // },
     // {
@@ -47,7 +45,7 @@ const ContactPage = () => {
     // },
   ];
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
   e.preventDefault();
   
   if (!formData.name || !formData.email || !formData.message) {
@@ -62,16 +60,19 @@ const ContactPage = () => {
   }
 
   setLoading(true);
-
-  try {
-    await axios.post(`${VITE_API_BASE_URL}/contact`, formData);
+  
+  // Simulate API call
+  setTimeout(() => {
     toast.success("Message sent successfully! We'll get back to you soon.");
-    setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
-  } catch (error) {
-    toast.error("Failed to send message. Please try again later.");
-  } finally {
+    setFormData({
+      name: "",
+      email: "",
+      phone: "",
+      subject: "",
+      message: "",
+    });
     setLoading(false);
-  }
+  }, 1500);
 };
 
 
@@ -282,7 +283,7 @@ const ContactPage = () => {
               
               <div className="flex gap-4">
                 <a
-                  href="https://www.facebook.com/profile.php?id=61585660263887"
+                  href="https://www.facebook.com/share/1CjQ32LMye/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110"
@@ -300,7 +301,7 @@ const ContactPage = () => {
                   <FaWhatsapp className="text-2xl" />
                 </a>
                 <a
-                  href="https://www.instagram.com/goeventify/"
+                  href="https://www.instagram.com/go_eventify/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110"
@@ -316,6 +317,15 @@ const ContactPage = () => {
                   aria-label="LinkedIn"
                 >
                   <FaLinkedin className="text-2xl" />
+                </a>
+                <a
+                  href="https://www.youtube.com/@goeventifyadrs"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110"
+                  aria-label="YouTube"
+                >
+                  <FaYoutube className="text-2xl" />
                 </a>
               </div>
             </div>

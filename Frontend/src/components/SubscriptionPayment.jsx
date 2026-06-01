@@ -10,44 +10,14 @@ const SubscriptionPayment = ({ onClose, onSuccess }) => {
   const [couponCode, setCouponCode] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
   const [couponError, setCouponError] = useState("");
-  const [testMode, setTestMode] = useState(false);
-  const [clickCount, setClickCount] = useState(0);
-
-  // Enable test mode by clicking price 5 times
-  const handlePriceClick = () => {
-    const newCount = clickCount + 1;
-    setClickCount(newCount);
-    
-    if (newCount === 5) {
-      setTestMode(true);
-      toast.success("🧪 Test mode enabled - Payment bypass active!");
-      setClickCount(0);
-    } else if (newCount === 3) {
-      toast.info(`Click ${5 - newCount} more times to enable test mode`);
-    }
-    
-    // Reset counter after 2 seconds
-    setTimeout(() => setClickCount(0), 2000);
-  };
-
-  // Enable test mode with special key combination (Ctrl + Shift + T)
-  useEffect(() => {
-    const handleKeyPress = (e) => {
-      if (e.ctrlKey && e.shiftKey && e.key === 'T') {
-        setTestMode(prev => !prev);
-        toast.success(testMode ? "Test mode disabled" : "🧪 Test mode enabled - Payment bypass active");
-      }
-    };
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [testMode]);
+  const COUPONS_ENABLED = false;
 
   const SUBSCRIPTION_DETAILS = {
-    originalAmount: 999,
+    originalAmount: 499,
     discountedAmount: 499,
     currency: "INR",
     period: "Annual",
-    validCoupon: "welcome546goeventify",
+    validCoupon: "",
     features: [
       "Accept unlimited bookings",
       "Manage your calendar and shifts",
@@ -64,6 +34,11 @@ const SubscriptionPayment = ({ onClose, onSuccess }) => {
 
   const applyCoupon = () => {
     setCouponError("");
+
+    if (!COUPONS_ENABLED) {
+      setCouponError("Coupons are not available for this plan.");
+      return;
+    }
     
     if (!couponCode.trim()) {
       setCouponError("Please enter a coupon code");
@@ -100,30 +75,6 @@ const SubscriptionPayment = ({ onClose, onSuccess }) => {
   const handlePayment = async () => {
     try {
       setLoading(true);
-
-      // TEST MODE BYPASS - Skip payment for testing
-      if (testMode) {
-        toast.success("🧪 Test Mode: Activating subscription...");
-        
-        try {
-          // Call backend to activate test subscription
-          const response = await subscriptionService.activateTestSubscription();
-          
-          if (response.success) {
-            toast.success("🎉 Test subscription activated successfully!");
-            if (onSuccess) onSuccess();
-            if (onClose) onClose();
-          } else {
-            toast.error(response.message || "Failed to activate test subscription");
-          }
-        } catch (error) {
-          console.error("Test activation error:", error);
-          toast.error(error.response?.data?.message || "Failed to activate test subscription");
-        }
-        
-        setLoading(false);
-        return;
-      }
 
       // Load Razorpay script
       const scriptLoaded = await loadRazorpayScript();
@@ -221,25 +172,12 @@ const SubscriptionPayment = ({ onClose, onSuccess }) => {
               <h2 className="text-2xl font-bold">Vendor Subscription</h2>
               <p className="text-white/80">Activate your vendor account</p>
             </div>
-            <div className="flex items-center gap-2">
-              {/* Hidden Test Mode Toggle - Click 3 times quickly */}
-              <button
-                onClick={() => {
-                  setTestMode(prev => !prev);
-                  toast.success(testMode ? "Test mode disabled" : "🧪 Test mode enabled - Payment bypass active");
-                }}
-                className="p-2 hover:bg-white/20 rounded-full transition-colors opacity-0 hover:opacity-100"
-                title="Click to toggle test mode"
-              >
-                🧪
-              </button>
-              <button
-                onClick={onClose}
-                className="p-2 hover:bg-white/20 rounded-full transition-colors"
-              >
-                <FiX className="text-2xl" />
-              </button>
-            </div>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-white/20 rounded-full transition-colors"
+            >
+              <FiX className="text-2xl" />
+            </button>
           </div>
         </div>
 
@@ -253,11 +191,7 @@ const SubscriptionPayment = ({ onClose, onSuccess }) => {
                   ₹{SUBSCRIPTION_DETAILS.originalAmount}
                 </div>
               )}
-              <div 
-                className="text-5xl font-bold text-[#284b63] cursor-pointer select-none"
-                onClick={handlePriceClick}
-                title="Click 5 times to enable test mode"
-              >
+              <div className="text-5xl font-bold text-[#284b63]">
                 ₹{finalAmount}
               </div>
               <div className="text-gray-600 mt-2">per year</div>
@@ -275,6 +209,7 @@ const SubscriptionPayment = ({ onClose, onSuccess }) => {
           </div>
 
           {/* Coupon Code Section */}
+          {COUPONS_ENABLED && (
           <div className="mb-6">
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               Have a coupon code?
@@ -322,6 +257,7 @@ const SubscriptionPayment = ({ onClose, onSuccess }) => {
               <p className="text-red-500 text-sm mt-2">{couponError}</p>
             )}
           </div>
+          )}
 
           {/* Features */}
           <div className="mb-6">
@@ -355,40 +291,21 @@ const SubscriptionPayment = ({ onClose, onSuccess }) => {
             </div>
           </div>
 
-          {/* Test Mode Indicator */}
-          {testMode && (
-            <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4 mb-6">
-              <div className="flex items-center gap-3">
-                <div className="text-2xl">🧪</div>
-                <div>
-                  <div className="font-semibold text-yellow-900">Test Mode Active</div>
-                  <div className="text-sm text-yellow-700">
-                    Payment will be bypassed for testing. Press Ctrl+Shift+T to disable.
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Payment Button */}
           <button
             onClick={handlePayment}
             disabled={loading}
-            className={`w-full font-semibold py-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-              testMode 
-                ? 'bg-yellow-500 hover:bg-yellow-600 text-white' 
-                : 'bg-[#f9a826] hover:bg-[#f7b733] text-white'
-            }`}
+            className="w-full bg-[#f9a826] hover:bg-[#f7b733] text-white font-semibold py-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
               <>
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                {testMode ? 'Simulating Payment...' : 'Processing...'}
+                Processing...
               </>
             ) : (
               <>
                 <FiCreditCard className="text-xl" />
-                {testMode ? '🧪 Test Payment (Bypass)' : `Pay ₹${finalAmount} & Activate`}
+                Pay ₹{finalAmount} & Activate
               </>
             )}
           </button>

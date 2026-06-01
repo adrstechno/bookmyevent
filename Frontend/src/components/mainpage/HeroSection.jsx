@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
@@ -8,7 +8,7 @@ const HeroSection = () => {
 
   const slides = [
     {
-      image: "https://media.istockphoto.com/id/471906412/photo/beautiful-table-setting-for-an-wedding-reception-or-an-event.webp?a=1&b=1&s=612x612&w=0&k=20&c=wrF199YjsZWmbQSqGGiA8LojD7qz602jbfoymHlYiZ4=",
+      image: "/images/event_home.png",
       title: "Best Event Management in Jabalpur",
       subtitle: "Wedding Planner, Shadi Planner & All Event Vendors in Jabalpur, MP",
     },
@@ -24,15 +24,11 @@ const HeroSection = () => {
     },
   ];
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [slides.length]);
+  // Auto-slide disabled: starts on the first image and only changes via the
+  // left/right arrows or the dot indicators below.
 
   return (
-    <section className="relative h-[70vh] min-h-[600px] overflow-hidden" aria-label="Event Management Services in Jabalpur">
+    <section className="relative w-full overflow-hidden" style={{ minHeight: 'clamp(400px, 100vh, 800px)' }} aria-label="Event Management Services in Jabalpur">
       {/* Slides */}
       {slides.map((slide, index) => (
         <div
@@ -42,8 +38,8 @@ const HeroSection = () => {
           }`}
         >
           <div
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-            style={{ backgroundImage: `url(${slide.image})` }}
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat w-full h-full"
+            style={{ backgroundImage: `url(${slide.image})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
             role="img"
             aria-label={slide.title}
           >
@@ -52,7 +48,7 @@ const HeroSection = () => {
 
           <div className="relative h-full flex items-center justify-center text-center px-4 sm:px-6 lg:px-8">
             <div className="max-w-5xl mx-auto">
-              <motion.h1 
+              <motion.h1
                 key={`title-${index}`}
                 initial={{ opacity: 0, y: 30 }}
                 animate={index === currentSlide ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
@@ -61,8 +57,8 @@ const HeroSection = () => {
               >
                 {slide.title}
               </motion.h1>
-              
-              <motion.p 
+
+              <motion.p
                 key={`subtitle-${index}`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={index === currentSlide ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
@@ -72,7 +68,7 @@ const HeroSection = () => {
                 {slide.subtitle}
               </motion.p>
               
-              <motion.div 
+              <motion.div
                 key={`buttons-${index}`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={index === currentSlide ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
@@ -90,7 +86,7 @@ const HeroSection = () => {
                     </svg>
                   </span>
                 </Link>
-                
+
                 <Link
                   to="/vendors"
                   className="group px-8 py-4 bg-white/10 backdrop-blur-md text-white text-lg font-semibold rounded-2xl border-2 border-white/30 hover:bg-white/20 hover:border-white/50 transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 min-w-[200px]"
@@ -109,31 +105,31 @@ const HeroSection = () => {
       ))}
 
       {/* Slide Indicators */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-3 z-20">
+      <div className="absolute bottom-4 sm:bottom-8 left-1/2 transform -translate-x-1/2 flex gap-2 sm:gap-3 z-20">
         {slides.map((_, index) => (
           <button
             key={index}
             onClick={() => setCurrentSlide(index)}
-            className={`h-2 rounded-full transition-all duration-300 ${
+            className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 ${
               index === currentSlide
-                ? "bg-white w-12 shadow-lg"
-                : "bg-white/50 w-2 hover:bg-white/75 hover:w-8"
+                ? "bg-white w-8 sm:w-12 shadow-lg"
+                : "bg-white/50 w-1.5 sm:w-2 hover:bg-white/75 hover:w-6 sm:hover:w-8"
             }`}
             aria-label={`Go to slide ${index + 1}`}
           />
         ))}
       </div>
 
-      {/* Navigation Arrows */}
+      {/* Navigation Arrows - Hidden on mobile */}
       <button
         onClick={() =>
           setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length)
         }
-        className="absolute left-4 sm:left-8 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white/10 backdrop-blur-md hover:bg-white/20 text-white rounded-full transition-all duration-300 z-20 group"
+        className="hidden sm:flex absolute left-2 sm:left-4 lg:left-8 top-1/2 transform -translate-y-1/2 w-10 sm:w-12 h-10 sm:h-12 bg-white/10 backdrop-blur-md hover:bg-white/20 text-white rounded-full transition-all duration-300 z-20 group items-center justify-center"
         aria-label="Previous slide"
       >
         <svg
-          className="w-6 h-6 mx-auto group-hover:-translate-x-1 transition-transform duration-300"
+          className="w-5 h-5 sm:w-6 sm:h-6 group-hover:-translate-x-1 transition-transform duration-300"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -146,14 +142,14 @@ const HeroSection = () => {
           />
         </svg>
       </button>
-      
+
       <button
         onClick={() => setCurrentSlide((prev) => (prev + 1) % slides.length)}
-        className="absolute right-4 sm:right-8 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white/10 backdrop-blur-md hover:bg-white/20 text-white rounded-full transition-all duration-300 z-20 group"
+        className="hidden sm:flex absolute right-2 sm:right-4 lg:right-8 top-1/2 transform -translate-y-1/2 w-10 sm:w-12 h-10 sm:h-12 bg-white/10 backdrop-blur-md hover:bg-white/20 text-white rounded-full transition-all duration-300 z-20 group items-center justify-center"
         aria-label="Next slide"
       >
         <svg
-          className="w-6 h-6 mx-auto group-hover:translate-x-1 transition-transform duration-300"
+          className="w-5 h-5 sm:w-6 sm:h-6 group-hover:translate-x-1 transition-transform duration-300"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -167,18 +163,18 @@ const HeroSection = () => {
         </svg>
       </button>
 
-      {/* Scroll Indicator */}
-      <motion.div 
+      {/* Scroll Indicator - Hidden on small screens */}
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1, delay: 1.5 }}
-        className="absolute bottom-8 right-8 hidden lg:flex flex-col items-center gap-2 text-white/70"
+        className="absolute bottom-4 sm:bottom-8 right-4 sm:right-8 hidden md:flex flex-col items-center gap-2 text-white/70"
       >
-        <span className="text-sm font-medium rotate-90 origin-center whitespace-nowrap">Scroll Down</span>
+        <span className="text-xs sm:text-sm font-medium rotate-90 origin-center whitespace-nowrap">Scroll</span>
         <motion.div
           animate={{ y: [0, 8, 0] }}
           transition={{ duration: 2, repeat: Infinity }}
-          className="w-0.5 h-8 bg-white/50 rounded-full"
+          className="w-0.5 h-6 sm:h-8 bg-white/50 rounded-full"
         />
       </motion.div>
     </section>

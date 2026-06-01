@@ -65,7 +65,6 @@ export default function VendorSettingsScreen() {
 
 	const [pageLoading, setPageLoading] = useState(true);
 	const [isSaving, setIsSaving] = useState(false);
-	const [isNewProfile, setIsNewProfile] = useState(true);
 	const [showPasswordModal, setShowPasswordModal] = useState(false);
 	const [passwordData, setPasswordData] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' });
 	const [passwordErrors, setPasswordErrors] = useState<FormErrors>({});
@@ -86,12 +85,11 @@ export default function VendorSettingsScreen() {
 		const load = async () => {
 			try {
 				const [profile, cats] = await Promise.all([
-					fetchVendorProfile().catch(() => null),
+					fetchVendorProfile(),
 					fetchVendorServiceCategories(),
 				]);
 
 				setCategories(cats);
-				setIsNewProfile(!profile);
 
 				if (profile) {
 					setFormData({
@@ -122,7 +120,7 @@ export default function VendorSettingsScreen() {
 					}
 				}
 			} catch {
-				showError('Failed to load service categories. Please check your connection.');
+				showError('Failed to load profile');
 			} finally {
 				setPageLoading(false);
 			}
@@ -226,10 +224,9 @@ export default function VendorSettingsScreen() {
 					eventProfilesUrl: formData.event_profiles_url,
 					profileImageUri: profileImageUri ?? undefined,
 				},
-				{ isNewProfile }
+				{ isNewProfile: false }
 			);
-			if (isNewProfile) setIsNewProfile(false);
-			showSuccess(isNewProfile ? 'Profile created successfully!' : 'Profile updated successfully!');
+			showSuccess('Profile updated successfully!');
 		} catch (err: unknown) {
 			const msg = (err as { message?: string })?.message ?? 'Failed to save profile';
 			showError(msg);
@@ -348,7 +345,7 @@ export default function VendorSettingsScreen() {
 						<ThemedText style={styles.headerTitle}>Vendor Settings</ThemedText>
 						<View style={styles.headerBadge}>
 							<Ionicons name="person-circle" size={24} color="#fff" />
-							<ThemedText style={styles.headerBadgeText}>Welcome</ThemedText>
+							<ThemedText style={styles.headerBadgeText}>Welcome, Vendor</ThemedText>
 						</View>
 					</View>
 				</FadeInView>

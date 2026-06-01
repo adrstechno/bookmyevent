@@ -3,8 +3,6 @@ import {
   Animated,
   Alert,
   Image,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,7 +12,6 @@ import {
 import { StatusBar } from "expo-status-bar";
 import { Redirect, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
 
 import { ThemedText } from "@/components/themed-text";
 import { useAppToast } from "@/components/common/AppToastProvider";
@@ -59,7 +56,6 @@ export default function LoginScreen() {
   const [lastName, setLastName] = useState("");
   const [role, setRole] = useState<RoleType>("user");
   const [localError, setLocalError] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const transition = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -94,7 +90,6 @@ export default function LoginScreen() {
     setPhone("");
     setEmail("");
     setPassword("");
-    setShowPassword(false);
     dispatch(clearAuthError());
   };
 
@@ -238,15 +233,10 @@ export default function LoginScreen() {
       edges={["top", "bottom"]}
     >
       <StatusBar style={isDark ? "light" : "dark"} />
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-      >
       <ScrollView
         style={[styles.page, { backgroundColor: palette.screenBg }]}
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
       >
         {/* Header Section */}
         <View style={styles.headerSection}>
@@ -427,65 +417,41 @@ export default function LoginScreen() {
 
           {/* Phone Input (Register only) */}
           {mode === "register" && (
-            <>
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: palette.elevatedBg,
-                    borderColor: palette.border,
-                    color: palette.text,
-                  },
-                ]}
-                value={phone}
-                onChangeText={(t) => setPhone(t.replace(/\D/g, "").slice(0, 10))}
-                placeholder="Phone Number (10 digits)"
-                placeholderTextColor={palette.muted}
-                keyboardType="phone-pad"
-                maxLength={10}
-                editable={!isLoading}
-              />
-              {phone.length > 0 && phone.length < 10 && (
-                <ThemedText style={[styles.phoneHint, { color: palette.subtext }]}>
-                  {10 - phone.length} more digit{10 - phone.length !== 1 ? "s" : ""} needed
-                </ThemedText>
-              )}
-            </>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: palette.elevatedBg,
+                  borderColor: palette.border,
+                  color: palette.text,
+                },
+              ]}
+              value={phone}
+              onChangeText={setPhone}
+              placeholder="Phone Number"
+              placeholderTextColor={palette.muted}
+              keyboardType="phone-pad"
+              editable={!isLoading}
+            />
           )}
 
           {/* Password Input */}
-          <View style={[
-            styles.passwordWrapper,
-            {
-              backgroundColor: palette.elevatedBg,
-              borderColor: palette.border,
-            },
-          ]}>
-            <TextInput
-              style={[
-                styles.passwordInput,
-                { color: palette.text },
-              ]}
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Password"
-              placeholderTextColor={palette.muted}
-              secureTextEntry={!showPassword}
-              editable={!isLoading}
-              autoCapitalize="none"
-            />
-            <Pressable
-              onPress={() => setShowPassword((prev) => !prev)}
-              style={styles.eyeBtn}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Ionicons
-                name={showPassword ? "eye-off-outline" : "eye-outline"}
-                size={20}
-                color={palette.muted}
-              />
-            </Pressable>
-          </View>
+          <TextInput
+            style={[
+              styles.input,
+              {
+                backgroundColor: palette.elevatedBg,
+                borderColor: palette.border,
+                color: palette.text,
+              },
+            ]}
+            value={password}
+            onChangeText={setPassword}
+            placeholder="Password"
+            placeholderTextColor={palette.muted}
+            secureTextEntry
+            editable={!isLoading}
+          />
 
           {/* Forgot Password Link (Login only) */}
           {mode === "login" && (
@@ -518,7 +484,7 @@ export default function LoginScreen() {
               { backgroundColor: palette.primary },
               isLoading && styles.submitButtonDisabled,
             ]}
-            onPress={() => { void onSubmit(); }}
+            onPress={onSubmit}
             disabled={isLoading}
           >
             <ThemedText
@@ -534,7 +500,6 @@ export default function LoginScreen() {
 
         </Animated.View>
       </ScrollView>
-      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -654,29 +619,6 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
     minHeight: 48,
     fontSize: 15,
-  },
-  passwordWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    borderRadius: 10,
-    minHeight: 48,
-    paddingHorizontal: 14,
-  },
-  passwordInput: {
-    flex: 1,
-    paddingVertical: 13,
-    fontSize: 15,
-  },
-  eyeBtn: {
-    paddingLeft: 8,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  phoneHint: {
-    fontSize: 11,
-    marginTop: -8,
-    paddingHorizontal: 4,
   },
   forgotPasswordBtn: {
     alignSelf: "flex-end",

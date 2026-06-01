@@ -2,85 +2,7 @@ import { resolve } from "url";
 import VendorModel from "../Models/VendorModel.js";
 import { verifyToken } from "../Utils/Verification.js";
 import { v4 as uuidv4 } from "uuid";
-
-// Read token from Bearer header first, fall back to cookie
-const getToken = (req) => {
-  const authHeader = req.headers['authorization'];
-  return (authHeader && authHeader.split(' ')[1]) || req.cookies?.auth_token || null;
-};
-
-const VALID_WEEKDAYS = new Set([
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday",
-]);
-
-const normalizeTime = (value) => {
-  if (!value) return null;
-  const raw = String(value).trim();
-  if (!raw) return null;
-  const parts = raw.split(":");
-  if (parts.length < 2 || parts.length > 3) return null;
-
-  const h = Number(parts[0]);
-  const m = Number(parts[1]);
-  const s = parts.length === 3 ? Number(parts[2]) : 0;
-
-  if ([h, m, s].some((n) => Number.isNaN(n))) return null;
-  if (h < 0 || h > 23 || m < 0 || m > 59 || s < 0 || s > 59) return null;
-
-  const hh = String(h).padStart(2, "0");
-  const mm = String(m).padStart(2, "0");
-  const ss = String(s).padStart(2, "0");
-  return `${hh}:${mm}:${ss}`;
-};
-
-const normalizeDaysOfWeek = (value) => {
-  let parsed = value;
-
-  for (let i = 0; i < 3; i += 1) {
-    if (Array.isArray(parsed)) break;
-    if (typeof parsed !== "string") break;
-
-    const trimmed = parsed.trim();
-    if (!trimmed) break;
-
-    try {
-      parsed = JSON.parse(trimmed);
-      continue;
-    } catch {
-      // Not JSON; fallback to comma-separated list below.
-      parsed = trimmed;
-      break;
-    }
-  }
-
-  let days;
-  if (Array.isArray(parsed)) {
-    days = parsed;
-  } else if (typeof parsed === "string") {
-    days = parsed.split(",");
-  } else {
-    days = [];
-  }
-
-  const cleaned = days
-    .map((day) => String(day ?? "").trim().replace(/^"+|"+$/g, ""))
-    .filter(Boolean);
-
-  const unique = [...new Set(cleaned)];
-  const hasInvalid = unique.some((day) => !VALID_WEEKDAYS.has(day));
-
-  if (unique.length === 0 || hasInvalid) {
-    return { valid: false, days: [] };
-  }
-
-  return { valid: true, days: unique };
-};
+import SubscriptionService from "../Services/SubscriptionService.js";
 
 export const insertVendor = (req, res) => {
   try {
@@ -97,7 +19,7 @@ export const insertVendor = (req, res) => {
     }
 
     const data = req.body;
-    const token = getToken(req);
+    const token = req.cookies.auth_token;
 
     if (!token) {
       console.log('❌ No auth token');
@@ -110,7 +32,7 @@ export const insertVendor = (req, res) => {
       return res.status(401).json({ message: "Unauthorized: Invalid token" });
     }
 
-    const userId = decoded.uuid ?? decoded.userId;
+    const userId = decoded.userId;
     console.log('✅ User ID:', userId);
 
     const profile_url = req.file.path;
@@ -135,19 +57,39 @@ export const insertVendor = (req, res) => {
 
     console.log('📊 Vendor data prepared:', vendorData);
 
-    VendorModel.insertVendor(vendorData, (err, result) => {
+    VendorModel.insertVendor(vendorData, async (err, result) => {
       if (err) {
         console.error('❌ Database error inserting vendor:', err);
         return res
           .status(500)
           .json({ message: "Error inserting vendor", error: err.message, sqlMessage: err.sqlMessage });
       }
-      
+
       const vendor_id = result.insertId;
       console.log('✅ Vendor created successfully, ID:', vendor_id);
-      
+
+      // Auto-create the 90-day free trial unless explicitly disabled for rollback.
+      const AUTO_CREATE_TRIAL = process.env.SUBSCRIPTION_AUTO_CREATE_TRIAL !== 'false';
+
+      if (AUTO_CREATE_TRIAL) {
+        try {
+          const trialCreated = await SubscriptionService.createFreeTrial(vendor_id);
+          if (trialCreated) {
+            console.log('✅ Free trial created automatically for vendor:', vendor_id);
+          } else {
+            console.log('⚠️ Free trial creation failed (non-critical), vendor registration continues');
+            // Don't fail the entire vendor registration if trial creation fails
+          }
+        } catch (trialError) {
+          console.error('⚠️ Error creating free trial:', trialError);
+          // Don't fail the vendor registration
+        }
+      } else {
+        console.log('ℹ️ Auto free trial creation disabled (SUBSCRIPTION_AUTO_CREATE_TRIAL=false)');
+      }
+
       return res.status(200).json({
-        message: "Vendor profile created successfully! Please subscribe to start accepting bookings.",
+        message: "Vendor profile created successfully. Your 90-day free trial has started. Upgrade to Premium to unlock dashboard and bookings.",
         vendorId: vendor_id,
         profileUrl: vendorData.profile_url,
         requiresSubscription: true
@@ -178,7 +120,7 @@ export const getAllVendor = (req, res) => {
 export const AddEventImages = async (req, res) => {
   try {
     //  Verify token
-    const token = getToken(req);
+    const token = req.cookies.auth_token;
     if (!token) {
       return res
         .status(401)
@@ -190,10 +132,8 @@ export const AddEventImages = async (req, res) => {
       return res.status(401).json({ message: "Unauthorized: Invalid token" });
     }
 
-    const userId = decoded.uuid ?? decoded.userId;
-
     // 2️⃣ Get vendor_id using a promisified helper
-    const vendor_id = await promisifyFindVendorID(userId);
+    const vendor_id = await promisifyFindVendorID(decoded.userId);
     if (!vendor_id) {
       return res.status(404).json({ message: "Vendor not found" });
     }
@@ -250,7 +190,7 @@ const promisifyAddEventImages = (vendor_id, url) => {
 
 export const getvendorById = async (req, res) => {
   try {
-    const token = getToken(req);
+    const token = req.cookies.auth_token;
 
     if (!token) {
       return res
@@ -263,11 +203,8 @@ export const getvendorById = async (req, res) => {
       return res.status(401).json({ message: "Unauthorized: Invalid token" });
     }
 
-    // JWT stores uuid (not userId) — support both for compatibility
-    const userId = decoded.uuid ?? decoded.userId;
-
     const vendor = await new Promise((resolve, reject) => {
-      VendorModel.findVendor(userId, (err, result) => {
+      VendorModel.findVendor(decoded.userId, (err, result) => {
         if (err) {
           console.error("Database error fetching vendor:", err);
           reject(err);
@@ -326,7 +263,7 @@ export const updateVendorProfile = async (req, res) => {
     const profile_url = req.file?.path;
 
     // Validate token
-    const token = getToken(req);
+    const token = req.cookies.auth_token;
     if (!token) {
       return res
         .status(401)
@@ -338,11 +275,9 @@ export const updateVendorProfile = async (req, res) => {
       return res.status(401).json({ message: "Unauthorized: Invalid token" });
     }
 
-    const userId = decoded.uuid ?? decoded.userId;
-
     // Find vendor ID
     const vendor_id = await new Promise((resolve, reject) => {
-      VendorModel.findVendorID(userId, (err, result) => {
+      VendorModel.findVendorID(decoded.userId, (err, result) => {
         if (err) {
           reject(err);
         } else if (!result || result.length === 0) {
@@ -389,7 +324,7 @@ export const updateVendorProfile = async (req, res) => {
 
 export const VendorShift = async (req, res) => {
   try {
-    const token = getToken(req);
+    const token = req.cookies.auth_token;
 
     if (!token) {
       return res
@@ -403,28 +338,16 @@ export const VendorShift = async (req, res) => {
     }
 
     const { shift_name, start_time, end_time, days_of_week } = req.body;
-    const normalizedStart = normalizeTime(start_time);
-    const normalizedEnd = normalizeTime(end_time);
-    const normalizedDays = normalizeDaysOfWeek(days_of_week);
 
     // Validate input
-    if (!shift_name || !normalizedStart || !normalizedEnd || !normalizedDays.valid) {
+    if (!shift_name || !start_time || !end_time || !days_of_week) {
       return res.status(400).json({
-        message:
-          "All fields required. days_of_week must include valid weekdays and time must be HH:MM or HH:MM:SS",
+        message: "All fields required. days_of_week must be an array",
       });
     }
-
-    if (normalizedStart >= normalizedEnd) {
-      return res.status(400).json({
-        message: "Start time must be before end time",
-      });
-    }
-
-    const userId = decoded.uuid ?? decoded.userId;
 
     const vendor_id = await new Promise((resolve, reject) => {
-      VendorModel.findVendorID(userId, (err, result) => {
+      VendorModel.findVendorID(decoded.userId, (err, result) => {
         if (err) reject(err);
         else resolve(result?.[0]?.vendor_id || null);
       });
@@ -439,9 +362,9 @@ export const VendorShift = async (req, res) => {
         {
           vendor_id,
           shift_name,
-          start_time: normalizedStart,
-          end_time: normalizedEnd,
-          days_of_week: normalizedDays.days,
+          start_time,
+          end_time,
+          days_of_week,
           is_active: true,
         },
         (err, result) => {
@@ -462,7 +385,7 @@ export const VendorShift = async (req, res) => {
 
 export const getVendorShiftforVendor = async (req, res) => {
   try {
-    const token = getToken(req);
+    const token = req.cookies.auth_token;
     if (!token) {
       return res
         .status(401)
@@ -482,9 +405,8 @@ export const getVendorShiftforVendor = async (req, res) => {
       // console.log('Using vendor_id from query parameter:', vendor_id);
     } else {
       // Get vendor_id from logged-in user's token (vendor use case)
-      const userId = decoded.uuid ?? decoded.userId;
       const vendorResult = await new Promise((resolve, reject) => {
-        VendorModel.findVendorID(userId, (err, result) => {
+        VendorModel.findVendorID(decoded.userId, (err, result) => {
           if (err) reject(err);
           else resolve(result);
         });
@@ -539,7 +461,7 @@ export const GetvendorEventImages = async (req, res) => {
 
     // If vendor_id not provided, try to derive it from auth token
     if (!vendor_id) {
-      const token = getToken(req);
+      const token = req.cookies.auth_token;
       if (!token) {
         return res
           .status(401)
@@ -552,7 +474,7 @@ export const GetvendorEventImages = async (req, res) => {
       }
 
       const foundVendorId = await new Promise((resolve, reject) => {
-        VendorModel.findVendorID(decoded.uuid ?? decoded.userId, (err, result) => {
+        VendorModel.findVendorID(decoded.userId, (err, result) => {
           if (err) return reject(err);
           resolve(result && result.length > 0 ? result[0].vendor_id : null);
         });
@@ -592,7 +514,7 @@ export const GetvendorEventImages = async (req, res) => {
 export const deleteEventImage = async (req, res) => {
   try {
     // Verify token
-    const token = getToken(req);
+    const token = req.cookies.auth_token;
     if (!token) {
       return res
         .status(401)
@@ -606,7 +528,7 @@ export const deleteEventImage = async (req, res) => {
 
     // Get vendor_id
     const vendor_id = await new Promise((resolve, reject) => {
-      VendorModel.findVendorID(decoded.uuid ?? decoded.userId, (err, result) => {
+      VendorModel.findVendorID(decoded.userId, (err, result) => {
         if (err) return reject(err);
         resolve(result && result.length > 0 ? result[0].vendor_id : null);
       });
@@ -670,7 +592,7 @@ export const deleteEventImage = async (req, res) => {
 
 export const updateVendorShiftbyId = async (req, res) => {
   try {
-    const token = getToken(req);
+    const token = req.cookies.auth_token;
     if (!token) {
       return res
         .status(401)
@@ -684,28 +606,18 @@ export const updateVendorShiftbyId = async (req, res) => {
 
     const { shift_id, shift_name, start_time, end_time, days_of_week } =
       req.body;
-    const normalizedStart = normalizeTime(start_time);
-    const normalizedEnd = normalizeTime(end_time);
-    const normalizedDays = normalizeDaysOfWeek(days_of_week);
 
-    if (!shift_id || !shift_name || !normalizedStart || !normalizedEnd || !normalizedDays.valid) {
+    if (!shift_id || !shift_name || !start_time || !end_time || !days_of_week) {
       return res.status(400).json({
-        message:
-          "All fields required. days_of_week must include valid weekdays and time must be HH:MM or HH:MM:SS",
-      });
-    }
-
-    if (normalizedStart >= normalizedEnd) {
-      return res.status(400).json({
-        message: "Start time must be before end time",
+        message: "All fields required. days_of_week must be an array",
       });
     }
 
     const ShiftData = {
       shift_name,
-      start_time: normalizedStart,
-      end_time: normalizedEnd,
-      days_of_week: normalizedDays.days,
+      start_time,
+      end_time,
+      days_of_week,
       is_active: true,
     };
 
@@ -729,7 +641,7 @@ export const updateVendorShiftbyId = async (req, res) => {
 
 export const deleteVendorShiftbyId = async (req, res) => {
   try {
-    const token = getToken(req);
+    const token = req.cookies.auth_token;
     if (!token) {
       return res
         .status(401)
@@ -768,7 +680,7 @@ export const deleteVendorShiftbyId = async (req, res) => {
 export const insertVendorPackage = (req, res) => {
   try {
     const data = req.body;
-    const token = getToken(req);
+    const token = req.cookies.auth_token;
 
     if (!token) {
       return res.status(401).json({ message: "Unauthorized: No token provided" });
@@ -779,7 +691,7 @@ export const insertVendorPackage = (req, res) => {
       return res.status(401).json({ message: "Unauthorized: Invalid token" });
     }
 
-    const userId = decoded.uuid ?? decoded.userId;
+    const userId = decoded.userId;
 
     // Find vendor ID and handle insertion in callback
     VendorModel.findVendorID(userId, (err, result) => {
@@ -826,7 +738,7 @@ export const updateVendorPackage = (req, res) => {
     const data = req.body;
    const {package_id} = req.body;
     
-    const token = getToken(req);
+    const token = req.cookies.auth_token;
     if (!token) {
       return res.status(401).json({ message: "Unauthorized: No token provided" });
     }
@@ -856,7 +768,7 @@ export const deleteVendorPackage = (req, res) => {
   try{ 
     const {package_id} = req.query;
     
-    const token = getToken(req);
+    const token = req.cookies.auth_token;
     if (!token) {
       return res.status(401).json({ message: "Unauthorized: No token provided" });
     }
@@ -1118,4 +1030,3 @@ export const getvendorsBysubserviceId = (req, res) => {
 
 // Aliases for API compatibility - must be at the end after function definitions
 export const GetVendorShifts = getVendorShiftforVendor;
-

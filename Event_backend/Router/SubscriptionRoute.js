@@ -11,11 +11,14 @@ router.post('/create-order', authenticateToken, SubscriptionController.createSub
 // Verify payment and activate subscription (Vendor only)
 router.post('/verify-payment', authenticateToken, SubscriptionController.verifyAndActivateSubscription);
 
-// Test mode: Activate subscription without payment (Vendor only - for testing)
-router.post('/test-activate', authenticateToken, SubscriptionController.testActivateSubscription);
+// Razorpay webhook fallback for captured payments (no auth; signed by Razorpay)
+router.post('/webhook', SubscriptionController.handleRazorpayWebhook);
 
 // Get subscription status (Vendor only)
 router.get('/status', authenticateToken, SubscriptionController.getSubscriptionStatus);
+
+// Get enhanced subscription status with feature flag control (Vendor only)
+router.get('/enhanced-status', authenticateToken, SubscriptionController.getEnhancedSubscriptionStatus);
 
 // Get all subscriptions (Admin only)
 router.get('/all', authenticateToken, authorizeAdmin, SubscriptionController.getAllSubscriptions);

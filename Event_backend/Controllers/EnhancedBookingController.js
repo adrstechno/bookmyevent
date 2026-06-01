@@ -2,6 +2,7 @@ import BookingModel from "../Models/BookingModel.js";
 import OTPModel from "../Models/OTPModel.js";
 import NotificationService from "../Services/NotificationService.js";
 import EmailService from "../Services/emailService.js";
+import SubscriptionService from "../Services/SubscriptionService.js";
 import db from "../Config/DatabaseCon.js";
 import VendorModel from "../Models/VendorModel.js";
 import ReviewTokenService from "../Utils/reviewToken.js";
@@ -38,6 +39,15 @@ class EnhancedBookingController {
                 });
             }
 
+            const vendorCanReceiveBookings = await SubscriptionService.canAcceptBookings(vendor_id);
+            if (!vendorCanReceiveBookings) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'This vendor is not currently accepting bookings. Premium subscription required.',
+                    vendorSubscriptionRequired: true
+                });
+            }
+
             // Generate booking UUID
             const booking_uuid = uuidv4();
 
@@ -58,9 +68,9 @@ class EnhancedBookingController {
             // Send comprehensive notifications to all parties
             try {
                 // Get user details for notification
-                const userQuery = `SELECT first_name, last_name, email, phone FROM users WHERE (uuid = ? OR CAST(user_id AS CHAR) = ?)`;
+                const userQuery = `SELECT first_name, last_name, email, phone FROM users WHERE uuid = ?`;
                 const userResult = await new Promise((resolve, reject) => {
-                    db.query(userQuery, [user_id, user_id], (err, results) => {
+                    db.query(userQuery, [user_id], (err, results) => {
                         if (err) reject(err);
                         else resolve(results);
                     });
@@ -70,7 +80,7 @@ class EnhancedBookingController {
                 const vendorQuery = `
                     SELECT u.first_name, u.last_name, u.email, vp.vendor_id, vp.business_name
                     FROM vendor_profiles vp 
-                    JOIN users u ON (vp.user_id = u.uuid OR vp.user_id = CAST(u.user_id AS CHAR))
+                    JOIN users u ON vp.user_id = u.user_id 
                     WHERE vp.vendor_id = ?
                 `;
                 const vendorResult = await new Promise((resolve, reject) => {
@@ -231,6 +241,15 @@ class EnhancedBookingController {
                 vendor_id = vendorResult[0].vendor_id;
             }
 
+            const canAcceptBookings = await SubscriptionService.canAcceptBookings(vendor_id);
+            if (!canAcceptBookings) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Premium subscription required to accept bookings.',
+                    requiresSubscription: true
+                });
+            }
+
             // Accept the booking
             const result = await BookingModel.acceptBooking(id, vendor_id);
 
@@ -249,7 +268,7 @@ class EnhancedBookingController {
                            v.first_name as vendor_first_name, v.last_name as vendor_last_name, v.email as vendor_email,
                            vp.package_name, vp.amount
                     FROM bookings b
-                    JOIN users u ON (b.user_id = u.uuid OR b.user_id = CAST(u.user_id AS CHAR))
+                    JOIN users u ON b.user_id = u.uuid
                     JOIN vendor_profiles vpr ON b.vendor_id = vpr.vendor_id
                     JOIN users v ON vpr.user_id = v.user_id
                     LEFT JOIN vendor_packages vp ON b.package_id = vp.package_id
@@ -361,7 +380,7 @@ class EnhancedBookingController {
                            v.first_name as vendor_first_name, v.last_name as vendor_last_name, v.email as vendor_email,
                            vp.package_name, vp.amount
                     FROM bookings b
-                    JOIN users u ON (b.user_id = u.uuid OR b.user_id = CAST(u.user_id AS CHAR))
+                    JOIN users u ON b.user_id = u.uuid
                     JOIN vendor_profiles vpr ON b.vendor_id = vpr.vendor_id
                     JOIN users v ON vpr.user_id = v.user_id
                     LEFT JOIN vendor_packages vp ON b.package_id = vp.package_id
@@ -443,4 +462,3 @@ class EnhancedBookingController {
 }
 
 export default EnhancedBookingController;
-

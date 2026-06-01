@@ -13,9 +13,13 @@ import {
   MenuItem,
 } from "@mui/material";
 import { PhotoCamera, Save } from "@mui/icons-material";
-import api from "../../../services/axiosConfig";
+import axios from "axios";
+import { VITE_API_BASE_URL } from "../../../utils/api";
 import toast from "react-hot-toast";
 import { useAuth } from "../../../context/AuthContext";
+
+// Configure axios to include credentials (cookies) with requests
+axios.defaults.withCredentials = true;
 
 const VendorProfileSetup = () => {
   const { user } = useAuth();
@@ -41,7 +45,9 @@ const VendorProfileSetup = () => {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const res = await api.get('/Service/GetAllServices');
+        const res = await axios.get(`${VITE_API_BASE_URL}/Service/GetAllServices`, {
+          withCredentials: true
+        });
         const data = res.data?.data || res.data;
         if (Array.isArray(data)) {
           const formatted = data.map((item) => ({
@@ -116,9 +122,20 @@ const VendorProfileSetup = () => {
         }
       });
 
-      const response = await api.post('/Vendor/InsertVendor', payload, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      // Get token from localStorage and add as Authorization header
+      const token = localStorage.getItem("token");
+      
+      const response = await axios.post(
+        `${VITE_API_BASE_URL}/Vendor/InsertVendor`,
+        payload,
+        {
+          withCredentials: true,
+          headers: { 
+            "Content-Type": "multipart/form-data",
+            ...(token && { "Authorization": `Bearer ${token}` })
+          },
+        }
+      );
 
       toast.success(response.data.message || "Vendor profile created successfully!");
       
@@ -126,7 +143,7 @@ const VendorProfileSetup = () => {
       if (response.data.requiresSubscription) {
         // Show subscription prompt after a short delay
         setTimeout(() => {
-          toast.success("🎉 Profile created! Now subscribe to start accepting bookings.", {
+          toast.success("Profile created. Upgrade to Premium to unlock dashboard and bookings.", {
             duration: 5000
           });
           // Redirect to dashboard where subscription status will be shown

@@ -1,0 +1,642 @@
+mysqldump: [Warning] Using a password on the command line interface can be insecure.
+-- MySQL dump 10.13  Distrib 8.0.45, for Linux (x86_64)
+--
+-- Host: gateway01.ap-southeast-1.prod.aws.tidbcloud.com    Database: Event_Managment
+-- ------------------------------------------------------
+-- Server version	8.0.11-TiDB-v8.5.3-serverless
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!50503 SET NAMES utf8mb4 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Table structure for table `Event_Images`
+--
+
+DROP TABLE IF EXISTS `Event_Images`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `Event_Images` (
+  `imageID` int unsigned NOT NULL AUTO_INCREMENT,
+  `vendor_id` bigint unsigned NOT NULL,
+  `imageUrl` varchar(512) NOT NULL,
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`imageID`) /*T![clustered_index] CLUSTERED */,
+  KEY `fk_1` (`vendor_id`),
+  CONSTRAINT `fk_1` FOREIGN KEY (`vendor_id`) REFERENCES `vendor_profiles` (`vendor_id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin AUTO_INCREMENT=180001;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `Event_Images`
+--
+
+LOCK TABLES `Event_Images` WRITE;
+/*!40000 ALTER TABLE `Event_Images` DISABLE KEYS */;
+INSERT INTO `Event_Images` VALUES (1,1,'https://res.cloudinary.com/dcbrlmzng/image/upload/v1776078786/eventImages/eventImages/eventImages-1776078784843-999737431.png','2026-04-13 11:13:06'),(2,1,'https://res.cloudinary.com/dcbrlmzng/image/upload/v1776078873/eventImages/eventImages/eventImages-1776078871898-722414809.png','2026-04-13 11:14:34'),(3,1,'https://res.cloudinary.com/dcbrlmzng/image/upload/v1776079273/eventImages/eventImages/eventImages-1776079271913-445078243.png','2026-04-13 11:21:14'),(30002,1,'https://res.cloudinary.com/dcbrlmzng/image/upload/v1777371072/eventImages/eventImages/eventImages-1777371071194-374646342.jpg','2026-04-28 10:11:13'),(90001,30001,'https://res.cloudinary.com/dcbrlmzng/image/upload/v1777969816/eventImages/eventImages/eventImages-1777969815198-870629413.jpg','2026-05-05 08:30:17'),(150001,150001,'https://res.cloudinary.com/dcbrlmzng/image/upload/v1779110026/eventImages/eventImages/eventImages-1779110023188-478606567.jpg','2026-05-18 13:13:47');
+/*!40000 ALTER TABLE `Event_Images` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `booking_otp`
+--
+
+DROP TABLE IF EXISTS `booking_otp`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `booking_otp` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `booking_id` int NOT NULL,
+  `user_id` varchar(255) DEFAULT NULL,
+  `vendor_id` int DEFAULT NULL,
+  `otp` varchar(10) NOT NULL,
+  `is_used` tinyint(1) DEFAULT '0',
+  `expires_at` datetime DEFAULT NULL,
+  `generated_by` enum('user','vendor','admin') DEFAULT 'user',
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`) /*T![clustered_index] CLUSTERED */
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin AUTO_INCREMENT=120001;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `booking_otp`
+--
+
+LOCK TABLES `booking_otp` WRITE;
+/*!40000 ALTER TABLE `booking_otp` DISABLE KEYS */;
+INSERT INTO `booking_otp` VALUES (1,660001,'d2996a86-ea89-4944-b771-81ae17a30eb1',420001,'372028',1,'2026-03-20 11:11:07','vendor','2026-03-20 11:01:07'),(30001,690001,'ff054460-8010-4e59-93f8-f020d98c16c4',420002,'209414',1,'2026-03-22 17:12:43','vendor','2026-03-22 17:02:43'),(60001,750001,'9f2bff4b-2f2b-49d3-ab44-4c1bb0f6bdfa',30001,'686965',1,'2026-05-02 10:05:28','vendor','2026-05-02 09:55:27'),(60002,750001,'9f2bff4b-2f2b-49d3-ab44-4c1bb0f6bdfa',30001,'979312',1,'2026-05-02 15:37:52','vendor','2026-05-02 09:57:51'),(90001,900001,'9f2bff4b-2f2b-49d3-ab44-4c1bb0f6bdfa',30001,'390296',1,'2026-05-19 12:21:39','vendor','2026-05-19 12:11:38');
+/*!40000 ALTER TABLE `booking_otp` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `booking_update`
+--
+
+DROP TABLE IF EXISTS `booking_update`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `booking_update` (
+  `booking_update_id` int NOT NULL AUTO_INCREMENT,
+  `booking_id` int NOT NULL,
+  `booking_completion_status` enum('completed','cancelled','pending') NOT NULL DEFAULT 'pending',
+  `reason` varchar(255) DEFAULT NULL,
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`booking_update_id`) /*T![clustered_index] CLUSTERED */,
+  KEY `fk_booking_update_booking` (`booking_id`),
+  CONSTRAINT `fk_booking_update_booking` FOREIGN KEY (`booking_id`) REFERENCES `event_booking` (`booking_id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `booking_update`
+--
+
+LOCK TABLES `booking_update` WRITE;
+/*!40000 ALTER TABLE `booking_update` DISABLE KEYS */;
+/*!40000 ALTER TABLE `booking_update` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `contact_messages`
+--
+
+DROP TABLE IF EXISTS `contact_messages`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `contact_messages` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) NOT NULL,
+  `email` varchar(150) NOT NULL,
+  `phone` varchar(20) NOT NULL,
+  `message` text NOT NULL,
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`) /*T![clustered_index] CLUSTERED */
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `contact_messages`
+--
+
+LOCK TABLES `contact_messages` WRITE;
+/*!40000 ALTER TABLE `contact_messages` DISABLE KEYS */;
+/*!40000 ALTER TABLE `contact_messages` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `event_booking`
+--
+
+DROP TABLE IF EXISTS `event_booking`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `event_booking` (
+  `booking_id` int NOT NULL AUTO_INCREMENT,
+  `booking_uuid` varchar(100) NOT NULL,
+  `user_id` varchar(255) DEFAULT NULL,
+  `vendor_id` int NOT NULL,
+  `shift_id` int NOT NULL,
+  `package_id` int NOT NULL,
+  `event_address` varchar(255) NOT NULL,
+  `event_date` date NOT NULL,
+  `event_time` time NOT NULL,
+  `special_requirement` text DEFAULT NULL,
+  `status` enum('pending','confirmed','cancelled','completed') DEFAULT 'pending',
+  `admin_approval` enum('pending','approved','rejected') DEFAULT 'pending',
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `removed_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`booking_id`) /*T![clustered_index] CLUSTERED */,
+  UNIQUE KEY `booking_uuid` (`booking_uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin AUTO_INCREMENT=990001;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `event_booking`
+--
+
+LOCK TABLES `event_booking` WRITE;
+/*!40000 ALTER TABLE `event_booking` DISABLE KEYS */;
+INSERT INTO `event_booking` VALUES (660001,'f32d3cbf-aa38-44f0-b045-205dfed5efd9','d2996a86-ea89-4944-b771-81ae17a30eb1',420001,1,1,'jabalpur','2026-03-22','16:30:00','','completed','approved','2026-03-20 10:59:05','2026-03-20 11:02:16',NULL),(660002,'912012ca-7c7c-4001-b6da-f3baaef5f53b','0cb2e429-0fe2-49ab-8d22-9607abc1084b',420001,1,1,'mela ground bareal','2026-04-02','20:31:00','no','cancelled','rejected','2026-03-20 10:59:07','2026-03-20 11:01:14',NULL),(690001,'9b0a8388-7eb0-42a2-a382-a1c8cff42ea5','ff054460-8010-4e59-93f8-f020d98c16c4',420002,2,5,'Barela, Jabalpur Tahsil, Jabalpur, Madhya Pradesh, 483001, India','2026-03-22','09:00:00','desc','completed','approved','2026-03-22 17:00:34','2026-03-22 17:03:22',NULL),(720001,'71a053b9-5d6a-4cc0-a6b7-875d820f1ca6','234fa43b-8d84-4cef-a3e6-841226fbce54',420002,2,2,'Plot no 71 dadda nagar ','2026-03-29','06:09:00','','cancelled','pending','2026-03-22 18:40:45','2026-03-22 18:41:18',NULL),(750001,'ae1ef33b-9272-431c-8e44-aec85dc930e1','9f2bff4b-2f2b-49d3-ab44-4c1bb0f6bdfa',30001,150001,60001,'Adhartal, Jabalpur, Madhya Pradesh, India - 482004','2026-05-24','18:20:00','Not specific','completed','approved','2026-05-02 09:50:41','2026-05-02 09:58:16',NULL),(780001,'1fa2093d-ae8c-4c23-9584-0c2099d4eb40','9f2bff4b-2f2b-49d3-ab44-4c1bb0f6bdfa',30001,150001,60001,'damoh road, Karmeta, Onriya, Adhartal Tahsil, जबलपुर ज़िला, Madhya Pradesh, 482002, India','2026-05-18','17:28:00','','confirmed','pending','2026-05-07 09:58:34','2026-05-18 12:07:45',NULL),(810001,'5e7abf0f-9317-469c-99ad-44ebd75008b7','39b729b0-2d7b-4f7c-a91b-8ce58fa7e155',30001,150001,60001,'Rionjha, Onriya, Adhartal Tahsil, Jabalpur, Madhya Pradesh, 482002, India','2026-05-29','19:29:00','vsdgfd','cancelled','pending','2026-05-14 07:54:14','2026-05-14 07:54:21',NULL),(840001,'e952c5b7-ca9b-41ec-bce8-a036799d80e2','9f2bff4b-2f2b-49d3-ab44-4c1bb0f6bdfa',30001,150001,60001,'Karmeta, Onriya, Adhartal Tahsil, Jabalpur, Madhya Pradesh, 482002, India','2026-06-10','13:33:00','','cancelled','pending','2026-05-16 08:03:57','2026-05-19 12:23:02',NULL),(870001,'0b4c15d3-f2cd-4cc3-a9b0-8adcbb1cef60','d5dc792a-9a04-439d-8bd4-9eee5947fab3',30001,150001,60001,'asa','2026-05-30','22:47:00','','confirmed','pending','2026-05-18 17:15:56','2026-05-19 12:03:05',NULL),(900001,'63b1c3fc-cd3f-4a17-94a5-d2567c0a7f5a','9f2bff4b-2f2b-49d3-ab44-4c1bb0f6bdfa',30001,150001,60001,'Agasaud, Jabalpur, Madhya Pradesh, India - 482002','2026-05-22','00:11:00','','completed','approved','2026-05-19 12:08:23','2026-05-19 12:12:47',NULL),(900002,'86e7a366-ceee-470b-bb6f-ca3f43c53be4','9f2bff4b-2f2b-49d3-ab44-4c1bb0f6bdfa',30001,150001,60001,'MD3404, Harda Khas, हरदा, Madhya Pradesh, 461331, India','2026-05-29','00:11:00','nothing specials lksjetjoij  sjoigjoi joisgjo oiwjegoijewiojiwejo wioijtoiwejoi weoijoig...','cancelled','pending','2026-05-19 12:24:52','2026-05-19 12:25:33',NULL),(930001,'a3425349-d7f8-4590-9b49-9a72543a43a2','550e8400-e29b-41d4-a716-446655440001',1,1,1,'Real Vendor Test','2026-06-15','18:00:00',NULL,'pending','pending','2026-05-23 11:49:26','2026-05-23 11:49:26',NULL),(960001,'af6ec3cc-343b-4b4c-8c8f-37e6bb2d50b7','64ebff3f-8bae-4fb4-9219-390f961f654f',1,120002,30001,'Karmeta, Onriya, Adhartal Tahsil, जबलपुर ज़िला, Madhya Pradesh, 482002, India','2026-05-30','01:15:00','','cancelled','pending','2026-05-26 05:46:48','2026-05-26 05:52:50',NULL),(960002,'a9e5ab3d-ea81-49ff-a581-6dbec09df994','64ebff3f-8bae-4fb4-9219-390f961f654f',30001,150001,60001,'Karmeta, Onriya, Adhartal Tahsil, जबलपुर ज़िला, Madhya Pradesh, 482002, India','2026-05-28','02:09:00','','pending','pending','2026-05-26 06:00:34','2026-05-26 06:00:34',NULL);
+/*!40000 ALTER TABLE `event_booking` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `manual_reservations`
+--
+
+DROP TABLE IF EXISTS `manual_reservations`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `manual_reservations` (
+  `reservation_id` int NOT NULL AUTO_INCREMENT,
+  `vendor_id` int NOT NULL,
+  `shift_id` int NOT NULL,
+  `event_date` date NOT NULL,
+  `reason` text DEFAULT NULL,
+  `reserved_by` varchar(255) DEFAULT NULL,
+  `reserved_by_type` enum('admin','vendor') NOT NULL,
+  `status` enum('active','cancelled') DEFAULT 'active',
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`reservation_id`) /*T![clustered_index] CLUSTERED */
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin AUTO_INCREMENT=330001;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `manual_reservations`
+--
+
+LOCK TABLES `manual_reservations` WRITE;
+/*!40000 ALTER TABLE `manual_reservations` DISABLE KEYS */;
+INSERT INTO `manual_reservations` VALUES (60001,420001,1,'2026-03-20','Manual reservation by vendor','157da328-6be6-486f-aa45-21d73b642fe1','vendor','active','2026-03-20 10:53:12','2026-03-20 10:53:12'),(90001,1,30001,'2026-05-24','Manual reservation by admin','ff054460-8010-4e59-93f8-f020d98c16c4','admin','cancelled','2026-04-30 17:42:01','2026-05-07 09:02:12'),(120001,1,60005,'2026-05-13','It is from manual reservation','ed9cf073-0377-40ec-b094-2021594cf6a0','vendor','cancelled','2026-05-07 08:22:25','2026-05-07 09:00:57'),(120002,1,30001,'2026-05-30','Manual reservation by vendor','ed9cf073-0377-40ec-b094-2021594cf6a0','vendor','active','2026-05-07 09:01:04','2026-05-07 09:01:04'),(150001,30001,150001,'2026-05-19','Manual reservation by vendor','336800eb-7acc-4ad4-88d0-6f0a242461cf','vendor','active','2026-05-07 09:56:50','2026-05-07 09:56:50'),(180001,1,120002,'2026-05-14','Manual reservation by vendor','ed9cf073-0377-40ec-b094-2021594cf6a0','vendor','active','2026-05-12 08:02:30','2026-05-12 08:02:30'),(210001,90001,180001,'2026-05-18','dfdf','03f06851-8296-4613-b04a-9388b57b6b2f','vendor','cancelled','2026-05-14 10:32:38','2026-05-14 10:36:09'),(210002,90001,180001,'2026-05-14','Bbbhh','03f06851-8296-4613-b04a-9388b57b6b2f','vendor','cancelled','2026-05-14 10:36:32','2026-05-14 10:36:38'),(240001,1,120001,'2026-05-19','need to book','ff054460-8010-4e59-93f8-f020d98c16c4','admin','active','2026-05-15 05:52:50','2026-05-15 05:52:50'),(270001,150001,210002,'2026-05-27','Manual reservation by vendor','3811220','vendor','active','2026-05-18 13:13:30','2026-05-18 13:13:30'),(300001,30001,150001,'2026-05-20','Booked','2087886','vendor','active','2026-05-19 12:05:10','2026-05-19 12:05:10');
+/*!40000 ALTER TABLE `manual_reservations` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `notifications`
+--
+
+DROP TABLE IF EXISTS `notifications`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `notifications` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `message` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `type` varchar(80) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `related_booking_id` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `is_read` tinyint(1) DEFAULT '0',
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`) /*T![clustered_index] CLUSTERED */,
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_is_read` (`is_read`),
+  KEY `idx_created_at` (`created_at`),
+  KEY `idx_notifications_user_is_read_created` (`user_id`,`is_read`,`created_at`),
+  KEY `idx_notifications_type` (`type`),
+  KEY `idx_notifications_related_booking_id` (`related_booking_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci AUTO_INCREMENT=630001;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `notifications`
+--
+
+LOCK TABLES `notifications` WRITE;
+/*!40000 ALTER TABLE `notifications` DISABLE KEYS */;
+INSERT INTO `notifications` VALUES (270001,'vendor_420001','New Booking Request','Nishant Kushwaha has requested a booking for premium on 2026-03-22. Please review and respond.','general',NULL,0,'2026-03-20 10:59:05'),(270002,'vendor_420001','New Booking Request','salil tiwari has requested a booking for premium on 2026-04-02. Please review and respond.','general',NULL,0,'2026-03-20 10:59:07'),(270003,'0cb2e429-0fe2-49ab-8d22-9607abc1084b','Booking Accepted','Great news! Nishant Wedding Planner has accepted your booking for Package #1 on Thu Apr 02 2026 00:00:00 GMT+0000 (Coordinated Universal Time). Awaiting admin approval.','general',NULL,1,'2026-03-20 10:59:22'),(270004,'admin','Booking Pending Approval','Vendor Nishant Wedding Planner has accepted a booking from User. Please review for approval.','general',NULL,0,'2026-03-20 10:59:22'),(270005,'d2996a86-ea89-4944-b771-81ae17a30eb1','Booking Accepted','Great news! Nishant Wedding Planner has accepted your booking for Package #1 on Sun Mar 22 2026 00:00:00 GMT+0000 (Coordinated Universal Time). Awaiting admin approval.','general',NULL,0,'2026-03-20 10:59:30'),(270006,'admin','Booking Pending Approval','Vendor Nishant Wedding Planner has accepted a booking from User. Please review for approval.','general',NULL,0,'2026-03-20 10:59:30'),(270007,'d2996a86-ea89-4944-b771-81ae17a30eb1','Booking Approved by Admin! 🎉','Great news! Your booking with Nishant Wedding Planner for premium on Sun Mar 22 2026 00:00:00 GMT+0000 (Coordinated Universal Time) has been approved by our admin team. You will receive an OTP for verification on the event day.','general',NULL,0,'2026-03-20 11:01:03'),(270008,'vendor_420001','Booking Approved by Admin','The booking for premium on Sun Mar 22 2026 00:00:00 GMT+0000 (Coordinated Universal Time) has been approved by admin. OTP verification will begin on the event day.','general',NULL,0,'2026-03-20 11:01:03'),(270009,'d2996a86-ea89-4944-b771-81ae17a30eb1','OTP Code for Booking Verification','Your OTP code is: 372028. Please share this with Nishant Wedding Planner to verify your booking for Sun Mar 22 2026 00:00:00 GMT+0000 (Coordinated Universal Time). Code expires at 11:11:07 AM.','general',NULL,0,'2026-03-20 11:01:07'),(270010,'vendor_420001','Service Completed Successfully','OTP verification completed! Your service for premium on Sun Mar 22 2026 00:00:00 GMT+0000 (Coordinated Universal Time) has been successfully completed and verified.','general',NULL,0,'2026-03-20 11:02:16'),(270011,'admin','Service Completed via OTP','Service between Nishant Kushwaha and Nishant Wedding Planner for Sun Mar 22 2026 00:00:00 GMT+0000 (Coordinated Universal Time) has been completed and verified via OTP.','general',NULL,0,'2026-03-20 11:02:16'),(270012,'d2996a86-ea89-4944-b771-81ae17a30eb1','Service Completed Successfully! 🎉','Your service with Nishant Wedding Planner for premium on Sun Mar 22 2026 00:00:00 GMT+0000 (Coordinated Universal Time) has been completed and verified. Please share your experience by leaving a review!','general',NULL,1,'2026-03-20 11:02:16'),(270013,'d2996a86-ea89-4944-b771-81ae17a30eb1','Share Your Experience! ⭐','How was your experience with Nishant Wedding Planner for premium on Sun Mar 22 2026 00:00:00 GMT+0000 (Coordinated Universal Time)? Click here to leave a review and help other customers!','general',NULL,1,'2026-03-20 11:02:20'),(300001,'vendor_420002','New Booking Request','adrs  admin has requested a booking for sliver on 2026-03-22. Please review and respond.','general',NULL,0,'2026-03-22 17:00:34'),(300002,'admin','Booking Pending Approval','Vendor Info Vender private limited has accepted a booking from User. Please review for approval.','general',NULL,0,'2026-03-22 17:02:08'),(300003,'ff054460-8010-4e59-93f8-f020d98c16c4','Booking Accepted','Great news! Info Vender private limited has accepted your booking for Package #5 on Sun Mar 22 2026 00:00:00 GMT+0000 (Coordinated Universal Time). Awaiting admin approval.','general',NULL,0,'2026-03-22 17:02:08'),(300004,'vendor_420002','Booking Approved by Admin','The booking for sliver on Sun Mar 22 2026 00:00:00 GMT+0000 (Coordinated Universal Time) has been approved by admin. OTP verification will begin on the event day.','general',NULL,0,'2026-03-22 17:02:40'),(300005,'ff054460-8010-4e59-93f8-f020d98c16c4','Booking Approved by Admin! 🎉','Great news! Your booking with Info Vender private limited for sliver on Sun Mar 22 2026 00:00:00 GMT+0000 (Coordinated Universal Time) has been approved by our admin team. You will receive an OTP for verification on the event day.','general',NULL,0,'2026-03-22 17:02:40'),(300006,'ff054460-8010-4e59-93f8-f020d98c16c4','OTP Code for Booking Verification','Your OTP code is: 209414. Please share this with Info Vender private limited to verify your booking for Sun Mar 22 2026 00:00:00 GMT+0000 (Coordinated Universal Time). Code expires at 5:12:43 PM.','general',NULL,1,'2026-03-22 17:02:43'),(300007,'vendor_420002','Service Completed Successfully','OTP verification completed! Your service for sliver on Sun Mar 22 2026 00:00:00 GMT+0000 (Coordinated Universal Time) has been successfully completed and verified.','general',NULL,0,'2026-03-22 17:03:22'),(300008,'ff054460-8010-4e59-93f8-f020d98c16c4','Service Completed Successfully! 🎉','Your service with Info Vender private limited for sliver on Sun Mar 22 2026 00:00:00 GMT+0000 (Coordinated Universal Time) has been completed and verified. Please share your experience by leaving a review!','general',NULL,0,'2026-03-22 17:03:22'),(300009,'admin','Service Completed via OTP','Service between adrs  admin and Info Vender private limited for Sun Mar 22 2026 00:00:00 GMT+0000 (Coordinated Universal Time) has been completed and verified via OTP.','general',NULL,0,'2026-03-22 17:03:22'),(300010,'ff054460-8010-4e59-93f8-f020d98c16c4','Share Your Experience! ⭐','How was your experience with Info Vender private limited for sliver on Sun Mar 22 2026 00:00:00 GMT+0000 (Coordinated Universal Time)? Click here to leave a review and help other customers!','general',NULL,0,'2026-03-22 17:03:24'),(330001,'vendor_420002','New Booking Request','Srajal Vishwakarma has requested a booking for Basic on 2026-03-29. Please review and respond.','general',NULL,0,'2026-03-22 18:40:45'),(360001,'vendor_30001','New Booking Request','nayan malviya has requested a booking for My Package on 2026-05-24. Please review and respond.','booking_created','750001',0,'2026-05-02 09:50:41'),(360002,'9f2bff4b-2f2b-49d3-ab44-4c1bb0f6bdfa','Booking Accepted','Great news!  event managment has accepted your booking for Package #60001 on Sun May 24 2026 00:00:00 GMT+0530 (India Standard Time). Awaiting admin approval.','booking_accepted','750001',0,'2026-05-02 09:50:56'),(360003,'admin','Booking Pending Approval','Vendor  event managment has accepted a booking from User. Please review for approval.','booking_accepted','750001',0,'2026-05-02 09:50:56'),(360004,'vendor_30001','Booking Approved by Admin','The booking for My Package on Sun May 24 2026 00:00:00 GMT+0000 (Coordinated Universal Time) has been approved by admin. OTP verification will begin on the event day.','booking_approved','750001',0,'2026-05-02 09:55:24'),(360005,'9f2bff4b-2f2b-49d3-ab44-4c1bb0f6bdfa','Booking Approved by Admin! 🎉','Great news! Your booking with  event managment for My Package on Sun May 24 2026 00:00:00 GMT+0000 (Coordinated Universal Time) has been approved by our admin team. You will receive an OTP for verification on the event day.','booking_approved','750001',0,'2026-05-02 09:55:24'),(360006,'9f2bff4b-2f2b-49d3-ab44-4c1bb0f6bdfa','OTP Code for Booking Verification','Your OTP code is: 686965. Please share this with  event managment to verify your booking for Sun May 24 2026 00:00:00 GMT+0000 (Coordinated Universal Time). Code expires at 10:05:27 AM.','otp_generated','750001',0,'2026-05-02 09:55:27'),(360007,'9f2bff4b-2f2b-49d3-ab44-4c1bb0f6bdfa','OTP Code for Booking Verification','Your OTP code is: 979312. Please share this with  event managment to verify your booking for Sun May 24 2026 00:00:00 GMT+0530 (India Standard Time). Code expires at 3:37:51 PM.','otp_generated','750001',0,'2026-05-02 09:57:51'),(360008,'vendor_30001','Service Completed Successfully','OTP verification completed! Your service for My Package on Sun May 24 2026 00:00:00 GMT+0530 (India Standard Time) has been successfully completed and verified.','otp_verified','750001',0,'2026-05-02 09:58:16'),(360009,'admin','Service Completed via OTP','Service between nayan malviya and  event managment for Sun May 24 2026 00:00:00 GMT+0530 (India Standard Time) has been completed and verified via OTP.','otp_verified','750001',0,'2026-05-02 09:58:16'),(360010,'9f2bff4b-2f2b-49d3-ab44-4c1bb0f6bdfa','Service Completed Successfully! 🎉','Your service with  event managment for My Package on Sun May 24 2026 00:00:00 GMT+0530 (India Standard Time) has been completed and verified. Please share your experience by leaving a review!','otp_verified','750001',0,'2026-05-02 09:58:16'),(360011,'9f2bff4b-2f2b-49d3-ab44-4c1bb0f6bdfa','Share Your Experience! ⭐','How was your experience with  event managment for My Package on Sun May 24 2026 00:00:00 GMT+0530 (India Standard Time)? Click here to leave a review and help other customers!','booking_completion_reminder','750001',0,'2026-05-02 09:58:18'),(390001,'vendor_30001','New Booking Request','nayan malviya has requested a booking for My Package on 2026-05-18. Please review and respond.','booking_created','780001',0,'2026-05-07 09:58:35'),(420001,'vendor_30001','New Booking Request','Shivanshu Nigam has requested a booking for My Package on 2026-05-29. Please review and respond.','booking_created','810001',0,'2026-05-14 07:54:14'),(450001,'vendor_30001','New Booking Request','nayan malviya has requested a booking for My Package on 2026-06-10. Please review and respond.','booking_created','840001',0,'2026-05-16 08:03:57'),(480001,'9f2bff4b-2f2b-49d3-ab44-4c1bb0f6bdfa','Booking Accepted','Great news! Photo Studio has accepted your booking for Package #60001 on Wed Jun 10 2026 00:00:00 GMT+0000 (Coordinated Universal Time). Awaiting admin approval.','booking_accepted','840001',0,'2026-05-18 12:07:20'),(480002,'admin','Booking Pending Approval','Vendor Photo Studio has accepted a booking from User. Please review for approval.','booking_accepted','840001',0,'2026-05-18 12:07:20'),(480003,'9f2bff4b-2f2b-49d3-ab44-4c1bb0f6bdfa','Booking Accepted','Great news! Photo Studio has accepted your booking for Package #60001 on Mon May 18 2026 00:00:00 GMT+0000 (Coordinated Universal Time). Awaiting admin approval.','booking_accepted','780001',0,'2026-05-18 12:07:45'),(480004,'admin','Booking Pending Approval','Vendor Photo Studio has accepted a booking from User. Please review for approval.','booking_accepted','780001',0,'2026-05-18 12:07:45'),(510001,'vendor_30001','New Booking Request','Nishant Jsjsn has requested a booking for My Package on 2026-05-30. Please review and respond.','booking_created','870001',0,'2026-05-18 17:15:56'),(540001,'d5dc792a-9a04-439d-8bd4-9eee5947fab3','Booking Accepted','Great news! Photo Studio has accepted your booking for Package #60001 on Sat May 30 2026 00:00:00 GMT+0000 (Coordinated Universal Time). Awaiting admin approval.','booking_accepted','870001',0,'2026-05-19 12:03:05'),(540002,'admin','Booking Pending Approval','Vendor Photo Studio has accepted a booking from User. Please review for approval.','booking_accepted','870001',0,'2026-05-19 12:03:05'),(540003,'vendor_30001','New Booking Request','nayan malviya has requested a booking for My Package on 2026-05-22. Please review and respond.','booking_created','900001',0,'2026-05-19 12:08:24'),(540004,'admin','Booking Pending Approval','Vendor Photo Studio has accepted a booking from User. Please review for approval.','booking_accepted','900001',0,'2026-05-19 12:10:56'),(540005,'9f2bff4b-2f2b-49d3-ab44-4c1bb0f6bdfa','Booking Accepted','Great news! Photo Studio has accepted your booking for Package #60001 on Fri May 22 2026 00:00:00 GMT+0000 (Coordinated Universal Time). Awaiting admin approval.','booking_accepted','900001',0,'2026-05-19 12:10:56'),(540006,'9f2bff4b-2f2b-49d3-ab44-4c1bb0f6bdfa','Booking Approved by Admin! 🎉','Great news! Your booking with Photo Studio for My Package on Fri May 22 2026 00:00:00 GMT+0000 (Coordinated Universal Time) has been approved by our admin team. You will receive an OTP for verification on the event day.','booking_approved','900001',0,'2026-05-19 12:11:34'),(540007,'vendor_30001','Booking Approved by Admin','The booking for My Package on Fri May 22 2026 00:00:00 GMT+0000 (Coordinated Universal Time) has been approved by admin. OTP verification will begin on the event day.','booking_approved','900001',0,'2026-05-19 12:11:34'),(540008,'9f2bff4b-2f2b-49d3-ab44-4c1bb0f6bdfa','OTP Code for Booking Verification','Your OTP code is: 390296. Please share this with Photo Studio to verify your booking for Fri May 22 2026 00:00:00 GMT+0000 (Coordinated Universal Time). Code expires at 12:21:38 PM.','otp_generated','900001',0,'2026-05-19 12:11:39'),(540009,'9f2bff4b-2f2b-49d3-ab44-4c1bb0f6bdfa','Service Completed Successfully! 🎉','Your service with Photo Studio for My Package on Fri May 22 2026 00:00:00 GMT+0000 (Coordinated Universal Time) has been completed and verified. Please share your experience by leaving a review!','otp_verified','900001',0,'2026-05-19 12:12:47'),(540010,'admin','Service Completed via OTP','Service between nayan malviya and Photo Studio for Fri May 22 2026 00:00:00 GMT+0000 (Coordinated Universal Time) has been completed and verified via OTP.','otp_verified','900001',0,'2026-05-19 12:12:47'),(540011,'vendor_30001','Service Completed Successfully','OTP verification completed! Your service for My Package on Fri May 22 2026 00:00:00 GMT+0000 (Coordinated Universal Time) has been successfully completed and verified.','otp_verified','900001',0,'2026-05-19 12:12:47'),(540012,'9f2bff4b-2f2b-49d3-ab44-4c1bb0f6bdfa','Share Your Experience! ⭐','How was your experience with Photo Studio for My Package on Fri May 22 2026 00:00:00 GMT+0000 (Coordinated Universal Time)? Click here to leave a review and help other customers!','booking_completion_reminder','900001',0,'2026-05-19 12:12:50'),(540013,'vendor_30001','New Booking Request','nayan malviya has requested a booking for My Package on 2026-05-29. Please review and respond.','booking_created','900002',0,'2026-05-19 12:24:52'),(570001,'vendor_1','New Booking Request','Rajeev Kumar has requested a booking for Mother of all package on 2026-06-15. Please review and respond.','booking_created','930001',0,'2026-05-23 11:49:26'),(600001,'vendor_1','New Booking Request','Sourabh  Patel has requested a booking for Premium on 2026-05-30. Please review and respond.','booking_created','960001',0,'2026-05-26 05:46:48'),(600002,'vendor_30001','New Booking Request','Sourabh  Patel has requested a booking for My Package on 2026-05-28. Please review and respond.','booking_created','960002',0,'2026-05-26 06:00:34');
+/*!40000 ALTER TABLE `notifications` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `password_reset_tokens`
+--
+
+DROP TABLE IF EXISTS `password_reset_tokens`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `password_reset_tokens` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `token` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `expires_at` datetime NOT NULL,
+  `used_at` datetime DEFAULT NULL,
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`) /*T![clustered_index] CLUSTERED */,
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_expires_at` (`expires_at`),
+  KEY `idx_used_at` (`used_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci AUTO_INCREMENT=420001;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `password_reset_tokens`
+--
+
+LOCK TABLES `password_reset_tokens` WRITE;
+/*!40000 ALTER TABLE `password_reset_tokens` DISABLE KEYS */;
+INSERT INTO `password_reset_tokens` VALUES (1,'08b78d7c-bc10-47e4-865a-aba8b3f6cf8b','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIwOGI3OGQ3Yy1iYzEwLTQ3ZTQtODY1YS1hYmE4YjNmNmNmOGIiLCJpYXQiOjE3NzYwODIzMDMsImV4cCI6MTc3NjA4NTkwM30.qvDqMzcyIj57QkLun9tYH1Om-PL3bmFNrZTa6BQm3Gg','2026-04-13 18:41:44',NULL,'2026-04-13 12:11:43'),(2,'08b78d7c-bc10-47e4-865a-aba8b3f6cf8b','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIwOGI3OGQ3Yy1iYzEwLTQ3ZTQtODY1YS1hYmE4YjNmNmNmOGIiLCJpYXQiOjE3NzYwODIzNjMsImV4cCI6MTc3NjA4NTk2M30.sfJ8IgXQ8M4FMfddW78OvGkMzpNEfgsILOY5-lWPtjU','2026-04-13 13:12:43',NULL,'2026-04-13 12:12:43'),(3,'08b78d7c-bc10-47e4-865a-aba8b3f6cf8b','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIwOGI3OGQ3Yy1iYzEwLTQ3ZTQtODY1YS1hYmE4YjNmNmNmOGIiLCJpYXQiOjE3NzYwODI0MjMsImV4cCI6MTc3NjA4NjAyM30.ZnoH3Hn6uCVeTdq9j3WTubxPstThxrwNdZovp5t2zr4','2026-04-13 13:13:44',NULL,'2026-04-13 12:13:43'),(4,'08b78d7c-bc10-47e4-865a-aba8b3f6cf8b','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIwOGI3OGQ3Yy1iYzEwLTQ3ZTQtODY1YS1hYmE4YjNmNmNmOGIiLCJpYXQiOjE3NzYwODI0NTYsImV4cCI6MTc3NjA4NjA1Nn0.XzL-L9VjqCFa-x9e6lInyFzTX7xF6CKQfeKG5S3WyN8','2026-04-13 13:14:16',NULL,'2026-04-13 12:14:16'),(5,'ed9cf073-0377-40ec-b094-2021594cf6a0','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJlZDljZjA3My0wMzc3LTQwZWMtYjA5NC0yMDIxNTk0Y2Y2YTAiLCJpYXQiOjE3NzYwODI1MTIsImV4cCI6MTc3NjA4NjExMn0.obMYiyE2PUpZdhKpd0akMHe7ZdJ0tLLI8SMiOkbzeTc','2026-04-13 13:15:13',NULL,'2026-04-13 12:15:12'),(30001,'9f2bff4b-2f2b-49d3-ab44-4c1bb0f6bdfa','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI5ZjJiZmY0Yi0yZjJiLTQ5ZDMtYWI0NC00YzFiYjBmNmJkZmEiLCJpYXQiOjE3NzYzMTgyMjAsImV4cCI6MTc3NjMyMTgyMH0.SnpwGlui8OWipV_9Mpbi3Ptj-tqDYZQKqDI7ETnqlfI','2026-04-16 06:43:41',NULL,'2026-04-16 05:43:40'),(60001,'336800eb-7acc-4ad4-88d0-6f0a242461cf','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIzMzY4MDBlYi03YWNjLTRhZDQtODhkMC02ZjBhMjQyNDYxY2YiLCJpYXQiOjE3Nzc0NTE1MTgsImV4cCI6MTc3NzQ1NTExOH0.JSPIM9gc9HGbwZSwMy4gGSy5M_XH9IG-Xwc0TAZEfAM','2026-04-29 09:31:59',NULL,'2026-04-29 08:31:58'),(90001,'336800eb-7acc-4ad4-88d0-6f0a242461cf','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIzMzY4MDBlYi03YWNjLTRhZDQtODhkMC02ZjBhMjQyNDYxY2YiLCJpYXQiOjE3Nzc0NTE4OTUsImV4cCI6MTc3NzQ1NTQ5NX0.plXgkLkVP0iB6KXOr83xXM-4yntIccwcTsVqWCc_VmY','2026-04-29 09:38:16',NULL,'2026-04-29 08:38:16'),(90002,'336800eb-7acc-4ad4-88d0-6f0a242461cf','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIzMzY4MDBlYi03YWNjLTRhZDQtODhkMC02ZjBhMjQyNDYxY2YiLCJpYXQiOjE3Nzc0NTIwMTEsImV4cCI6MTc3NzQ1NTYxMX0.dU8qRNjiXYTJy4kxh64iQMubIGR0oWMWqiCPp0kSFSE','2026-04-29 09:40:11',NULL,'2026-04-29 08:40:11'),(90003,'336800eb-7acc-4ad4-88d0-6f0a242461cf','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIzMzY4MDBlYi03YWNjLTRhZDQtODhkMC02ZjBhMjQyNDYxY2YiLCJpYXQiOjE3Nzc0NTIwNTEsImV4cCI6MTc3NzQ1NTY1MX0.26Df8JJ0I3LgyotR7hJC3rmEFCjH6RD4aunktRyaXQQ','2026-04-29 09:40:52',NULL,'2026-04-29 08:40:51'),(120001,'7d65cffb-ec64-4a93-a1cc-12b65e760361','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1dWlkIjoiN2Q2NWNmZmItZWM2NC00YTkzLWExY2MtMTJiNjVlNzYwMzYxIiwiaWF0IjoxNzc4NTcxMTEyLCJleHAiOjE3Nzg1NzQ3MTJ9.kjcfFLlO37ziiZrjeUWWbmplHkU45d9zVrfLDOWmSA4','2026-05-12 08:31:53',NULL,'2026-05-12 07:31:52'),(120002,'7d65cffb-ec64-4a93-a1cc-12b65e760361','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1dWlkIjoiN2Q2NWNmZmItZWM2NC00YTkzLWExY2MtMTJiNjVlNzYwMzYxIiwiaWF0IjoxNzc4NTcxMTM3LCJleHAiOjE3Nzg1NzQ3Mzd9.yu8wuAakAeHaSLROiS_9TK7PB1IOcFL-UW_8XnVTg8g','2026-05-12 08:32:17',NULL,'2026-05-12 07:32:17'),(150001,'ed9cf073-0377-40ec-b094-2021594cf6a0','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1dWlkIjoiZWQ5Y2YwNzMtMDM3Ny00MGVjLWIwOTQtMjAyMTU5NGNmNmEwIiwiaWF0IjoxNzc4NTczNjY3LCJleHAiOjE3Nzg1NzcyNjd9.7JmULEMPXW9zpnWx6WT5mN9MthCiPDJAqyFtB_LwHKM','2026-05-12 09:14:27',NULL,'2026-05-12 08:14:27'),(180001,'39b729b0-2d7b-4f7c-a91b-8ce58fa7e155','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1dWlkIjoiMzliNzI5YjAtMmQ3Yi00ZjdjLWE5MWItOGNlNThmYTdlMTU1IiwiaWF0IjoxNzc4OTE3Njg2LCJleHAiOjE3Nzg5MjEyODZ9.qmKr3h_EVqgNWDaYPBSH5dZAdJY2gu_-6bm7xkxed6A','2026-05-16 08:48:07',NULL,'2026-05-16 07:48:06'),(180002,'39b729b0-2d7b-4f7c-a91b-8ce58fa7e155','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1dWlkIjoiMzliNzI5YjAtMmQ3Yi00ZjdjLWE5MWItOGNlNThmYTdlMTU1IiwiaWF0IjoxNzc4OTE4MTEzLCJleHAiOjE3Nzg5MjE3MTN9.Trk9mr3eKlRp8sxunJit2dNOTYcUpVeNvBFOnXdz4dg','2026-05-16 08:55:14',NULL,'2026-05-16 07:55:13'),(180003,'39b729b0-2d7b-4f7c-a91b-8ce58fa7e155','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1dWlkIjoiMzliNzI5YjAtMmQ3Yi00ZjdjLWE5MWItOGNlNThmYTdlMTU1IiwiaWF0IjoxNzc4OTE4MTY0LCJleHAiOjE3Nzg5MjE3NjR9.m2d2W26jK_FQY0AlguvfoDaNXuWIkZ3VG5cTqDkCBEY','2026-05-16 08:56:04',NULL,'2026-05-16 07:56:04'),(210001,'39b729b0-2d7b-4f7c-a91b-8ce58fa7e155','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1dWlkIjoiMzliNzI5YjAtMmQ3Yi00ZjdjLWE5MWItOGNlNThmYTdlMTU1IiwiaWF0IjoxNzc4OTI1NDg0LCJleHAiOjE3Nzg5MjkwODR9.DuZloMIXpnevFfoYtJcKihpMzRFUJT4DgRvh0lNMipY','2026-05-16 10:58:04',NULL,'2026-05-16 09:58:04'),(240001,'70363225-3ed6-4cde-979b-173425003264','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1dWlkIjoiNzAzNjMyMjUtM2VkNi00Y2RlLTk3OWItMTczNDI1MDAzMjY0IiwiaWF0IjoxNzc4OTMwMjUwLCJleHAiOjE3Nzg5MzM4NTB9.ebTL6ZtTX9IitF9eXos2eKA1SYb9QzscVZsaOeCh_GE','2026-05-16 12:17:30','2026-05-16 11:19:04','2026-05-16 11:17:30'),(240002,'03225984-3aee-4a72-a29a-9c31de757eb5','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1dWlkIjoiMDMyMjU5ODQtM2FlZS00YTcyLWEyOWEtOWMzMWRlNzU3ZWI1IiwiaWF0IjoxNzc4OTM0MjQxLCJleHAiOjE3Nzg5Mzc4NDF9.IbOC_Bfgg6bhvE0F99OoDDSLTTyu-2MhGPAQKo7Ngls','2026-05-16 13:24:01','2026-05-16 12:24:48','2026-05-16 12:24:01'),(270001,'b968f52b-5850-4ae4-9227-f826b663c483','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1dWlkIjoiYjk2OGY1MmItNTg1MC00YWU0LTkyMjctZjgyNmI2NjNjNDgzIiwiaWF0IjoxNzc4OTg3Nzk5LCJleHAiOjE3Nzg5OTEzOTl9.RPW1HEmHWG6ta6p4JU11euVvvXx-c3tPQfQpGVfJkEs','2026-05-17 04:16:39',NULL,'2026-05-17 03:16:39'),(300001,'9f2bff4b-2f2b-49d3-ab44-4c1bb0f6bdfa','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1dWlkIjoiOWYyYmZmNGItMmYyYi00OWQzLWFiNDQtNGMxYmIwZjZiZGZhIiwiaWF0IjoxNzc5MTEwNTA5LCJleHAiOjE3Nzk3MTUzMDl9.UVjaNgEwiwmYNvwhGDl1UatLl3QvZ3OosXaE1_EAHSs','2026-05-18 19:51:49','2026-05-18 13:23:21','2026-05-18 13:21:49'),(330001,'9f2bff4b-2f2b-49d3-ab44-4c1bb0f6bdfa','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1dWlkIjoiOWYyYmZmNGItMmYyYi00OWQzLWFiNDQtNGMxYmIwZjZiZGZhIiwiaWF0IjoxNzc5MTY2NDc4LCJleHAiOjE3Nzk3NzEyNzh9.UnkSi0GqaF2JXQP1KaDVvqBfXzkB0bFs_NBWgQvi5LM','2026-05-19 05:54:39',NULL,'2026-05-19 04:54:38'),(330002,'9f2bff4b-2f2b-49d3-ab44-4c1bb0f6bdfa','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1dWlkIjoiOWYyYmZmNGItMmYyYi00OWQzLWFiNDQtNGMxYmIwZjZiZGZhIiwiaWF0IjoxNzc5MTY2NTE1LCJleHAiOjE3Nzk3NzEzMTV9.VbEDihncbFTP1xAMuvtf9xRMA1U8qpE0kN3jN_asvP4','2026-05-19 05:55:15',NULL,'2026-05-19 04:55:15'),(330003,'06205eac-575b-48cb-bd20-eccc04a3488b','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1dWlkIjoiMDYyMDVlYWMtNTc1Yi00OGNiLWJkMjAtZWNjYzA0YTM0ODhiIiwiaWF0IjoxNzc5MTY2NTIzLCJleHAiOjE3Nzk3NzEzMjN9.KfN7Co3YgPG0eHQIMA8t2xF0r8hia6qztpvNhck3Mas','2026-05-19 05:55:23',NULL,'2026-05-19 04:55:23'),(330004,'9f2bff4b-2f2b-49d3-ab44-4c1bb0f6bdfa','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1dWlkIjoiOWYyYmZmNGItMmYyYi00OWQzLWFiNDQtNGMxYmIwZjZiZGZhIiwiaWF0IjoxNzc5MTY2NTQwLCJleHAiOjE3Nzk3NzEzNDB9.cgQeRNxAbMOxxmjM8_ecV7ccl4tGJX-QGgKj9U3jjsE','2026-05-19 05:55:41',NULL,'2026-05-19 04:55:40'),(330005,'06205eac-575b-48cb-bd20-eccc04a3488b','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1dWlkIjoiMDYyMDVlYWMtNTc1Yi00OGNiLWJkMjAtZWNjYzA0YTM0ODhiIiwiaWF0IjoxNzc5MTY2NTg1LCJleHAiOjE3Nzk3NzEzODV9.L1wX677On8QdlmLNyyks3MhaprkGydcicd5-Ncdv05c','2026-05-19 05:56:26',NULL,'2026-05-19 04:56:25'),(360001,'ed9cf073-0377-40ec-b094-2021594cf6a0','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1dWlkIjoiZWQ5Y2YwNzMtMDM3Ny00MGVjLWIwOTQtMjAyMTU5NGNmNmEwIiwiaWF0IjoxNzc5MTgyNTIzLCJleHAiOjE3Nzk3ODczMjN9.YWx_RatuQybIKQWjiRNJbyBzwyqKViiUmGnDDVg5-ls','2026-05-19 10:22:03',NULL,'2026-05-19 09:22:03'),(390001,'ed9cf073-0377-40ec-b094-2021594cf6a0','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1dWlkIjoiZWQ5Y2YwNzMtMDM3Ny00MGVjLWIwOTQtMjAyMTU5NGNmNmEwIiwiaWF0IjoxNzc5MTg0MTU2LCJleHAiOjE3Nzk3ODg5NTZ9.R2iL-ukaLzVBa96M_G9DL_oYsgRdoDRYCV4GeHy2IVc','2026-05-19 10:49:17',NULL,'2026-05-19 09:49:16');
+/*!40000 ALTER TABLE `password_reset_tokens` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `review_and_rating`
+--
+
+DROP TABLE IF EXISTS `review_and_rating`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `review_and_rating` (
+  `rating_id` int NOT NULL AUTO_INCREMENT,
+  `rating_uuid` varchar(100) NOT NULL,
+  `user_id` int NOT NULL,
+  `booking_id` int NOT NULL,
+  `vendor_id` int NOT NULL,
+  `rating` tinyint NOT NULL,
+  `review` text DEFAULT NULL,
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`rating_id`) /*T![clustered_index] CLUSTERED */,
+  UNIQUE KEY `rating_uuid` (`rating_uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `review_and_rating`
+--
+
+LOCK TABLES `review_and_rating` WRITE;
+/*!40000 ALTER TABLE `review_and_rating` DISABLE KEYS */;
+/*!40000 ALTER TABLE `review_and_rating` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `schema_migrations`
+--
+
+DROP TABLE IF EXISTS `schema_migrations`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `schema_migrations` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `file_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `batch` int NOT NULL,
+  `applied_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`) /*T![clustered_index] CLUSTERED */,
+  KEY `idx_batch` (`batch`),
+  UNIQUE KEY `file_name` (`file_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci AUTO_INCREMENT=30001;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `schema_migrations`
+--
+
+LOCK TABLES `schema_migrations` WRITE;
+/*!40000 ALTER TABLE `schema_migrations` DISABLE KEYS */;
+INSERT INTO `schema_migrations` VALUES (1,'001_normalize_subservices.sql',1,'2026-04-09 03:56:20'),(2,'002_create_password_reset_tokens_table.sql',1,'2026-04-09 03:56:20'),(3,'003_extend_notifications_table.sql',2,'2026-04-09 03:56:20');
+/*!40000 ALTER TABLE `schema_migrations` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `service_categories`
+--
+
+DROP TABLE IF EXISTS `service_categories`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `service_categories` (
+  `category_id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `category_name` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
+  `icon_url` varchar(255) DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `sort_order` int DEFAULT '0',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`category_id`) /*T![clustered_index] CLUSTERED */,
+  UNIQUE KEY `category_name` (`category_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin AUTO_INCREMENT=300001;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `service_categories`
+--
+
+LOCK TABLES `service_categories` WRITE;
+/*!40000 ALTER TABLE `service_categories` DISABLE KEYS */;
+INSERT INTO `service_categories` VALUES (270001,'Wedding Event','provide all type of wedding event vendors for all services','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773865884/Service_Icons/Service_Icons/serviceIcon-1773865883363-590123461.webp',1,0,'2026-03-18 20:31:24'),(270002,'Birthday Party  Event','provide all type of birthday party event vendors for all services','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773865924/Service_Icons/Service_Icons/serviceIcon-1773865923916-254798757.webp',1,0,'2026-03-18 20:32:05'),(270003,'Kitty Party Event','provide all type of kitty party event vendors for all services','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773865968/Service_Icons/Service_Icons/serviceIcon-1773865967560-787237097.webp',1,0,'2026-03-18 20:32:49'),(270004,'Bhagwat Katha Event','provide all type of Bhagwat Katha event vendors for all services','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866017/Service_Icons/Service_Icons/serviceIcon-1773866017009-552952908.webp',1,0,'2026-03-18 20:33:38'),(270005,'Office Seminar and Public Conference','provide all type of office seminar and public conference vendors for all services','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866116/Service_Icons/Service_Icons/serviceIcon-1773866115622-658486624.webp',1,0,'2026-03-18 20:35:17');
+/*!40000 ALTER TABLE `service_categories` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `subservices`
+--
+
+DROP TABLE IF EXISTS `subservices`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `subservices` (
+  `subservice_id` int NOT NULL AUTO_INCREMENT,
+  `service_category_id` int NOT NULL,
+  `subservice_name` varchar(255) NOT NULL,
+  `description` text NOT NULL,
+  `icon_url` varchar(255) DEFAULT NULL,
+  `is_active` tinyint(1) DEFAULT '1',
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`subservice_id`) /*T![clustered_index] CLUSTERED */
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin AUTO_INCREMENT=150003;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `subservices`
+--
+
+LOCK TABLES `subservices` WRITE;
+/*!40000 ALTER TABLE `subservices` DISABLE KEYS */;
+INSERT INTO `subservices` VALUES (90001,270001,'Party Hall and Garden ','we are provieding a good location and space for your event ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866321/Subservice_Icons/Subservice_Icons/icon_url-1773866320041-784679072.webp',1,'2026-03-18 20:38:41'),(90002,270002,'Party Hall and Garden ','we are provieding a good location and space for your event ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866321/Subservice_Icons/Subservice_Icons/icon_url-1773866320041-784679072.webp',1,'2026-03-18 20:38:41'),(90003,270003,'Party Hall and Garden ','we are provieding a good location and space for your event ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866321/Subservice_Icons/Subservice_Icons/icon_url-1773866320041-784679072.webp',1,'2026-03-18 20:38:41'),(90004,270005,'Party Hall and Garden ','we are provieding a good location and space for your event ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866321/Subservice_Icons/Subservice_Icons/icon_url-1773866320041-784679072.webp',1,'2026-03-18 20:38:41'),(90005,270004,'Party Hall and Garden ','we are provieding a good location and space for your event ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866321/Subservice_Icons/Subservice_Icons/icon_url-1773866320041-784679072.webp',1,'2026-03-18 20:38:41'),(90006,270003,'Tent Egency and light ','we are provieding the best light and tent service for your event ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866459/Subservice_Icons/Subservice_Icons/icon_url-1773866458486-875798193.webp',1,'2026-03-18 20:41:00'),(90007,270004,'Tent Egency and light ','we are provieding the best light and tent service for your event ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866459/Subservice_Icons/Subservice_Icons/icon_url-1773866458486-875798193.webp',1,'2026-03-18 20:41:00'),(90008,270005,'Tent Egency and light ','we are provieding the best light and tent service for your event ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866459/Subservice_Icons/Subservice_Icons/icon_url-1773866458486-875798193.webp',1,'2026-03-18 20:41:00'),(90009,270002,'Tent Egency and light ','we are provieding the best light and tent service for your event ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866459/Subservice_Icons/Subservice_Icons/icon_url-1773866458486-875798193.webp',1,'2026-03-18 20:41:00'),(90010,270001,'Tent Egency and light ','we are provieding the best light and tent service for your event ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866459/Subservice_Icons/Subservice_Icons/icon_url-1773866458486-875798193.webp',1,'2026-03-18 20:41:00'),(90011,270002,'Musical Accompaniment / Arkestra','we are provieding best musical Accompaniment services ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866752/Subservice_Icons/Subservice_Icons/icon_url-1773866751477-910624708.webp',1,'2026-03-18 20:45:53'),(90012,270001,'Musical Accompaniment / Arkestra','we are provieding best musical Accompaniment services ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866752/Subservice_Icons/Subservice_Icons/icon_url-1773866751477-910624708.webp',1,'2026-03-18 20:45:53'),(90013,270004,'Musical Accompaniment / Arkestra','we are provieding best musical Accompaniment services ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866752/Subservice_Icons/Subservice_Icons/icon_url-1773866751477-910624708.webp',1,'2026-03-18 20:45:53'),(90014,270001,'disco light ','we are providing best disco light services ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866816/Subservice_Icons/Subservice_Icons/icon_url-1773866815941-379566846.webp',1,'2026-03-18 20:46:57'),(90015,270002,'dj and sound system','we are provieding the best sound and dj system ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866901/Subservice_Icons/Subservice_Icons/icon_url-1773866900569-68328116.webp',1,'2026-03-18 20:48:22'),(90016,270001,'dj and sound system','we are provieding the best sound and dj system ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866901/Subservice_Icons/Subservice_Icons/icon_url-1773866900569-68328116.webp',1,'2026-03-18 20:48:22'),(90017,270003,'dj and sound system','we are provieding the best sound and dj system ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866901/Subservice_Icons/Subservice_Icons/icon_url-1773866900569-68328116.webp',1,'2026-03-18 20:48:22'),(90018,270004,'dj and sound system','we are provieding the best sound and dj system ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866901/Subservice_Icons/Subservice_Icons/icon_url-1773866900569-68328116.webp',1,'2026-03-18 20:48:22'),(90019,270001,'fireworks','we are provieding the best fireworks services ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867012/Subservice_Icons/Subservice_Icons/icon_url-1773867010922-675184608.webp',1,'2026-03-18 20:50:14'),(90020,270004,'fireworks','we are provieding the best fireworks services ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867012/Subservice_Icons/Subservice_Icons/icon_url-1773867010922-675184608.webp',1,'2026-03-18 20:50:14'),(90021,270001,'Ketars ','we provied Ketars services ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867156/Subservice_Icons/Subservice_Icons/icon_url-1773867155190-386909659.webp',1,'2026-03-18 20:52:36'),(90022,270002,'Ketars ','we provied Ketars services ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867156/Subservice_Icons/Subservice_Icons/icon_url-1773867155190-386909659.webp',1,'2026-03-18 20:52:36'),(90023,270003,'Ketars ','we provied Ketars services ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867156/Subservice_Icons/Subservice_Icons/icon_url-1773867155190-386909659.webp',1,'2026-03-18 20:52:36'),(90024,270004,'Ketars ','we provied Ketars services ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867156/Subservice_Icons/Subservice_Icons/icon_url-1773867155190-386909659.webp',1,'2026-03-18 20:52:36'),(90025,270001,'flower decorestion ','we provied flower decorestion','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867223/Subservice_Icons/Subservice_Icons/icon_url-1773867222269-19679381.webp',1,'2026-03-18 20:53:44'),(90026,270002,'flower decorestion ','we provied flower decorestion','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867223/Subservice_Icons/Subservice_Icons/icon_url-1773867222269-19679381.webp',1,'2026-03-18 20:53:44'),(90027,270004,'flower decorestion ','we provied flower decorestion','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867223/Subservice_Icons/Subservice_Icons/icon_url-1773867222269-19679381.webp',1,'2026-03-18 20:53:44'),(90028,270001,'Entry and pyro ballon decorestion','Entry and pyro ballon decorestion services','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867327/Subservice_Icons/Subservice_Icons/icon_url-1773867326211-789390706.webp',1,'2026-03-18 20:55:27'),(90029,270002,'Entry and pyro ballon decorestion','Entry and pyro ballon decorestion services','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867327/Subservice_Icons/Subservice_Icons/icon_url-1773867326211-789390706.webp',1,'2026-03-18 20:55:27'),(90030,270004,'Entry and pyro ballon decorestion','Entry and pyro ballon decorestion services','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867327/Subservice_Icons/Subservice_Icons/icon_url-1773867326211-789390706.webp',1,'2026-03-18 20:55:27'),(90031,270001,'parlor service ','we are providing mackup and parlor services ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867437/Subservice_Icons/Subservice_Icons/icon_url-1773867436704-876611970.webp',1,'2026-03-18 20:57:18'),(90032,270003,'parlor service ','we are providing mackup and parlor services ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867437/Subservice_Icons/Subservice_Icons/icon_url-1773867436704-876611970.webp',1,'2026-03-18 20:57:18'),(90033,270002,'parlor service ','we are providing mackup and parlor services ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867437/Subservice_Icons/Subservice_Icons/icon_url-1773867436704-876611970.webp',1,'2026-03-18 20:57:18'),(90034,270005,'parlor service ','we are providing mackup and parlor services ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867437/Subservice_Icons/Subservice_Icons/icon_url-1773867436704-876611970.webp',1,'2026-03-18 20:57:18'),(90035,270001,'Band party services ','Band party services ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867547/Subservice_Icons/Subservice_Icons/icon_url-1773867546700-435305032.webp',1,'2026-03-18 20:59:08'),(90036,270002,'Band party services ','Band party services ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867547/Subservice_Icons/Subservice_Icons/icon_url-1773867546700-435305032.webp',1,'2026-03-18 20:59:08'),(90037,270004,'Band party services ','Band party services ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867547/Subservice_Icons/Subservice_Icons/icon_url-1773867546700-435305032.webp',1,'2026-03-18 20:59:08'),(90038,270001,'Pandit ji','Pandit ji','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867632/Subservice_Icons/Subservice_Icons/icon_url-1773867631318-102060727.webp',1,'2026-03-18 21:00:33'),(90039,270004,'Pandit ji','Pandit ji','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867632/Subservice_Icons/Subservice_Icons/icon_url-1773867631318-102060727.webp',1,'2026-03-18 21:00:33'),(120001,270001,'Mehendi Service','Our Bridal Mehendi services are designed to make your wedding even more special. We create stunning, personalized designs that reflect tradition, elegance, and your unique style.','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773920188/Subservice_Icons/Subservice_Icons/icon_url-1773920187156-238587656.jpg',1,'2026-03-19 11:36:29'),(120002,270001,'Wedding Carriage (Baggi) Service','Grand royal entry with decorated wedding carriage.','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773920382/Subservice_Icons/Subservice_Icons/icon_url-1773920381027-135550885.jpg',1,'2026-03-19 11:39:43'),(120003,270001,'Wedding Photography & Videography','Creative photography for unforgettable events','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773920872/Subservice_Icons/Subservice_Icons/icon_url-1773920870607-453808113.jpg',1,'2026-03-19 11:47:52'),(120004,270002,'Wedding Photography & Videography','Creative photography for unforgettable events','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773920872/Subservice_Icons/Subservice_Icons/icon_url-1773920870607-453808113.jpg',1,'2026-03-19 11:47:52'),(120005,270003,'Wedding Photography & Videography','Creative photography for unforgettable events','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773920872/Subservice_Icons/Subservice_Icons/icon_url-1773920870607-453808113.jpg',1,'2026-03-19 11:47:52'),(120006,270004,'Wedding Photography & Videography','Creative photography for unforgettable events','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773920872/Subservice_Icons/Subservice_Icons/icon_url-1773920870607-453808113.jpg',1,'2026-03-19 11:47:52'),(120007,270005,'Wedding Photography & Videography','Creative photography for unforgettable events','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773920872/Subservice_Icons/Subservice_Icons/icon_url-1773920870607-453808113.jpg',1,'2026-03-19 11:47:52'),(120008,270001,'Traditional Turban (Pagdi) Tying Service','Royal pagdi styling for a traditional look.','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773920981/Subservice_Icons/Subservice_Icons/icon_url-1773920979826-236504721.jpg',1,'2026-03-19 11:49:41'),(120009,270002,'Fun & Entertainment Services','Fun-filled activities for an unforgettable party.','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773921442/Subservice_Icons/Subservice_Icons/icon_url-1773921440803-522254971.jpg',1,'2026-03-19 11:57:23'),(120010,270002,'Birthday Cake & Custom Cakes','Delicious cakes crafted for your special celebration.','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773921562/Subservice_Icons/Subservice_Icons/icon_url-1773921560865-121607291.jpg',1,'2026-03-19 11:59:22'),(120011,270001,'Security & Crowd Management [Volunteer]','Volunteers ensuring safe and organized crowd flow.','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773922734/Subservice_Icons/Subservice_Icons/icon_url-1773922732544-123006075.webp',1,'2026-03-19 12:18:55'),(120012,270005,'Security & Crowd Management [Volunteer]','Volunteers ensuring safe and organized crowd flow.','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773922734/Subservice_Icons/Subservice_Icons/icon_url-1773922732544-123006075.webp',1,'2026-03-19 12:18:55'),(120013,270004,'Security & Crowd Management [Volunteer]','Volunteers ensuring safe and organized crowd flow.','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773922734/Subservice_Icons/Subservice_Icons/icon_url-1773922732544-123006075.webp',1,'2026-03-19 12:18:55');
+/*!40000 ALTER TABLE `subservices` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `subservices_backup_old`
+--
+
+DROP TABLE IF EXISTS `subservices_backup_old`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `subservices_backup_old` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `service_category_id` int NOT NULL,
+  `subservice_name` varchar(255) NOT NULL,
+  `description` text NOT NULL,
+  `icon_url` varchar(255) DEFAULT NULL,
+  `is_active` tinyint(1) DEFAULT '1',
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`) /*T![clustered_index] CLUSTERED */
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin AUTO_INCREMENT=150001;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `subservices_backup_old`
+--
+
+LOCK TABLES `subservices_backup_old` WRITE;
+/*!40000 ALTER TABLE `subservices_backup_old` DISABLE KEYS */;
+INSERT INTO `subservices_backup_old` VALUES (90001,270001,'Party Hall and Garden ','we are provieding a good location and space for your event ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866321/Subservice_Icons/Subservice_Icons/icon_url-1773866320041-784679072.webp',1,'2026-03-18 20:38:41'),(90002,270002,'Party Hall and Garden ','we are provieding a good location and space for your event ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866321/Subservice_Icons/Subservice_Icons/icon_url-1773866320041-784679072.webp',1,'2026-03-18 20:38:41'),(90003,270003,'Party Hall and Garden ','we are provieding a good location and space for your event ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866321/Subservice_Icons/Subservice_Icons/icon_url-1773866320041-784679072.webp',1,'2026-03-18 20:38:41'),(90004,270005,'Party Hall and Garden ','we are provieding a good location and space for your event ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866321/Subservice_Icons/Subservice_Icons/icon_url-1773866320041-784679072.webp',1,'2026-03-18 20:38:41'),(90005,270004,'Party Hall and Garden ','we are provieding a good location and space for your event ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866321/Subservice_Icons/Subservice_Icons/icon_url-1773866320041-784679072.webp',1,'2026-03-18 20:38:41'),(90006,270003,'Tent Egency and light ','we are provieding the best light and tent service for your event ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866459/Subservice_Icons/Subservice_Icons/icon_url-1773866458486-875798193.webp',1,'2026-03-18 20:41:00'),(90007,270004,'Tent Egency and light ','we are provieding the best light and tent service for your event ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866459/Subservice_Icons/Subservice_Icons/icon_url-1773866458486-875798193.webp',1,'2026-03-18 20:41:00'),(90008,270005,'Tent Egency and light ','we are provieding the best light and tent service for your event ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866459/Subservice_Icons/Subservice_Icons/icon_url-1773866458486-875798193.webp',1,'2026-03-18 20:41:00'),(90009,270002,'Tent Egency and light ','we are provieding the best light and tent service for your event ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866459/Subservice_Icons/Subservice_Icons/icon_url-1773866458486-875798193.webp',1,'2026-03-18 20:41:00'),(90010,270001,'Tent Egency and light ','we are provieding the best light and tent service for your event ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866459/Subservice_Icons/Subservice_Icons/icon_url-1773866458486-875798193.webp',1,'2026-03-18 20:41:00'),(90011,270002,'Musical Accompaniment / Arkestra','we are provieding best musical Accompaniment services ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866752/Subservice_Icons/Subservice_Icons/icon_url-1773866751477-910624708.webp',1,'2026-03-18 20:45:53'),(90012,270001,'Musical Accompaniment / Arkestra','we are provieding best musical Accompaniment services ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866752/Subservice_Icons/Subservice_Icons/icon_url-1773866751477-910624708.webp',1,'2026-03-18 20:45:53'),(90013,270004,'Musical Accompaniment / Arkestra','we are provieding best musical Accompaniment services ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866752/Subservice_Icons/Subservice_Icons/icon_url-1773866751477-910624708.webp',1,'2026-03-18 20:45:53'),(90014,270001,'disco light ','we are providing best disco light services ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866816/Subservice_Icons/Subservice_Icons/icon_url-1773866815941-379566846.webp',1,'2026-03-18 20:46:57'),(90015,270002,'dj and sound system','we are provieding the best sound and dj system ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866901/Subservice_Icons/Subservice_Icons/icon_url-1773866900569-68328116.webp',1,'2026-03-18 20:48:22'),(90016,270001,'dj and sound system','we are provieding the best sound and dj system ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866901/Subservice_Icons/Subservice_Icons/icon_url-1773866900569-68328116.webp',1,'2026-03-18 20:48:22'),(90017,270003,'dj and sound system','we are provieding the best sound and dj system ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866901/Subservice_Icons/Subservice_Icons/icon_url-1773866900569-68328116.webp',1,'2026-03-18 20:48:22'),(90018,270004,'dj and sound system','we are provieding the best sound and dj system ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866901/Subservice_Icons/Subservice_Icons/icon_url-1773866900569-68328116.webp',1,'2026-03-18 20:48:22'),(90019,270001,'fireworks','we are provieding the best fireworks services ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867012/Subservice_Icons/Subservice_Icons/icon_url-1773867010922-675184608.webp',1,'2026-03-18 20:50:14'),(90020,270004,'fireworks','we are provieding the best fireworks services ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867012/Subservice_Icons/Subservice_Icons/icon_url-1773867010922-675184608.webp',1,'2026-03-18 20:50:14'),(90021,270001,'Ketars ','we provied Ketars services ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867156/Subservice_Icons/Subservice_Icons/icon_url-1773867155190-386909659.webp',1,'2026-03-18 20:52:36'),(90022,270002,'Ketars ','we provied Ketars services ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867156/Subservice_Icons/Subservice_Icons/icon_url-1773867155190-386909659.webp',1,'2026-03-18 20:52:36'),(90023,270003,'Ketars ','we provied Ketars services ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867156/Subservice_Icons/Subservice_Icons/icon_url-1773867155190-386909659.webp',1,'2026-03-18 20:52:36'),(90024,270004,'Ketars ','we provied Ketars services ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867156/Subservice_Icons/Subservice_Icons/icon_url-1773867155190-386909659.webp',1,'2026-03-18 20:52:36'),(90025,270001,'flower decorestion ','we provied flower decorestion','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867223/Subservice_Icons/Subservice_Icons/icon_url-1773867222269-19679381.webp',1,'2026-03-18 20:53:44'),(90026,270002,'flower decorestion ','we provied flower decorestion','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867223/Subservice_Icons/Subservice_Icons/icon_url-1773867222269-19679381.webp',1,'2026-03-18 20:53:44'),(90027,270004,'flower decorestion ','we provied flower decorestion','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867223/Subservice_Icons/Subservice_Icons/icon_url-1773867222269-19679381.webp',1,'2026-03-18 20:53:44'),(90028,270001,'Entry and pyro ballon decorestion','Entry and pyro ballon decorestion services','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867327/Subservice_Icons/Subservice_Icons/icon_url-1773867326211-789390706.webp',1,'2026-03-18 20:55:27'),(90029,270002,'Entry and pyro ballon decorestion','Entry and pyro ballon decorestion services','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867327/Subservice_Icons/Subservice_Icons/icon_url-1773867326211-789390706.webp',1,'2026-03-18 20:55:27'),(90030,270004,'Entry and pyro ballon decorestion','Entry and pyro ballon decorestion services','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867327/Subservice_Icons/Subservice_Icons/icon_url-1773867326211-789390706.webp',1,'2026-03-18 20:55:27'),(90031,270001,'parlor service ','we are providing mackup and parlor services ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867437/Subservice_Icons/Subservice_Icons/icon_url-1773867436704-876611970.webp',1,'2026-03-18 20:57:18'),(90032,270003,'parlor service ','we are providing mackup and parlor services ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867437/Subservice_Icons/Subservice_Icons/icon_url-1773867436704-876611970.webp',1,'2026-03-18 20:57:18'),(90033,270002,'parlor service ','we are providing mackup and parlor services ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867437/Subservice_Icons/Subservice_Icons/icon_url-1773867436704-876611970.webp',1,'2026-03-18 20:57:18'),(90034,270005,'parlor service ','we are providing mackup and parlor services ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867437/Subservice_Icons/Subservice_Icons/icon_url-1773867436704-876611970.webp',1,'2026-03-18 20:57:18'),(90035,270001,'Band party services ','Band party services ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867547/Subservice_Icons/Subservice_Icons/icon_url-1773867546700-435305032.webp',1,'2026-03-18 20:59:08'),(90036,270002,'Band party services ','Band party services ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867547/Subservice_Icons/Subservice_Icons/icon_url-1773867546700-435305032.webp',1,'2026-03-18 20:59:08'),(90037,270004,'Band party services ','Band party services ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867547/Subservice_Icons/Subservice_Icons/icon_url-1773867546700-435305032.webp',1,'2026-03-18 20:59:08'),(90038,270001,'Pandit ji','Pandit ji','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867632/Subservice_Icons/Subservice_Icons/icon_url-1773867631318-102060727.webp',1,'2026-03-18 21:00:33'),(90039,270004,'Pandit ji','Pandit ji','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867632/Subservice_Icons/Subservice_Icons/icon_url-1773867631318-102060727.webp',1,'2026-03-18 21:00:33'),(120001,270001,'Mehendi Service','Our Bridal Mehendi services are designed to make your wedding even more special. We create stunning, personalized designs that reflect tradition, elegance, and your unique style.','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773920188/Subservice_Icons/Subservice_Icons/icon_url-1773920187156-238587656.jpg',1,'2026-03-19 11:36:29'),(120002,270001,'Wedding Carriage (Baggi) Service','Grand royal entry with decorated wedding carriage.','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773920382/Subservice_Icons/Subservice_Icons/icon_url-1773920381027-135550885.jpg',1,'2026-03-19 11:39:43'),(120003,270001,'Wedding Photography & Videography','Creative photography for unforgettable events','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773920872/Subservice_Icons/Subservice_Icons/icon_url-1773920870607-453808113.jpg',1,'2026-03-19 11:47:52'),(120004,270002,'Wedding Photography & Videography','Creative photography for unforgettable events','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773920872/Subservice_Icons/Subservice_Icons/icon_url-1773920870607-453808113.jpg',1,'2026-03-19 11:47:52'),(120005,270003,'Wedding Photography & Videography','Creative photography for unforgettable events','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773920872/Subservice_Icons/Subservice_Icons/icon_url-1773920870607-453808113.jpg',1,'2026-03-19 11:47:52'),(120006,270004,'Wedding Photography & Videography','Creative photography for unforgettable events','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773920872/Subservice_Icons/Subservice_Icons/icon_url-1773920870607-453808113.jpg',1,'2026-03-19 11:47:52'),(120007,270005,'Wedding Photography & Videography','Creative photography for unforgettable events','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773920872/Subservice_Icons/Subservice_Icons/icon_url-1773920870607-453808113.jpg',1,'2026-03-19 11:47:52'),(120008,270001,'Traditional Turban (Pagdi) Tying Service','Royal pagdi styling for a traditional look.','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773920981/Subservice_Icons/Subservice_Icons/icon_url-1773920979826-236504721.jpg',1,'2026-03-19 11:49:41'),(120009,270002,'Fun & Entertainment Services','Fun-filled activities for an unforgettable party.','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773921442/Subservice_Icons/Subservice_Icons/icon_url-1773921440803-522254971.jpg',1,'2026-03-19 11:57:23'),(120010,270002,'Birthday Cake & Custom Cakes','Delicious cakes crafted for your special celebration.','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773921562/Subservice_Icons/Subservice_Icons/icon_url-1773921560865-121607291.jpg',1,'2026-03-19 11:59:22'),(120011,270001,'Security & Crowd Management [Volunteer]','Volunteers ensuring safe and organized crowd flow.','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773922734/Subservice_Icons/Subservice_Icons/icon_url-1773922732544-123006075.webp',1,'2026-03-19 12:18:55'),(120012,270005,'Security & Crowd Management [Volunteer]','Volunteers ensuring safe and organized crowd flow.','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773922734/Subservice_Icons/Subservice_Icons/icon_url-1773922732544-123006075.webp',1,'2026-03-19 12:18:55'),(120013,270004,'Security & Crowd Management [Volunteer]','Volunteers ensuring safe and organized crowd flow.','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773922734/Subservice_Icons/Subservice_Icons/icon_url-1773922732544-123006075.webp',1,'2026-03-19 12:18:55');
+/*!40000 ALTER TABLE `subservices_backup_old` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `subservices_master`
+--
+
+DROP TABLE IF EXISTS `subservices_master`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `subservices_master` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `subservice_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `icon_url` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `is_active` tinyint(1) DEFAULT '1',
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `category_ids` json DEFAULT NULL,
+  PRIMARY KEY (`id`) /*T![clustered_index] CLUSTERED */,
+  KEY `idx_subservice_name` (`subservice_name`),
+  KEY `idx_is_active` (`is_active`),
+  UNIQUE KEY `subservice_name` (`subservice_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci AUTO_INCREMENT=90001;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `subservices_master`
+--
+
+LOCK TABLES `subservices_master` WRITE;
+/*!40000 ALTER TABLE `subservices_master` DISABLE KEYS */;
+INSERT INTO `subservices_master` VALUES (1,'Band party services ','Band party services ','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867547/Subservice_Icons/Subservice_Icons/icon_url-1773867546700-435305032.webp',1,'2026-03-20 12:15:41','2026-03-21 08:07:10','[270001, 270002, 270004]'),(2,'Entry and pyro balloon decoration','Entry and pyro balloon decoration services','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867327/Subservice_Icons/Subservice_Icons/icon_url-1773867326211-789390706.webp',1,'2026-03-20 12:15:41','2026-05-01 17:06:12','[270001, 270002, 270004]'),(3,'Traditional Turban (Pagdi) Tying Service','Royal pagdi styling for a traditional look.','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773920981/Subservice_Icons/Subservice_Icons/icon_url-1773920979826-236504721.jpg',1,'2026-03-20 12:15:41','2026-03-21 08:07:11','[270001]'),(4,'Fun & Entertainment Services','Fun-filled activities for an unforgettable party.','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773921442/Subservice_Icons/Subservice_Icons/icon_url-1773921440803-522254971.jpg',1,'2026-03-20 12:15:41','2026-03-21 08:07:11','[270002]'),(5,'Pandit ji','Pandit ji','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867632/Subservice_Icons/Subservice_Icons/icon_url-1773867631318-102060727.webp',1,'2026-03-20 12:15:41','2026-03-21 08:07:10','[270001, 270004]'),(6,'Caterers','We provide caterers services','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867156/Subservice_Icons/Subservice_Icons/icon_url-1773867155190-386909659.webp',1,'2026-03-20 12:15:41','2026-05-01 17:06:12','[270001, 270002, 270003, 270004]'),(7,'Mehendi Service','Our Bridal Mehendi services are designed to make your wedding even more special. We create stunning, personalized designs that reflect tradition, elegance, and your unique style.','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773920188/Subservice_Icons/Subservice_Icons/icon_url-1773920187156-238587656.jpg',1,'2026-03-20 12:15:41','2026-03-21 08:07:10','[270001]'),(8,'Wedding Photography & Videography','Creative photography for unforgettable events','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773920872/Subservice_Icons/Subservice_Icons/icon_url-1773920870607-453808113.jpg',1,'2026-03-20 12:15:41','2026-03-21 08:07:11','[270001, 270002, 270003, 270004, 270005]'),(9,'Musical Accompaniment / Arkestra','We are providing the best musical accompaniment services','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866752/Subservice_Icons/Subservice_Icons/icon_url-1773866751477-910624708.webp',1,'2026-03-20 12:15:41','2026-05-01 17:06:12','[270002, 270001, 270004]'),(10,'dj and sound system','We are providing the best sound and DJ system','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866901/Subservice_Icons/Subservice_Icons/icon_url-1773866900569-68328116.webp',1,'2026-03-20 12:15:41','2026-05-01 17:06:12','[270002, 270001, 270003, 270004]'),(11,'Flower decoration','We provide flower decoration','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867223/Subservice_Icons/Subservice_Icons/icon_url-1773867222269-19679381.webp',1,'2026-03-20 12:15:41','2026-05-01 17:06:12','[270001, 270002, 270004]'),(12,'fireworks','We are providing the best fireworks services','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867012/Subservice_Icons/Subservice_Icons/icon_url-1773867010922-675184608.webp',1,'2026-03-20 12:15:41','2026-05-01 17:06:13','[270001, 270004]'),(13,'Security & Crowd Management [Volunteer]','Volunteers ensuring safe and organized crowd flow.','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773922734/Subservice_Icons/Subservice_Icons/icon_url-1773922732544-123006075.webp',1,'2026-03-20 12:15:41','2026-03-21 08:07:11','[270001, 270005, 270004]'),(14,'disco light ','we are providing best disco light services ','/images/services/fashion/professionallighting.jpg',1,'2026-03-20 12:15:41','2026-05-01 17:13:58','[270001]'),(15,'Birthday Cake & Custom Cakes','Delicious cakes crafted for your special celebration.','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773921562/Subservice_Icons/Subservice_Icons/icon_url-1773921560865-121607291.jpg',1,'2026-03-20 12:15:41','2026-03-21 08:07:11','[270002]'),(16,'Wedding Carriage (Baggi) Service','Grand royal entry with decorated wedding carriage.','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773920382/Subservice_Icons/Subservice_Icons/icon_url-1773920381027-135550885.jpg',1,'2026-03-20 12:15:41','2026-03-21 08:07:10','[270001]'),(17,'parlor service ','We are providing makeup and parlor services','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773867437/Subservice_Icons/Subservice_Icons/icon_url-1773867436704-876611970.webp',1,'2026-03-20 12:15:41','2026-05-01 17:06:13','[270001, 270003, 270002, 270005]'),(18,'Party Hall and Garden ','We are providing a good location and space for your event','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866321/Subservice_Icons/Subservice_Icons/icon_url-1773866320041-784679072.webp',1,'2026-03-20 12:15:41','2026-05-01 17:06:13','[270001, 270002, 270003, 270005, 270004]'),(19,'Tent Agency and light','We are providing the best light and tent service for your event','https://res.cloudinary.com/dcbrlmzng/image/upload/v1773866459/Subservice_Icons/Subservice_Icons/icon_url-1773866458486-875798193.webp',1,'2026-03-20 12:15:41','2026-05-01 17:06:13','[270003, 270004, 270005, 270002, 270001]'),(60001,'Clothes services','Welcome to our clothing store, where every celebration finds its perfect outfit. Whether you are stepping into a wedding mandap, dancing at a birthday bash, or making memories at a festival, we have the finest collection of lehengas, sarees, suits, and ethnic wear to make you shine. We believe fashion is not just clothing — it is the way you carry your joy.','https://res.cloudinary.com/dcbrlmzng/image/upload/v1774712394/Subservice_Icons/Subservice_Icons/icon_url-1774712393235-702802266.jpg',1,'2026-03-28 15:39:54','2026-05-01 17:06:13','[]');
+/*!40000 ALTER TABLE `subservices_master` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `users`
+--
+
+DROP TABLE IF EXISTS `users`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `users` (
+  `user_id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `uuid` char(36) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `phone` varchar(20) DEFAULT NULL,
+  `password_hash` varchar(255) NOT NULL,
+  `first_name` varchar(100) NOT NULL,
+  `last_name` varchar(100) DEFAULT NULL,
+  `user_type` enum('admin','vendor','user') NOT NULL DEFAULT 'user',
+  `is_verified` tinyint(1) NOT NULL DEFAULT '0',
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`user_id`) /*T![clustered_index] CLUSTERED */,
+  UNIQUE KEY `uuid` (`uuid`),
+  UNIQUE KEY `email` (`email`),
+  UNIQUE KEY `phone` (`phone`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin AUTO_INCREMENT=4552798;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `users`
+--
+
+LOCK TABLES `users` WRITE;
+/*!40000 ALTER TABLE `users` DISABLE KEYS */;
+INSERT INTO `users` VALUES (1,'ff054460-8010-4e59-93f8-f020d98c16c4','adrstechnosoft@gmail.com','6265004675','$2b$10$9gnA53FpsG0fA2/CEvcvQe15wpz12/srySpXZ7BidNvaqU3fC3QVW','adrs ','admin','admin',1,1,'2026-03-17 12:53:58','2026-03-17 12:59:17'),(180001,'2edbfd50-b16e-468f-9ef9-831bb7320c2e','aryansahusrit@gmail.com','8225890905','$2b$10$0XOY5r5KY99oYZIABA8/qO42EE4vPJlPHwKXOI5zPBz7nPj5XnABW','Aryan','Sahu','user',1,1,'2026-03-28 15:33:18','2026-03-28 15:33:53'),(210001,'48d8cd21-dc71-4ee2-b97a-44794409731d','satyamsahu0216@gmail.com','9691028144','$2b$10$ZkgHe3NmAHIrAV/HjjBGqu/AUOOkmrQKDRUYVasKS7M5WNtM1jrCS','satyam','sahu','vendor',1,1,'2026-03-31 03:03:35','2026-03-31 03:05:35'),(240001,'9f2bff4b-2f2b-49d3-ab44-4c1bb0f6bdfa','nayanmalviya75@gmail.com','7828186627','$2b$10$Wc8Ut3ba0KX5Ifn/G3VRI.hS/Jjy18cmsTiNF2bOyUHPaKZEQETx2','nayan','malviya','user',1,1,'2026-03-31 07:43:18','2026-05-18 13:23:21'),(270001,'ed9cf073-0377-40ec-b094-2021594cf6a0','naymalviya@gmail.com','7828186629','$2b$10$27CaFYrdKP7iisY0I/fLq.rCkNYqX8gCdMky4GjgBV78YWsCVNf/e','Nayan','Malviya','vendor',1,1,'2026-04-01 09:47:34','2026-04-28 11:26:13'),(300001,'8ac25123-00c2-4065-a5c4-5c448889039c','vishwakarmasam@gmail.com','9999999999','$2b$10$aqzZ.wNajNv2QNW0gc2m1u.1atLRxAtHOBXGafD0ovsqGQdUz4wY6','Sam','rai','vendor',0,1,'2026-04-02 09:11:10','2026-04-02 09:11:10'),(330001,'62379e94-d046-4fc7-8346-7b94f95ad1c9','vishwakarmasapeksh@gmail.com','9898989898','$2b$10$RnBZluMKGGuD1vk6815S9eVGnb3DZ7.37dx5nfpeDW3UhmQNWN9je','sam','Vis','vendor',1,1,'2026-04-02 09:19:56','2026-04-02 09:23:16'),(761100,'e0ba3ba6-228d-4dca-8b01-a69fcd768368','sparshsahu004@gmail.com','9876543213','$2b$10$GUGU8uqAtvymB/EClXxzauuP.Y1dtYse.Di4bN/ao47Rrjaq.iWJq','Sparsh','','user',1,1,'2026-04-09 03:16:26','2026-04-09 03:25:09'),(791100,'08b78d7c-bc10-47e4-865a-aba8b3f6cf8b','learnifyuser@gmail.com','7566558855','$2b$10$UxF4V68kcm3N11nLnDu3T.cjVI1aa8xX6tQvIt1PBh.fxdpfPRfsS','Nayan','Malviya','vendor',0,1,'2026-04-13 12:10:17','2026-04-13 12:10:17'),(821100,'8b2532a8-899d-45a2-a65e-c00e41be3cd5','hodcsesrist@gmail.com','9893532596','$2b$10$pro.SB4of8DyC3VlwdsDfuN8JVWOGz38iwWzMlY8s.v7EzsNPfeji','Prateek','Gupta','user',0,1,'2026-04-14 06:18:03','2026-04-14 06:18:03'),(958956,'06f55eb3-8bf4-417b-b8ef-1dab678a1d94','demo94277@gmail.com','7788558866','$2b$10$4q9DrIvlv49.pysfTr3vzORa18UZCIouemlAmpgGVJUf.l8TrpHFG','Nayan','Malviya','vendor',0,1,'2026-04-14 11:01:25','2026-04-14 11:01:25'),(1419113,'2afc24c6-dc02-4a79-b398-f1feb4129d81','gg@gmail.com','9898989896','$2b$10$yCI3rYKRgrsKm1Y4.f3kceCRe02HxkavyTQsOArS0gAQXn/mevu12','Test','','vendor',0,1,'2026-04-15 07:54:44','2026-04-15 07:54:44'),(1479113,'77524252-9558-4e81-8842-b37e704722cc','bytestream0101@gmail.com','7828183388','$2b$10$ns2KIwOuHcT2Bt6R2Gob2uBieoNu6WUT9X2i9qL6xmuV2PZRDlZJe','Test','Nayan','vendor',1,1,'2026-04-17 05:36:58','2026-04-17 05:37:59'),(1509113,'ddad324f-43c9-481b-bd35-c21c85b3df9c','moontontlol321@gmail.com','8989898989','$2b$10$tnSRgj8y1K6YRHimvq93..N9mVKcI8eyrmxl12KVtXfceKrooShFu','Hshs','Hshs','user',1,1,'2026-04-27 19:47:19','2026-04-27 19:48:20'),(2057886,'445cbfd9-d15d-4562-bb48-410f8dd70d02','nayanmalviya76@gmail.com','7846589568','$2b$10$Hl8xqoPQABawKV0wlmRSgeeP1clOGWR6X9sHq5SktY3xE2I0jTX3C','Test','Nayan','user',0,1,'2026-04-28 11:15:45','2026-04-28 11:15:45'),(2057887,'0611a9db-3055-4cac-aa1c-74e40f36067b','naymalviya1@gmail.com','8758689568','$2b$10$9f0G8J0p3ynAl6DPaGcaRujmGsnVruo/F5d3sLspp8vSTd1cedMYy','Nayan','Malviya','user',0,1,'2026-04-28 11:17:09','2026-04-28 11:17:09'),(2087886,'336800eb-7acc-4ad4-88d0-6f0a242461cf','soniadarsh712@gmail.com','9179966773','$2b$10$eJFL8gfX8YNiXWU3FS.SueuKEOHfqxvlMSriT1mRC5HWfbsKz4cIO','adarsh','soni','vendor',1,1,'2026-04-28 12:11:37','2026-05-05 08:28:54'),(2117886,'03225984-3aee-4a72-a29a-9c31de757eb5','sanatjaiswal1363@gmail.com','9340464548','$2b$10$M80EvM8G5DGruybjb83jYOzdoqCKl.3Z24h7CQZu1a9Zu0kv3WtnS','sanat ','jaiswal ','vendor',1,1,'2026-05-09 10:27:02','2026-05-16 12:24:48'),(2117887,'70363225-3ed6-4cde-979b-173425003264','sanatjaiswal9340@gmail.com','9340464547','$2b$10$nfBhsqibk2TThMyYxRqdPumvnIYifNRclzbVniMf9n1z8X.JbH6ui','sanat','jaiswal','user',1,1,'2026-05-09 10:57:09','2026-05-16 11:23:03'),(2147886,'89c300b1-a0a5-4a15-bc73-58b99b47328e','sapekshvishwakarma@gmail.com','9285543488','$2b$10$3zTL3.yicMFiCjAuV75S6ekg9AItZAzsP3XiWivRqeWE0oOVuu6eq','Sapekshvishwakarma','','user',0,1,'2026-05-12 07:21:27','2026-05-12 07:21:27'),(2147887,'05c29b06-d905-40d4-b81d-ae870a308cb2','nayamalviya@gmail.com','9868565859','$2b$10$zYqgbyvYWtoNKCeCG..bKOnKK057fJdRUeBoSqKCSZ7Xn4Wy4YVUC','Nayan','Malviya','user',0,1,'2026-05-12 07:26:02','2026-05-12 07:26:02'),(2147888,'7d65cffb-ec64-4a93-a1cc-12b65e760361','malviya@gmail.com','9889865858','$2b$10$Yg92phjeu2UDC3pCkt.xQ.6ydyjpOYyF/GVxPLt4MCPwRqKVCte4G','Nayan','Malviya','user',0,1,'2026-05-12 07:31:01','2026-05-12 07:31:01'),(2297908,'39b729b0-2d7b-4f7c-a91b-8ce58fa7e155','shivanshunigam6@gmail.com','9981992856','$2b$10$RO8AJ3FmIyXTlMLN87N2TOaQ5Bwlm.XzZ.L.FOzkWwm2NAXaMf1Hm','Shivanshu','Nigam','user',1,1,'2026-05-14 04:57:28','2026-05-14 04:59:19'),(2327908,'c607a8c4-cf6a-46b0-9ed7-2d275f70a191','nigamshivanshu297@gmail.com','9009828385','$2b$10$3q5.uopXzNNNyAD1d6d/jeNXRxt2riXfYe4oI690ibtHOzkyY2Su.','Shivanshu','Nigam','user',0,1,'2026-05-14 09:38:45','2026-05-14 09:38:45'),(2357908,'03f06851-8296-4613-b04a-9388b57b6b2f','eventify312@gmail.com','9632580741','$2b$10$1zWWT5/DgAUQn.WEj9lHkuC1fvB0.wBm0Z4M9vMixf6HcB8qa7j3y','Nishant','Kushwaha','vendor',1,1,'2026-05-14 10:16:04','2026-05-14 10:19:06'),(2449766,'06205eac-575b-48cb-bd20-eccc04a3488b','nishantteach@gmail.com','9698052142','$2b$10$jaxdkw3TfywV8DkCtzFeme0H50BGZAuVhYrNhqPI/FPTd9N67PO8G','Nishant','Kushwaha','user',1,1,'2026-05-15 07:25:25','2026-05-15 12:02:03'),(2449767,'41394757-2904-4731-9259-a762bf739850','nishantteach1@gmail.com','9698052143','$2b$10$EZgZIdcIrTKjyCIYcaiZieZALZ/GJBj9uDs26bIPS/T7u2dAKvzmS','Nishant','Kushwaha','user',0,1,'2026-05-15 07:26:34','2026-05-15 07:26:34'),(2449768,'fa302e75-7192-4f18-af6f-10df84317583','nishantteach13@gmail.com','9698052149','$2b$10$G7HnHuPZGj0RQFBiElQ/m.4sAfuxALtw6REmXE236i6HHmsnPShau','Nishant','Kushwaha','vendor',0,1,'2026-05-15 07:30:04','2026-05-15 07:30:04'),(2655504,'d3dbca9b-3f1e-4e6b-8209-1037a66b0b9f','nishantteach667@gmail.com','9690852741','$2b$10$xzOfQMbuLGNVIhyoXE2UyOgrADyYuw5lDzvFsMih3GjUZX6aDDwxu','Nishant','Kuuu','user',0,1,'2026-05-15 07:42:40','2026-05-15 07:42:40'),(2655505,'28384dbc-a452-405e-9010-54d0afa76d66','nishantteach687@gmail.com','9690852749','$2b$10$qQ6InB7j8oQq.TiMQp7pJOzzWTMTIkzocZATRlnsfSxQtIyNktaye','Nishant','Kuuu','user',0,1,'2026-05-15 07:45:15','2026-05-15 07:45:15'),(2655506,'9b2fa4f2-6030-4a40-8f8c-054fcb95acc1','nishantteac5h687@gmail.com','6690852749','$2b$10$ne4JTTsaOnpSHq8Cj4K.9.COYkhTh4opS3NzSkptWxOM0oWynmfIO','Nishant','Kuuu','user',0,1,'2026-05-15 07:49:58','2026-05-15 07:49:58'),(2655507,'ca31f56d-d0a5-4606-9abf-116c444755a2','nishantteac5hh687@gmail.com','6690892749','$2b$10$DPLEuO0rtitXkZMGG9jG3ur6DX0sDSCC4DallO7wOUFupRYrnipqe','Nishant','Kuuu','user',0,1,'2026-05-15 07:51:14','2026-05-15 07:51:14'),(2899197,'ded6e9d6-11af-4416-98ee-56676828a562','ansh@gmail.com','9638520741','$2b$10$k3C0Z.ay18ENQc5LgBPpI.A/cb8sy9fTCsMZRXFmS97D7QKS7FoR6','Ansh','Ku','user',0,1,'2026-05-15 09:18:05','2026-05-15 09:18:05'),(2899198,'d278c90c-ded3-4ee9-b922-a6616aa1b5df','ramendra@gmil.com','9630852741','$2b$10$iVLsgpT.O6GWI.mk3hQT6OInKCVpzFBZ2k9lxXhSSYw8MoZmggC/q','Ramaendr','','vendor',0,1,'2026-05-15 09:18:36','2026-05-15 09:18:36'),(2899199,'b63f1b57-6004-4d0b-8131-701362f9be42','ndnsns@gm.com','9638520749','$2b$10$wR/0HaY84anzfyXQnPkzT.1AQjQ4MVj3XdbIFrbu7qSP20rUyPXyK','Dnjdkd','','vendor',0,1,'2026-05-15 09:19:38','2026-05-15 09:19:38'),(2998050,'d5dc792a-9a04-439d-8bd4-9eee5947fab3','nishantkushwaha8989@gmail.com','7869532147','$2b$10$Pm.QNEAPzHYZPLB3ngY.ReyMwj.YrloHDKWd4eDJw9Xpqh1.sA8CS','Nishant','Jsjsn','user',1,1,'2026-05-15 09:31:47','2026-05-16 06:18:26'),(3028050,'9407dab7-04c5-47ff-9a9f-978d0121cb53','test_mail_1778837859@gmail.com','9876543299','$2b$10$biI47t9Y3Dd4bJAB9tHQteWf71LZhetS2ap8yO6qQbLoPwn2JX8DG','EmailTest',NULL,'user',0,1,'2026-05-15 09:37:41','2026-05-15 09:37:41'),(3413879,'9cb07b1b-bc34-4c73-944e-9fa0a3b88c08','iamnishantkushwaha1@gmail.com','9638527410','$2b$10$BFy005NWPz3r9XD3kGlqq.JXgobZ233UahreG6BfUm4mxE6yFSZe.','Nayn','','user',1,1,'2026-05-15 10:21:07','2026-05-15 10:22:12'),(3413880,'cabdd484-7fe3-44c3-b2b0-3b4407a4fa10','nishantkushwaha145@gmail.com','9663258074','$2b$10$.0fl8Sgueh0cHXq50h.wkOHoBMtso8uUomwe//PBqAd9X7Zrg4nzq','Nishant','','vendor',1,1,'2026-05-15 10:25:34','2026-05-15 10:31:52'),(3751217,'b4d3c48f-a5e7-4120-b31e-6ebc22a75e67','sanatjaiswal15454@gmail.com','7847858595','$2b$10$5cKeRZaGM0cheXrvd01Hg.SsvkKne4pcqzfNb7peQ2ettIDDQop5y','sanat','jaiswal','user',0,1,'2026-05-16 11:14:18','2026-05-16 11:14:18'),(3751218,'6cef5bfe-5e3a-4d32-9ca8-84294fcdaeb0','shivanshu6@gmail.com','9340464541','$2b$10$DWkIBiBKzKQyX12ncoQIqeD/9yu2GtXyc8bjBMg6gvTdF10v6EA52','sanat','jaiswal','vendor',0,1,'2026-05-16 12:12:09','2026-05-16 12:12:09'),(3751219,'66612b01-d681-4e19-8dc4-5b6ded0caa0c','darkdecoderrr@gmail.com','9340464554','$2b$10$aXRsuQDuilj13uTrtRdWH.7mRhV2GLB0lXNhgKkMitml67r8WmsxW','sanat','jaiswal','user',1,1,'2026-05-16 12:14:01','2026-05-16 12:15:06'),(3781217,'b968f52b-5850-4ae4-9227-f826b663c483','nayanmalviya.air1@gmail.com','7856585968','$2b$10$dlqBBbUZIW1R/.NnCq7mau6WzMrUNu3c8csWkUx7gyhJe2rhbxWNq','Test','Nayan','user',0,1,'2026-05-17 03:14:41','2026-05-17 03:14:41'),(3811217,'d2744838-d34d-42b6-bca5-5bc86878af16','bytestream011@gmail.com','9868585968','$2b$10$N1Suj.qP7ING/lxnxl7QveECAj3R6xWMBTBlXfdFev8tJCkZJC59.','Byte','Test','user',0,1,'2026-05-18 13:08:15','2026-05-18 13:08:15'),(3811218,'7c6d93e9-43f8-4aa5-88b3-9e04c8b1ef26','hocen68505@acanok.com','9545433535','$2b$10$lcMLyNhRt9afpHL3YFIlyejw9bUKsWfmSR/rQ01lDAtjfDo.UTnGC','Howard','Rojas','vendor',1,1,'2026-05-18 13:09:06','2026-05-18 13:09:49'),(3811219,'c2360c8c-49ac-48e0-8101-12c56835ae9f','srjnayanfullfullstackdevglobaltech@gmail.com','8968585968','$2b$10$xZ77gVTJrt1bgXxnZ5/UUuxXPBOmWISzZ3eDh9y2iVjtXC05N8sDK','Nayan','malviya','user',0,1,'2026-05-18 13:09:22','2026-05-18 13:09:22'),(3811220,'b0360511-4f48-465f-9489-782e48adabe9','yefan42908@acanok.com','9638527419','$2b$10$JvHu0F6Uj2a9.QRRUKAcEuMacFiDHOs6Ok0mRO1xxL5EacetgwK32','Hdjskd','','vendor',1,1,'2026-05-18 13:11:27','2026-05-18 13:11:43'),(3811221,'05371a69-22bb-4a3b-8b66-3825da9c5eef','xofiwe3064@bitmah.com','9676767675','$2b$10$rWAz0lIpL2szxLcsupyjUOXLWvMrGpH9q9IAlUxLhFKxt2YcbTkfm','Nayan','Kksjsjs','user',1,1,'2026-05-18 13:16:03','2026-05-18 13:18:48'),(3841217,'c29d7070-883d-446e-ac57-f440801c054f','nayanmalviya78@gmail.com','9666464646','$2b$10$7jnxD13c8gkj1mEsy3866.M9mBE1jTbAM//zxVWLXsaAOqDX/Vgmq','Dkkdjx','Djdnjs','user',0,1,'2026-05-19 04:57:11','2026-05-19 04:57:11'),(3871217,'c5ce4727-dcf0-4d21-8f60-806e045f3993','testuser@gmail.com','8596868958','$2b$10$HnWgCQe8NpC5BllkHZ536.G0aob7TXpEvWqT09s/vdp.a1n.7aVAW','Test','Bcc','user',0,1,'2026-05-19 09:46:54','2026-05-19 09:46:54'),(3901217,'c717931e-f258-4156-a3eb-cc6f767bc089','abc@gmail.com','9329154398','$2b$10$OiXUG0BFX1ZIauFl6IQBkebwARn96ZXgClECcWawIj/14xQonUE4C','Abc','Abc','user',0,1,'2026-05-22 11:15:25','2026-05-22 11:15:25'),(3901218,'294bd96a-2c39-4680-9d4e-f91cd73db5e6','srajalvishwakarma8@gmail.com','6264714201','$2b$10$daLoKL4PKzOTlqC1Qflks.7ziqFdxrhPY/Ny7Jnh8qoyGM6C4czV2','Srajal','Vishwakarma','user',0,1,'2026-05-22 11:16:29','2026-05-22 11:16:29'),(3901219,'4965f09b-2549-4122-8f4b-1b94d5dde0bd','viskwakarmasrajal297@gmail.com','6267123879','$2b$10$mEokqE/dH9.i6HLLsHsC9OAYGR7YH.BuS5lOJiL8XfcIMajN1H.Oi','Srajal','Vishwakarma','user',0,1,'2026-05-22 11:18:27','2026-05-22 11:18:27'),(3931217,'550e8400-e29b-41d4-a716-446655440001','rajeev.catering@jabalpur.local',NULL,'$2b$10$k6YJOGupUo2EBLtM8HyGf.mhh/3r8TOxc6wVPcBGNIlbDSjbuRuoe','Rajeev','Kumar','vendor',1,1,'2026-05-23 07:30:43','2026-05-23 07:31:30'),(3931218,'550e8400-e29b-41d4-a716-446655440002','priya.decoration@jabalpur.local',NULL,'$2b$10$k6YJOGupUo2EBLtM8HyGf.mhh/3r8TOxc6wVPcBGNIlbDSjbuRuoe','Priya','Singh','vendor',1,1,'2026-05-23 07:30:43','2026-05-23 07:31:30'),(3931219,'550e8400-e29b-41d4-a716-446655440003','manoj.photography@jabalpur.local',NULL,'$2b$10$k6YJOGupUo2EBLtM8HyGf.mhh/3r8TOxc6wVPcBGNIlbDSjbuRuoe','Manoj','Sharma','vendor',1,1,'2026-05-23 07:30:43','2026-05-23 07:31:31'),(3931220,'550e8400-e29b-41d4-a716-446655440004','sneha.dj@jabalpur.local',NULL,'$2b$10$k6YJOGupUo2EBLtM8HyGf.mhh/3r8TOxc6wVPcBGNIlbDSjbuRuoe','Sneha','Patel','vendor',1,1,'2026-05-23 07:30:43','2026-05-23 07:31:31'),(3931221,'550e8400-e29b-41d4-a716-446655440005','amit.banquet@jabalpur.local',NULL,'$2b$10$k6YJOGupUo2EBLtM8HyGf.mhh/3r8TOxc6wVPcBGNIlbDSjbuRuoe','Amit','Verma','vendor',1,1,'2026-05-23 07:30:43','2026-05-23 07:31:31'),(3931222,'550e8400-e29b-41d4-a716-446655440006','sapna.makeup@jabalpur.local',NULL,'$2b$10$k6YJOGupUo2EBLtM8HyGf.mhh/3r8TOxc6wVPcBGNIlbDSjbuRuoe','Sapna','Joshi','vendor',1,1,'2026-05-23 07:30:43','2026-05-23 07:31:31'),(3931223,'550e8400-e29b-41d4-a716-446655440007','vikram.planner@jabalpur.local',NULL,'$2b$10$k6YJOGupUo2EBLtM8HyGf.mhh/3r8TOxc6wVPcBGNIlbDSjbuRuoe','Vikram','Singh','vendor',1,1,'2026-05-23 07:30:43','2026-05-23 07:31:31'),(3931224,'550e8400-e29b-41d4-a716-446655440008','neha.flowers@jabalpur.local',NULL,'$2b$10$k6YJOGupUo2EBLtM8HyGf.mhh/3r8TOxc6wVPcBGNIlbDSjbuRuoe','Neha','Kapoor','vendor',1,1,'2026-05-23 07:30:43','2026-05-23 07:31:31'),(3931225,'550e8400-e29b-41d4-a716-446655440009','rajesh.video@jabalpur.local',NULL,'$2b$10$k6YJOGupUo2EBLtM8HyGf.mhh/3r8TOxc6wVPcBGNIlbDSjbuRuoe','Rajesh','Gupta','vendor',1,1,'2026-05-23 07:30:43','2026-05-23 07:31:31'),(3931226,'550e8400-e29b-41d4-a716-446655440010','pooja.mehendi@jabalpur.local',NULL,'$2b$10$k6YJOGupUo2EBLtM8HyGf.mhh/3r8TOxc6wVPcBGNIlbDSjbuRuoe','Pooja','Mehta','vendor',1,1,'2026-05-23 07:30:44','2026-05-23 07:31:31'),(3931227,'550e8400-e29b-41d4-a716-446655440011','arjun.catering@jabalpur.local',NULL,'$2b$10$k6YJOGupUo2EBLtM8HyGf.mhh/3r8TOxc6wVPcBGNIlbDSjbuRuoe','Arjun','Malviya','vendor',1,1,'2026-05-23 07:30:44','2026-05-23 07:31:31'),(3931228,'550e8400-e29b-41d4-a716-446655440012','divya.decor@jabalpur.local',NULL,'$2b$10$k6YJOGupUo2EBLtM8HyGf.mhh/3r8TOxc6wVPcBGNIlbDSjbuRuoe','Divya','Nair','vendor',1,1,'2026-05-23 07:30:44','2026-05-23 07:31:32'),(3931229,'550e8400-e29b-41d4-a716-446655440013','sanjay.catering@jabalpur.local',NULL,'$2b$10$k6YJOGupUo2EBLtM8HyGf.mhh/3r8TOxc6wVPcBGNIlbDSjbuRuoe','Sanjay','Tiwari','vendor',1,1,'2026-05-23 07:30:44','2026-05-23 07:31:32'),(3931230,'550e8400-e29b-41d4-a716-446655440014','anjali.photography@jabalpur.local',NULL,'$2b$10$k6YJOGupUo2EBLtM8HyGf.mhh/3r8TOxc6wVPcBGNIlbDSjbuRuoe','Anjali','Verma','vendor',1,1,'2026-05-23 07:30:44','2026-05-23 07:31:32'),(3931231,'550e8400-e29b-41d4-a716-446655440015','rahul.banquet@jabalpur.local',NULL,'$2b$10$k6YJOGupUo2EBLtM8HyGf.mhh/3r8TOxc6wVPcBGNIlbDSjbuRuoe','Rahul','Pandey','vendor',1,1,'2026-05-23 07:30:44','2026-05-23 07:31:32'),(3931232,'550e8400-e29b-41d4-a716-446655440016','kiran.dj@jabalpur.local',NULL,'$2b$10$k6YJOGupUo2EBLtM8HyGf.mhh/3r8TOxc6wVPcBGNIlbDSjbuRuoe','Kiran','Singh','vendor',1,1,'2026-05-23 07:30:44','2026-05-23 07:31:32'),(3931233,'550e8400-e29b-41d4-a716-446655440017','meera.makeup@jabalpur.local',NULL,'$2b$10$k6YJOGupUo2EBLtM8HyGf.mhh/3r8TOxc6wVPcBGNIlbDSjbuRuoe','Meera','Desai','vendor',1,1,'2026-05-23 07:30:44','2026-05-23 07:31:32'),(3931234,'550e8400-e29b-41d4-a716-446655440018','nikhil.video@jabalpur.local',NULL,'$2b$10$k6YJOGupUo2EBLtM8HyGf.mhh/3r8TOxc6wVPcBGNIlbDSjbuRuoe','Nikhil','Agarwal','vendor',1,1,'2026-05-23 07:30:44','2026-05-23 07:31:33'),(3931235,'550e8400-e29b-41d4-a716-446655440019','shreya.flowers@jabalpur.local',NULL,'$2b$10$k6YJOGupUo2EBLtM8HyGf.mhh/3r8TOxc6wVPcBGNIlbDSjbuRuoe','Shreya','Goyal','vendor',1,1,'2026-05-23 07:30:44','2026-05-23 07:31:33'),(3931236,'550e8400-e29b-41d4-a716-446655440020','deepak.planner@jabalpur.local',NULL,'$2b$10$k6YJOGupUo2EBLtM8HyGf.mhh/3r8TOxc6wVPcBGNIlbDSjbuRuoe','Deepak','Yadav','vendor',1,1,'2026-05-23 07:30:44','2026-05-23 07:31:33'),(3931237,'550e8400-e29b-41d4-a716-446655440021','ritika.catering@jabalpur.local',NULL,'$2b$10$k6YJOGupUo2EBLtM8HyGf.mhh/3r8TOxc6wVPcBGNIlbDSjbuRuoe','Ritika','Choudhary','vendor',1,1,'2026-05-23 07:30:45','2026-05-23 07:31:33'),(3961217,'6465ae04-ad3a-4636-83c0-fbee06d7c526','abhidubey4334@gmail.com','9201976523','$2b$10$nbGP1TEGzxQD7Z.QfnnRIeDubToWDYck6LwIREF.rSy669zuhFiAa','Abhishek','Dubey','user',0,1,'2026-05-23 10:24:57','2026-05-23 10:24:57'),(4462798,'64ebff3f-8bae-4fb4-9219-390f961f654f','sourabhpa787987@gmail.com','7879875296','$2b$10$gZyAUsJEMouVMAc6mzaeN.5YOXtPkNmzwKmOjl5v/pKqaz2ksqOxG','Sourabh ','Patel','user',1,1,'2026-05-25 08:47:34','2026-05-26 05:26:05'),(4492798,'687077c6-b603-4c06-a68b-49a00b7ee2b3','abhibarman047@gmail.com','7987992345','$2b$10$blBWueiyCTsG/lNJP4wZiuVkz3rqdZMvneC9t9BhsVAzW53DBlCTy','Shivansh ','Event ','vendor',1,1,'2026-05-25 16:50:50','2026-05-25 16:53:24'),(4522798,'b3a67c97-09f0-46dd-be88-eafe14864af9','gutalanux@mailinator.com','9678678687','$2b$10$jgBqZAZsYM0O3i4g2C.gduty/xPden4y63kkHROG3IBkFnzdEhj3a','Astra','Parker','user',0,1,'2026-05-26 05:22:59','2026-05-26 05:22:59');
+/*!40000 ALTER TABLE `users` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `vendor_packages`
+--
+
+DROP TABLE IF EXISTS `vendor_packages`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `vendor_packages` (
+  `package_id` int NOT NULL AUTO_INCREMENT,
+  `package_uuid` char(36) NOT NULL,
+  `vendor_id` int NOT NULL,
+  `package_desc` text DEFAULT NULL,
+  `amount` decimal(10,2) NOT NULL,
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `removed_at` timestamp NULL DEFAULT NULL,
+  `package_name` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`package_id`) /*T![clustered_index] CLUSTERED */,
+  UNIQUE KEY `package_uuid` (`package_uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin AUTO_INCREMENT=150001;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `vendor_packages`
+--
+
+LOCK TABLES `vendor_packages` WRITE;
+/*!40000 ALTER TABLE `vendor_packages` DISABLE KEYS */;
+INSERT INTO `vendor_packages` VALUES (1,'deabd3af-78bd-43e6-8c4f-dda14c798acb',1,'description of this package',400000.00,'2026-04-08 04:51:32','2026-04-28 10:11:49',NULL,'Mother of all package'),(30001,'a8c84935-24cf-47d6-b68a-15e6774cc04f',1,'Pre',235000.00,'2026-04-28 10:11:44','2026-04-28 10:11:44',NULL,'Premium'),(60001,'fa3921fa-3ddc-499b-8e08-c420d380e497',30001,'All Included',1.00,'2026-05-02 09:49:23','2026-05-02 09:49:23',NULL,'My Package'),(90001,'f43d2f51-18a0-4657-bca1-eed74d7a7742',90001,'greg',99992.00,'2026-05-14 10:33:27','2026-05-14 10:35:14','2026-05-14 10:35:14','rrtfg'),(90002,'5d4ff484-91bd-4f43-b5e1-d253a6e2867f',90001,'Huhuh',100000.00,'2026-05-14 10:35:29','2026-05-14 10:35:35',NULL,'Sjaja'),(120001,'82bb86c4-6bd4-45ac-994e-595a22efadcf',150001,'Znn',6897979.00,'2026-05-18 13:14:06','2026-05-18 13:14:11',NULL,'Jdjdks');
+/*!40000 ALTER TABLE `vendor_packages` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `vendor_profiles`
+--
+
+DROP TABLE IF EXISTS `vendor_profiles`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `vendor_profiles` (
+  `vendor_id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` varchar(50) DEFAULT NULL,
+  `business_name` varchar(255) NOT NULL,
+  `service_category_id` bigint unsigned NOT NULL,
+  `description` text DEFAULT NULL,
+  `years_experience` int DEFAULT '0',
+  `contact` varchar(50) DEFAULT NULL,
+  `address` text DEFAULT NULL,
+  `city` varchar(100) DEFAULT NULL,
+  `state` varchar(100) DEFAULT NULL,
+  `is_verified` tinyint(1) NOT NULL DEFAULT '0',
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `profile_url` varchar(255) DEFAULT NULL,
+  `event_profiles_url` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `subservice_id` int DEFAULT NULL,
+  `is_dummy` tinyint(1) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`vendor_id`) /*T![clustered_index] CLUSTERED */,
+  UNIQUE KEY `user_id` (`user_id`),
+  KEY `fk_vendor_service_category` (`service_category_id`),
+  KEY `fk_vendor_subservice` (`subservice_id`),
+  KEY `idx_subservice_id` (`subservice_id`),
+  CONSTRAINT `fk_vendor_service_category` FOREIGN KEY (`service_category_id`) REFERENCES `service_categories` (`category_id`),
+  CONSTRAINT `fk_vendor_subservice` FOREIGN KEY (`subservice_id`) REFERENCES `subservices_master` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin AUTO_INCREMENT=240001;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `vendor_profiles`
+--
+
+LOCK TABLES `vendor_profiles` WRITE;
+/*!40000 ALTER TABLE `vendor_profiles` DISABLE KEYS */;
+INSERT INTO `vendor_profiles` VALUES (1,'ed9cf073-0377-40ec-b094-2021594cf6a0','Info Vender private limited',270003,'wedding event',5,'8899883778','dadda nagar adhartal','Jabalpur','Madhya Pradesh',0,1,'https://res.cloudinary.com/dcbrlmzng/image/upload/v1779539470/Vendor_Profiles/Vendor_Profiles/profilePicture-1779539469498-547514190.jpg','https://www.instagram.com/_btwitsnayan/','2026-04-06 05:40:35',18,0),(30001,'336800eb-7acc-4ad4-88d0-6f0a242461cf','Photo Studio',270001,'Camera person',5,'9179966773','Barela jabalpur','Jabalpur','Madhya Pradesh',0,1,'https://res.cloudinary.com/dcbrlmzng/image/upload/v1778918506/Vendor_Profiles/Vendor_Profiles/profilePicture-1778918506581-760665791.jpg','','2026-04-28 12:13:59',8,0),(90001,'03f06851-8296-4613-b04a-9388b57b6b2f','parlor',270003,'casxcbfdvsd',5,'9454575122','WARD No 6 RAMPUR BAGHELAN DISTRICT SATNA','SATNA','MADHYA PRADESH',0,1,'https://res.cloudinary.com/dcbrlmzng/image/upload/v1779539292/Vendor_Profiles/Vendor_Profiles/profilePicture-1779539291312-536774339.png','','2026-05-14 10:32:06',6,0),(120001,'cabdd484-7fe3-44c3-b2b0-3b4407a4fa10','Catering',270001,'Very good food',5,'3698520741','Jabalpur','Jabalpur','Madhyapradesh',0,1,'https://res.cloudinary.com/dcbrlmzng/image/upload/v1778843907/Vendor_Profiles/Vendor_Profiles/profilePicture-1778843904727-498130043.jpg','','2026-05-15 11:18:18',6,0),(150001,'b0360511-4f48-465f-9489-782e48adabe9','Buisness',270003,'Jzzjjz',5,'9630852741','Xnxnnxnx','Jabalp','Nznznznz',0,1,'https://res.cloudinary.com/dcbrlmzng/image/upload/v1779109962/Vendor_Profiles/Vendor_Profiles/profilePicture-1779109958779-597415702.jpg','','2026-05-18 13:12:42',18,0),(180001,'550e8400-e29b-41d4-a716-446655440001','RK Caterers & Events',270001,'Premium catering services with diverse vegetarian and non-vegetarian menu options. Specializes in traditional Indian cuisine and modern fusion dishes for weddings, corporate events, and family celebrations.',8,'9981234501','Near Kasturba Chowk, South Civil Lines, Jabalpur','Jabalpur','Madhya Pradesh',0,0,'https://res.cloudinary.com/dcbrlmzng/image/upload/v1779605520/Vendor_Profiles/Vendor_Profiles/profilePicture-1779605519801-782435091.jpg','','2026-05-23 07:31:34',6,1),(180002,'550e8400-e29b-41d4-a716-446655440002','Priya’s Decor Hub',270002,'Creative decoration designs with modern and traditional themes. We specialize in wedding backdrops, flower arrangements, and personalized event styling for all occasions.',6,'9889786756','Sharda Nagar, Jabalpur','Jabalpur','Madhya Pradesh',0,0,'https://res.cloudinary.com/dcbrlmzng/image/upload/v1779605900/Vendor_Profiles/Vendor_Profiles/profilePicture-1779605899116-830304878.jpg','','2026-05-23 07:31:34',15,1),(180003,'550e8400-e29b-41d4-a716-446655440003','The Manoj Sharma Studio',270004,'Professional photography and videography services. Capturing candid moments, traditional portraits, and cinematic wedding videos. With 10+ years experience in the industry.',10,'9983456703','Civil Lines, Jabalpur','Jabalpur','Madhya Pradesh',0,0,'https://res.cloudinary.com/dcbrlmzng/image/upload/v1779606069/Vendor_Profiles/Vendor_Profiles/profilePicture-1779606068938-258567884.jpg','','2026-05-23 07:31:34',8,1),(180004,'550e8400-e29b-41d4-a716-446655440004','DJ Sneha Patel',270004,'High-energy DJ services with premium sound systems. Specializes in wedding receptions, corporate events, and birthday parties. Latest music collection and custom playlists.',7,'9984567804','Adhartal, Jabalpur','Jabalpur','Madhya Pradesh',0,0,'https://res.cloudinary.com/dcbrlmzng/image/upload/v1779606211/Vendor_Profiles/Vendor_Profiles/profilePicture-1779606210026-165742602.jpg','','2026-05-23 07:31:34',4,1),(180005,'550e8400-e29b-41d4-a716-446655440005','Amit Verma Banquet Hall',270005,'Spacious air-conditioned banquet hall with capacity of 200-500 guests. Complete facilities including parking, decoration setup, and catering arrangements available.',12,'9985678905','Mangal Pandey Nagar, Jabalpur','Jabalpur','Madhya Pradesh',0,0,'https://res.cloudinary.com/dcbrlmzng/image/upload/v1779606324/Vendor_Profiles/Vendor_Profiles/profilePicture-1779606323468-601458273.jpg','','2026-05-23 07:31:34',5,1),(180006,'550e8400-e29b-41d4-a716-446655440006','Sapna Joshi Makeup & Bridal',270002,'Professional makeup and bridal services using premium brands. Specialized in bridal makeup, party makeup, and mehendi artists. Home service available across Jabalpur.',5,'9986789006','Ranital, Jabalpur','Jabalpur','Madhya Pradesh',0,0,'https://res.cloudinary.com/dcbrlmzng/image/upload/v1779606432/Vendor_Profiles/Vendor_Profiles/profilePicture-1779606431106-185096795.jpg','','2026-05-23 07:31:34',6,1),(180008,'550e8400-e29b-41d4-a716-446655440008','The Floral House by Neha',270002,'Premium fresh flower arrangements and bouquets. Specializes in floral backdrops, centerpieces, and bridal flowers. Same-day delivery available within Jabalpur.',4,'9988901208','Homi Bhabha Nagar, Jabalpur','Jabalpur','Madhya Pradesh',0,0,'https://res.cloudinary.com/dcbrlmzng/image/upload/v1779606615/Vendor_Profiles/Vendor_Profiles/profilePicture-1779606613630-387179597.jpg','','2026-05-23 07:31:34',8,1),(180009,'550e8400-e29b-41d4-a716-446655440009','RG FilmWorks',270003,'Professional video production for weddings and events. Drone footage, cinematic editing, and same-day teaser videos available. Multiple cameraman teams for complete coverage.',8,'9989012309','Tulsi Nagar, Jabalpur','Jabalpur','Madhya Pradesh',0,0,'https://res.cloudinary.com/dcbrlmzng/image/upload/v1779606767/Vendor_Profiles/Vendor_Profiles/profilePicture-1779606766684-119984755.jpg','','2026-05-23 07:31:35',8,1),(180010,'550e8400-e29b-41d4-a716-446655440010','Pooja Mehendi',270002,'Expert mehendi artist with 6+ years experience. Specializes in traditional and contemporary mehendi designs. Available for bridal mehendi, sister mehendi, and mehendi events.',6,'8767987867','Khatlapura, Jabalpur','Jabalpur','Madhya Pradesh',0,0,'https://res.cloudinary.com/dcbrlmzng/image/upload/v1779606866/Vendor_Profiles/Vendor_Profiles/profilePicture-1779606864949-703497770.jpg','','2026-05-23 07:31:35',10,1),(180011,'550e8400-e29b-41d4-a716-446655440011','The Arjun Malviya Caterers',270001,'Specialized in authentic Malwa cuisine and international dishes. Eco-friendly serving options available. Customizable menu for all budgets and preferences.',11,'8991234511','Gole Road, Jabalpur','Jabalpur','Madhya Pradesh',0,0,'https://res.cloudinary.com/dcbrlmzng/image/upload/v1779607041/Vendor_Profiles/Vendor_Profiles/profilePicture-1779607040336-334837436.jpg','','2026-05-23 07:31:35',6,1),(180012,'550e8400-e29b-41d4-a716-446655440012','Divya Nair Theme Decorations',270002,'Theme-based event decorations from classic elegance to modern minimalism. Expert team for installation and dismantling. Lighting and backdrop designs included.',7,'6692345612','Raje Pandey Nagar, Jabalpur','Jabalpur','Madhya Pradesh',0,0,'https://res.cloudinary.com/dcbrlmzng/image/upload/v1779607125/Vendor_Profiles/Vendor_Profiles/profilePicture-1779607124514-30472427.jpg','','2026-05-23 07:31:35',12,1),(180013,'550e8400-e29b-41d4-a716-446655440013','Sanjay Tiwari Fast Catering',270001,'Quick service catering for office events, small parties, and gatherings. Budget-friendly packages with quality food. Minimum 20 guests requirement.',5,'8493456713','Damoh Road, Jabalpur','Jabalpur','Madhya Pradesh',0,0,'https://res.cloudinary.com/dcbrlmzng/image/upload/v1779607274/Vendor_Profiles/Vendor_Profiles/profilePicture-1779607273847-880852812.jpg','','2026-05-23 07:31:35',6,1),(180014,'550e8400-e29b-41d4-a716-446655440014','Anjali Verma Portraits & Photography',270003,'Studio and outdoor photography for weddings and pre-wedding shoots. Album designing and wall-mounted photo frames available. Professional editing and digital delivery.',9,'9994567814','Geeta Bhawan, Jabalpur','Jabalpur','Madhya Pradesh',0,0,'https://res.cloudinary.com/dcbrlmzng/image/upload/v1779607446/Vendor_Profiles/Vendor_Profiles/profilePicture-1779607444868-805054617.jpg','','2026-05-23 07:31:35',14,1),(180015,'550e8400-e29b-41d4-a716-446655440015','Rahul\' Event Halls',270005,'Modern event halls with latest facilities. AC, sound system, kitchen, and outdoor garden area available. Perfect for weddings, corporate events, and social gatherings.',8,'8885678915','Napier Town, Jabalpur','Jabalpur','Madhya Pradesh',0,0,'https://res.cloudinary.com/dcbrlmzng/image/upload/v1779607606/Vendor_Profiles/Vendor_Profiles/profilePicture-1779607605145-877434253.jpg','','2026-05-23 07:31:35',15,1),(180016,'550e8400-e29b-41d4-a716-446655440016','Kiran Sound System',270004,'Affordable DJ services with extensive music library. Weddings, birthday parties, and corporate functions. State-of-the-art sound and lighting equipment.',6,'9996789016','Bada Bhaiya Ka Chowk, Jabalpur','Jabalpur','Madhya Pradesh',0,0,'https://res.cloudinary.com/dcbrlmzng/image/upload/v1779607801/Vendor_Profiles/Vendor_Profiles/profilePicture-1779607800020-992457914.jpg','','2026-05-23 07:31:35',16,1),(180017,'550e8400-e29b-41d4-a716-446655440017','Desai Airbrush Makeup',270001,'Professional airbrush makeup using premium international brands. Bridal makeup, engagement, and event makeup. Waterproof and long-lasting finish guaranteed.',7,'8978665566','Choithram Square, Jabalpur','Jabalpur','Madhya Pradesh',0,0,'https://res.cloudinary.com/dcbrlmzng/image/upload/v1779607935/Vendor_Profiles/Vendor_Profiles/profilePicture-1779607934221-325938090.jpg','','2026-05-23 07:31:35',17,1),(180018,'550e8400-e29b-41d4-a716-446655440018','Nikhil Agarwal Cinematic Videos',270001,'Cinematic quality wedding videos with Hollywood-style editing. Drone cinematography, multi-camera coverage, and pre-wedding video shoots available.',6,'8978901218','Ganj Bazaar, Jabalpur','Jabalpur','Madhya Pradesh',0,0,'https://res.cloudinary.com/dcbrlmzng/image/upload/v1779608066/Vendor_Profiles/Vendor_Profiles/profilePicture-1779608065511-333623764.jpg','','2026-05-23 07:31:35',19,1),(180019,'550e8400-e29b-41d4-a716-446655440019','Shreya Fresh Flowers',270004,'Fresh daily flowers imported from local and international gardens. Custom bouquets, wedding arrangements, and subscription flowers. Free delivery within Jabalpur city.',3,'7867098990','Madan Mahal, Jabalpur','Jabalpur','Madhya Pradesh',0,0,'https://res.cloudinary.com/dcbrlmzng/image/upload/v1779608187/Vendor_Profiles/Vendor_Profiles/profilePicture-1779608185723-449679005.jpg','','2026-05-23 07:31:36',11,1),(210001,'687077c6-b603-4c06-a68b-49a00b7ee2b3','Shivansh event ',270001,'Wedding Event,baby Shower,baby well come, birthday decoration anniversary decoration & all typ event ',5,'7987992345','Jabalpur ','Jabalpur ','Madhya Pradesh ',0,1,'https://res.cloudinary.com/dcbrlmzng/image/upload/v1779728385/Vendor_Profiles/Vendor_Profiles/profilePicture-1779728384683-154116711.jpg','','2026-05-25 16:59:46',2,0);
+/*!40000 ALTER TABLE `vendor_profiles` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `vendor_shifts`
+--
+
+DROP TABLE IF EXISTS `vendor_shifts`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `vendor_shifts` (
+  `shift_id` int NOT NULL AUTO_INCREMENT,
+  `vendor_id` bigint unsigned NOT NULL,
+  `shift_name` varchar(100) DEFAULT NULL,
+  `start_time` time NOT NULL,
+  `end_time` time NOT NULL,
+  `days_of_week` json NOT NULL,
+  `is_active` tinyint(1) DEFAULT '1',
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`shift_id`) /*T![clustered_index] CLUSTERED */,
+  UNIQUE KEY `unique_shift` (`vendor_id`,`start_time`,`end_time`),
+  CONSTRAINT `fk_1` FOREIGN KEY (`vendor_id`) REFERENCES `vendor_profiles` (`vendor_id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin AUTO_INCREMENT=240001;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `vendor_shifts`
+--
+
+LOCK TABLES `vendor_shifts` WRITE;
+/*!40000 ALTER TABLE `vendor_shifts` DISABLE KEYS */;
+INSERT INTO `vendor_shifts` VALUES (1,420001,'morning','09:00:00','12:02:00','[\"Tuesday\"]',1,'2026-03-20 10:49:54','2026-03-20 10:50:03'),(2,420002,'Krishna Janma','09:00:00','12:00:00','\"[\\\"Tuesday\\\",\\\"Wednesday\\\",\\\"Thursday\\\"]\"',1,'2026-03-20 10:55:01','2026-03-20 10:55:01'),(3,420002,'Shiv Katha','15:00:00','18:00:00','\"[\\\"Monday\\\",\\\"Tuesday\\\",\\\"Thursday\\\",\\\"Saturday\\\"]\"',1,'2026-03-20 10:55:33','2026-03-20 10:55:33'),(30001,1,'Myshiftq.o','04:00:00','08:00:00','[\"Tuesday\", \"Wednesday\", \"Thursday\", \"Monday\", \"Friday\"]',1,'2026-04-06 05:46:17','2026-04-28 10:10:36'),(60005,1,'shift','13:00:00','15:00:00','\"[\\\"Wednesday\\\",\\\"Thursday\\\"]\"',1,'2026-04-13 05:56:32','2026-04-13 05:56:32'),(120001,1,'end','10:00:00','12:00:00','\"[\\\"Sunday\\\",\\\"Saturday\\\",\\\"Thursday\\\"]\"',1,'2026-04-28 09:56:25','2026-04-28 09:56:25'),(120002,1,'Morning','09:00:00','18:00:00','\"[\\\"Tuesday\\\"]\"',1,'2026-04-28 10:08:34','2026-04-28 10:08:34'),(150001,30001,'My Shift','09:00:00','12:00:00','\"[\\\"Tuesday\\\",\\\"Monday\\\",\\\"Wednesday\\\",\\\"Thursday\\\",\\\"Friday\\\",\\\"Saturday\\\",\\\"Sunday\\\"]\"',1,'2026-05-02 09:50:08','2026-05-02 09:50:08'),(180001,90001,'fdsfv','09:00:00','12:00:00','\"[\\\"Tuesday\\\"]\"',1,'2026-05-14 10:32:21','2026-05-14 10:32:21'),(210002,150001,'Xnnxndn','09:00:00','18:00:00','[\"Tuesday\"]',1,'2026-05-18 13:13:12','2026-05-18 13:13:12');
+/*!40000 ALTER TABLE `vendor_shifts` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `vendor_subscriptions`
+--
+
+DROP TABLE IF EXISTS `vendor_subscriptions`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `vendor_subscriptions` (
+  `subscription_id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `vendor_id` bigint unsigned NOT NULL,
+  `start_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `end_date` timestamp NULL DEFAULT NULL,
+  `billing_cycle` varchar(20) DEFAULT NULL,
+  `status` enum('active','expired','cancelled','pending') NOT NULL DEFAULT 'pending',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `razorpay_order_id` varchar(255) DEFAULT NULL,
+  `razorpay_payment_id` varchar(255) DEFAULT NULL,
+  `amount_paid` decimal(10,2) DEFAULT NULL,
+  PRIMARY KEY (`subscription_id`) /*T![clustered_index] CLUSTERED */,
+  KEY `fk_subscription_vendor` (`vendor_id`),
+  KEY `idx_razorpay_payment` (`razorpay_payment_id`),
+  KEY `idx_status_end_date` (`status`,`end_date`),
+  CONSTRAINT `fk_subscription_vendor` FOREIGN KEY (`vendor_id`) REFERENCES `vendor_profiles` (`vendor_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin AUTO_INCREMENT=120001;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `vendor_subscriptions`
+--
+
+LOCK TABLES `vendor_subscriptions` WRITE;
+/*!40000 ALTER TABLE `vendor_subscriptions` DISABLE KEYS */;
+INSERT INTO `vendor_subscriptions` VALUES (1,420001,'2026-03-20 10:58:51','2027-03-20 10:58:51','annual','active','2026-03-20 10:58:51','order_STSGTsKY8Edwez','pay_STSI1Dq3uRo9jZ',1.00),(30001,420002,'2026-03-21 14:23:40','2027-03-21 14:23:40','annual','active','2026-03-21 08:53:40','order_STog6glaThNrVl','pay_STogsdPe9vNJen',1.00),(60001,30001,'2026-04-28 18:07:27','2027-04-28 18:07:27','annual','active','2026-04-28 12:41:34','TEST_MODE','TEST_MODE',0.00),(90001,180001,'2026-05-23 11:47:10','2027-05-23 11:47:10','monthly','active','2026-05-23 11:47:10',NULL,NULL,5000.00),(90002,1,'2026-05-23 11:49:20','2027-05-23 11:49:20','monthly','active','2026-05-23 11:49:20',NULL,NULL,5000.00);
+/*!40000 ALTER TABLE `vendor_subscriptions` ENABLE KEYS */;
+UNLOCK TABLES;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2026-05-26 12:48:07

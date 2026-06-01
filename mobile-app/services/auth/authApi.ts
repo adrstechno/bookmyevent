@@ -1,6 +1,6 @@
 /**
  * authApi.ts
- * Real API calls to the configured backend.
+ * Real API calls to the backend at localhost:3232
  * Endpoints: /User/Login, /User/InsertUser, /User/forgot-password
  */
 import apiClient from "@/services/api/client";
@@ -70,19 +70,6 @@ const toNameFromEmail = (email: string): string => {
   return prefix.charAt(0).toUpperCase() + prefix.slice(1);
 };
 
-// ─── Server Warm-up ──────────────────────────────────────────
-// Render free tier sleeps after inactivity. Fire this on app launch so the
-// server wakes up before the user hits a real endpoint (login / register).
-
-export const warmupServer = async (): Promise<void> => {
-	try {
-		// GET / returns 200 "Welcome to the Event Management API" — confirmed in Server.js
-		await apiClient.get('/', { timeout: 35000 });
-	} catch {
-		// Any response means the server is awake — ignore errors.
-	}
-};
-
 // ─── Login ───────────────────────────────────────────────────
 
 export const login = async (input: LoginRequest): Promise<LoginResponse> => {
@@ -96,13 +83,11 @@ export const login = async (input: LoginRequest): Promise<LoginResponse> => {
 
   const payload = response.data;
   const firstName = payload.first_name || toNameFromEmail(input.email);
-  const lastName = payload.last_name || '';
-  const fullName = lastName ? `${firstName} ${lastName}`.trim() : firstName;
 
   return {
     token: extractToken(payload),
     role: normalizeRole(payload.user_type ?? payload.role),
-    name: fullName,
+    name: firstName,
     email: input.email,
     userId: payload.user_id,
     uuid: payload.uuid,
@@ -112,69 +97,28 @@ export const login = async (input: LoginRequest): Promise<LoginResponse> => {
 
 // ─── Register ────────────────────────────────────────────────
 
-const isEmailAlreadyExists = (err: unknown): boolean => {
-  const msg = String(
-    (err as Record<string, unknown>)?.message ?? "",
-  ).toLowerCase();
-  return msg.includes("email already exists") || msg.includes("already exists") || msg.includes("already registered");
-};
-
-const isNetworkOrConnectionError = (err: unknown): boolean => {
-  const e = err as Record<string, unknown>;
-  return Boolean(e?.isNetworkError);
-};
-
 export const register = async (
   input: RegisterRequest,
 ): Promise<RegisterResponse> => {
-  const body = {
-    first_name: input.firstName,
-    last_name: input.lastName,
-    email: input.email,
-    phone: input.phone,
-    password: input.password,
-    user_type: input.userType ?? "user",
+  const response = await apiClient.post<BackendRegisterResponse>(
+    API_ENDPOINTS.auth.register,
+    {
+      first_name: input.firstName,
+      last_name: input.lastName,
+      email: input.email,
+      phone: input.phone,
+      password: input.password,
+      user_type: input.userType ?? "user",
+    },
+  );
+
+  return {
+    success: response.status >= 200 && response.status < 300,
+    message: response.data.message ?? "Registration successful. Please login.",
+    userId: response.data.user_id,
+    uuid: response.data.uuid,
+    requiresVerification: true,
   };
-
-  const makeRequest = async (): Promise<RegisterResponse> => {
-    const response = await apiClient.post<BackendRegisterResponse>(
-      API_ENDPOINTS.auth.register,
-      body,
-    );
-    return {
-      success: response.status >= 200 && response.status < 300,
-      message: response.data.message ?? "Registration successful. Please login.",
-      userId: response.data.user_id,
-      uuid: response.data.uuid,
-      requiresVerification: true,
-    };
-  };
-
-  try {
-    return await makeRequest();
-  } catch (firstError) {
-    // Only retry when the connection was lost — the server may have already
-    // created the user but the response never made it back to the app.
-    if (!isNetworkOrConnectionError(firstError)) throw firstError;
-
-    // Give the server time to fully wake up (Render cold-start recovery).
-    await new Promise((resolve) => setTimeout(resolve, 5000));
-
-    try {
-      return await makeRequest();
-    } catch (retryError) {
-      // If the backend says the email already exists the first request
-      // succeeded — the user IS registered, just return success.
-      if (isEmailAlreadyExists(retryError)) {
-        return {
-          success: true,
-          message: "Registration successful. Please check your email to verify your account.",
-          requiresVerification: true,
-        };
-      }
-      throw retryError;
-    }
-  }
 };
 
 // ─── Forgot Password ─────────────────────────────────────────

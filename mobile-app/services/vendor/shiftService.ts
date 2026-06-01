@@ -1,6 +1,6 @@
 /**
  * shiftService.ts
- * Vendor shift CRUD — wired to the configured backend
+ * Vendor shift CRUD — wired to localhost:3232
  *
  * Endpoints (all under /Vendor):
  *   GET  /Vendor/getVendorShiftforVendor   → fetch all shifts for logged-in vendor
@@ -23,16 +23,12 @@ export type VendorShift = {
 
 // ─── Helpers ─────────────────────────────────────────────────
 
-/** Backend stores days_of_week as JSON array string, double-stringified string, or comma-separated */
+/** Backend stores days_of_week as JSON string OR comma-separated OR array */
 const parseDays = (value: unknown): string[] => {
 	if (Array.isArray(value)) return value.filter((v): v is string => typeof v === 'string');
 	if (typeof value === 'string') {
-		let t = value.trim();
+		const t = value.trim();
 		if (!t) return [];
-		// Handle double-stringified: outer quotes wrapping an inner JSON array
-		if (t.startsWith('"') && t.endsWith('"')) {
-			try { t = JSON.parse(t) as string; } catch { /* fall through */ }
-		}
 		if (t.startsWith('[')) {
 			try { return JSON.parse(t); } catch { /* fall through */ }
 		}

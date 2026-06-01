@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Mail, Phone, MapPin, Facebook, Instagram, Linkedin } from "lucide-react";
+import { Mail, Phone, MapPin, Facebook, Instagram, Linkedin, Youtube } from "lucide-react";
 
 const Footer = () => {
   return (
@@ -32,7 +32,7 @@ const Footer = () => {
               </p>
               <div className="flex gap-4">
                 <a 
-                  href="https://www.facebook.com/profile.php?id=61585660263887" 
+                  href="https://www.facebook.com/share/1CjQ32LMye/" 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   aria-label="Follow GoEventify on Facebook" 
@@ -40,23 +40,32 @@ const Footer = () => {
                 >
                   <Facebook className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
                 </a>
-                <a 
-                  href="https://www.instagram.com/goeventify/" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  aria-label="Follow GoEventify on Instagram" 
+                <a
+                  href="https://www.instagram.com/go_eventify/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Follow GoEventify on Instagram"
                   className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/10 border border-white/20 hover:border-[#f9a826] hover:bg-[#f9a826] transition-all duration-300 group"
                 >
                   <Instagram className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
                 </a>
-                <a 
-                  href="https://www.linkedin.com/in/go-eventify/" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  aria-label="Connect with GoEventify on LinkedIn" 
+                <a
+                  href="https://www.linkedin.com/in/go-eventify/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Connect with GoEventify on LinkedIn"
                   className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/10 border border-white/20 hover:border-[#f9a826] hover:bg-[#f9a826] transition-all duration-300 group"
                 >
                   <Linkedin className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
+                </a>
+                <a
+                  href="https://www.youtube.com/@goeventifyadrs"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Subscribe to GoEventify on YouTube"
+                  className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/10 border border-white/20 hover:border-[#f9a826] hover:bg-[#f9a826] transition-all duration-300 group"
+                >
+                  <Youtube className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
                 </a>
               </div>
             </div>

@@ -15,7 +15,7 @@ export default function AppErrorScreen() {
 	const surfaceBg = isDark ? '#111827' : '#FFFFFF';
 	const border = isDark ? '#334155' : '#E2E8F0';
 	const supportPhone = '+91 98765 00000';
-	const supportEmail = 'goeventify@adrstechno.com';
+	const supportEmail = 'support@goeventify.demo';
 
 	const onReloadApp = () => {
 		if (__DEV__) {

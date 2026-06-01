@@ -46,6 +46,7 @@ import MyPackege from "./pages/Dashboards/Vendor/MyPackege";
 import VendorSettings from "./pages/Dashboards/Vendor/VendorSettings";
 import VendorBookings from "./pages/Dashboards/Vendor/VendorBookings";
 import VendorManualReservations from "./pages/Dashboards/Vendor/VendorManualReservations";
+import SubscriptionGuard from "./components/subscription/SubscriptionGuard";
 
 // User Pages
 import UserDashboard from "./pages/Dashboards/User/UserDashboard";
@@ -157,15 +158,20 @@ export default function App() {
             {/* 🔐 VENDOR ROUTES */}
             <Route element={<ProtectedRoute allowedRoles={["vendor"]} />}>
               <Route path="vendor">
+                {/* Always-accessible pages (even when plan expired) */}
                 <Route path="dashboard" element={<VendorDashboard />} />
                 <Route path="profile-setup" element={<VendorProfileSetup />} />
-                <Route path="shifts" element={<VendorShiftPage />} />
-                <Route path="myevents" element={<MyEvents />} />
-                <Route path="gallery" element={<VendorGallery />} />
-                <Route path="mypackege" element={<MyPackege />} />
                 <Route path="setting" element={<VendorSettings />} />
-                <Route path="bookings" element={<VendorBookings />} />
-                <Route path="reservations" element={<VendorManualReservations />} />
+
+                {/* Subscription-locked pages: blocked when plan_type === 'expired' */}
+                <Route element={<SubscriptionGuard />}>
+                  <Route path="shifts" element={<VendorShiftPage />} />
+                  <Route path="myevents" element={<MyEvents />} />
+                  <Route path="gallery" element={<VendorGallery />} />
+                  <Route path="mypackege" element={<MyPackege />} />
+                  <Route path="bookings" element={<VendorBookings />} />
+                  <Route path="reservations" element={<VendorManualReservations />} />
+                </Route>
               </Route>
             </Route>
 

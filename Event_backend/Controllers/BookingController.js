@@ -1,5 +1,6 @@
 import BookingModel from "../Models/BookingModel.js";
 import OTPModel from "../Models/OTPModel.js";
+import SubscriptionService from "../Services/SubscriptionService.js";
 import NotificationService from "../Services/NotificationService.js";
 import EmailService from "../Services/emailService.js";
 import db from "../Config/DatabaseCon.js";
@@ -38,6 +39,15 @@ class BookingController {
                 });
             }
 
+            const vendorCanReceiveBookings = await SubscriptionService.canAcceptBookings(vendor_id);
+            if (!vendorCanReceiveBookings) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'This vendor is not currently accepting bookings. Premium subscription required.',
+                    vendorSubscriptionRequired: true
+                });
+            }
+
             // Generate booking UUID
             const booking_uuid = uuidv4();
 
@@ -58,9 +68,9 @@ class BookingController {
             // Send notification to vendor about new booking
             try {
                 // Get user details for notification
-                const userQuery = `SELECT first_name, last_name, email, phone FROM users WHERE (uuid = ? OR CAST(user_id AS CHAR) = ?)`;
+                const userQuery = `SELECT first_name, last_name, email, phone FROM users WHERE uuid = ?`;
                 const userResult = await new Promise((resolve, reject) => {
-                    db.query(userQuery, [user_id, user_id], (err, results) => {
+                    db.query(userQuery, [user_id], (err, results) => {
                         if (err) reject(err);
                         else resolve(results);
                     });
@@ -70,7 +80,7 @@ class BookingController {
                 const vendorQuery = `
                     SELECT u.first_name, u.last_name, u.email, vp.vendor_id, vp.business_name
                     FROM vendor_profiles vp 
-                    JOIN users u ON (vp.user_id = u.uuid OR vp.user_id = CAST(u.user_id AS CHAR))
+                    JOIN users u ON vp.user_id = u.user_id 
                     WHERE vp.vendor_id = ?
                 `;
                 const vendorResult = await new Promise((resolve, reject) => {
@@ -197,6 +207,15 @@ class BookingController {
             }
 
             // console.log('Using vendor_id:', vendor_id);
+
+            const canAcceptBookings = await SubscriptionService.canAcceptBookings(vendor_id);
+            if (!canAcceptBookings) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Premium subscription required to accept bookings.',
+                    requiresSubscription: true
+                });
+            }
 
             // Get booking details before update
             const booking = await BookingModel.getBookingById(id);
@@ -405,7 +424,7 @@ class BookingController {
                     const vendorQuery = `
                         SELECT u.first_name, u.last_name, u.email, vp.vendor_id, vp.business_name
                         FROM vendor_profiles vp 
-                        JOIN users u ON (vp.user_id = u.uuid OR vp.user_id = CAST(u.user_id AS CHAR))
+                        JOIN users u ON vp.user_id = u.user_id 
                         WHERE vp.vendor_id = ?
                     `;
                     const vendorResult = await new Promise((resolve, reject) => {
@@ -782,24 +801,45 @@ class BookingController {
                 });
             }
 
-            // Get the vendor_id for this user
-            const vendorResult = await new Promise((resolve, reject) => {
-                VendorModel.findVendorID(user_id, (err, results) => {
-                    if (err) reject(err);
-                    else resolve(results);
-                });
-            });
+            let vendor_id = req.user?.vendor_id;
 
-            if (!vendorResult || vendorResult.length === 0) {
-                // console.log('No vendor profile found for user_id:', user_id);
-                return res.status(401).json({
-                    success: false,
-                    message: 'Vendor authentication required. No vendor profile found.'
+            if (!vendor_id) {
+                const vendorResult = await new Promise((resolve, reject) => {
+                    VendorModel.findVendorID(user_id, (err, results) => {
+                        if (err) reject(err);
+                        else resolve(results);
+                    });
+                });
+
+                if (!vendorResult || vendorResult.length === 0) {
+                    // console.log('No vendor profile found for user_id:', user_id);
+                    return res.status(401).json({
+                        success: false,
+                        message: 'Vendor authentication required. No vendor profile found.'
+                    });
+                }
+
+                vendor_id = vendorResult[0].vendor_id;
+            }
+            // console.log('Fetching bookings for vendor_id:', vendor_id);
+
+            const subscription = await SubscriptionService.getSubscriptionStatus(vendor_id);
+            const planType = subscription.plan_type;
+            if (planType === 'expired') {
+                return res.status(200).json({
+                    success: true,
+                    subscription,
+                    data: {
+                        bookings: [],
+                        pagination: {
+                            page: parseInt(req.query.page || 1),
+                            limit: Math.min(parseInt(req.query.limit || 20), 100),
+                            hasMore: false
+                        }
+                    },
+                    message: 'Your free trial has expired. Upgrade to Premium to view bookings.'
                 });
             }
-
-            const vendor_id = vendorResult[0].vendor_id;
-            // console.log('Fetching bookings for vendor_id:', vendor_id);
 
             const {
                 page = 1,
@@ -816,10 +856,28 @@ class BookingController {
             const bookings = await BookingModel.getBookingsByVendor(vendor_id, options);
             // console.log('Found', bookings.length, 'bookings for vendor');
 
+            // ===== NEW: Filter booking data based on subscription (Feature Flag Controlled) =====
+            let filteredBookings = bookings;
+
+            try {
+                console.log('Filtering bookings for plan type:', planType);
+                if (planType === 'free') {
+                    filteredBookings = bookings.map(booking =>
+                        SubscriptionService.filterBookingData(booking, planType)
+                    );
+                }
+            } catch (filterError) {
+                console.error('Error filtering booking data:', filterError);
+                if (planType === 'free') {
+                    filteredBookings = [];
+                }
+            }
+
             res.status(200).json({
                 success: true,
+                subscription,
                 data: {
-                    bookings,
+                    bookings: filteredBookings,
                     pagination: {
                         page: options.page,
                         limit: options.limit,
@@ -1047,9 +1105,9 @@ class BookingController {
             // Send notification to vendor about new booking (same as createBooking method)
             try {
                 // Get user details for notification
-                const userQuery = `SELECT first_name, last_name, email, phone FROM users WHERE (uuid = ? OR CAST(user_id AS CHAR) = ?)`;
+                const userQuery = `SELECT first_name, last_name, email, phone FROM users WHERE uuid = ?`;
                 const userResult = await new Promise((resolve, reject) => {
-                    db.query(userQuery, [user_id, user_id], (err, results) => {
+                    db.query(userQuery, [user_id], (err, results) => {
                         if (err) reject(err);
                         else resolve(results);
                     });
@@ -1059,7 +1117,7 @@ class BookingController {
                 const vendorQuery = `
                     SELECT u.first_name, u.last_name, u.email, vp.vendor_id, vp.business_name
                     FROM vendor_profiles vp 
-                    JOIN users u ON (vp.user_id = u.uuid OR vp.user_id = CAST(u.user_id AS CHAR))
+                    JOIN users u ON vp.user_id = u.user_id 
                     WHERE vp.vendor_id = ?
                 `;
                 const vendorResult = await new Promise((resolve, reject) => {
@@ -1280,4 +1338,3 @@ export const {
     getBookingForReview,
     approveBooking
 } = BookingController;
-

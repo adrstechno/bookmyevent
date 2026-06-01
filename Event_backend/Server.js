@@ -47,14 +47,26 @@ const { default: ManualReservationRouter } = await import('./Router/ManualReserv
 const { default: SubscriptionRouter } = await import('./Router/SubscriptionRoute.js');
 const { default: SubscriptionCronJobs } = await import('./Utils/subscriptionCronJobs.js');
 const { default: TestRouter } = await import('./Router/TestRouter.js');
-const { default: ContactRouter } = await import('./Router/ContactRouter.js');
 
 const app = express();
+const jsonParser = express.json();
+const urlencodedParser = express.urlencoded({ extended: true });
 
 // 🟢 Middleware
 app.use(helmet());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use('/subscription/webhook', express.raw({ type: 'application/json' }));
+app.use((req, res, next) => {
+  if (req.path === '/subscription/webhook') {
+    return next();
+  }
+  return jsonParser(req, res, next);
+});
+app.use((req, res, next) => {
+  if (req.path === '/subscription/webhook') {
+    return next();
+  }
+  return urlencodedParser(req, res, next);
+});
 app.use(cookieParser());
 
 // CORS configuration for production
@@ -102,7 +114,7 @@ app.options(/.*/, cors(corsOptions));
 
 // 🟢 Mount routers
 app.use('/User', UserRouter);
-app.use('/service', ServiceRouter);
+app.use('/Service', ServiceRouter);
 app.use('/Subservice', SubserviceRouter);
 app.use('/Vendor', VendorRouter);
 app.use('/Booking', BookingRouter);
@@ -121,9 +133,6 @@ app.use('/subscription', SubscriptionRouter);
 
 // 🟢 Test routes
 app.use('/test', TestRouter);
-
-// 🟢 Contact form
-app.use('/contact', ContactRouter);
 
 app.get('/', (req, res) => {
   res.send('Welcome to the Event Management API');

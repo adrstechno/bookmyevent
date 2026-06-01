@@ -22,11 +22,8 @@ class RazorpayService {
             // console.log('✅ Razorpay configured successfully');
         }
         
-        // Subscription plan details
-        // 🧪 TESTING MODE: ₹1 for demo/testing (change back to 99900 for production)
         this.SUBSCRIPTION_PLAN = {
-            amount: 100, // ₹1 in paise (1 * 100) - FOR TESTING ONLY
-            // amount: 99900, // ₹999 in paise (999 * 100) - USE THIS FOR PRODUCTION
+            amount: 49900,
             currency: 'INR',
             period: 'yearly',
             interval: 1,
@@ -102,6 +99,34 @@ class RazorpayService {
         }
     }
 
+    verifyWebhookSignature(rawBody, signature) {
+        const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+
+        if (!webhookSecret) {
+            console.error('Razorpay webhook secret not configured');
+            return false;
+        }
+
+        if (!rawBody || !signature) {
+            return false;
+        }
+
+        try {
+            const expectedSign = crypto
+                .createHmac('sha256', webhookSecret)
+                .update(rawBody)
+                .digest('hex');
+
+            return crypto.timingSafeEqual(
+                Buffer.from(expectedSign),
+                Buffer.from(signature)
+            );
+        } catch (error) {
+            console.error('Error verifying webhook signature:', error);
+            return false;
+        }
+    }
+
     // Fetch payment details
     async getPaymentDetails(payment_id) {
         if (!this.isConfigured) {
@@ -143,6 +168,29 @@ class RazorpayService {
             };
         } catch (error) {
             console.error('Error fetching order details:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
+    async capturePayment(payment_id, amount, currency = this.SUBSCRIPTION_PLAN.currency) {
+        if (!this.isConfigured) {
+            return {
+                success: false,
+                error: 'Razorpay is not configured'
+            };
+        }
+
+        try {
+            const payment = await this.razorpay.payments.capture(payment_id, amount, currency);
+            return {
+                success: true,
+                payment
+            };
+        } catch (error) {
+            console.error('Error capturing payment:', error);
             return {
                 success: false,
                 error: error.message

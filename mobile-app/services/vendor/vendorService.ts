@@ -288,9 +288,7 @@ export const deleteVendorShift = async (shiftId: number | string) => {
 export const fetchVendorBookings = async (): Promise<VendorBooking[]> => {
 	const response = await apiClient.get(API_ENDPOINTS.booking.listByVendor);
 	const payload = toObject(response.data);
-	// Backend returns: { success, data: { bookings: [...], pagination: {...} } }
-	const nested = toObject(payload.data ?? payload);
-	const rows = toRows(nested.bookings ?? payload.bookings ?? payload.data ?? payload);
+	const rows = toRows(payload.bookings ?? payload.data ?? payload);
 
 	return rows.map((row) => ({
 		bookingId: toText(row.booking_id ?? row.id),
@@ -409,13 +407,13 @@ export type VendorEventImage = {
 };
 
 export const fetchVendorEventImages = async (): Promise<VendorEventImage[]> => {
+	// No vendor_id needed — backend derives it from auth token
 	const response = await apiClient.get(API_ENDPOINTS.vendor.eventImages);
 	const payload = toObject(response.data);
 	const rows = toRows(payload.eventImages ?? payload.data ?? payload);
 
 	return rows.map((row) => ({
-		// Backend returns imageID (capital ID) from Event_images table
-		imageId: row.imageID ?? row.image_id ?? row.id ?? '',
+		imageId: row.image_id ?? row.id ?? '',
 		imageUrl: toText(row.imageUrl ?? row.event_profiles_url ?? row.url),
 	})).filter((img) => img.imageUrl);
 };
@@ -436,15 +434,5 @@ export const uploadVendorEventImages = async (imageUris: string[]): Promise<void
 
 	await apiClient.post(API_ENDPOINTS.vendor.uploadEventImages, formData, {
 		headers: { 'Content-Type': 'multipart/form-data' },
-	});
-};
-
-/**
- * Delete a vendor event image by imageID.
- * Backend: POST /Vendor/DeleteEventImage  { imageID }
- */
-export const deleteVendorEventImage = async (imageId: number | string): Promise<void> => {
-	await apiClient.post(API_ENDPOINTS.vendor.deleteEventImage, {
-		imageID: imageId,
 	});
 };

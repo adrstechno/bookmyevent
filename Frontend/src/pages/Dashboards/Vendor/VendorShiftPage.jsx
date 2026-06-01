@@ -34,8 +34,9 @@ import {
 import { Add, Search, ArrowUpward, ArrowDownward, ArrowBack } from "@mui/icons-material";
 import { FiEdit3 } from "react-icons/fi";
 import { RiDeleteBin6Line } from "react-icons/ri";
-import api from "../../../services/axiosConfig";
+import axios from "axios";
 import toast from "react-hot-toast";
+import { VITE_API_BASE_URL } from "../../../utils/api";
 
 const weekdays = [
   "Monday",
@@ -99,7 +100,10 @@ const VendorShiftPage = () => {
   const fetchVendorShifts = async () => {
     setVendorLoading(true);
     try {
-      const res = await api.get("/Vendor/getVendorShiftforVendor");
+      const res = await axios.get(
+        `${VITE_API_BASE_URL}/Vendor/getVendorShiftforVendor`,
+        { withCredentials: true }
+      );
       const raw = res.data;
       const data =
         raw?.data || raw?.shifts || raw?.vendorShifts || raw?.Data || [];
@@ -167,10 +171,18 @@ const VendorShiftPage = () => {
       payload.append("days_of_week", JSON.stringify(shift.days_of_week));
 
       if (isEdit) {
-        await api.post("/Vendor/updateVendorShiftbyId", payload);
+        await axios.post(
+          `${VITE_API_BASE_URL}/Vendor/updateVendorShiftbyId`,
+          payload,
+          { withCredentials: true }
+        );
         toast.success("Shift updated");
       } else {
-        await api.post("/Vendor/AddvendorShifts", payload);
+        await axios.post(
+          `${VITE_API_BASE_URL}/Vendor/AddvendorShifts`,
+          payload,
+          { withCredentials: true }
+        );
         toast.success("Shift added");
       }
 
@@ -200,7 +212,10 @@ const VendorShiftPage = () => {
 
   const handleDelete = async (id) => {
     try {
-      await api.get("/Vendor/deleteVendorShiftbyId", { params: { shift_id: id } });
+      await axios.get(
+        `${VITE_API_BASE_URL}/Vendor/deleteVendorShiftbyId`,
+        { params: { shift_id: id }, withCredentials: true }
+      );
       toast.success("Shift deleted");
       fetchVendorShifts();
     } catch {

@@ -19,15 +19,15 @@ const subscriptionService = {
     return response.data;
   },
 
-  // Get all subscriptions (Admin only)
-  getAllSubscriptions: async () => {
-    const response = await api.get("/subscription/all");
+  // Get computed subscription/trial analytics for vendor dashboard
+  getEnhancedSubscriptionStatus: async () => {
+    const response = await api.get("/subscription/enhanced-status");
     return response.data;
   },
 
-  // Test mode: Activate subscription without payment (for testing only)
-  activateTestSubscription: async () => {
-    const response = await api.post("/subscription/test-activate");
+  // Get all subscriptions (Admin only)
+  getAllSubscriptions: async () => {
+    const response = await api.get("/subscription/all");
     return response.data;
   },
 };

@@ -16,6 +16,42 @@ const AllVendorsPage = () => {
   const [selectedCity, setSelectedCity] = useState("all");
   const [cities, setCities] = useState([]);
 
+  // Common city mappings for deduplication (all in sentence case)
+  const commonCityMappings = {
+    'jabalp': 'Jabalpur',
+    'jabalpur': 'Jabalpur',
+    'satna': 'Satna',
+    'satna ': 'Satna',
+    'jabalpal': 'Jabalpur',
+    'jabalpour': 'Jabalpur',
+  };
+
+  // Convert city to sentence case (capitalize first letter, rest lowercase)
+  const toSentenceCase = (text) => {
+    if (!text) return '';
+    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+  };
+
+  const normalizeCity = (city) => {
+    if (!city) return '';
+    const lowerCity = city.toLowerCase().trim();
+    const mapped = commonCityMappings[lowerCity];
+    if (mapped) return mapped;
+    // For unmapped cities, apply sentence case
+    return toSentenceCase(city);
+  };
+
+  // Randomize vendor order on the frontend (Fisher-Yates) so the list isn't
+  // shown in a fixed backend order. Backend response is left untouched.
+  const shuffleArray = (array) => {
+    const result = [...array];
+    for (let i = result.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [result[i], result[j]] = [result[j], result[i]];
+    }
+    return result;
+  };
+
   useEffect(() => {
     loadVendors();
   }, []);
@@ -42,12 +78,28 @@ const AllVendorsPage = () => {
         const data = await response.json();
         console.log("Vendors data received:", data);
         console.log("Number of vendors:", data?.length);
-        
-        // Extract unique cities
-        const uniqueCities = [...new Set(data.map(v => v.city).filter(Boolean))];
+
+        // Normalize all vendor cities to standardized names
+        const normalizedData = data.map(vendor => ({
+          ...vendor,
+          normalizedCity: normalizeCity(vendor.city)
+        }));
+
+        // Extract unique cities with intelligent deduplication
+        const citiesMap = {};
+        normalizedData.forEach(v => {
+          if (v.normalizedCity) {
+            const lowerCity = v.normalizedCity.toLowerCase();
+            if (!citiesMap[lowerCity]) {
+              citiesMap[lowerCity] = v.normalizedCity;
+            }
+          }
+        });
+        const uniqueCities = Object.values(citiesMap).sort();
         setCities(uniqueCities);
 
-        return { data: data || [] };
+        // Shuffle so vendors appear in a random order each time the page loads.
+        return { data: shuffleArray(normalizedData || []) };
       }, {
         emptyMessage: "No vendors available",
         showEmptyToast: false
@@ -60,7 +112,11 @@ const AllVendorsPage = () => {
   const filteredVendors = vendors.filter(vendor => {
     const matchesSearch = vendor.business_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          vendor.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCity = selectedCity === "all" || vendor.city === selectedCity;
+
+    // Use the pre-normalized city from vendor data
+    const vendorCity = vendor.normalizedCity || normalizeCity(vendor.city);
+    const normalizedSelectedCity = normalizeCity(selectedCity);
+    const matchesCity = selectedCity === "all" || vendorCity.toLowerCase() === normalizedSelectedCity.toLowerCase();
     return matchesSearch && matchesCity;
   });
 
@@ -118,7 +174,7 @@ const AllVendorsPage = () => {
           >
             <option value="all">All Cities ({vendors.length})</option>
             {cities.map((city) => {
-              const count = vendors.filter(v => v.city === city).length;
+              const count = vendors.filter(v => (v.normalizedCity || normalizeCity(v.city)) === city).length;
               return (
                 <option key={city} value={city}>
                   {city} ({count})

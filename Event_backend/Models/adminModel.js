@@ -32,7 +32,7 @@ class AdminModel {
         u.last_name,
         u.created_at
       FROM vendor_profiles vp
-      JOIN users u ON (vp.user_id = u.uuid OR vp.user_id = CAST(u.user_id AS CHAR))
+      JOIN users u ON vp.user_id = u.id
       ORDER BY vp.vendor_id DESC
         `;
 

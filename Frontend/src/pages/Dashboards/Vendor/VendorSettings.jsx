@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
+import axios from "axios";
 import { PhotoIcon, UserCircleIcon } from "@heroicons/react/24/outline";
 import ChangePassword from "../../../components/ChangePassword";
+import UpgradeModal from "../../../components/subscription/UpgradeModal";
 import toast from "react-hot-toast";
-import api from "../../../services/axiosConfig";
+import { VITE_API_BASE_URL } from "../../../utils/api";
 
 const VendorSettings = () => {
   const [profile, setProfile] = useState({
@@ -26,12 +28,15 @@ const VendorSettings = () => {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isNewProfile, setIsNewProfile] = useState(false);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
 
   // ✅ Fetch all service categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await api.get('/Service/GetAllServices');
+        const res = await axios.get(`${VITE_API_BASE_URL}/Service/GetAllServices`, {
+          withCredentials: true,
+        });
         const data = res.data?.data || res.data;
         if (Array.isArray(data)) {
           const formatted = data.map((item) => ({
@@ -59,7 +64,10 @@ const VendorSettings = () => {
       }
 
       try {
-        const res = await api.get(`/Service/GetSubservicesByServiceCategoryId/${profile.service_category_id}`);
+        const res = await axios.get(
+          `${VITE_API_BASE_URL}/Service/GetSubservicesByServiceCategoryId/${profile.service_category_id}`,
+          { withCredentials: true }
+        );
         
         const data = res.data;
         if (Array.isArray(data)) {
@@ -80,7 +88,9 @@ const VendorSettings = () => {
   useEffect(() => {
     const fetchVendorProfile = async () => {
       try {
-        const res = await api.get('/Vendor/getvendorById');
+        const res = await axios.get(`${VITE_API_BASE_URL}/Vendor/getvendorById`, {
+          withCredentials: true,
+        });
 
         if (res.status === 200 && res.data) {
           const vendor = res.data.vendor || res.data;
@@ -201,14 +211,24 @@ const VendorSettings = () => {
       let res;
       if (isNewProfile) {
         // Create new vendor profile
-        res = await api.post('/Vendor/InsertVendor', formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
+        res = await axios.post(
+          `${VITE_API_BASE_URL}/Vendor/InsertVendor`,
+          formData,
+          {
+            headers: { "Content-Type": "multipart/form-data" },
+            withCredentials: true,
+          }
+        );
       } else {
         // Update existing vendor profile
-        res = await api.post('/Vendor/updateVendorProfile', formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
+        res = await axios.post(
+          `${VITE_API_BASE_URL}/Vendor/updateVendorProfile`,
+          formData,
+          {
+            headers: { "Content-Type": "multipart/form-data" },
+            withCredentials: true,
+          }
+        );
       }
 
       if (res.status === 200 || res.status === 201) {
@@ -591,6 +611,11 @@ const VendorSettings = () => {
           visible={showPasswordModal}
           onClose={() => setShowPasswordModal(false)}
         />
+      )}
+
+      {/* Upgrade Modal */}
+      {upgradeModalOpen && (
+        <UpgradeModal onClose={() => setUpgradeModalOpen(false)} />
       )}
     </div>
   );
