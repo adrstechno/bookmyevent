@@ -3,7 +3,7 @@
 // Purpose: Check for expiring subscriptions and send reminder emails
 // Date: May 26, 2026
 // Schedule: Daily at 00:00 UTC (or as configured)
-// Feature: SUBSCRIPTION_EMAIL_REMINDERS_ENABLED
+// Feature: always enabled
 // ============================================================================
 
 import db from '../Config/DatabaseCon.js';
@@ -16,16 +16,7 @@ class SubscriptionExpiryCheck {
    * Run this daily via CRON job
    */
   static async checkAndNotifyExpiringSubscriptions() {
-    const FEATURE_ENABLED = process.env.SUBSCRIPTION_EMAIL_REMINDERS_ENABLED === 'true';
-
-    if (!FEATURE_ENABLED) {
-      console.log('ℹ️ Subscription email reminders disabled (SUBSCRIPTION_EMAIL_REMINDERS_ENABLED=false)');
-      return {
-        success: true,
-        message: 'Feature disabled',
-        processed: 0
-      };
-    }
+    const FEATURE_ENABLED = true;
 
     console.log('🔍 Starting subscription expiry check at', new Date().toISOString());
 

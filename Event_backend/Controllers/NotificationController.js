@@ -28,8 +28,8 @@ class NotificationController {
             const notifications = await NotificationModel.getUserNotifications(user_id, options);
             const unreadCount = await NotificationModel.getUnreadCount(user_id);
 
-            // ===== NEW: Filter notification content based on subscription (Feature Flag Controlled) =====
-            const FILTERING_ENABLED = process.env.SUBSCRIPTION_FILTERING_ENABLED === 'true';
+            // ===== Filter notification content based on subscription =====
+            const FILTERING_ENABLED = true;
             let filteredNotifications = notifications;
 
             if (FILTERING_ENABLED) {
@@ -58,8 +58,6 @@ class NotificationController {
                     console.error('Error filtering notification content:', filterError);
                     // Continue without filtering if there's an error
                 }
-            } else {
-                console.log('Notification filtering disabled (SUBSCRIPTION_FILTERING_ENABLED=false)');
             }
 
             res.status(200).json({

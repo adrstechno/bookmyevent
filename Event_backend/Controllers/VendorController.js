@@ -68,24 +68,17 @@ export const insertVendor = (req, res) => {
       const vendor_id = result.insertId;
       console.log('✅ Vendor created successfully, ID:', vendor_id);
 
-      // Auto-create the 90-day free trial unless explicitly disabled for rollback.
-      const AUTO_CREATE_TRIAL = process.env.SUBSCRIPTION_AUTO_CREATE_TRIAL !== 'false';
-
-      if (AUTO_CREATE_TRIAL) {
-        try {
-          const trialCreated = await SubscriptionService.createFreeTrial(vendor_id);
-          if (trialCreated) {
-            console.log('✅ Free trial created automatically for vendor:', vendor_id);
-          } else {
-            console.log('⚠️ Free trial creation failed (non-critical), vendor registration continues');
-            // Don't fail the entire vendor registration if trial creation fails
-          }
-        } catch (trialError) {
-          console.error('⚠️ Error creating free trial:', trialError);
-          // Don't fail the vendor registration
+      try {
+        const trialCreated = await SubscriptionService.createFreeTrial(vendor_id);
+        if (trialCreated) {
+          console.log('✅ Free trial created automatically for vendor:', vendor_id);
+        } else {
+          console.log('⚠️ Free trial creation failed (non-critical), vendor registration continues');
+          // Don't fail the entire vendor registration if trial creation fails
         }
-      } else {
-        console.log('ℹ️ Auto free trial creation disabled (SUBSCRIPTION_AUTO_CREATE_TRIAL=false)');
+      } catch (trialError) {
+        console.error('⚠️ Error creating free trial:', trialError);
+          // Don't fail the vendor registration
       }
 
       return res.status(200).json({

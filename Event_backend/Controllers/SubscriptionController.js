@@ -640,7 +640,6 @@ class SubscriptionController {
 
     // ===== NEW: Get subscription status with feature flags (May 26, 2026) =====
     // Enhanced endpoint that includes subscription service details
-    // Only visible if SUBSCRIPTION_STATUS_VISIBLE feature flag is enabled
     static async getEnhancedSubscriptionStatus(req, res) {
         try {
             const user_id = req.user?.uuid || req.user?.user_id;
@@ -674,7 +673,7 @@ class SubscriptionController {
             }
 
             const vendor_id = vendorResult[0].vendor_id;
-            const FEATURE_ENABLED = process.env.SUBSCRIPTION_STATUS_VISIBLE === 'true';
+            const FEATURE_ENABLED = true;
 
             // Get subscription status using SubscriptionService
             const subscriptionStatus = await SubscriptionService.getSubscriptionStatus(vendor_id);
